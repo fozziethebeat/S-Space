@@ -1,0 +1,19 @@
+README for jnt.FFT
+ Java Numerical Toolkit subpackage for Fast Fourier Transforms.
+ Bruce R. Miller <bruce.miller@nist.gov>
+
+***NOTE***
+Several routines in this subpackage were derived from
+Brian Gough's FFT routines in the Gnu Scientific Library (GSL).
+GSL is released under the Gnu General Public License
+  (see http://www.gnu.org/copyleft/gpl.html)
+As such, this package must also be released under GPL.
+
+The modifications I have made to port the routines from
+C to Java,  and the additional classes developed were
+developed as part of my official duties as a U.S. 
+government employee, and are therefore not subject
+to copyright.
+
+Furthermore, this software is under development, and is
+in no way certified or guaranteed.

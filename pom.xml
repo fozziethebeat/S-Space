@@ -1,0 +1,47 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>edu.ucla.sspace</groupId>
+  <artifactId>sspace</artifactId>
+  <packaging>jar</packaging>
+  <name>S-Space Package</name>
+  <version>1.6</version>
+  <description>The S-Space Package is a collection of algorithms for building
+    Semantic Spaces as well as a highly-scalable library for designing new
+    distributional semantics algorithms. Distributional algorithms process text
+    corpora and represent the semantic for words as high dimensional feature
+    vectors. This package also includes matrices, vectors, and numerous
+    clustering algorithms. These approaches are known by many names, such as
+    word spaces, semantic spaces, or distributed semantics and rest upon the
+    Distributional Hypothesis: words that appear in similar contexts have
+    similar meanings.</description> 
+  <url>http://code.google.com/p/airhead-research/</url>
+
+  <licenses>
+    <license>
+      <name>GNU General Public License 2</name>
+      <url>http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>http://airhead-research.googlecode.com/svn/</url>
+    <connection>scm:svn:http://airhead-research.googlecode.com/svn/</connection>
+    <developerConnection>scm:svn:https://airhead-research.googlecode.com/svn/</developerConnection>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>fozziethebeat</id>
+      <name>Keith Stevens</name>
+      <email>fozziethebeat@gmail.com</email>
+    </developer>
+    <developer>
+      <id>david.jurgens</id>
+      <name>David Jurgens</name>
+      <email>jurgens@cs.ucla.edu</email>
+    </developer>
+  </developers>
+</project>

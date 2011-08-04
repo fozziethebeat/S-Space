@@ -1,0 +1,649 @@
+<!--
+ * Copyright 2009 Keith Stevens 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ -->
+
+<project name="semanticspaces" default="compile"
+         xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+  <property file="build.properties"/>
+
+  <property name="lib.dir" value="lib"/>
+  <property name="build.dir" value="classes"/>
+  <property name="report.dir" value="reports"/>
+  <property name="coverage.html.dir" value="${report.dir}/cobertura-html"/>
+  <property name="src.dir" value="src"/>
+  <property name="test.dir" value="test"/>
+  <property name="dist.dir" value="dist"/>
+  <property name="test.dir" value="test"/>
+  <property name="hadoop.dir" value="opt/hadoop"/>
+  <property name="package" value="edu.ucla.sspace"/>
+  <property name="bin.dir" value="bin"/>
+  <property name="tools.dir" value="tools"/>
+  <property name="version" value="1.6"/>
+
+  <!-- define Maven coordinates, repository url and artifacts name etc -->
+  <property name="groupId" value="edu.ucla.sspace" />
+  <property name="artifactId" value="sspace" />
+  <property name="maven-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+  <property name="maven-repository-id" value="sonatype-nexus-staging" />
+  <property name="maven-jar" value="${dist.dir}/${artifactId}-${version}.jar" />
+  <property name="maven-javadoc-jar" value="${dist.dir}/${artifactId}-${version}-javadoc.jar" />
+  <property name="maven-sources-jar" value="${dist.dir}/${artifactId}-${version}-src.jar" />
+
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+  </path>
+
+  <path id="cobertura.classpath">
+    <fileset dir="${lib.dir}">
+      <include name="cobertura.jar" />
+      <include name="*.jar" />
+    </fileset>
+  </path>
+
+  <taskdef classpathref="cobertura.classpath" resource="tasks.properties"/>
+
+  <path id="run-classpath">
+    <path refid="classpath"/>
+    <pathelement location="${build.dir}"/>
+  </path>
+
+  <target name="all" depends="dist,tools,lib">
+    <!-- put in dependencies here -->
+  </target>
+
+  <!--
+    **
+    ** 
+    ** TOP LEVEL BUILD TARGETS
+    **
+    **
+    **-->
+
+  <target name="lib" depends="sspace-jar,sspace-src-jar"/>
+  
+  <target name="compile">
+    <!-- Ensure that the build output directories are always present -->
+    <!-- REMINDER: since these are present in the svn repository, do we really
+	 need to do this? -->
+    <mkdir dir="classes"/>
+    
+    <!-- remove old jars and classes -->
+    <delete>
+      <fileset dir="classes" includes="**"/>
+    </delete>
+
+    <!-- Compile all of the classes and put the results in the classes
+	 directory -->
+     <javac srcdir="./" destdir="classes" classpathref="classpath" 
+	    debug="true" debuglevel="lines,source">
+       <compilerarg value="-Xlint"/>
+       <compilerarg value="-g"/>
+       <include name="src/**"/>
+       <include name="lib/**"/>
+       <exclude name="test/**"/>
+       <exclude name="opt/"/>
+    </javac>  
+  </target>
+
+  <!-- An internal target designed to check that the hadoop library exists -->
+  <target name="-hadoop-check">
+    <available file="${lib.dir}/hadoop-0.20.2-core.jar" 
+               property="hadoop.present"/>
+  </target>
+
+  <target name="hadoop" depends="compile,-hadoop-check" if="hadoop.present">
+    <echo>Compiling Hadoop classes</echo>  
+    <javac srcdir="opt/hadoop/" destdir="classes"
+           classpathref="classpath" 
+	   debug="true" debuglevel="lines,source">
+       <compilerarg value="-Xlint"/>
+       <compilerarg value="-g"/>
+       <include name="**"/>
+    </javac>
+  </target>
+
+  <!-- Removes all class files and built jar executables -->
+  <target name="clean">
+    <delete>
+      <fileset dir="bin" includes="**"/>
+      <fileset dir="classes" includes="**"/>
+      <fileset dir="javadoc" includes="**"/>
+      <fileset dir="lib" includes="sspace-lib.jar"/>
+      <fileset dir="lib" includes="sspace-src.jar"/>
+      <fileset dir="tools" includes="**"/>
+    </delete>
+  </target>
+
+  <target name="compile-tests" description="Compile test Classes" 
+	  depends="compile">
+    <mkdir dir="classes"/>
+    <!-- <ivy:cachepath conf="test" pathid="test.refid"/> -->
+    <javac srcdir="test" destdir="classes" debug="true"
+      classpathref="classpath" debuglevel="lines,source">	   
+      <compilerarg value="-Xlint"/>
+      <compilerarg value="-g"/>
+    </javac>
+  </target>
+
+
+  <target name="binaries" depends="lsa-jar,ri-jar,coals-jar,hal-jar,fdtri-jar,isa-jar,purandare-jar,esa-jar,vsm-jar,beagle-jar,rri-jar"/>
+
+  <!--
+       Create the distribution jars for the libraries, javadoc, and source 
+       files.
+  -->
+  <target name="dist" depends="clean,compile,binaries"
+          description="Generate the full distribution">
+    <!-- build the main artifact -->
+    <jar jarfile="${maven-jar}" basedir="${build.dir}" />
+
+    <!-- build the javadoc artifact -->
+    <javadoc sourcepath="${src.dir}" destdir="javadoc" />
+    <jar jarfile="${maven-javadoc-jar}">
+        <fileset dir="javadoc" />
+    </jar>
+
+    <!-- build the sources artifact -->
+    <jar jarfile="${maven-sources-jar}">
+        <fileset dir="${src.dir}" />
+    </jar>
+  </target>
+
+  <!--
+       Deploy the distribution jars to the maven repository.
+  -->
+  <target name="deploy" depends="dist" description="deploy to Nexus">
+    <!-- sign and deploy the main artifact -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-repository-url}" />
+      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-jar}" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
+    <!-- sign and deploy the sources artifact -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-repository-url}" />
+      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-sources-jar}" />
+      <arg value="-Dclassifier=sources" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
+    <!-- sign and deploy the javadoc artifact -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-repository-url}" />
+      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-javadoc-jar}" />
+      <arg value="-Dclassifier=javadoc" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+  </target>
+
+  <target name="tools" depends="sse-jar,svd-jar,tc-jar">
+  </target>
+
+  <!--
+    **
+    ** 
+    ** LIBRARY PACKAGES
+    **
+    **
+    **-->
+
+  
+  <target name="sspace-jar" depends="compile">
+    <jar destfile="${dist.dir}/sspace-lib.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <exclude name="jnt/*"/>
+      <manifest>
+        <!-- Who is building this jar? -->
+        <attribute name="Built-By" value="${user.name}"/>
+        <!-- Information about the program itself -->
+        <attribute name="Implementation-Vendor" value="AIRhead Research"/>
+        <attribute name="Implementation-Title" value="Full release of the
+          S-Space package"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="sspace-src-jar" depends="compile">
+    <jar destfile="${dist.dir}/sspace-src.jar" basedir="src">
+      <include name="**/*.java"/>
+      <exclude name="jnt/*"/>
+      <manifest>
+        <!-- Who is building this jar? -->
+        <attribute name="Built-By" value="${user.name}"/>
+        <!-- Information about the program itself -->
+        <attribute name="Implementation-Vendor" value="AIRhead Research"/>
+        <attribute name="Implementation-Title" value="Full release of the
+          S-Space package source code"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <!--
+    **
+    ** 
+    ** EXECUTABLE JAR ALGORITHMS
+    **
+    **
+    **-->
+
+  <target name="hadoop-ri-jar" depends="hadoop">
+    <jar destfile="${bin.dir}/hadoop-ri.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Hadoop Random Indexing"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.HadoopRandomIndexingMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="lsa-jar" depends="compile">
+    <jar destfile="${bin.dir}/lsa.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Latent Semantic Analysis"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.LSAMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="coals-jar" depends="compile">
+    <jar destfile="${bin.dir}/coals.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <exclude name="jnt/*"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Coals"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.CoalsMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="isa-jar" depends="compile">
+    <jar destfile="${bin.dir}/isa.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <exclude name="jnt/*"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Incremental Semantic Analysis"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.IsaMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="esa-jar" depends="compile">
+    <jar destfile="${bin.dir}/esa.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Incremental Semantic Analysis"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.ESAMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="ri-jar" depends="compile">
+    <jar destfile="${bin.dir}/random-indexing.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Random Indexing"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.RandomIndexingMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="beagle-jar" depends="compile">
+    <jar destfile="${bin.dir}/beagle.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Random Indexing"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.BeagleMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="rri-jar" depends="compile">
+    <jar destfile="${bin.dir}/rri.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Random Indexing"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.ReflectiveRandomIndexingMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="gws-jar" depends="compile">
+    <jar destfile="${bin.dir}/gws.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Generic Word Space"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.GwsMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="fdtri-jar" depends="compile">
+    <jar destfile="${bin.dir}/fd-tri.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Fixed Duration Temporal Random Indexing"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.FixedDurationTemporalRandomIndexingMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="hal-jar" depends="compile">
+    <jar destfile="${bin.dir}/hal.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Hyperspace Analogue to Language"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.HALMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="purandare-jar" depends="compile">
+    <jar destfile="${bin.dir}/purandare-pedersen.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Purandare and Pedersen"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.PurandareMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="vsm-jar" depends="compile">
+    <jar destfile="${bin.dir}/vsm.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Vector Space Model"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.VsmMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="dv-jar" depends="compile">
+    <jar destfile="${bin.dir}/dv.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Dependency Vector Space"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.mains.DependencyVectorSpaceMain"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <!--
+    **
+    ** 
+    ** EXECUTABLE JAR TOOLS
+    **
+    **
+    **-->
+
+  <target name="sse-jar" depends="compile">
+    <jar destfile="${tools.dir}/sse.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Semantic Space Explorer"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.SemanticSpaceExplorer"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="svd-jar" depends="compile">
+    <jar destfile="${tools.dir}/svd.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="SVD"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.SvdTool"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="tc-jar" depends="compile">
+    <jar destfile="${tools.dir}/tc.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="SVD"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.TokenCounter"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <!--
+    **
+    ** 
+    ** UNIT TEST XML
+    **
+    **
+    **-->
+
+  <target name="instrument">
+    <delete dir="classes/instrumented" />
+    <cobertura-instrument todir="classes/instrumented">
+      <fileset dir="classes">
+        <include name="edu/ucla/sspace/**/*.class"/>
+      </fileset>
+    </cobertura-instrument>
+  </target>
+
+  <target name="coverage" depends="instrument">
+    <delete dir="reports" />
+    <mkdir dir="reports" />
+
+    <junit printSummary="yes" fork="true" haltonerror="no">
+      <jvmarg value="-Xmx1g"/>
+      <jvmarg value="-debug"/>
+
+      <classpath location="${build.dir}/instrumented"/>
+      <classpath refid="run-classpath"/> 
+      <classpath refid="cobertura.classpath" />
+      <formatter type="plain"/>    
+
+      <!-- Example test when doing debugging of single classes 
+      <test name="edu.ucla.sspace.package.Class" todir="${report.dir}"/>
+      -->
+      <batchtest fork="yes" todir="${report.dir}">
+        <fileset dir="${test.dir}">
+          <include name="**/*Test.java"/>
+          <include name="**/*Tests.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <target name="coverage-report">
+    <cobertura-report srcdir="${src.dir}" destdir="${coverage.html.dir}" />
+  </target>
+
+  <target name="test" depends="compile-tests">
+    <delete dir="reports"/>
+    <mkdir dir="reports"/>
+
+    <junit printsummary="yes" fork="yes" haltonfailure="no">
+      <jvmarg value="-Xmx1g"/>
+      <jvmarg value="-debug"/>
+      <classpath location="${build.instrumented.dir}"/>
+      <classpath refid="run-classpath"/> 
+      <formatter type="plain"/>    
+
+      <!-- Example test when doing debugging of single classes 
+      <test name="edu.ucla.sspace.package.Class" todir="${report.dir}"/>
+      -->
+      <batchtest fork="yes" todir="${report.dir}">
+        <fileset dir="${test.dir}">
+          <include name="**/*Test.java"/>
+          <include name="**/*Tests.java"/>
+        </fileset>
+      </batchtest>
+
+    </junit>
+  </target>
+
+  <target name="javadoc" description="Create Javadocs" depends="compile,hadoop">
+    <javadoc destdir="javadoc/" classpathref="classpath" access="public">
+      <link href="http://java.sun.com/javase/6/docs/api/"/>
+      <link href="http://hadoop.apache.org/common/docs/current/api/"/>
+      <link href="http://hadoop.apache.org/mapreduce/docs/r0.21.0/api/"/>
+      <fileset dir="${src.dir}/" includes="**/*.java"/>      
+      <fileset dir="${hadoop.dir}/" includes="**/*.java"/>
+
+      <bottom><![CDATA[
+   <!-- Note: these links rely on the Syntaxhighlighter files being hosted at this location. -->
+   <link type="text/css" rel="stylesheet" href="http://howard.ross.work.googlepages.com/SyntaxHighlighter.css"></link>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shCore.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushJava.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushXml.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushSql.js"></script>  
+   <script language="javascript">  
+   dp.SyntaxHighlighter.ClipboardSwf = 'http://howard.ross.work.googlepages.com/clipboard.swf';  
+   dp.SyntaxHighlighter.HighlightAll('code');  
+   </script>  
+   ]]>
+	</bottom>
+      <footer><![CDATA[
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6063773-2");
+pageTracker._trackPageview();
+} catch(err) {}</script>]]>
+      </footer>
+    </javadoc>
+  </target>
+
+  <!-- The full javadoc for all methods and fields -->
+  <target name="javadoc-dev" description="Create Javadocs" depends="compile">
+    <javadoc destdir="javadoc/" classpathref="classpath" access="private">
+      <link href="http://java.sun.com/javase/6/docs/api/"/>
+      <fileset dir="${src.dir}/" includes="**/*.java"/>
+      <bottom><![CDATA[
+   <!-- Note: these links rely on the Syntaxhighlighter files being hosted at this location. -->
+   <link type="text/css" rel="stylesheet" href="http://howard.ross.work.googlepages.com/SyntaxHighlighter.css"></link>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shCore.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushJava.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushXml.js"></script>  
+   <script language="javascript" src="http://howard.ross.work.googlepages.com/shBrushSql.js"></script>  
+   <script language="javascript">  
+   dp.SyntaxHighlighter.ClipboardSwf = 'http://howard.ross.work.googlepages.com/clipboard.swf';  
+   dp.SyntaxHighlighter.HighlightAll('code');  
+   </script>  
+   ]]>
+	</bottom>
+    </javadoc>
+  </target>
+
+</project>
