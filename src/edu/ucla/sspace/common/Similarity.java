@@ -23,9 +23,12 @@ package edu.ucla.sspace.common;
 
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.IntegerEntry;
+import edu.ucla.sspace.util.Counter;
 
+import edu.ucla.sspace.vector.CompactSparseIntegerVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
+import edu.ucla.sspace.vector.SparseIntegerVector;
 import edu.ucla.sspace.vector.SparseVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
@@ -46,9 +49,9 @@ import java.util.TreeMap;
 
 
 /**
- * A collection of static methods for computing the similarity and distances
- * between vectors and arrays.  {@link SemanticSpace} implementations should use
- * this class.
+ * A collection of static methods for computing the similarity, distances,
+ * correlations, and all other vectorized value comparisons between vectors and
+ * arrays.  {@link SemanticSpace} implementations should use this class.
  *
  * @author Keith Stevens
  * @author David Jurgens
@@ -66,7 +69,8 @@ public class Similarity {
         JACCARD_INDEX,
         LIN,
         KL_DIVERGENCE,
-        AVERAGE_COMMON_FEATURE_RANK
+        AVERAGE_COMMON_FEATURE_RANK,
+        KENDALLS_TAU
     }
 
     /**
@@ -110,6 +114,9 @@ public class Similarity {
             break;
         case KL_DIVERGENCE:
             methodName = "klDivergence";
+            break;
+        case KENDALLS_TAU:
+            methodName = "kendallsTau";
             break;
         default:
             assert false : similarityType;
@@ -156,6 +163,8 @@ public class Similarity {
                 return linSimilarity(a, b);
             case KL_DIVERGENCE:
                 return klDivergence(a, b);
+            case KENDALLS_TAU:
+                return kendallsTau(a, b);
         }
         return 0;
     }
@@ -190,6 +199,8 @@ public class Similarity {
                 return linSimilarity(a, b);
             case KL_DIVERGENCE:
                 return klDivergence(a, b);
+            case KENDALLS_TAU:
+                return kendallsTau(a, b);
         }
         return 0;
     }
@@ -229,7 +240,7 @@ public class Similarity {
     /**
      * Returns the cosine similarity of the two arrays.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double cosineSimilarity(double[] a, double[] b) {
@@ -254,7 +265,7 @@ public class Similarity {
     /**
      * Returns the cosine similarity of the two arrays.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double cosineSimilarity(int[] a, int[] b) {
@@ -281,7 +292,7 @@ public class Similarity {
     /**
      * Returns the cosine similarity of the two {@code DoubleVector}.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     @SuppressWarnings("unchecked")
@@ -368,7 +379,7 @@ public class Similarity {
     /**
      * Returns the cosine similarity of the two {@code DoubleVector}.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     @SuppressWarnings("unchecked")
@@ -454,7 +465,7 @@ public class Similarity {
     /**
      * Returns the cosine similarity of the two {@code DoubleVector}.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double cosineSimilarity(Vector a, Vector b) {
@@ -468,7 +479,7 @@ public class Similarity {
      * Returns the Pearson product-moment correlation coefficient of the two
      * arrays.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double correlation(double[] arr1, double[] arr2) {
@@ -503,7 +514,7 @@ public class Similarity {
      * Returns the Pearson product-moment correlation coefficient of the two
      * arrays.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double correlation(int[] arr1, int[] arr2) {
@@ -535,7 +546,7 @@ public class Similarity {
      * Returns the Pearson product-moment correlation coefficient of the two
      * {@code Vector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double correlation(DoubleVector arr1, DoubleVector arr2) {
@@ -569,7 +580,7 @@ public class Similarity {
      * Returns the Pearson product-moment correlation coefficient of the two
      * {@code Vector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double correlation(IntegerVector arr1, DoubleVector arr2) {
@@ -601,7 +612,7 @@ public class Similarity {
      * Returns the Pearson product-moment correlation coefficient of the two
      * {@code Vector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double correlation(Vector a, Vector b) {
@@ -611,7 +622,7 @@ public class Similarity {
     /**
      * Returns the euclidian distance between two arrays of {code double}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanDistance(double[] a, double[] b) {
@@ -625,7 +636,7 @@ public class Similarity {
     /**
      * Returns the euclidian distance between two arrays of {code double}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanDistance(int[] a, int[] b) {
@@ -640,7 +651,7 @@ public class Similarity {
     /**
      * Returns the euclidian distance between two {@code DoubleVector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanDistance(DoubleVector a, DoubleVector b) {
@@ -675,7 +686,7 @@ public class Similarity {
     /**
      * Returns the euclidian distance between two {@code DoubleVector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanDistance(IntegerVector a, IntegerVector b) {
@@ -710,7 +721,7 @@ public class Similarity {
     /**
      * Returns the euclidian distance between two {@code Vector}s.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanDistance(Vector a, Vector b) {
@@ -720,7 +731,7 @@ public class Similarity {
     /**
      * Returns the euclidian similiarty between two arrays of values.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanSimilarity(int[] a, int[] b) {
@@ -730,7 +741,7 @@ public class Similarity {
     /**
      * Returns the euclidian similiarty between two arrays of values.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanSimilarity(double[] a, double[] b) {
@@ -740,7 +751,7 @@ public class Similarity {
     /**
      * Returns the euclidian similiarty between two arrays of values.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double euclideanSimilarity(Vector a, Vector b) {
@@ -860,7 +871,7 @@ public class Similarity {
      * If there is a tie in the ranking of {@code a}, then Pearson's
      * product-moment coefficient is returned instead.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(double[] a, 
@@ -916,7 +927,7 @@ public class Similarity {
      * If there is a tie in the ranking of {@code a}, then Pearson's
      * product-moment coefficient is returned instead.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(int[] a, int[] b) {
@@ -971,10 +982,10 @@ public class Similarity {
      * DoubleVector}s.  If there is a tie in the ranking of {@code a}, then
      * Pearson's product-moment coefficient is returned instead.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(DoubleVector a, 
@@ -1031,7 +1042,7 @@ public class Similarity {
      * DoubleVector}s.  If there is a tie in the ranking of {@code a}, then
      * Pearson's product-moment coefficient is returned instead.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(IntegerVector a, 
@@ -1088,7 +1099,7 @@ public class Similarity {
      * Vector}s.  If there is a tie in the ranking of {@code a}, then Pearson's
      * product-moment coefficient is returned instead.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(Vector a, 
@@ -1101,7 +1112,7 @@ public class Similarity {
      * Computes the Average Common Feature Rank between the two feature arrays.
      * Uses the top 20 features for comparison.
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double averageCommonFeatureRank(double[] a, 
@@ -1234,7 +1245,7 @@ public class Similarity {
      * Uses the top 20 features for comparison. Converts types and calls
      * averageCommonFeatureRank(double[],double[])
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double averageCommonFeatureRank(Vector a, Vector b) {
@@ -1247,7 +1258,7 @@ public class Similarity {
      * Uses the top 20 features for comparison. Converts types and calls
      * averageCommonFeatureRank(Vector,Vector)
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double averageCommonFeatureRank(int[] a, 
@@ -1270,7 +1281,7 @@ public class Similarity {
      *   </i>, Montreal, Quebec, Canada, 1998.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double linSimilarity(DoubleVector a, DoubleVector b) {
@@ -1352,7 +1363,7 @@ public class Similarity {
      *   </i>, Montreal, Quebec, Canada, 1998.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double linSimilarity(IntegerVector a, IntegerVector b) {
@@ -1434,7 +1445,7 @@ public class Similarity {
      *   </i>, Montreal, Quebec, Canada, 1998.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double linSimilarity(Vector a, Vector b) {
@@ -1514,7 +1525,7 @@ public class Similarity {
      *   </i>, Montreal, Quebec, Canada, 1998.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double linSimilarity(double[] a, double[] b) {
@@ -1551,7 +1562,7 @@ public class Similarity {
      *   </i>, Montreal, Quebec, Canada, 1998.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double linSimilarity(int[] a, int[] b) {
@@ -1588,7 +1599,7 @@ public class Similarity {
      *   Mathematical Statistics</i> 1951.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double klDivergence(DoubleVector a, DoubleVector b) {
@@ -1640,7 +1651,7 @@ public class Similarity {
      *   Mathematical Statistics</i> 1951.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double klDivergence(IntegerVector a, IntegerVector b) {
@@ -1692,7 +1703,7 @@ public class Similarity {
      *   Mathematical Statistics</i> 1951.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double klDivergence(Vector a, Vector b) {
@@ -1744,7 +1755,7 @@ public class Similarity {
      *   Mathematical Statistics</i> 1951.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double klDivergence(double[] a, double[] b) {
@@ -1776,7 +1787,7 @@ public class Similarity {
      *   Mathematical Statistics</i> 1951.
      *   </li>
      *
-     * @throws IllegaleArgumentException when the length of the two vectors are
+     * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double klDivergence(int[] a, int[] b) {
@@ -1793,5 +1804,213 @@ public class Similarity {
         }
 
         return divergence;
+    }
+
+    /**
+     * Computes <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+     * tau</a> of the values in the two arrays.  This method uses tau-b, which
+     * is suitable for arrays with duplicate values.
+     *
+     * @throws IllegalArgumentException when the length of the two arrays are
+     *                                   not the same.
+     */
+    public static double kendallsTau(double[] a, double[] b) {
+        return kendallsTau(Vectors.asVector(a), Vectors.asVector(b));
+    }
+
+    /**
+     * Computes <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+     * tau</a> of the values in the two arrays.  This method uses tau-b, which
+     * is suitable for arrays with duplicate values.
+     *
+     * @throws IllegalArgumentException when the length of the two arrays are
+     *                                   not the same.
+     */
+    public static double kendallsTau(int[] a, int[] b) {
+        return kendallsTau(Vectors.asVector(a), Vectors.asVector(b));
+    }
+
+    /**
+     * Computes <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+     * tau</a> of the values in the two vectors.  This method uses tau-b, which
+     * is suitable for vectors with duplicate values.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                   not the same.
+     */
+    public static double kendallsTau(Vector a, Vector b) {
+        return kendallsTau(Vectors.asDouble(a), Vectors.asDouble(b));
+    }
+
+    /**
+     * Computes <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+     * tau</a> of the values in the two vectors.  This method uses tau-b, which
+     * is suitable for vectors with duplicate values.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                   not the same.
+     */
+    public static double kendallsTau(DoubleVector a, DoubleVector b) {
+        check(a, b);
+        // NOTE: slow n^2 version.  Needs to be replaced at some point with the
+        // n-log-n method and to take into account sparse vectors. -jurgens
+        int length = a.length();
+        double numerator = 0;
+        
+        // For both a and b, keep track of how many times each position i tied
+        // with some other position for rank.
+        SparseIntegerVector tiesInA = new CompactSparseIntegerVector(length);
+        SparseIntegerVector tiesInB = new CompactSparseIntegerVector(length);
+        boolean foundTies = false;
+
+        int concordant = 0;
+        int discordant = 0;
+
+        // For all pairs, track how many pairs satisfy the ordering
+        for (int i = 0; i < length; ++i) {
+            for (int j = i+1; j < length; ++j) {
+                // NOTE: this value will be 1 if there exists an match or
+                // "concordance" in the ordering of the two pairs.  Otherwise
+                // it, will be a -1 of the pairs are not matched or are
+                // "discordant.
+                double ai = a.get(i);
+                double aj = a.get(j);
+                double bi = b.get(i);
+                double bj = b.get(j);
+
+                // Check for ties
+                boolean atie = ai == aj;
+                if (ai == aj) {
+                    tiesInA.add(i, 1);
+                    foundTies = true;
+                }
+                if (bi == bj) {
+                    tiesInB.add(i, 1);
+                    foundTies = true;
+                }
+                // If there was a tied rank, don't count the comparisons towards
+                // the concordance totals
+                if (ai != aj && bi != bj) {
+                    if ((ai < aj && bi < bj) || (ai > aj && bi > bj))
+                        concordant++;
+                    else
+                        discordant++;
+                }
+            }
+        }
+
+        int n = concordant - discordant;
+        double d = (.5 * (length * (length-1)));
+
+        if (foundTies) {
+            // IMPORTANT NOTE: for the summations, add 1 to the number of ties,
+            // rather than subtract 1.  All the online pseudo code has (ties *
+            // (ties - 1)) / 2, which assumes that for a tied rank, ties will
+            // always have a value of 2 or more.  I think they're double
+            // counting ties somehow, so we add 1 to account for this.  Most
+            // importantly, adding 1 causes all the online Kendall's tau
+            // calculators to agree with our result.
+            double aSum = 0;
+            for (int i : tiesInA.getNonZeroIndices()) {
+                int ties = tiesInA.get(i);
+                aSum += (ties * (ties + 1) * .5);
+            }
+
+            double bSum = 0;
+            for (int i : tiesInB.getNonZeroIndices()) {
+                int ties = tiesInB.get(i);
+                bSum += (ties * (ties + 1) * .5);
+            }
+
+            return n / Math.sqrt((d - aSum) * (d - bSum));
+        }
+        else 
+            return n / d;
+    }
+
+    /**
+     * Computes <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+     * tau</a> of the values in the two vectors.  This method uses tau-b, which
+     * is suitable for vectors with duplicate values.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                   not the same.
+     */
+    public static double kendallsTau(IntegerVector a, IntegerVector b) {
+        check(a, b);
+        // NOTE: slow n^2 version.  Needs to be replaced at some point with the
+        // n-log-n method and to take into account sparse vectors. -jurgens
+        int length = a.length();
+        double numerator = 0;
+        
+        // For both a and b, keep track of how many times each position i tied
+        // with some other position for rank.
+        SparseIntegerVector tiesInA = new CompactSparseIntegerVector(length);
+        SparseIntegerVector tiesInB = new CompactSparseIntegerVector(length);
+        boolean foundTies = false;
+
+        int concordant = 0;
+        int discordant = 0;
+
+        // For all pairs, track how many pairs satisfy the ordering
+        for (int i = 0; i < length; ++i) {
+            for (int j = i+1; j < length; ++j) {
+                // NOTE: this value will be 1 if there exists an match or
+                // "concordance" in the ordering of the two pairs.  Otherwise
+                // it, will be a -1 of the pairs are not matched or are
+                // "discordant.
+                int ai = a.get(i);
+                int aj = a.get(j);
+                int bi = b.get(i);
+                int bj = b.get(j);
+
+                // Check for ties
+                boolean atie = ai == aj;
+                if (ai == aj) {
+                    tiesInA.add(i, 1);
+                    foundTies = true;
+                }
+                if (bi == bj) {
+                    tiesInB.add(i, 1);
+                    foundTies = true;
+                }
+                // If there was a tied rank, don't count the comparisons towards
+                // the concordance totals
+                if (ai != aj && bi != bj) {
+                    if ((ai < aj && bi < bj) || (ai > aj && bi > bj))
+                        concordant++;
+                    else
+                        discordant++;
+                }
+            }
+        }
+
+        int n = concordant - discordant;
+        double d = (.5 * (length * (length-1)));
+
+        if (foundTies) {
+            // IMPORTANT NOTE: for the summations, add 1 to the number of ties,
+            // rather than subtract 1.  All the online pseudo code has (ties *
+            // (ties - 1)) / 2, which assumes that for a tied rank, ties will
+            // always have a value of 2 or more.  I think they're double
+            // counting ties somehow, so we add 1 to account for this.  Most
+            // importantly, adding 1 causes all the online Kendall's tau
+            // calculators to agree with our result.
+            double aSum = 0;
+            for (int i : tiesInA.getNonZeroIndices()) {
+                int ties = tiesInA.get(i);
+                aSum += (ties * (ties + 1) * .5);
+            }
+
+            double bSum = 0;
+            for (int i : tiesInB.getNonZeroIndices()) {
+                int ties = tiesInB.get(i);
+                bSum += (ties * (ties + 1) * .5);
+            }
+
+            return n / Math.sqrt((d - aSum) * (d - bSum));
+        }
+        else 
+            return n / d;
     }
 }

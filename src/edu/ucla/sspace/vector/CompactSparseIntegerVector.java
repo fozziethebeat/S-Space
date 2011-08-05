@@ -179,4 +179,8 @@ public class CompactSparseIntegerVector
             array[i] = intArray.getPrimitive(i);
         return array;
     }
+
+    public String toString() {
+        return intArray.toString();
+    }
 }

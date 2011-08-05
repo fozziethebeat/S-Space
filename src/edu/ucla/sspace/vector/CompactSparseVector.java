@@ -210,4 +210,7 @@ public class CompactSparseVector
         return vector.length();
     }
 
+    public String toString() {
+        return vector.toString();
+    }
 }

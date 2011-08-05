@@ -104,4 +104,39 @@ public class SimilarityTest {
         assertEquals(-0.175758, spCorr, 0.01);
     }
 
+    
+    @Test public void testKendallsTauDouble() {
+        // from: http://www.jeremymiles.co.uk/usingstatistics/chapter8/kendalltaua.html
+        // with a minor modification to remove the values with tied ranks
+        double[] a = new double[] 
+            { 1.16, .81, 1.06, 1.01, .96, 1.07, .9, 1.23 };
+        double[] b = new double[] 
+            { 5.4, 3.8, 3, 4.8, 3.6, 3.65, 3.4, 5.2 };
+        double tau = Similarity.kendallsTau(a,b);
+        // we disagree with their example
+        assertEquals(.357, tau, 0.01);
+    }
+
+    @Test public void testKendallsTau() {
+        int[] a = new int[] { 4, 10, 3, 1, 9,  2, 6, 7, 8, 5 };
+        int[] b = new int[] { 5, 8,  6, 2, 10, 3, 9, 4, 7, 1 };
+        double tau = Similarity.kendallsTau(a, b);
+        assertEquals(.5111, tau, .01);
+    }
+
+    @Test public void testKendallsTauTiedRanks() {
+        int[] a = new int[] { 1, 2, 3, 4, 5 };
+        int[] b = new int[] { 1, 2, 3, 4, 5 };
+        double tau = Similarity.kendallsTau(a, b);
+        assertEquals(1d, tau, .01);
+
+        b = new int[] { 1, 1, 3, 4, 5 };
+        tau = Similarity.kendallsTau(a, b);
+        assertEquals(.9486, tau, .01);
+
+        a = new int[] { 8, 1, 1, 1, 4, 5, 3, 3, 10 };
+        b = new int[] { 1, 2, 3, 4, 5, 9, 9, 1, 3 };
+        tau = Similarity.kendallsTau(a, b);
+        assertEquals(.0307, tau, .01);
+    }
 }

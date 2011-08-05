@@ -79,12 +79,12 @@ public class HashMultiMapTests {
         assertTrue(s.contains("1"));
     }
 
-    @Test public void testPutMulti() {
+    @Test public void testPutMany() {
         HashMultiMap<String,String> m = new HashMultiMap<String,String>();
         Set<String> vals = new HashSet<String>();
         vals.add("1");
         vals.add("2");
-        m.putMulti("a", vals);
+        m.putMany("a", vals);
         Set<String> s = m.get("a");
         assertTrue(s.contains("1"));
         assertTrue(s.contains("2"));
@@ -93,7 +93,7 @@ public class HashMultiMapTests {
         assertEquals(1, m.size());
 
         // empty values
-        m.putMulti("b", new HashSet<String>());
+        m.putMany("b", new HashSet<String>());
         assertFalse(m.containsKey("b"));
     }
 

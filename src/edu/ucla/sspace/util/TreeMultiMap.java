@@ -173,6 +173,14 @@ public class TreeMultiMap<K,V>
     /**
      * {@inheritDoc}
      */
+    public boolean containsMapping(Object key, Object value) {
+        Set<V> s = map.get(key);
+        return s != null && s.contains(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public boolean containsValue(Object value) {
 	for (Set<V> s : map.values()) {
 	    if (s.contains(value)) {
@@ -271,7 +279,7 @@ public class TreeMultiMap<K,V>
     /**
      * {@inheritDoc}
      */
-    public boolean putMulti(K key, Collection<V> values) {
+    public boolean putMany(K key, Collection<V> values) {
         // Short circuit when adding empty values to avoid adding a key with an
         // empty mapping
         if (values.isEmpty())
@@ -320,8 +328,11 @@ public class TreeMultiMap<K,V>
     /**
      * {@inheritDoc}
      */
-    public boolean remove(K key, V value) {
+    public boolean remove(Object key, Object value) {
 	Set<V> values = map.get(key);
+        // If the key was not mapped to any values
+        if (values == null)
+            return false;
 	boolean removed = values.remove(value);
 	if (removed) {
 	    range--;
@@ -396,6 +407,13 @@ public class TreeMultiMap<K,V>
      */
     public Collection<V> values() {
 	return new ValuesView();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Collection<Set<V>> valueSets() {
+        return map.values();
     }
 
     /**
