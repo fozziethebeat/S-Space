@@ -75,7 +75,8 @@ public class LinkClusteringTests {
 
         SparseMatrix m = Matrices.asSparseMatrix(vectors);
 
-        Assignment[] assignments = linkClustering.cluster(m, new Properties());
+        Assignments a = linkClustering.cluster(m, new Properties());
+        Assignment[] assignments = a.assignments();
         for (int i = 0; i < assignments.length; ++i) 
             System.out.printf("Node %d is in clusters %s%n",
                               i, Arrays.toString(assignments[i].assignments()));
@@ -115,7 +116,7 @@ public class LinkClusteringTests {
         for (int i = 0; i < numSol; ++i) {
             System.out.printf("Solution %d had density %f%n", i,
                              linkClustering.getSolutionDensity(i));
-            assertEquals(9, linkClustering.getSolution(i).length);            
+            assertEquals(9, linkClustering.getSolution(i).assignments().length);
         }
     }
 

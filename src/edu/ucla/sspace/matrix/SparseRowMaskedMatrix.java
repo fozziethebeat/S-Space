@@ -52,6 +52,8 @@ import java.util.Set;
 public class SparseRowMaskedMatrix extends RowMaskedMatrix 
         implements SparseMatrix {
 
+    private final SparseMatrix matrix;
+
     /**
      * Creates a partial view of the provided sparse matrix using the bits set
      * to {@code true} as the rows that should be included
@@ -60,8 +62,9 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      *         index is greater than the number of rows present in {@code
      *         matrix}
      */
-    public SparseRowMaskedMatrix(Matrix matrix, BitSet included) {
+    public SparseRowMaskedMatrix(SparseMatrix matrix, BitSet included) {
         super(matrix, included);
+        this.matrix = matrix;
     }
 
     /**
@@ -75,9 +78,24 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      *         that is less than 0 or greater than the number of rows present in
      *         {@code matrix}
      */
-    public SparseRowMaskedMatrix(Matrix matrix, Set<Integer> included) {
+    public SparseRowMaskedMatrix(SparseMatrix matrix, Set<Integer> included) {
         super(matrix, included);
+        this.matrix = matrix;
     }
+
+    /**
+     * Creates a partial view of the provided sparse matrix using the the
+     * integer mapping to specify which rows should be included in the matrix.  
+     *
+     * @throws IllegalArgumentException if {@code included} specifies a value
+     *         that is less than 0 or greater than the number of rows present in
+     *         {@code matrix}
+     */
+    public SparseRowMaskedMatrix(SparseMatrix matrix, int[] reordering) {
+        super(matrix, reordering);
+        this.matrix = matrix;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -97,13 +115,6 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      * {@inheritDoc}
      */
     public SparseDoubleVector getRowVector(int row) {
-        int cols = columns();
-        SparseDoubleVector v = new SparseHashDoubleVector(cols);
-        for (int col = 0; col < cols; ++col) {
-            double d = get(row, col);
-            if (d != 0)
-                v.set(col, d);
-        }
-        return v;
+        return matrix.getRowVector(getRealRow(row));
     }
 }

@@ -21,11 +21,9 @@
 
 package edu.ucla.sspace.dv;
 
-import edu.ucla.sspace.dependency.DependencyPath;
+import edu.ucla.sspace.basis.AbstractBasisMapping;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import edu.ucla.sspace.dependency.DependencyPath;
 
 
 /**
@@ -36,28 +34,11 @@ import java.util.Map;
  *
  * @author David Jurgens
  */
-public class WordBasedBasisMapping implements DependencyPathBasisMapping {
+public class WordBasedBasisMapping
+    extends AbstractBasisMapping<DependencyPath, String> 
+    implements DependencyPathBasisMapping {
 
-    /**
-     * A map that represents the word space by mapping raw strings to which
-     * dimension they are represented by.
-     */
-    private final Map<String,Integer> termToIndex;
-    
-    /**
-     * A cache of the reverse {@code termToIndex} mapping.  This field is only
-     * updated on calls to {@link #getDimensionDescription(int)} when the
-     * mapping has chanaged since the previous call.
-     */
-    private String[] indexToTermCache;
-
-    /**
-     * Creates an empty {@code WordBasedBasisMapping}.
-     */
-    public WordBasedBasisMapping() {
-        termToIndex = new HashMap<String,Integer>();
-        indexToTermCache = new String[0];
-    }
+    private static final long serialVersionUID = 1L;
 
     /**
      * Returns the dimension number corresponding to the term at the end of the
@@ -68,57 +49,6 @@ public class WordBasedBasisMapping implements DependencyPathBasisMapping {
      * @return the dimension for the occurrence of the last word in the path
      */
     public int getDimension(DependencyPath path) {       
-        String token = path.last().word();
-        return getDimension(token);
-    }
-
-    /**
-     * Returns the word mapped to each dimension.
-     */
-    public String getDimensionDescription(int dimension) {
-        if (dimension < 0 || dimension > termToIndex.size())
-            throw new IllegalArgumentException(
-                "invalid dimension: " + dimension);
-        // If the cache is out of date, rebuild the reverse mapping.
-        if (termToIndex.size() > indexToTermCache.length) {
-            // Lock to ensure safe iteration
-            synchronized(this) {
-                indexToTermCache = new String[termToIndex.size()];
-                for (Map.Entry<String,Integer> e : termToIndex.entrySet())
-                    indexToTermCache[e.getValue()] = e.getKey();
-            }
-        }
-        return indexToTermCache[dimension];
-    }
-
-    /**
-     * Returns the dimension represention the occurrence of the provided token.
-     * If the token was not previously assigned an index, this method adds one
-     * for it and returns that index.
-     */
-    private int getDimension(String token) {
-
-        Integer index = termToIndex.get(token);
-        if (index == null) {     
-            synchronized(this) {
-                // recheck to see if the term was added while blocking
-                index = termToIndex.get(token);
-                // if another thread has not already added this word while the
-                // current thread was blocking waiting on the lock, then add it.
-                if (index == null) {
-                    int i = termToIndex.size();
-                    termToIndex.put(token, i);
-                    return i; // avoid the auto-boxing to assign i to index
-                }
-            }
-        }
-        return index;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int numDimensions() { 
-        return termToIndex.size();
+        return getDimensionInternal(path.last().word());
     }
 }

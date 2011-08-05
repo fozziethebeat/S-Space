@@ -41,114 +41,56 @@ public class MatlabSparseMatrixBuilderTest {
                                               {3, 5, 0, 0, 1},
                                               {1, 1, 1, 0, 0}};
 
-    /**
-     * Checks that a single line has the correct values.
-     */
-    private static void checkLine(int row, int col, double value,
-                                  String line) {
-        // Split up the [col row value] in the line.
-        String[] colRowValue = line.split("\\s+");
-
-        // Matlab indices are off by one, so add 1 to each index.
-        assertEquals(row+1, Integer.parseInt(colRowValue[0]));
-        assertEquals(col+1, Integer.parseInt(colRowValue[1]));
-        assertEquals(value, Double.parseDouble(colRowValue[2]), .000001);
+    public Matrix denseMatrix() {
+        return new ArrayMatrix(values);
     }
 
-    /**
-     * Checks that the lines in {@code mFile} matches the values in {@code
-     * values}.
-     */
-    private static void testFileWithData(double[][] values, File mFile,
-                                         boolean transposed) {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(mFile));
-
-            for (int col = 0; col < values.length; ++col) {
-                for (int row = 0; row < values[col].length; ++row) {
-                    if (values[col][row] != 0d) {
-                        String line = reader.readLine();
-                        if (transposed)
-                            checkLine(col, row, values[col][row], line);
-                        else
-                            checkLine(row, col, values[col][row], line);
-                    }
-                }
-            }
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+    public SparseMatrix sparseMatrix() {
+        SparseMatrix m = new YaleSparseMatrix(values.length, values[0].length);
+        for (int r = 0; r < m.rows(); ++r)
+            for (int c = 0; c < m.columns(); ++c)
+                if (values[r][c] != 0d)
+                    m.set(r,c, values[r][c]);
+        return m;
     }
 
     @Test public void testAddSparseVectorColumn() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder();
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new CompactSparseVector(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), false);
+        MatrixBuilderTestUtil.testMatrixBuild(builder, sparseMatrix(), true);
     }
 
     @Test public void testAddSparseVectorColumnTranspose() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder(true);
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new CompactSparseVector(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), true);
+        MatrixBuilderTestUtil.testMatrixBuild(builder, sparseMatrix());
     }
 
     @Test public void testAddDoubleColumn() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder();
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(values[col]);
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), false);
+        MatrixBuilderTestUtil.testArrayBuild(builder, sparseMatrix(), true);
     }
 
     @Test public void testAddDoubleColumnTranspose() {
-        MatrixBuilder builder = new MatlabSparseMatrixBuilder();
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(values[col]);
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), false);
+        MatrixBuilder builder = new MatlabSparseMatrixBuilder(true);
+        MatrixBuilderTestUtil.testArrayBuild(builder, sparseMatrix());
     }
 
     @Test public void testAddDenseVectorColumn() {
-        MatrixBuilder builder = new MatlabSparseMatrixBuilder(true);
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new DenseVector(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), true);
+        MatrixBuilder builder = new MatlabSparseMatrixBuilder();
+        MatrixBuilderTestUtil.testArrayBuild(builder, denseMatrix(), true);
     }
 
     @Test public void testAddDenseVectorColumnTranpose() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder(true);
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new DenseVector(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), true);
+        MatrixBuilderTestUtil.testArrayBuild(builder, denseMatrix());
     }
 
     @Test public void testAddSparseArrayColumn() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder();
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new SparseDoubleArray(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), false);
+        MatrixBuilderTestUtil.testSparseArrayBuild(builder,sparseMatrix(),true);
     }
 
     @Test public void testAddSparseArrayColumnTranspose() {
         MatrixBuilder builder = new MatlabSparseMatrixBuilder(true);
-        for (int col = 0; col < values.length; ++col)
-            builder.addColumn(new SparseDoubleArray(values[col]));
-
-        builder.finish();
-        testFileWithData(values, builder.getFile(), true);
+        MatrixBuilderTestUtil.testSparseArrayBuild(builder, sparseMatrix());
     }
 }

@@ -21,13 +21,9 @@
 
 package edu.ucla.sspace.gws;
 
-import edu.ucla.sspace.basis.GenericBasisMapping;
+import edu.ucla.sspace.basis.AbstractBasisMapping;
 
 import edu.ucla.sspace.util.Duple;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -36,20 +32,15 @@ import java.util.Map;
  *
  * @author David Jurgens
  */
-class WordBasisMapping extends GenericBasisMapping<Duple<String,Integer>> {
+public class WordBasisMapping
+        extends AbstractBasisMapping<Duple<String,Integer>, String> {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Creates an empty {@code WordBasisMapping}.
+     * {@inheritDoc}
      */
-    public WordBasisMapping() { }
-
-    /**
-     * Returns the word mapped to each dimension.
-     */
-    @Override protected String describeDimension(int dimension, 
-                                                 Duple<String,Integer> d) {
-        return d.x;
+    public int getDimension(Duple<String, Integer> key) {
+        return getDimensionInternal(key.x);
     }
 }

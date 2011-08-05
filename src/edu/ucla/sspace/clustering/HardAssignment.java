@@ -56,4 +56,11 @@ public class HardAssignment implements Assignment {
     public int[] assignments() {
         return assignments;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int length() {
+        return assignments.length;
+    }
 }

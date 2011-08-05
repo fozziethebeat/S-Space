@@ -63,8 +63,8 @@ import java.io.File;
 public interface MatrixBuilder {
 
     /**
-     * Adds the column values to the underlying matrix, updating the dimensions as
-     * necessary and returning the index at which the column was added.
+     * Adds the column values to the underlying matrix, updating the dimensions
+     * as necessary and returning the index at which the column was added.
      *
      * @param column the values of the column in the matrix.
      *
@@ -129,6 +129,8 @@ public interface MatrixBuilder {
      * @return the format of the matrix's data
      */
     Format getMatrixFormat();
+
+    MatrixFile getMatrixFile();
 
     /**
      * Returns {@code true} if no further data should be added to the matrix and

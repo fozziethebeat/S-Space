@@ -79,7 +79,6 @@ public class MaskedSparseDoubleVectorView extends MaskedDoubleVectorView
             Integer newIndex = reverseColumnMask.get(indices[index]);
             if (newIndex == null)
                 continue;
-            System.out.printf("%d %d %d\n", index, indices[index], newIndex);
             newIndices[i++] = newIndex;
         }
         return Arrays.copyOf(newIndices, i);

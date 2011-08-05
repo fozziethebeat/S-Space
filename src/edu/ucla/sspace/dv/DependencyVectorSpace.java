@@ -224,6 +224,8 @@ public class DependencyVectorSpace
      */
     private final DependencyPathAcceptor acceptor;
 
+    private final int pathLength;
+
     /**
      * Creates and configures this {@code DependencyVectorSpace} with the
      * default set of parameters.  The default values are:<ul>
@@ -234,15 +236,19 @@ public class DependencyVectorSpace
      * </ul>
      */
     public DependencyVectorSpace() {
-        this(System.getProperties());
+        this(System.getProperties(), 0);
     }
    
+    public DependencyVectorSpace(Properties properties) {
+        this(properties, 0);
+    }
+
     /**
      * Creates and configures this {@code DependencyVectorSpace} with the
      * according to the provided properties.  If no properties are specified,
      * the default values are used.
      */
-    public DependencyVectorSpace(Properties properties) {
+    public DependencyVectorSpace(Properties properties, int pathLength) {
         termToVector = new HashMap<String,SparseDoubleVector>();
         
         String basisMappingProp = 
@@ -265,6 +271,10 @@ public class DependencyVectorSpace
             ? new MinimumPennTemplateAcceptor()
             : ReflectionUtil.<DependencyPathAcceptor>
                 getObjectInstance(acceptorProp);
+
+        this.pathLength = (pathLength == 0)
+            ? acceptor.maxPathLength()
+            : pathLength;
 
         extractor = DependencyExtractorManager.getDefaultExtractor();
     }
@@ -370,9 +380,8 @@ public class DependencyVectorSpace
                 // Get all the valid paths starting from this word.  The
                 // acceptor will filter out any paths that don't contain the
                 // semantic connections we're looking for.
-                Iterator<DependencyPath> paths = 
-                    new FilteredDependencyIterator(nodes[wordIndex], acceptor,
-                                                   acceptor.maxPathLength());
+                Iterator<DependencyPath> paths = new FilteredDependencyIterator(
+                            nodes[wordIndex], acceptor, pathLength);
                 
                 // For each of the paths rooted at the focus word, update the
                 // co-occurrences of the focus word in the dimension that the

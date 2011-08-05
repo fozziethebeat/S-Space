@@ -147,6 +147,11 @@ public class TokenCounter {
             String token = tokens.next();
             if (doLowerCasing)
                 token = token.toLowerCase();
+            if (token.matches("[0-9]+"))
+                token = "<NUM>";
+            if (token.matches("[^\\w\\s;:\\(\\)\\[\\]'!/&?\",\\.<>]"))
+                continue;
+
             Integer count = tokenToCount.get(token);
             tokenToCount.put(token, (count == null) ? 1 : 1 + count);
             numTokens++;

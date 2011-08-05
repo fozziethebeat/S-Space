@@ -112,16 +112,26 @@ public class SimpleDependencyPath implements DependencyPath {
      * {@inheritDoc}
      */
     public DependencyTreeNode getNode(int position) {
-        if (position < 0 || position > path.size())
+        if (position < 0 || position > path.size() + 1)
             throw new IndexOutOfBoundsException("Invalid node: " + position);
+        // Special case for getting the very first node.
+        if (position == 0)
+            return (isHeadFirst)
+                ? path.get(0).headNode()
+                : path.get(0).dependentNode();
+        if (position == 1)
+            return (isHeadFirst)
+                ? path.get(0).dependentNode()
+                : path.get(0).headNode();
+        // Special case for if only one relation exists in the path
         // Special case for if only one relation exists in the path
         if (path.size() == 1)
             return ((isHeadFirst && position == 1) 
                     || (!isHeadFirst && position == 0))
                 ? path.get(0).dependentNode() 
                 : path.get(0).headNode();
-        DependencyRelation prev = path.get(position-1);
-        DependencyRelation cur = path.get(position);
+        DependencyRelation prev = path.get(position - 2);
+        DependencyRelation cur = path.get(position - 1);
         return getNextNode(prev, cur);
     }
 
@@ -138,8 +148,8 @@ public class SimpleDependencyPath implements DependencyPath {
      */
     private DependencyTreeNode getNextNode(DependencyRelation prev,
                                            DependencyRelation cur) {
-        return (prev.headNode() == cur.headNode() 
-                || prev.dependentNode() ==  cur.headNode())
+        return (prev.headNode().equals(cur.headNode()) ||
+                prev.dependentNode().equals(cur.headNode()))
             ? cur.dependentNode()
             : cur.headNode();
     }
@@ -185,9 +195,7 @@ public class SimpleDependencyPath implements DependencyPath {
      * {@inheritDoc}
      */
     public int length() {
-        // +1 because path.size() == number of relations.  There is one more
-        // node than there are relations.
-        return path.size() + 1;
+        return path.size();
     }
 
     /**

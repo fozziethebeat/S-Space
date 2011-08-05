@@ -21,8 +21,19 @@
 
 package edu.ucla.sspace.text;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.IOError;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 
 /**
  * A collection of static methods for processing text.
@@ -169,6 +180,43 @@ public class StringUtils {
 	LATIN1_CODES.put("&#38;", "&");
 	LATIN1_CODES.put("&#8217;", "'");
     }
+
+    /**
+     * Loads each line of the file as a list of strings.
+     *
+     * @throws IOError if any exception occurs while reading the file
+     */
+    public static List<String> loadFileAsList(File f) {
+        try {
+            List<String> s = new ArrayList<String>();
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            for (String line = null; (line = br.readLine()) != null; )
+                s.add(line);
+            br.close();
+            return s;
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
+    }
+
+    /**
+     * Loads the contents of a file as a set of strings, with each line being
+     * treated as a separate instance.
+     *
+     * @throws IOError if any exception occurs while reading the file
+     */
+    public static Set<String> loadFileAsSet(File f) {
+        try {
+            Set<String> s = new HashSet<String>();
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            for (String line = null; (line = br.readLine()) != null; )
+                s.add(line);
+            br.close();
+            return s;
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
+    }
     
     /**
      * Returns the provided string where all HTML special characters
@@ -259,6 +307,5 @@ public class StringUtils {
 	    start = source.indexOf("&", start + 1);
 	    end = source.indexOf(";", start);
 	}
-    }
-
+    }    
 }

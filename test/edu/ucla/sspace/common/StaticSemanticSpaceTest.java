@@ -42,73 +42,77 @@ public class StaticSemanticSpaceTest {
     private final DummySemanticSpace control;
 
     public StaticSemanticSpaceTest() {
-	control = new DummySemanticSpace();
-	control.setVector("cow", new DenseVector(new double[] {1, 0, 0, 0}));
-	control.setVector("dog", new DenseVector(new double[] {0, 1, 0, 0}));
-	control.setVector("ear", new DenseVector(new double[] {0, 0, 1, 0}));
-	control.setVector("fig", new DenseVector(new double[] {0, 0, 0, 1}));
-	control.setVector("git", new DenseVector(new double[] {1, 1, 0, 0}));
-	control.setVector("hat", new DenseVector(new double[] {1, 0, 1, 0}));
-	control.setVector("its", new DenseVector(new double[] {1, 0, 0, 1}));
+        control = new DummySemanticSpace();
+        control.setVector("cow", new DenseVector(new double[] {1, 0, 0, 0}));
+        control.setVector("dog", new DenseVector(new double[] {0, 1, 0, 0}));
+        control.setVector("ear", new DenseVector(new double[] {0, 0, 1, 0}));
+        control.setVector("fig", new DenseVector(new double[] {0, 0, 0, 1}));
+        control.setVector("git", new DenseVector(new double[] {1, 1, 0, 0}));
+        control.setVector("hat", new DenseVector(new double[] {1, 0, 1, 0}));
+        control.setVector("its", new DenseVector(new double[] {1, 0, 0, 1}));
     }
 
     @Test public void testText() throws Exception { 
-	File textFile = File.createTempFile("test-text",".sspace");
-	textFile.deleteOnExit();
-	SemanticSpaceIO.save(control, textFile, SSpaceFormat.TEXT);
-	SemanticSpace onDisk = new StaticSemanticSpace(textFile);
-	
-	assertEquals(control.getWords().size(), onDisk.getWords().size());
-	assertTrue(control.getWords().containsAll(onDisk.getWords()));
-	for (String word : control.getWords()) {
-	    assertEquals(VectorIO.toString(control.getVector(word)),
-			 VectorIO.toString(onDisk.getVector(word)));
-	}	
+        File textFile = File.createTempFile("test-text",".sspace");
+        textFile.deleteOnExit();
+        SemanticSpaceIO.save(control, textFile, SSpaceFormat.TEXT);
+        SemanticSpace onDisk = new StaticSemanticSpace(textFile);
+        
+        assertEquals(control.getWords().size(), onDisk.getWords().size());
+        assertTrue(control.getWords().containsAll(onDisk.getWords()));
+        for (String word : control.getWords()) {
+            assertEquals(VectorIO.toString(control.getVector(word)),
+                         VectorIO.toString(onDisk.getVector(word)));
+        }        
     }
 
     @Test public void testSparseText() throws Exception { 
-	File sparseTextFile = File.createTempFile("test-sparse-text",".sspace");
-	sparseTextFile.deleteOnExit();
-	SemanticSpaceIO.save(control, sparseTextFile, SSpaceFormat.SPARSE_TEXT);
-	SemanticSpace onDisk = new StaticSemanticSpace(sparseTextFile);
-	
-	assertEquals(control.getWords().size(), onDisk.getWords().size());
-	assertTrue(control.getWords().containsAll(onDisk.getWords()));
-	for (String word : control.getWords()) {
-	    assertEquals(VectorIO.toString(control.getVector(word)),
-			 VectorIO.toString(onDisk.getVector(word)));
-	}	
+        File sparseTextFile = File.createTempFile("test-sparse-text",".sspace");
+        sparseTextFile.deleteOnExit();
+        SemanticSpaceIO.save(control, sparseTextFile, SSpaceFormat.SPARSE_TEXT);
+        SemanticSpace onDisk = new StaticSemanticSpace(sparseTextFile);
+        
+        assertEquals(control.getWords().size(), onDisk.getWords().size());
+        assertTrue(control.getWords().containsAll(onDisk.getWords()));
+        for (String word : control.getWords()) {
+            assertEquals(toSparseString(control.getVector(word)),
+                         VectorIO.toString(onDisk.getVector(word)));
+        }        
     }
 
     @Test public void testBinary() throws Exception { 
-	File binaryFile = File.createTempFile("test-binary",".sspace");
- 	binaryFile.deleteOnExit();
-	SemanticSpaceIO.save(control, binaryFile, SSpaceFormat.BINARY);
-	SemanticSpace onDisk = new StaticSemanticSpace(binaryFile);
-	
-	assertEquals(control.getWords().size(), onDisk.getWords().size());
-	assertTrue(control.getWords().containsAll(onDisk.getWords()));
-	for (String word : control.getWords()) {
-	    assertEquals(VectorIO.toString(control.getVector(word)),
-			 VectorIO.toString(onDisk.getVector(word)));
-	}	
+        File binaryFile = File.createTempFile("test-binary",".sspace");
+         binaryFile.deleteOnExit();
+        SemanticSpaceIO.save(control, binaryFile, SSpaceFormat.BINARY);
+        SemanticSpace onDisk = new StaticSemanticSpace(binaryFile);
+        
+        assertEquals(control.getWords().size(), onDisk.getWords().size());
+        assertTrue(control.getWords().containsAll(onDisk.getWords()));
+        for (String word : control.getWords()) {
+            assertEquals(VectorIO.toString(control.getVector(word)),
+                         VectorIO.toString(onDisk.getVector(word)));
+        }        
     }
 
     @Test public void testSparseBinary() throws Exception { 
-	File sparseBinaryFile = File.createTempFile("test-sparse-binary",".sspace");
-	sparseBinaryFile.deleteOnExit();
-	SemanticSpaceIO.save(control, sparseBinaryFile, SSpaceFormat.SPARSE_BINARY);
-	SemanticSpace onDisk = new StaticSemanticSpace(sparseBinaryFile);
-	
-	assertEquals(control.getWords().size(), onDisk.getWords().size());
-	assertTrue(control.getWords().containsAll(onDisk.getWords()));
-	for (String word : control.getWords()) {
-	    assertEquals(VectorIO.toString(control.getVector(word)),
-			 VectorIO.toString(onDisk.getVector(word)));
-	}	
+        File sparseBinaryFile = File.createTempFile("test-sparse-binary",".sspace");
+        sparseBinaryFile.deleteOnExit();
+        SemanticSpaceIO.save(control, sparseBinaryFile, SSpaceFormat.SPARSE_BINARY);
+        SemanticSpace onDisk = new StaticSemanticSpace(sparseBinaryFile);
+        
+        assertEquals(control.getWords().size(), onDisk.getWords().size());
+        assertTrue(control.getWords().containsAll(onDisk.getWords()));
+        for (String word : control.getWords()) {
+            assertEquals(toSparseString(control.getVector(word)),
+                         VectorIO.toString(onDisk.getVector(word)));
+        }        
     }
 
-    public static junit.framework.Test suite() {
-	return new junit.framework.JUnit4TestAdapter(StaticSemanticSpaceTest.class);
+    private static String toSparseString(Vector v) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < v.length(); ++i)
+            if (v.getValue(i).doubleValue() != 0d)
+                sb.append(i).append(",").append(v.getValue(i).doubleValue()).append(";");
+        return sb.toString().substring(0, sb.length() - 1);
     }
 }

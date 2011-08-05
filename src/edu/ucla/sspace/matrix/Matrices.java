@@ -80,6 +80,16 @@ public class Matrices {
     }
 
     /**
+     * Returns a {@link SparseMatrix} from a list of {@code
+     * SparseDoubleVector}s. The resulting matrix will be modifiable.  Any
+     * modifications will affect the vectors stored in the passed in list.
+     */
+    public static <T extends SparseDoubleVector> SparseMatrix asSparseMatrix(
+            List<T> vectors, int columns) {
+        return new SparseListMatrix<T>(vectors, columns);
+    }
+
+    /**
      * Creates a matrix of the given dimensions and selects the matrix
      * implementation by considering the size and density of the new matrix with
      * respect to the available memory for the JVM.
@@ -130,12 +140,43 @@ public class Matrices {
      *
      * @param matrix the matrix to be copied
      *
+     * @throws IllegalArgumentException when the dimensionality of matrix and
+     *         output do not match
+     *
      * @return a copied version of matrix
      */
     public static Matrix copy(Matrix matrix) {
-        if (matrix instanceof SparseMatrix) {
-            Matrix copiedMatrix = Matrices.create(
+        Matrix copiedMatrix = null;
+        if (matrix instanceof SparseMatrix)
+            copiedMatrix = Matrices.create(
                     matrix.rows(), matrix.columns(), Type.SPARSE_IN_MEMORY);
+        else
+            copiedMatrix = Matrices.create(
+                    matrix.rows(), matrix.columns(), Type.DENSE_IN_MEMORY);
+        return copyTo(matrix, copiedMatrix);
+    }
+
+    /**
+     * Copies values from {@code matrix} to {@code output} and returns {@code
+     * output}.  {@code output} is assumed to be empty.  This method is useful
+     * for uses who wish to specify the type of matrix used during a copy
+     * operation.
+     *
+     * @param matrix the matrix to be copied
+     * @param output the matrix storing the copied values.
+     *
+     * @throws IllegalArgumentException when the dimensionality of matrix and
+     *         output do not match
+     *
+     * @return {@code output}
+     */
+    public static Matrix copyTo(Matrix matrix, Matrix output) {
+        if (matrix.rows() != output.rows() ||
+            matrix.columns() != output.columns())
+            throw new IllegalArgumentException(
+                    "Matrix dimensions must match when copying.");
+
+        if (matrix instanceof SparseMatrix) {
             SparseMatrix smatrix = (SparseMatrix) matrix;
 
             // Copy a sparse matrix by only iterating over the non zero
@@ -143,17 +184,14 @@ public class Matrices {
             for (int row = 0; row < matrix.rows(); ++row) {
                 SparseDoubleVector rowVec = smatrix.getRowVector(row);
                 for (int col : rowVec.getNonZeroIndices())
-                    copiedMatrix.set(row, col, rowVec.get(col));
+                    output.set(row, col, rowVec.get(col));
             }
-            return copiedMatrix;
         } else {
-            Matrix copiedMatrix = Matrices.create(
-                    matrix.rows(), matrix.columns(), Type.DENSE_IN_MEMORY);
             for (int row = 0; row < matrix.rows(); ++row)
                 for (int col = 0; col < matrix.columns(); ++col)
-                    copiedMatrix.set(row, col, matrix.get(row, col));
-            return copiedMatrix;
+                    output.set(row, col, matrix.get(row, col));
         }
+        return output;
     }
 
     /**

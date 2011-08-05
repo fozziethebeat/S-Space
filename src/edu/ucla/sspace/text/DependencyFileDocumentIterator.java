@@ -23,6 +23,7 @@ package edu.ucla.sspace.text;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOError;
 import java.io.IOException;
 
 import java.util.Iterator;
@@ -45,6 +46,12 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
     private final BufferedReader documentsReader;
     
     /**
+     * Specifies whether or not dependency parsed documents have a header and if
+     * the headers should be ignored.
+     */
+    private final boolean ignoreHeader;
+
+    /**
      * The next line in the file
      */
     private String nextLine;
@@ -61,6 +68,25 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
      */
     public DependencyFileDocumentIterator(String documentsFile)
             throws IOException {
+        this(documentsFile, false);
+    }
+
+    /**
+     * Creates an {@code Iterator} over the file where each document returned
+     * contains the sequence of dependency parsed words composing a sentence..
+     *
+     * @param documentsFile the file specifying a dependency parsed file in the
+     * <a href="http://nextens.uvt.nl/depparse-wiki/DataFormat">CoNLL Format</a>
+     * @param ignoreHeader if true, the first line of every dependency tree will
+     * be discarded
+     *
+     * @throws IOException if any error occurs when reading
+     *                     {@code documentsFile}
+     */
+    public DependencyFileDocumentIterator(String documentsFile,
+                                          boolean ignoreHeader)
+            throws IOException {
+        this.ignoreHeader = ignoreHeader;
         documentsReader = new BufferedReader(new FileReader(documentsFile));
         nextLine = advance();
     }
@@ -81,12 +107,13 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
                && line.length() == 0)
             ; 
 
-        // If we found a line then append it.  This is the base case
-        if (line != null)
-            sb.append(line).append("\n");
-        // Otherwise, there were no lines left, so return null
-        else
+        // If there were no lines left return null.
+        if (line == null)
             return null;
+
+        // If we found a line, and we keep any headers, then append it.  
+        if (!ignoreHeader)
+            sb.append(line).append("\n");
 
         // Keep reading until a blank line was seen or the reader has no further
         // lines
@@ -103,9 +130,8 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
         Document next = new StringDocument(nextLine);
         try {
             nextLine = advance();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            nextLine = null;
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
         }
         return next;
     }        

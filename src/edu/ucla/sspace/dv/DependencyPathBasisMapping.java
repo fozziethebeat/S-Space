@@ -34,29 +34,4 @@ import edu.ucla.sspace.dependency.DependencyPath;
  */
 public interface DependencyPathBasisMapping 
         extends BasisMapping<DependencyPath,String> {
-
-    /**
-     * Returns the dimension number corresponding to the term at the end of the
-     * provided path.
-     *
-     * @param path a path whose end represents a semantic connection
-     *
-     * @return the dimension for the occurrence of the last word in the path
-     */
-    int getDimension(DependencyPath path);
-
-    /**
-     * Returns a description of path-specific features represented by the
-     * specified dimension.
-     *
-     * @param dimension a dimension number
-     *
-     * @return a description of the path features for the dimension
-     */
-    String getDimensionDescription(int dimension);
-   
-    /**
-     * {@inheritDoc}
-     */
-    int numDimensions();    
 }

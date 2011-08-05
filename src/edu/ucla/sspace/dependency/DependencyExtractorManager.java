@@ -68,9 +68,8 @@ public class DependencyExtractorManager {
      * @throws NullPointerException if either {@code name} or {@code extractor}
      *         are {@code null}.
      */
-    public static synchronized void 
-            addExtractor(String name, DependencyExtractor extractor) {
-        
+    public static synchronized void addExtractor(
+        String name, DependencyExtractor extractor) {
         addExtractor(name, extractor, defaultExtractor == null);
     }
 
@@ -88,9 +87,8 @@ public class DependencyExtractorManager {
      * @throws NullPointerException if either {@code name} or {@code extractor}
      *         are {@code null}.
      */
-    public static synchronized void
-            addExtractor(String name, DependencyExtractor extractor, 
-                         boolean isDefault) {
+    public static synchronized void addExtractor(
+        String name, DependencyExtractor extractor, boolean isDefault) {
                
         if (extractor == null)
             throw new NullPointerException("Extractor cannot be null" + name);
@@ -103,7 +101,8 @@ public class DependencyExtractorManager {
     
     /**
      * Returns the extractor with the specified name.  The name typically refers
-     * to the parser that generated the output files that the extractor can read.
+     * to the parser that generated the output files that the extractor can
+     * read.
      *
      * @param name the name associated with an extractor.
      *
