@@ -73,9 +73,10 @@ public class SparseHashMatrix extends AbstractMatrix implements SparseMatrix {
      * {@link IndexOutOfBoundsException} if not.
      */        
     private void checkIndices(int row, int col) {
-        if (row < 0 || col < 0 || row >= rows || col >= columns) {
-            throw new IndexOutOfBoundsException();
-        }
+        if (row < 0 || row >= rows) 
+            throw new IndexOutOfBoundsException("Invalid index: " + row);
+        else if (col < 0 || col >= columns)
+            throw new IndexOutOfBoundsException("Invalid index: " + col);
     }
     
     /**

@@ -44,7 +44,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     /**
      * An inverse mapping from values to keys.
      */
-    private BiMap<V, K> reverseMap;
+    private HashBiMap<V, K> reverseMap;
 
     /**
      * Creates an empty {@code HashBiMap}
@@ -71,7 +71,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * existing {@link BiMap}.  The original mapping is not recomputed for the
      * {@link BiMap} created in public  above constructor.
      */
-    private HashBiMap(Map<K, V> map, BiMap<V, K> reverse) {
+    private HashBiMap(Map<K, V> map, HashBiMap<V, K> reverse) {
         this.originalMap = map;
         this.reverseMap = reverse;
     }
@@ -151,7 +151,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * {@inheritDoc}
      */
     public V put(K key, V value) {
-        reverseMap.put(value, key);
+        reverseMap.originalMap.put(value, key);
         return originalMap.put(key, value);
     }
 
@@ -179,6 +179,13 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      */
     public int size() {
         return originalMap.size();
+    }
+
+    /**
+     * Returns a string description of the mappings.
+     */
+    public String toString() {
+        return originalMap.toString();
     }
 
     /**

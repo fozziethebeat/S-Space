@@ -133,7 +133,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
      * The work used by all {@code LinkClustering} instances to perform
      * multi-threaded operations.
      */
-    private static final WorkQueue WORK_QUEUE = new WorkQueue();
+    private static final WorkQueue WORK_QUEUE = new WorkQueue(1);
     
     /**
      * The merges for the prior run of this clustering algorithm
@@ -380,7 +380,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             final int row = i;
             WORK_QUEUE.add(key, new Runnable() {
                     public void run() {
-                        for (int j = row; j < numEdges; ++j) {
+                        for (int j = row+1; j < numEdges; ++j) {
                             Edge e1 = edgeList.get(row);
                             Edge e2 = edgeList.get(j);
                             
@@ -418,7 +418,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             clusterToElements.put(i, i);
 
         for (Merge m : merges) {
-            clusterToElements.putMulti(m.remainingCluster(), 
+            clusterToElements.putMany(m.remainingCluster(), 
                 clusterToElements.remove(m.mergedCluster()));
         }           
 

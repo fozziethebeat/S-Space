@@ -554,7 +554,6 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
         return buildDendrogram(similarityMatrix, linkage);
     }
 
-
     /**
      * Builds a dendrogram of the rows of similarity matrix by iteratively
      * linking each row according to the linkage policy in a bottom up manner.
@@ -579,11 +578,11 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             throw new IllegalArgumentException(
                 "Similarity matrix must be square");
 
-        if (!(similarityMatrix instanceof OnDiskMatrix)) {
-            LOGGER.fine("Similarity matrix supports fast multi-threaded " +
-                        "access; switching to multi-threaded clustering");
-            return buildDendogramMultithreaded(similarityMatrix, linkage);
-        }
+//         if (!(similarityMatrix instanceof OnDiskMatrix)) {
+//             LOGGER.fine("Similarity matrix supports fast multi-threaded " +
+//                         "access; switching to multi-threaded clustering");
+//             return buildDendogramMultithreaded(similarityMatrix, linkage);
+//         }
 
         int rows = similarityMatrix.rows();
 
@@ -764,8 +763,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
         // Perform rows-1 merges to merge all elements
         for (int mergeIter = 0; mergeIter < rows - 1; ++mergeIter) {
             LOGGER.finer("Computing dendogram merge " + mergeIter);
-            System.out.println("Computing dendogram merge " 
-                               + mergeIter + "/" + (rows-1));
+//             System.out.println("Computing dendogram merge " 
+//                                + mergeIter + "/" + (rows-1));
 
 
             // Find the two clusters that have the highest similarity

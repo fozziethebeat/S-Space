@@ -92,12 +92,12 @@
     <!-- Compile all of the classes and put the results in the classes
 	 directory -->
      <javac srcdir="./" destdir="classes" classpathref="classpath" 
-	    debug="true" debuglevel="lines,source">
+ 	    debug="true" debuglevel="lines,source" encoding="utf-8">
        <compilerarg value="-Xlint"/>
        <compilerarg value="-g"/>
        <include name="src/**"/>
        <include name="lib/**"/>
-       <exclude name="test/**"/>
+       <include name="test/**"/>
        <exclude name="opt/"/>
     </javac>  
   </target>
@@ -475,6 +475,36 @@
     **
     **-->
 
+  <target name="lc-jar" depends="compile">
+    <jar destfile="${tools.dir}/lc.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Link Clustering"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.LinkClusteringTool"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="fanmod-jar" depends="compile">
+    <jar destfile="${tools.dir}/fanmod.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="Fanmod"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.FanmodTool"/>
+      </manifest>
+    </jar>
+  </target>
+
   <target name="sse-jar" depends="compile">
     <jar destfile="${tools.dir}/sse.jar" basedir="classes">
       <include name="**/*.class"/>
@@ -541,7 +571,7 @@
     <delete dir="reports" />
     <mkdir dir="reports" />
 
-    <junit printSummary="yes" fork="true" haltonerror="no">
+    <junit printSummary="yes" fork="true" haltonerror="no" timeout="1000">
       <jvmarg value="-Xmx1g"/>
       <jvmarg value="-debug"/>
 
@@ -550,17 +580,19 @@
       <classpath refid="cobertura.classpath" />
       <formatter type="plain"/>    
 
-      <!-- Example test when doing debugging of single classes 
-      <test name="edu.ucla.sspace.package.Class" todir="${report.dir}"/>
-      -->
+      <!-- Example test when doing debugging of single classes       -->
+      <!--- <test name="edu.ucla.sspace.pkg.Class" todir="${report.dir}"/> -->
+
       <batchtest fork="yes" todir="${report.dir}">
-        <fileset dir="${test.dir}">
-          <include name="**/*Test.java"/>
-          <include name="**/*Tests.java"/>
+        <fileset dir="${test.dir}"> 
+          <include name="*Test.java"/>
+          <include name="*Tests.java"/>
         </fileset>
       </batchtest>
+
     </junit>
   </target>
+
 
   <target name="coverage-report">
     <cobertura-report srcdir="${src.dir}" destdir="${coverage.html.dir}" />
@@ -570,7 +602,7 @@
     <delete dir="reports"/>
     <mkdir dir="reports"/>
 
-    <junit printsummary="yes" fork="yes" haltonfailure="no">
+    <junit printsummary="yes" fork="yes" haltonfailure="no" timeout="5000">
       <jvmarg value="-Xmx1g"/>
       <jvmarg value="-debug"/>
       <classpath location="${build.instrumented.dir}"/>
@@ -586,7 +618,6 @@
           <include name="**/*Tests.java"/>
         </fileset>
       </batchtest>
-
     </junit>
   </target>
 
