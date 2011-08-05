@@ -27,10 +27,19 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
 import edu.ucla.sspace.lsa.LatentSemanticAnalysis;
 
+import edu.ucla.sspace.matrix.LogEntropyTransform;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.Transform;
+import edu.ucla.sspace.matrix.SVD;
+import edu.ucla.sspace.matrix.SVD.Algorithm;
+
+import edu.ucla.sspace.util.ReflectionUtil;
+
 import java.io.IOError;
 import java.io.IOException;
 
-import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * An executable class for running {@link LatentSemanticAnalysis} (LSA) from the
@@ -153,7 +162,18 @@ public class LSAMain extends GenericMain {
     
     protected SemanticSpace getSpace() {
         try {
-            return new LatentSemanticAnalysis();
+            int dimensions = argOptions.getIntOption("dimensions", 300);
+            Transform transform = new LogEntropyTransform();
+            if (argOptions.hasOption("preprocess"))
+                transform = ReflectionUtil.getObjectInstance(
+                        argOptions.getStringOption("preprocess"));
+            String algName = argOptions.getStringOption("svdAlgorithm", "ANY");
+            MatrixFactorization factorization = SVD.getFactorization(
+                    Algorithm.valueOf(algName.toUpperCase()));
+
+            return new LatentSemanticAnalysis(
+                false, dimensions, transform, factorization, false,
+                new ConcurrentHashMap<String, Integer>());
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
@@ -165,29 +185,6 @@ public class LSAMain extends GenericMain {
      */
     protected SSpaceFormat getSpaceFormat() {
         return SSpaceFormat.BINARY;
-    }
-
-    protected Properties setupProperties() {
-        // use the System properties in case the user specified them as
-        // -Dprop=<val> to the JVM directly.
-        Properties props = System.getProperties();
-
-        if (argOptions.hasOption("dimensions")) {
-            props.setProperty(LatentSemanticAnalysis.LSA_DIMENSIONS_PROPERTY,
-                              argOptions.getStringOption("dimensions"));
-        }
-
-        if (argOptions.hasOption("preprocess")) {
-            props.setProperty(LatentSemanticAnalysis.MATRIX_TRANSFORM_PROPERTY,
-                              argOptions.getStringOption("preprocess"));
-        }
-
-        if (argOptions.hasOption("svdAlgorithm")) {
-            props.setProperty(LatentSemanticAnalysis.LSA_SVD_ALGORITHM_PROPERTY,
-                              argOptions.getStringOption("svdAlgorithm"));
-        }
-
-        return props;
     }
 
     /**

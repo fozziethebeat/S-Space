@@ -23,6 +23,8 @@ package edu.ucla.sspace.matrix;
 
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Matrix.Type;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibJ;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -135,6 +137,31 @@ public class SVD {
      * Uninstantiable
      */
     private SVD() { }
+
+    /**
+     * Returns the fastest {@link MatrixFactorization} implementation of
+     * Singular Value Decomposition available, or {@code null} if no
+     * implementation is available.
+     */
+    public static MatrixFactorization getFastestAvailableFactorization() {
+        if (isSVDLIBCavailable())
+            return new SingularValueDecompositionLibC();
+        else 
+            return new SingularValueDecompositionLibJ();
+    }
+
+    /**
+     * Returns the {@link MatrixFactorization} implementation corresponding to
+     * the {@link Algorithm} name.
+     */
+    public static MatrixFactorization getFactorization(Algorithm alg) {
+        switch (alg)  {
+            case SVDLIBJ:
+                return new SingularValueDecompositionLibJ();
+            default:
+                return new SingularValueDecompositionLibC();
+        }
+    }
 
     /**
      * Returns the fastest available SVD algorithm supported on the current
