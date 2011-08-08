@@ -52,9 +52,8 @@ public class RelationBasedBasisMapping
         String endToken = path.last().word();
 
         // Extract out how the current word is related to the last word in the
-        // path.  The last relation is the length - 2, due to length - 1 being
-        // the last node index and there are one-fewer relations than nodes.
-        String relation = path.getRelation(path.length() - 2);
+        // path.  
+        String relation = path.getRelation(path.length() - 1);
         return getDimensionInternal(endToken + "+" + relation);
     }
 }
