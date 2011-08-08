@@ -167,9 +167,14 @@ public class SVD {
      * Returns the fastest available SVD algorithm supported on the current
      * system.
      *
+     * </p>
+     *
+     * Use {@link getFastestAvailableFactorization} instead.
+     *
      * @return the fastest algorithm available or {@code null} if no SVD
      *         algorithm is available
      */
+    @Deprecated
     static Algorithm getFastestAvailableAlgorithm() {
         if (isSVDLIBCavailable())
             return Algorithm.SVDLIBC;
@@ -197,6 +202,10 @@ public class SVD {
      * fastest available SVD algorithm to generate the specified number of
      * singular values.
      *
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
+     *
      * @param m the matrix on which the SVD should be computed
      * @param dimensions the number of singular values to calculate
      *
@@ -205,6 +214,7 @@ public class SVD {
      *
      * @throws UnsupportedOperationException if no SVD algorithm is available
      */
+    @Deprecated
     public static Matrix[] svd(Matrix m, int dimensions) {
         // Determine which algorithm is the fastest in order to decide which
         // format the matrix file should be written
@@ -216,6 +226,10 @@ public class SVD {
      * specified SVD algorithm to generate the specified number of singular
      * values.
      *
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
+     *
      * @param m the matrix on which the SVD should be computed
      * @param algorithm the algorithm to use in computing the SVD
      * @param dimensions the number of singular values to calculate
@@ -225,6 +239,7 @@ public class SVD {
      *
      * @throws UnsupportedOperationException if no SVD algorithm is available
      */
+    @Deprecated
     public static Matrix[] svd(Matrix m, Algorithm algorithm, int dimensions) {
         // Determine which algorithm is the fastest in order to decide which
         // format the matrix file should be written
@@ -274,6 +289,10 @@ public class SVD {
      * {@link Format#MATLAB_SPARSE Matlab sparse} format using the specified SVD
      * algorithm to generate the specified number of singular values.
      *
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
+     *
      * @param matrix a file containing a matrix
      * @param dimensions the number of singular values to calculate
      *
@@ -282,6 +301,7 @@ public class SVD {
      *
      * @throws UnsupportedOperationException if no SVD algorithm is available
      */
+    @Deprecated
     public static Matrix[] svd(File matrix, int dimensions) {
         return svd(matrix, Algorithm.ANY, 
                    Format.MATLAB_SPARSE, dimensions);        
@@ -292,6 +312,10 @@ public class SVD {
      * {@link Format#MATLAB_SPARSE Matlab sparse} format using the specified SVD
      * algorithm to generate the specified number of singular values.
      *
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
+     *
      * @param matrix a file containing a matrix
      * @param alg which algorithm to use for computing the SVD
      * @param dimensions the number of singular values to calculate
@@ -302,6 +326,7 @@ public class SVD {
      * @throws UnsupportedOperationException if the provided SVD algorithm is
      *         unavailable
      */
+    @Deprecated
     public static Matrix[] svd(File matrix, Algorithm alg, int dimensions) {
         return svd(matrix, alg, Format.MATLAB_SPARSE, dimensions);
     }
@@ -311,6 +336,10 @@ public class SVD {
      * specified format using the the fastst SVD algorithm available to generate
      * the specified number of singular values.
      * 
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
+     *
      * @param matrix a file containing a matrix
      * @param format the format of the input matrix file
      * @param dimensions the number of singular values to calculate
@@ -320,6 +349,7 @@ public class SVD {
      *
      * @throws UnsupportedOperationException if no SVD algorithm is available
      */
+    @Deprecated
     public static Matrix[] svd(File matrix, Format format, int dimensions) {
         return svd(matrix, Algorithm.ANY, format, dimensions);
     }
@@ -328,6 +358,10 @@ public class SVD {
      * Returns U, S, V<sup>T</sup> matrices for the SVD of the matrix file in
      * specified format using the the specified SVD algorithm available to
      * generate the specified number of singular values.
+     *
+     * </p>
+     *
+     * Use a {@link MatrixFactorization} implementation instead.
      *
      * @param matrix a file containing a matrix
      * @param alg which algorithm to use for computing the SVD
@@ -340,6 +374,7 @@ public class SVD {
      * @throws UnsupportedOperationException if the provided SVD algorithm is
      *         unavailable
      */
+    @Deprecated
     public static Matrix[] svd(File matrix, Algorithm alg, 
                                Format format, int dimensions) {
         try {
@@ -599,7 +634,7 @@ public class SVD {
     /**
      * Returns {@code true} if the SVDLIBC library is available
      */
-    private static boolean isSVDLIBCavailable() {
+    public static boolean isSVDLIBCavailable() {
         try {
             Process svdlibc = Runtime.getRuntime().exec("svd");
             svdlibc.waitFor();
@@ -612,7 +647,7 @@ public class SVD {
     /**
      * Returns {@code true} if Octave is available
      */
-    private static boolean isOctaveAvailable() {
+    public static boolean isOctaveAvailable() {
         try {
             Process octave = Runtime.getRuntime().exec("octave -v");
             octave.waitFor();
@@ -625,7 +660,7 @@ public class SVD {
     /**
      * Returns {@code true} if Matlab is available
      */
-    private static boolean isMatlabAvailable() {
+    public static boolean isMatlabAvailable() {
         try {
             Process matlab = Runtime.getRuntime().exec("matlab -h");
             matlab.waitFor();

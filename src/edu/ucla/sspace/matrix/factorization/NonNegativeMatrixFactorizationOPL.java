@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.matrix.factorization;
 
 import edu.ucla.sspace.matrix.ArrayMatrix;
@@ -22,6 +45,8 @@ import java.util.Properties;
  *     Gradient Approaches for Lage-Scale Problems," Intell. Neuroscience, vol.
  *     2008, <a href="http://www.hindawi.com/journals/cin/2008/939567/abs/">here</a>
  *   </p>
+ *
+ * NOTE: Does not work yet.  Returns 0 matrices.
  *
  * @author Keith Stevens
  */
@@ -273,8 +298,11 @@ public class NonNegativeMatrixFactorizationOPL implements MatrixFactorization {
         for (int r = 0; r < A.rows(); ++r)
             for (int c = 0; c < A.columns(); ++c)
                 learningRateX[c] += Math.pow(A.get(r, c), 2);
-        for (int k = 0; k < numDimensions; ++k)
-            learningRateX[k] = 2 / learningRateX[k];
+        for (int k = 0; k < numDimensions; ++k) {
+            System.out.printf("%f ", learningRateX[k]);
+            learningRateX[k] = 2.0 / (learningRateX[k] + .000000001);
+        }
+        System.out.println();
 
         return learningRateX;
     }
@@ -288,15 +316,19 @@ public class NonNegativeMatrixFactorizationOPL implements MatrixFactorization {
      */
     private double[] computeLearningRateA() {
         double[] learningRateA = new double[numDimensions];
+        System.out.println("computeLearningRateA");
         for (int r = 0; r < X.rows(); ++r) {
             double sum = 0;
-            for (int c = 0; c < X.columns(); ++c)
+            for (int c = 0; c < X.columns(); ++c) {
+                System.out.printf("%f ", Math.pow(X.get(r,c), 2));
                 sum += Math.pow(X.get(r, c), 2);
-            learningRateA[r] = sum;
+            }
+            System.out.println();
+            learningRateA[r] = sum + .000000001;
         }
 
         for (int k = 0; k < numDimensions; ++k)
-            learningRateA[k] = 2 / learningRateA[k];
+            learningRateA[k] = 2.0 / learningRateA[k];
         return learningRateA;
     }
 }

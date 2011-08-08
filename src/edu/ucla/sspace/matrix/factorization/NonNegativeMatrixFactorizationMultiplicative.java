@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.matrix.factorization;
 
 import edu.ucla.sspace.matrix.ArrayMatrix;
@@ -62,7 +85,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
     /**
      * By default, use this many outer iterations.
      */
-    public static final String DEFAULT_OUTER_ITERATIONS = "50";
+    public static final String DEFAULT_OUTER_ITERATIONS = "300";
 
     /**
      * By default, use this many inner iterations.
@@ -161,7 +184,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
                         int[] nonZeros = v.getNonZeroIndices();
                         for (int m : nonZeros)
                             Hprime.set(k, m, Hprime.get(k, m) + 
-                                             H.get(n,k) * v.get(m));
+                                             W.get(n,k) * v.get(m));
                     }
                 }
 
@@ -169,7 +192,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
                 Matrix WtW = new ArrayMatrix(numDimensions, numDimensions);
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int l = 0; l < numDimensions; ++l) {
-                        int sum = 0;
+                        double sum = 0;
                         for (int n = 0; n < W.rows(); ++n) 
                             sum += W.get(n, k) * W.get(n, l);
                         WtW.set(k, l, sum);
@@ -190,12 +213,13 @@ public class NonNegativeMatrixFactorizationMultiplicative
                 // maintain those values until every value of WtWH is computed.
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int m = 0; m < H.columns(); ++m) {
-                        int sum = 0;
+                        double sum = 0;
                         for (int l = 0; l < numDimensions; ++l)
                             sum += WtW.get(k, l) * H.get(l, m);
                         double v = Hprime.get(k, m);
                         double w = H.get(k, m);
                         Hprime.set(k, m, w * v / sum);
+
                     }
                 }
 
@@ -214,7 +238,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
                     SparseDoubleVector v = matrix.getRowVector(n);
                     int[] nonZeros = v.getNonZeroIndices();
                     for (int k = 0; k < numDimensions; ++k) {
-                        int sum = 0;
+                        double sum = 0;
                         for (int m : nonZeros)
                             sum += v.get(m) * H.get(k, m);
                         Wprime.set(n, k, sum);

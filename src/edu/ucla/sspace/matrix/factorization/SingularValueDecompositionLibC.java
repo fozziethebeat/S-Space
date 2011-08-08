@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.matrix.factorization;
 
 import edu.ucla.sspace.matrix.DiagonalMatrix;
@@ -172,13 +195,14 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
             scaledDataClasses = true;
             // Weight the values in the data point space by the singular
             // values.
-            //
-            // REMINDER: when the RowScaledMatrix class is merged in with
-            // the trunk, this code should be replaced.
-            for (int r = 0; r < dataClasses.rows(); ++r)
-                for (int c = 0; c < dataClasses.columns(); ++c)
+            for (int r = 0; r < dataClasses.rows(); ++r) {
+                for (int c = 0; c < dataClasses.columns(); ++c) {
+                    System.out.printf("%f ", dataClasses.get(r,c));
                     dataClasses.set(r, c, dataClasses.get(r, c) * 
                                           singularValues[c]);
+                }
+            System.out.println();
+            }
         }
 
         return dataClasses;
@@ -192,13 +216,12 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
             scaledClassFeatures = true;
             // Weight the values in the document space by the singular
             // values.
-            //
             // REMINDER: when the RowScaledMatrix class is merged in with
             // the trunk, this code should be replaced.
             for (int r = 0; r < classFeatures.rows(); ++r)
                 for (int c = 0; c < classFeatures.columns(); ++c)
                     classFeatures.set(r, c, classFeatures.get(r, c) * 
-                                            singularValues[c]);
+                                            singularValues[r]);
         }
 
         return classFeatures;
@@ -226,25 +249,20 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
                                                       int dimensions)
             throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(sigmaMatrixFile));
-        int dimension = -1;
-        int valsSeen = 0;
         double[] m = new double[dimensions];
-        for (String line = null; (line = br.readLine()) != null; ) {
-            String[] vals = line.split("\\s+");
-            for (int i = 0; i < vals.length; ++i) {
-                // Check that the number of dimensions returned by svdlibc
-                // matches the requested number.
-                if (dimension == -1) {
-                    dimension = Integer.parseInt(vals[i]);
-                    if (dimension != dimensions)
-                        throw new RuntimeException(
-                                "SVDLIBC generated the incorrect number of " +
-                                "dimensions: " + dimension + " versus " + 
-                                dimensions);
-                } else
-                    m[++valsSeen] = Double.parseDouble(vals[i]);
-            }
-        }
+
+        // Check that the computed number of dimensions equals the expected
+        // number of dimensions.
+        int readDimensions = Integer.parseInt(br.readLine());
+        if (readDimensions != dimensions)
+            throw new RuntimeException(
+                    "SVDLIBC generated the incorrect number of " +
+                    "dimensions: " + readDimensions + " versus " + dimensions);
+
+        // Read each singular value.
+        int i = 0;
+        for (String line = null; (line = br.readLine()) != null; )
+            m[i++] = Double.parseDouble(line);
         return m;
     }
 }
