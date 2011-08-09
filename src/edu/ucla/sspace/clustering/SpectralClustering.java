@@ -132,7 +132,7 @@ public class SpectralClustering {
                 new ArrayList<DoubleVector>(matrix.rows());
             for (int r = 0; r < matrix.rows(); ++r) {
                 DoubleVector v = matrix.getRowVector(r);
-                scaledVectors.add(new ScaledDoubleVector(v, v.magnitude()));
+                scaledVectors.add(new ScaledDoubleVector(v, 1/v.magnitude()));
             }
             return Matrices.asMatrix(scaledVectors);
         }

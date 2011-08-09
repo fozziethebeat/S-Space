@@ -181,10 +181,6 @@ public abstract class BaseSpectralCut implements EigenCut {
 
         // Create the sorted matrix based on the reordering.
         Matrix sortedMatrix;
-        // REMINDER: if matrix is already being masked, then we should properly
-        // extract out the backing matrix and remask its rows in order to avoid
-        // a (potentially deep) recursive call stack as more matrices are
-        // wrapped.
         if (matrix instanceof SparseMatrix)
             sortedMatrix = new SparseRowMaskedMatrix(
                     (SparseMatrix) matrix, reordering);
@@ -407,15 +403,6 @@ public abstract class BaseSpectralCut implements EigenCut {
         if (1/dot == 0d || dot == 0)
             return v;
 
-        // If the vector we are to orthonormalize is already scaled, get its
-        // backing data and create a new instance that is rescaled by the
-        // product of both scalars.  This avoids unnecessary recursion to
-        // multiply all the values together for heavily scaled vectors.
-        if (v instanceof ScaledDoubleVector) {
-            ScaledDoubleVector sdv = (ScaledDoubleVector)v;
-            return new ScaledDoubleVector(
-                sdv.getBackingVector(), 1/dot * sdv.getScalar());
-        }
         return new ScaledDoubleVector(v, 1/dot);
     }
 

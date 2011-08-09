@@ -31,25 +31,34 @@ package edu.ucla.sspace.vector;
 public class ScaledSparseDoubleVector extends ScaledDoubleVector 
                                       implements SparseDoubleVector {
 
-  /**
-   * The original vector.
-   */
-  private SparseDoubleVector vector;
+    /**
+    * The original vector.
+    */
+    private SparseDoubleVector vector;
 
-  /**
-   * Creates a new {@link ScaledSparseDoubleVector} that decorates a given
-   * {@link SparseDoubleVector} by scaling each value in {@code vector} by
-   * {@code scale}.
-   */
-  public ScaledSparseDoubleVector(SparseDoubleVector vector, double scale) {
-      super(vector, scale);
-      this.vector = vector;
-  }
+    /**
+    * Creates a new {@link ScaledSparseDoubleVector} that decorates a given
+    * {@link SparseDoubleVector} by scaling each value in {@code vector} by
+    * {@code scale}.
+    */
+    public ScaledSparseDoubleVector(SparseDoubleVector vector, double scale) {
+        super(vector, scale);
 
-  /**
-   * {@inheritDoc}
-   */
-  public int[] getNonZeroIndices() {
-      return vector.getNonZeroIndices();
-  }
+        // If the vector we are to orthonormalize is already scaled, get its
+        // backing data and create a new instance that is rescaled by the
+        // product of both scalars.  This avoids unnecessary recursion to
+        // multiply all the values together for heavily scaled vectors.
+        if (vector instanceof ScaledSparseDoubleVector) {
+            ScaledSparseDoubleVector ssdv = (ScaledSparseDoubleVector) vector;
+            this.vector = ssdv.vector;
+        } else 
+            this.vector = vector;
+    }
+
+    /**
+    * {@inheritDoc}
+    */
+    public int[] getNonZeroIndices() {
+        return vector.getNonZeroIndices();
+    }
 }

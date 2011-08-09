@@ -349,8 +349,11 @@ public abstract class GenericWordsiMain extends GenericMain {
     protected Iterator<Document> getDocumentIterator() throws IOException {
         Iterator<Document> docIter = super.getDocumentIterator();
 
-        // If we are not in streaming mode, just return the iterator as normal.
-        if (!argOptions.hasOption('s'))
+        // If we are not using the pseudo word evalutor, just return the
+        // iterator as normal.  The SemEval corpora already have their contexts
+        // shuffled so there is no worry about biasing the results towards a
+        // particular sense.
+        if (!argOptions.hasOption('P'))
             return docIter;
 
         // Otherwise, read in all of the documents into a list, shuffle it, and
@@ -371,7 +374,7 @@ public abstract class GenericWordsiMain extends GenericMain {
         // Setup the assignment reporter.  When training, the assignment report
         // will only be used If the evaluation mode will be for pseudoWord.
         AssignmentReporter reporter = null;
-        if (options.hasOption('P') || options.hasOption('W'))
+        if (options.hasOption('P'))
             reporter = new PseudoWordReporter(System.out);
 
         int numClusters = options.getIntOption('c', 0);

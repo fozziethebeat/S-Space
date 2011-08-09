@@ -393,13 +393,14 @@ public class Vectors {
             return null;
         DoubleVector result = null;
 
-        if (source instanceof DenseVector) {
+        if (source instanceof SparseDoubleVector) {
+            result = new CompactSparseVector(source.length());
+            copyFromSparseVector(result, source);
+        } else if (source instanceof DenseVector ||
+                   source instanceof ScaledDoubleVector) {
             result = new DenseVector(source.length());
             for (int i = 0; i < source.length(); ++i)
                 result.set(i, source.get(i));
-        } else if (source instanceof SparseDoubleVector) {
-            result = new CompactSparseVector(source.length());
-            copyFromSparseVector(result, source);
         } else if (source instanceof AmortizedSparseVector) {
             result = new AmortizedSparseVector(source.length());
             copyFromSparseVector(result, source);

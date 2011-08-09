@@ -45,10 +45,21 @@ public class ScaledDoubleVector implements DoubleVector {
      * DoubleVector} by scaling each value in {@code vector} by {@code scale}.
      */
     public ScaledDoubleVector(DoubleVector vector, double scale) {
-        this.vector = vector;
-        this.scale = scale;
         if (scale == 0d)
             throw new IllegalArgumentException("Cannot scale a vector by 0");
+
+        // If the vector we are to orthonormalize is already scaled, get its
+        // backing data and create a new instance that is rescaled by the
+        // product of both scalars.  This avoids unnecessary recursion to
+        // multiply all the values together for heavily scaled vectors.
+        if (vector instanceof ScaledDoubleVector) {
+            ScaledDoubleVector sdv = (ScaledDoubleVector) vector;
+            this.vector = sdv.vector;
+            this.scale = scale * sdv.scale;
+        } else {
+            this.vector = vector;
+            this.scale = scale;
+        }
     }
 
     /**

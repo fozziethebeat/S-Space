@@ -27,6 +27,7 @@ import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -85,7 +86,7 @@ public class EvaluationWordsi extends BaseWordsi {
      * {@inheritDoc}
      */
     public Set<String> getWords() {
-        return wordSpace.getWords();
+        return new HashSet<String>();
     }
 
     /**

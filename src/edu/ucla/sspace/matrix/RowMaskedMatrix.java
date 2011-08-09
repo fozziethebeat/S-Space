@@ -146,17 +146,35 @@ public class RowMaskedMatrix implements Matrix {
      *         {@code matrix}
      */
     public RowMaskedMatrix(Matrix matrix, int[] reordering) {
-        backingMatrix = matrix;
         rowToReal = new int[reordering.length];
+        rows = reordering.length;
 
-        for (int i = 0; i < reordering.length; ++i) {
-            int j = reordering[i];
-            if (j < 0 || j >= matrix.rows())
-                throw new IllegalArgumentException("Cannot specify a row " +
+        // If the given matrix is already a RowMaskedMatrix, connect to the
+        // inner backing matrix and compute the transitive row ordering mapping.
+        // This will prevent a deep nesting of RowMaskMatrix lookups when
+        // algorithms recursively remap a mapped matrix.
+        if (matrix instanceof RowMaskedMatrix) {
+            RowMaskedMatrix rmm = (RowMaskedMatrix) matrix;
+            this.backingMatrix = rmm.backingMatrix;
+
+            for (int i = 0; i < reordering.length; ++i) {
+                int j = reordering[i];
+                if (j < 0 || j >= matrix.rows())
+                    throw new IllegalArgumentException("Cannot specify a row " +
                     "outside the original matrix dimensions:" + j);
-            rowToReal[i] = j;
+
+                rowToReal[i] = rmm.rowToReal[j];
+            }
+        } else {
+            backingMatrix = matrix;
+            for (int i = 0; i < reordering.length; ++i) {
+                int j = reordering[i];
+                if (j < 0 || j >= matrix.rows())
+                    throw new IllegalArgumentException("Cannot specify a row " +
+                    "outside the original matrix dimensions:" + j);
+                rowToReal[i] = j;
+            }
         }
-        rows = rowToReal.length;
     }
 
     /**
@@ -280,5 +298,20 @@ public class RowMaskedMatrix implements Matrix {
      */
     public void setRow(int row, DoubleVector values) {
         backingMatrix.setRow(getRealRow(row), values);
+    }
+
+    /**
+     * Returns the {@code backingMatrix} that is being masked.
+     */
+    public Matrix backingMatrix() {
+        return backingMatrix;
+    }
+
+    /**
+     * Returns the mapping from indices in this {@link RowMaskedMatrix} to the
+     * real indices in the {@code backingMatrix}.
+     */
+    public int[] reordering() {
+        return rowToReal;
     }
 }

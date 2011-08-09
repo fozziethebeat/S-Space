@@ -68,6 +68,25 @@ public class YaleSparseMatrix implements SparseMatrix {
     }
 
     /**
+     * Constructs a sparse matrix with the non zero values from the given two
+     * dimensional array.
+     */
+    public YaleSparseMatrix(double[][] values) {
+        this.rows = values.length;
+        this.cols = values[0].length;
+
+        sparseMatrix = new CompactSparseVector[rows];
+        for (int r = 0; r < rows; ++r) {
+            sparseMatrix[r] = new CompactSparseVector(cols);
+            for (int c = 0; c < cols; ++c)
+                if (values[r][c] != 0d)
+                    sparseMatrix[r].set(c, values[r][c]);
+        }
+
+
+    }
+
+    /**
      * Checks that the indices are within the bounds of this matrix or throws an
      * {@link IndexOutOfBoundsException} if not.
      */        

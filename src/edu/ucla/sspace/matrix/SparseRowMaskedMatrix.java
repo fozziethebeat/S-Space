@@ -93,7 +93,16 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      */
     public SparseRowMaskedMatrix(SparseMatrix matrix, int[] reordering) {
         super(matrix, reordering);
-        this.matrix = matrix;
+
+        // If the given matrix is already a RowMaskedMatrix, connect to the
+        // inner backing matrix.  This will prevent a deep nesting of
+        // RowMaskMatrix lookups when algorithms recursively remap a mapped
+        // matrix.
+        if (matrix instanceof SparseRowMaskedMatrix) {
+            SparseRowMaskedMatrix srmm = (SparseRowMaskedMatrix) matrix;
+            this.matrix = srmm.matrix;
+        } else
+            this.matrix = matrix;
     }
 
 

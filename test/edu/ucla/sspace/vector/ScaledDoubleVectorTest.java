@@ -74,6 +74,20 @@ public class ScaledDoubleVectorTest {
         assertEquals(22, v.get(3), .0001);
     }
 
+    @Test public void testDoubleScale() {
+        DoubleVector b = new DenseVector(new double[] {4, 4, 4, 4});
+        ScaledDoubleVector v = new ScaledDoubleVector(b, 5);
+        v = new ScaledDoubleVector(v, 6);
+
+        assertEquals(b, v.getBackingVector());
+        assertEquals(30, v.getScalar(), .0001);
+
+        assertEquals(4*30, v.get(0), .001);
+        assertEquals(4*30, v.get(1), .001);
+        assertEquals(4*30, v.get(2), .001);
+        assertEquals(4*30, v.get(3), .001);
+    }
+
     @Test public void testMagnitude() {
         DoubleVector v = new DenseVector(new double[] {1, 2, 3, 1});
         v = new ScaledDoubleVector(v, 5);
