@@ -46,6 +46,8 @@ import java.io.FileReader;
  * The data file should have one cluster assignment per line, with cluster ids
  * starting from 0 and going up to numClusters - 1.
  *
+ * TODO, maybe not even include this in the final merge.
+ *
  * @author Keith Stevens
  */
 public class OptimalSeed implements KMeansSeed {

@@ -239,16 +239,39 @@ public class DependencyVectorSpace
         this(System.getProperties(), 0);
     }
    
+    /**
+     * Creates and configures this {@code DependencyVectorSpace} with the
+     * default set of parameters.  The default values are:<ul>
+     *   <li> a {@link WordBasedBasisMapping} is used for dimensions;
+     *   <li> a {@link FlatPathWeight} is used to weight accepted paths;
+     *   <li> and a {@link MinimumTemplateAcceptor} is used to filter the paths
+     *        in a sentence.
+     * </ul>
+     */
     public DependencyVectorSpace(Properties properties) {
         this(properties, 0);
     }
 
     /**
+    /**
      * Creates and configures this {@code DependencyVectorSpace} with the
-     * according to the provided properties.  If no properties are specified,
-     * the default values are used.
+     * default set of parameters.  The default values are:<ul>
+     *   <li> a {@link WordBasedBasisMapping} is used for dimensions;
+     *   <li> a {@link FlatPathWeight} is used to weight accepted paths;
+     *   <li> and a {@link MinimumTemplateAcceptor} is used to filter the paths
+     *        in a sentence.
+     * </ul>
+     *
+     * @param properties The {@link Properties} setting the above options
+     * @param pathLength The maximum valid path length.  Must be non-negative.
+     *        If zero, an the maximum path length used by the {@link
+     *        DependencyPathAcceptor} will be used.
      */
     public DependencyVectorSpace(Properties properties, int pathLength) {
+        if (pathLength < 0)
+            throw new IllegalArgumentException(
+                    "path length must be non-negative");
+
         termToVector = new HashMap<String,SparseDoubleVector>();
         
         String basisMappingProp = 

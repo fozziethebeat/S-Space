@@ -34,6 +34,10 @@ import java.util.List;
 
 
 /**
+ * This {@link Cluster} represents only the centroid of the data points assigned
+ * to it.  Assignments from data point indices to cluster ids are maintained
+ * internally, but the actualy data points are discareded.
+ *
  * @author Keith Stevens
  */
 public class CentroidCluster<T extends DoubleVector> implements Cluster<T> {
@@ -46,6 +50,8 @@ public class CentroidCluster<T extends DoubleVector> implements Cluster<T> {
 
     /**
      * The set of data point id's that assigned to this {@link Cluster}.
+     * TODO: Consider replacing with a TIntSet after merging the
+     * graphical-update branch which depends on Trove.
      */
     private BitSet assignments;
 
@@ -68,7 +74,7 @@ public class CentroidCluster<T extends DoubleVector> implements Cluster<T> {
     public void addVector(T vector, int id) {
         VectorMath.add(centroid, vector);
         if (id >= 0)
-                assignments.set(id);
+            assignments.set(id);
     }
 
     /**
@@ -86,7 +92,7 @@ public class CentroidCluster<T extends DoubleVector> implements Cluster<T> {
     }
 
     /**
-     * {@inheritDoc}
+     * Returns an empty list, as no spare data point values are maintained.
      */
     public List<T> dataPointValues() {
         return new ArrayList<T>();

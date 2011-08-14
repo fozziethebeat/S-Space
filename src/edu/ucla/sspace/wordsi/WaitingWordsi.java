@@ -24,7 +24,6 @@ package edu.ucla.sspace.wordsi;
 import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.Clustering;
-import edu.ucla.sspace.clustering.ClusterUtil;
 
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.Matrices;
@@ -263,7 +262,7 @@ public class WaitingWordsi extends BaseWordsi {
             : clustering.cluster(contexts, props);
         LOG.info("Finished clustering term: " + senseName);
 
-        SparseDoubleVector[] centroids = assignments.getCentroids(contexts);
+        SparseDoubleVector[] centroids = assignments.getSparseCentroids();
 
         // Add the centroids to the splitSenses map.
         for (int index = 0; index < centroids.length; ++index) {
@@ -289,7 +288,7 @@ public class WaitingWordsi extends BaseWordsi {
         // data points might not have been clustered (Cluto based clustering
         // does this on occasion) so we must check for the number of assignments
         // first.
-        for (int i = 0; i < assignments.length(); ++i)
+        for (int i = 0; i < assignments.size(); ++i)
             if (assignments.get(i).assignments().length > 0)
                 reporter.updateAssignment(senseName, contextLabels[i],
                                           assignments.get(i).assignments()[0]);

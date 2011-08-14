@@ -62,7 +62,7 @@ public class H1Function extends HybridBaseFunction {
     /**
      * {@inheritDoc}
      */
-    public boolean maximize() {
+    public boolean isMaximize() {
         return true;
     }
 }

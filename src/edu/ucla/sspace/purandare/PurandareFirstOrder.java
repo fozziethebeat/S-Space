@@ -617,7 +617,7 @@ public class PurandareFirstOrder implements SemanticSpace {
 
         // For each of the contexts, determine which cluster it was in and sum
         // it value with the other contexts
-        for (int row = 0; row < clusterAssignment.length(); ++row) {
+        for (int row = 0; row < clusterAssignment.size(); ++row) {
             // Check whether this row was assigned a cluster
             if (clusterAssignment.get(row).assignments().length == 0)
                 continue;                

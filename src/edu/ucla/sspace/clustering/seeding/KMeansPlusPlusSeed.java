@@ -51,6 +51,11 @@ public class KMeansPlusPlusSeed implements KMeansSeed {
      */
     private static final double EPSILON = 1e-3;
 
+    /**
+     * Selects the best scattered {@link numCentroids} data points from {@link
+     * dataPoints}.  The actual {@link DoubleVector}s are returned, not a copy
+     * or wrapped version.
+     */
     public DoubleVector[] chooseSeeds(int numCentroids, Matrix dataPoints) {
         int[] centroids = new int[numCentroids];
         // Select the first centroid randomly.

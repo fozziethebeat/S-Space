@@ -271,7 +271,7 @@ public class AutomaticStopClustering implements Clustering {
         for (File outFile : outFiles)
             outFile.delete();
 
-        return new Assignments(bestK, assignments);
+        return new Assignments(bestK, assignments, m);
     }
 
     /**

@@ -26,6 +26,12 @@ package edu.ucla.sspace.vector;
  * A decorator for {@link DoubleVector}s that scales every value in a given
  * {@link DoubleVector} by some non zero scale.
  *
+ * </p>
+ *
+ * Note that this automatically computes the scaling of a {@link
+ * ScaledDoubleVector} so that backing vector is scaled only once, thus
+ * preventing any recursive calls to scaling.
+ *
  * @author Keith Stevens
  */
 public class ScaledDoubleVector implements DoubleVector {

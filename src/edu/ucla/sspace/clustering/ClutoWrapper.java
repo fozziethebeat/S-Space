@@ -89,7 +89,7 @@ class ClutoWrapper {
         cluster(assignments, matrix, clmethod, crtFunction,
                 numClusters, outputFile);
         extractAssignments(outputFile, assignments);
-        return new Assignments(numClusters, assignments);
+        return new Assignments(numClusters, assignments, matrix);
     }
 
 

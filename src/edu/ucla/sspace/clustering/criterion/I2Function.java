@@ -86,7 +86,7 @@ public class I2Function extends BaseFunction {
     /**
      * {@inheritDoc}
      */
-    public boolean maximize() {
+    public boolean isMaximize() {
         return true;
     }
 }

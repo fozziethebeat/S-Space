@@ -76,7 +76,7 @@ public class BisectingKMeans implements Clustering {
             Assignment[] assignments = new Assignment[dataPoints.rows()];
             for (int i = 0; i < assignments.length; ++i)
                 assignments[i] = new HardAssignment(0);
-            return new Assignments(numClusters, assignments);
+            return new Assignments(numClusters, assignments, dataPoints);
         }
 
         // Create a count of cluster assignments.
@@ -159,7 +159,7 @@ public class BisectingKMeans implements Clustering {
                 }
             }
         }
-        return new Assignments(numClusters, assignments);
+        return new Assignments(numClusters, assignments, dataPoints);
     }
 
     public String toString() {

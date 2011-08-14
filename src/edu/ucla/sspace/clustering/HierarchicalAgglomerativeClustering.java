@@ -269,7 +269,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             try {
                 double clusterSimThresh = Double.parseDouble(minSimProp);
                 return toAssignments(cluster(matrix, clusterSimThresh, 
-                                             linkage, simFunc, -1), -1);                
+                                             linkage, simFunc, -1), matrix, -1);
             } catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
                     "Cluster similarity threshold was not a valid double: " +
@@ -302,7 +302,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
                     DEFAULT_SIMILARITY_FUNCTION_PROPERTY));
         return toAssignments(cluster(m, clusterSimilarityThreshold, linkage,
                                      similarityFunction, numClusters),
-                             numClusters);
+                             m, numClusters);
     }
 
     /**
@@ -1085,6 +1085,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * array of {@link HardAssignment} instances.
      */
     private static Assignments toAssignments(int[] rowAssignments,
+                                             Matrix matrix,
                                              int numClusters) {
         if (numClusters == -1) 
             for (int assignment : rowAssignments)
@@ -1093,7 +1094,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
         Assignment[] assignments = new Assignment[rowAssignments.length];
         for (int i = 0; i < rowAssignments.length; ++i)
             assignments[i] = new HardAssignment(rowAssignments[i]);
-        return new Assignments(numClusters, assignments);
+        return new Assignments(numClusters, assignments, matrix);
     }
 
     /**

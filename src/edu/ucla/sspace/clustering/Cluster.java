@@ -52,7 +52,7 @@ public interface Cluster<T extends DoubleVector> {
     double compareWithVector(T vector);
 
     /**
-     * Returns the centroid of this cluster.
+     * Returns an immutable view of the centroid for this {@link Cluster}.
      */
     T centroid();
 
@@ -64,6 +64,8 @@ public interface Cluster<T extends DoubleVector> {
     /**
      * Returns the set of identifiers for all data points assigned to this
      * cluster.
+     * TODO: Consider returning a set and let implementations return a wrapped
+     * BitSet, as in the graphical-update branch.
      */
     BitSet dataPointIds();
 

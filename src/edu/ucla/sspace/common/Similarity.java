@@ -50,6 +50,8 @@ import java.util.TreeMap;
  * between vectors and arrays.  {@link SemanticSpace} implementations should use
  * this class.
  *
+ * TODO: unit test cosine similarity with it's craaaazy optimizations.
+ *
  * @author Keith Stevens
  * @author David Jurgens
  */
@@ -1000,7 +1002,7 @@ public class Similarity {
             curRank++;
         }
 
-        return 1 - ((6d * diff) / (a.length * ((a.length * a.length) - 1d)));
+        return 1 - ((6d * diff) / (a.length * ((a.length * a.length) - 1)));
     }
 
     /**

@@ -62,6 +62,8 @@ import java.util.logging.Logger;
  *   </li>
  * </ul>
  *
+ * TODO: Update javadoc.
+ *
  * @author Keith Stevens
  */
 public class SpectralClustering {
@@ -93,7 +95,7 @@ public class SpectralClustering {
         for (int i = 0; i < r.assignments.length; ++i)
             assignments[i] = new HardAssignment(r.assignments[i]);
 
-        return new Assignments(r.numClusters, assignments);
+        return new Assignments(r.numClusters, assignments, matrix);
     }
 
     public Assignments cluster(Matrix matrix,
@@ -110,7 +112,7 @@ public class SpectralClustering {
         for (int i = 0; i < r.assignments.length; ++i)
             assignments[i] = new HardAssignment(r.assignments[i]);
 
-        return new Assignments(r.numClusters, assignments);
+        return new Assignments(r.numClusters, assignments, matrix);
     }
 
     private Matrix scaleMatrix(Matrix matrix) {

@@ -29,6 +29,24 @@ import edu.ucla.sspace.vector.DoubleVector;
 /**
  * An interface for computing the spectral cut of a {@link Matrix}.
  *
+ * <ul>
+ *   <li style="font-family:Garamond, Georgia, serif">Cheng, D., Kannan, R.,
+ *     Vempala, S., Wang, G.  (2006).  A Divide-and-Merge Methodology for
+ *     Clustering. <i>ACM Transactions on Database Systsms</i>, <b>31</b>,
+ *     1499-1525.  Available <a
+ *     href=http://www-math.mit.edu/~vempala/papers/eigencluster.pdf">here</a>
+ *   </li>
+ *
+ *   <li style="font-family:Garamond, Georgia, serif">Kannan, R., Vempala, S.,
+ *     Vetta, A.  (2000).  On clustering: Good, bad, and spectral.  
+ *     <i>FOCS '00: Proceedings of the 41st Annual Symposium on Foundations of
+ *   Computer Science</i> Available <a
+ *     href="http://www-math.mit.edu/~vempala/papers/specfocs.ps">here</a>
+ *   </li>
+ * </ul>
+ *
+ * TODO: Add javadoc explaining papers
+ *
  * @see BaseSpectralCut
  *
  * @author Keith Stevens

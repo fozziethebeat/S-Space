@@ -84,5 +84,5 @@ public interface CriterionFunction {
      * Returns true if this {@link CriterionFunction} tries to maximize it's
      * score, and false otherwise.
      */
-    boolean maximize();
+    boolean isMaximize();
 }

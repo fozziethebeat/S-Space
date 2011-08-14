@@ -177,7 +177,7 @@ public abstract class BaseFunction implements CriterionFunction {
     public boolean update(int currentVectorIndex) {
         int currentClusterIndex = assignments[currentVectorIndex];
 
-        double bestDelta = (maximize()) ? 0 : Double.MAX_VALUE;
+        double bestDelta = (isMaximize()) ? 0 : Double.MAX_VALUE;
         int bestDeltaIndex = -1;
 
         // Get the current vector.
@@ -208,7 +208,7 @@ public abstract class BaseFunction implements CriterionFunction {
             // data points original cluster.
             double delta = newCost - costs[i] + deltaBase;
 
-            if (maximize()) {
+            if (isMaximize()) {
                 // Remember this move if it's positive and the best seen so far.
                 // Negative detlas can be safely ignored since we only want to
                 // maximize the cost.
@@ -409,18 +409,5 @@ public abstract class BaseFunction implements CriterionFunction {
      */
     protected static double subtractedMagnitude(DoubleVector c, DoubleVector v) {
         return Math.sqrt(subtractedMagnitudeSqrd(c, v));
-    }
-
-    protected static double dotProduct(DoubleVector a, DoubleVector b) {
-        double dot = 0;
-        if (b instanceof SparseDoubleVector) {
-            SparseDoubleVector sb = (SparseDoubleVector) b;
-            int[] nonZeroB = sb.getNonZeroIndices();
-            for (int nz : nonZeroB)
-                dot += a.get(nz) * b.get(nz);
-        } else
-            for (int c = 0; c < a.length(); ++c)
-                dot += a.get(c) * b.get(c);
-        return dot;
     }
 }

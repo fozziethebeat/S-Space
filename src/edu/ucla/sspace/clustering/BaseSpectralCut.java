@@ -179,7 +179,9 @@ public abstract class BaseSpectralCut implements EigenCut {
             sortedRho.set(i, rho.get(elementIndices[i].index));
         }
 
-        // Create the sorted matrix based on the reordering.
+        // Create the sorted matrix based on the reordering.  Note that both row
+        // masked matrices internally handle masking a masked matrix to avoid
+        // recursive calls to the index lookups.
         Matrix sortedMatrix;
         if (matrix instanceof SparseMatrix)
             sortedMatrix = new SparseRowMaskedMatrix(
@@ -248,6 +250,7 @@ public abstract class BaseSpectralCut implements EigenCut {
      * {@inheritDoc}
      */
     public double getKMeansObjective() {
+        // Note that the scaled vector handles any recursive scaling.
         DoubleVector centroid = new ScaledDoubleVector(
                 matrixRowSums, 1/((double) dataMatrix.rows()));
         double score = 0;
@@ -290,7 +293,8 @@ public abstract class BaseSpectralCut implements EigenCut {
             sizes[assignments[i]]++;
         }
 
-        // Scale non empty centroids.
+        // Scale non empty centroids.  Note that the scaled vector handles any
+        // recursive scaling.
         for (int i = 0; i < centroids.length; ++i)
             if (sizes[i] != 0)
                 centroids[i] = new ScaledDoubleVector(centroids[i],1d/sizes[i]);
@@ -403,6 +407,7 @@ public abstract class BaseSpectralCut implements EigenCut {
         if (1/dot == 0d || dot == 0)
             return v;
 
+        // Note that the scaled vector handles any recursive scaling.
         return new ScaledDoubleVector(v, 1/dot);
     }
 

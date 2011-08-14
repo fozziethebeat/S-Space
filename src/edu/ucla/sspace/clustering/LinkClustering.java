@@ -347,7 +347,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             nodeAssignments[i] = 
                 new SoftAssignment(nodeClusters.get(i));
         }
-        return new Assignments(numClusters, nodeAssignments);
+        return new Assignments(numClusters, nodeAssignments, matrix);
     }
 
     /**

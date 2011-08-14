@@ -34,8 +34,10 @@ import edu.ucla.sspace.matrix.SparseMatrix;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The return value for all {@link Clustering} implementations.  This class
@@ -57,20 +59,50 @@ public class Assignments implements Iterable<Assignment> {
     private int numClusters;
 
     /**
+     * The {@link Matrix} of data points that these {@link Assignments} link to.
+     */
+    private Matrix matrix;
+
+    /**
+     * Creates a new {@link Assignments} instance that can hold up to {@code
+     * numAssignments} {@link Assignment}s.  This assumes that the data matrix
+     * will not be accessible.  Calls to {@link #getCentroids} will fail when
+     * using this constructor.
+     */
+    public Assignments(int numClusters, int numAssignments) {
+        this(numClusters, numAssignments, null);
+    }
+
+    /**
      * Creates a new {@link Assignments} instance that can hold up to {@code
      * numAssignments} {@link Assignment}s.
      */
-    public Assignments(int numClusters, int numAssignments) {
+    public Assignments(int numClusters, int numAssignments, Matrix matrix) {
         this.numClusters = numClusters;
+        this.matrix = matrix;
         assignments = new Assignment[numAssignments];
+    }
+
+    /**
+     * Creates a new {@link Assignments} instance that takes ownership of the
+     * {@code initialAssignments} array.  This assumes that the data matrix will
+     * not be accessible.  Calls to {@link #getCentroids} will fail when using
+     * this constructor.
+     */
+    public Assignments(int numClusters,
+                       Assignment[] initialAssignments) {
+        this(numClusters, initialAssignments, null);
     }
 
     /**
      * Creates a new {@link Assignments} instance that takes ownership of the
      * {@code initialAssignments} array.
      */
-    public Assignments(int numClusters, Assignment[] initialAssignments) {
+    public Assignments(int numClusters,
+                       Assignment[] initialAssignments, 
+                       Matrix matrix) {
         this.numClusters = numClusters;
+        this.matrix = matrix;
         assignments = initialAssignments;
     }
 
@@ -84,7 +116,7 @@ public class Assignments implements Iterable<Assignment> {
     /**
      * Returns the number of {@link Assignment} objects stored.
      */
-    public int length() {
+    public int size() {
         return assignments.length;
     }
 
@@ -92,7 +124,7 @@ public class Assignments implements Iterable<Assignment> {
      * Returns an iterator over the {@link Assignment} objects stored.
      */
     public Iterator<Assignment> iterator() {
-        return new ArrayIterator();
+        return Arrays.asList(assignments).iterator();
     }
 
     /**
@@ -117,17 +149,34 @@ public class Assignments implements Iterable<Assignment> {
     }
 
     /**
-     * Returns an array of dense centroid vectors based on the data points in
-     * {@code dataMatrix} and the assignments given so far.  The number of rows
-     * in {@code dataMatrix} must be equal to the length of this {@link
-     * Assignments} instance.
+     * Returns the data point indices assigned to each cluster.
      */
-    public DoubleVector[] getCentroids(Matrix dataMatrix) {
+    public List<Set<Integer>> clusters() {
+        List<Set<Integer>> clusters = new ArrayList<Set<Integer>>();
+        for (int c = 0; c < numClusters; ++c)
+            clusters.add(new HashSet<Integer>());
+        for (int i = 0; i < assignments.length; ++i)
+            for (int k : assignments[i].assignments())
+                clusters.get(k).add(i);
+        return clusters;
+    }
+
+    /**
+     * Returns an array of dense centroid vectors of each discovered cluster
+     * which are scaled according the the number of data points asisgned to that
+     * cluster.  Note that this method assumes that the original {@link Matrix}
+     * holding the data points contains rows of feature vectors.  
+     */
+    public DoubleVector[] getCentroids() {
+        if (matrix == null)
+            throw new IllegalArgumentException(
+                    "The data matrix was not passed to Assignments.");
+
         // Initialzie the centroid vectors and the cluster sizes.
         DoubleVector[] centroids = new DoubleVector[numClusters];
         int[] counts = new int[numClusters];
         for (int c = 0; c < numClusters; ++c)
-            centroids[c] = new DenseVector(dataMatrix.columns());
+            centroids[c] = new DenseVector(matrix.columns());
 
         // For each initial assignment, add the vector to it's centroid and
         // increase the size of the cluster.
@@ -136,7 +185,7 @@ public class Assignments implements Iterable<Assignment> {
             if (assignment.length() != 0) {
                 counts[assignment.assignments()[0]]++;
                 DoubleVector centroid = centroids[assignment.assignments()[0]];
-                VectorMath.add(centroid, dataMatrix.getRowVector(row));
+                VectorMath.add(centroid, matrix.getRowVector(row));
             }
             row++;
         }
@@ -151,17 +200,24 @@ public class Assignments implements Iterable<Assignment> {
     }
 
     /**
-     * Returns an array of sparse centroid vectors based on the data points in
-     * {@code dataMatrix} and the assignments given so far.  The number of rows
-     * in {@code dataMatrix} must be equal to the length of this {@link
-     * Assignments} instance.
+     * Returns an array of sparse centroid vectors of each discovered cluster
+     * which are scaled according the the number of data points asisgned to that
+     * cluster.  This assumes that the original {@link Matrix} is sparse.  Note
+     * that this method assumes that the original {@link Matrix} holding the
+     * data points contains rows of feature vectors.  
      */
-    public SparseDoubleVector[] getCentroids(SparseMatrix dataMatrix) {
+    public SparseDoubleVector[] getSparseCentroids() {
+        if (matrix == null)
+            throw new IllegalArgumentException(
+                    "The data matrix was not passed to Assignments.");
+
+        SparseMatrix sm = (SparseMatrix) matrix;
+
         // Initialzie the centroid vectors and the cluster sizes.
         SparseDoubleVector[] centroids = new SparseDoubleVector[numClusters];
         int[] counts = new int[numClusters];
         for (int c = 0; c < numClusters; ++c)
-            centroids[c] = new CompactSparseVector(dataMatrix.columns());
+            centroids[c] = new CompactSparseVector(matrix.columns());
 
         // For each initial assignment, add the vector to it's centroid and
         // increase the size of the cluster.
@@ -169,59 +225,18 @@ public class Assignments implements Iterable<Assignment> {
         for (Assignment assignment : assignments) {
             if (assignment.length() != 0) {
                 counts[assignment.assignments()[0]]++;
-                SparseDoubleVector centroid =
-                    centroids[assignment.assignments()[0]];
-                VectorMath.add(centroid, dataMatrix.getRowVector(row));
+                DoubleVector centroid = centroids[assignment.assignments()[0]];
+                VectorMath.add(centroid, sm.getRowVector(row));
             }
             row++;
         }
 
         // Scale any non empty clusters by their size.
         for (int c = 0; c < numClusters; ++c)
-            if (counts[c] > 0)
+            if (counts[c] != 0)
                 centroids[c] = new ScaledSparseDoubleVector(
-                        centroids[c], 1d/counts[c]);
+                        centroids[c],1d/counts[c]);
 
         return centroids;
-    }
-
-    /**
-     * An internal {@link Iterator} for accessing {@link Assignment} objects.
-     */
-    private class ArrayIterator implements Iterator<Assignment> {
-
-        /**
-         * The current index of the iterator.
-         */
-        int index;
-
-        /**
-         * Creates a new {@link ArrayIterator} that starts at index 0.
-         */
-        public ArrayIterator() {
-            index = 0;
-        }
-
-        /**
-         * Unsupported.
-         */
-        public void remove() {
-            throw new UnsupportedOperationException(
-                    "Cannot remove from an ArrayIterator");
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean hasNext() {
-            return index < assignments.length;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Assignment next() {
-            return assignments[index++];
-        }
     }
 }

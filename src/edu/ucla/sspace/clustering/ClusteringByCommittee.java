@@ -292,7 +292,7 @@ public class ClusteringByCommittee implements Clustering {
             }
             result[r] = new SoftAssignment(assignments);
         }
-        return new Assignments(committees.size(), result);
+        return new Assignments(committees.size(), result, m);
     }
 
     /**

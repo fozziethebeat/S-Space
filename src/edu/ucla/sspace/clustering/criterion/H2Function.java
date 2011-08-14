@@ -50,7 +50,7 @@ public class H2Function extends HybridBaseFunction {
     /**
      * {@inheritDoc}
      */
-    public boolean maximize() {
+    public boolean isMaximize() {
         return true;
     }
 }

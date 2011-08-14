@@ -57,6 +57,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * treating the old centroids as new heavily weighted data points.  This process
  * happens automatically when one of several thresholds are passed.
  *
+ * TODO: Add link to braverman paper.
+ *
  * @author Keith Stevens
  */
 public class StreamingKMeans<T extends DoubleVector>

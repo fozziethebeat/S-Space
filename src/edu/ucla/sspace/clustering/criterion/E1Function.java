@@ -48,7 +48,7 @@ public class E1Function extends BaseFunction {
     private DoubleVector completeCentroid;
 
     /**
-     * The distance from each cluster to {@code completeCentroid}.
+     * The the dot product between each cluster and {@code completeCentroid}.
      */
     private double[] simToComplete;
 
@@ -98,7 +98,8 @@ public class E1Function extends BaseFunction {
 
         simToComplete = new double[centroids.length];
         for (int c = 0; c < centroids.length; ++c)
-            simToComplete[c] = dotProduct(centroids[c], completeCentroid);
+            simToComplete[c] = VectorMath.dotProduct(
+                    centroids[c], completeCentroid);
     }
 
     /**
@@ -108,7 +109,7 @@ public class E1Function extends BaseFunction {
                                          int oldCentroidIndex,
                                          int altClusterSize) {
         double newScore = simToComplete[oldCentroidIndex];
-        newScore -= dotProduct(completeCentroid, vector);
+        newScore -= VectorMath.dotProduct(completeCentroid, vector);
         newScore /= subtractedMagnitude(centroids[oldCentroidIndex], vector);
         newScore *= altClusterSize;
         return newScore;
@@ -119,7 +120,7 @@ public class E1Function extends BaseFunction {
      */
     protected double getNewCentroidScore(int newCentroidIndex,
                                          DoubleVector dataPoint) {
-        double newScore = dotProduct(completeCentroid, dataPoint);
+        double newScore = VectorMath.dotProduct(completeCentroid, dataPoint);
         newScore += simToComplete[newCentroidIndex];
         newScore /= modifiedMagnitude(centroids[newCentroidIndex], dataPoint);
         newScore *= (clusterSizes[newCentroidIndex] + 1);
@@ -129,7 +130,7 @@ public class E1Function extends BaseFunction {
     /**
      * {@inheritDoc}
      */
-    public boolean maximize() {
+    public boolean isMaximize() {
         return false;
     }
 
@@ -139,9 +140,9 @@ public class E1Function extends BaseFunction {
     protected void updateScores(int newCentroidIndex,
                                 int oldCentroidIndex,
                                 DoubleVector vector) {
-        simToComplete[newCentroidIndex] += dotProduct(
+        simToComplete[newCentroidIndex] += VectorMath.dotProduct(
                 completeCentroid, vector);
-        simToComplete[oldCentroidIndex] -= dotProduct(
+        simToComplete[oldCentroidIndex] -= VectorMath.dotProduct(
                 completeCentroid, vector);
     }
 }

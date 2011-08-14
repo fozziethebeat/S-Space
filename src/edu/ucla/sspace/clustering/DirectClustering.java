@@ -189,10 +189,10 @@ public class DirectClustering implements Clustering {
                                       KMeansSeed seedType,
                                       CriterionFunction criterion) {
         int[] bestAssignment = null;
-        double bestScore = (criterion.maximize()) ? 0 : Double.MAX_VALUE;
+        double bestScore = (criterion.isMaximize()) ? 0 : Double.MAX_VALUE;
         for (int i = 0; i < numRepetitions; ++i) {
-            clusterInt(matrix, numClusters, seedType, criterion);
-            if (criterion.maximize()) {
+            clusterIteration(matrix, numClusters, seedType, criterion);
+            if (criterion.isMaximize()) {
                 if (criterion.score() > bestScore) {
                     bestScore = criterion.score();
                     bestAssignment = criterion.assignments();
@@ -210,17 +210,16 @@ public class DirectClustering implements Clustering {
         for (int i = 0; i < bestAssignment.length; ++i)
             assignments[i] = new HardAssignment(bestAssignment[i]);
 
-        return new Assignments(numClusters, assignments);
-
+        return new Assignments(numClusters, assignments, matrix);
     }
 
     /**
-     * performs one run of Direct Clustering over the data set.
+     * Performs one iteration of Direct Clustering over the data set.
      */
-    private static void clusterInt(Matrix matrix,
-                                   int numClusters,
-                                   KMeansSeed seedType,
-                                   CriterionFunction criterion) {
+    private static void clusterIteration(Matrix matrix,
+                                         int numClusters,
+                                         KMeansSeed seedType,
+                                         CriterionFunction criterion) {
         DoubleVector[] centers = seedType.chooseSeeds(numClusters, matrix);
 
         // Compute the initial set of assignments for each data point based on

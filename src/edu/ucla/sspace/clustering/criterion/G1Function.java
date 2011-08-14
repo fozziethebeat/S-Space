@@ -49,7 +49,7 @@ public class G1Function extends BaseFunction {
     private DoubleVector completeCentroid;
 
     /**
-     * The distance from each cluster to {@code completeCentroid}.
+     * The dot product between cluster and {@code completeCentroid}.
      */
     private double[] simToComplete;
 
@@ -99,7 +99,8 @@ public class G1Function extends BaseFunction {
 
         simToComplete = new double[centroids.length];
         for (int c = 0; c < centroids.length; ++c)
-            simToComplete[c] = dotProduct(completeCentroid, centroids[c]);
+            simToComplete[c] = VectorMath.dotProduct(
+                    completeCentroid, centroids[c]);
     }
 
     /**
@@ -109,7 +110,7 @@ public class G1Function extends BaseFunction {
                                          int oldCentroidIndex,
                                          int altClusterSize) {
         double newScore = simToComplete[oldCentroidIndex];
-        newScore -= dotProduct(completeCentroid, vector);
+        newScore -= VectorMath.dotProduct(completeCentroid, vector);
         newScore /= subtractedMagnitudeSqrd(
                 centroids[oldCentroidIndex], vector);
         return newScore;
@@ -118,7 +119,7 @@ public class G1Function extends BaseFunction {
     protected double getNewCentroidScore(int newCentroidIndex,
                                          DoubleVector dataPoint) {
         double newScore = simToComplete[newCentroidIndex];
-        newScore += dotProduct(completeCentroid, dataPoint);
+        newScore += VectorMath.dotProduct(completeCentroid, dataPoint);
         newScore /= modifiedMagnitudeSqrd(
                 centroids[newCentroidIndex], dataPoint);
         return newScore;
@@ -127,7 +128,7 @@ public class G1Function extends BaseFunction {
     /**
      * {@inheritDoc}
      */
-    public boolean maximize() {
+    public boolean isMaximize() {
         return false;
     }
 
@@ -137,9 +138,9 @@ public class G1Function extends BaseFunction {
     protected void updateScores(int newCentroidIndex,
                                 int oldCentroidIndex,
                                 DoubleVector vector) {
-        simToComplete[newCentroidIndex] += dotProduct(
+        simToComplete[newCentroidIndex] += VectorMath.dotProduct(
                 completeCentroid, vector);
-        simToComplete[oldCentroidIndex] -= dotProduct(
+        simToComplete[oldCentroidIndex] -= VectorMath.dotProduct(
                 completeCentroid, vector);
     }
 }

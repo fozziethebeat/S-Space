@@ -44,6 +44,9 @@ import java.util.Properties;
  * </p>  This implementation implements a subclass of the {@link
  * BaseSpectralCut} and simply computes the second eigen vector for a data set.
  *
+ * @see BaseSpectralCut
+ * @see SpectralClustering
+ *
   * @author Keith Stevens
  */
 public class CKVWSpectralClustering06 implements Clustering {

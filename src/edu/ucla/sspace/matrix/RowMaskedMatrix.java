@@ -40,9 +40,16 @@ import java.util.Set;
  * original.  This class is intended to be use when a large matrix has been
  * created and submatrices of the large matrix need to be treated as full {@code
  * Matrix} instances; rather than copy the data, this class provides a way of
- * representing the original data as a partial view.<p>
+ * representing the original data as a partial view.
+ *
+ * </p>
  *
  * All methods are write-through to the original backing matrix.
+ *
+ * </p>
+ *
+ * This matrix recomputes the mapping if the {@link Matrix} being masked is also
+ * a {@link RowMaskedMatrix}, thus preventing a recursive call to row lookups.
  *
  * @author David Jurgens
  */
