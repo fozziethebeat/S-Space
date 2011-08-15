@@ -50,8 +50,6 @@ import java.util.TreeMap;
  * between vectors and arrays.  {@link SemanticSpace} implementations should use
  * this class.
  *
- * TODO: unit test cosine similarity with it's craaaazy optimizations.
- *
  * @author Keith Stevens
  * @author David Jurgens
  */
@@ -332,7 +330,8 @@ public class Similarity {
             // product.  Because it would be more expensive to compute the
             // intersection of the two sets, we assume that any potential
             // misses would be less of a performance hit.
-            if (nzA.length < nzB.length) {
+            if (a.length() < b.length() ||
+                nzA.length < nzB.length) {
                 DoubleVector t = a;
                 a = b;
                 b = t;
@@ -350,10 +349,17 @@ public class Similarity {
         // multiplications.
         else if (b instanceof SparseVector) {
             SparseVector svB = (SparseVector)b;
-            int[] nzB = svB.getNonZeroIndices();
+            for (int nz : svB.getNonZeroIndices())
+                dotProduct += b.get(nz) * a.get(nz);
+        }
 
-            for (int nz : nzB)
-                dotProduct += b.get(nz) + a.get(nz);
+        // Check if the first vector is sparse.  If so, use only the non-zero
+        // indices of a to speed up the computation by avoiding zero
+        // multiplications.
+        else if (a instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            for (int nz : svA.getNonZeroIndices())
+                dotProduct += b.get(nz) * a.get(nz);
         }
 
         // Otherwise, just assume both are dense and compute the full amount

@@ -25,6 +25,7 @@ import edu.ucla.sspace.dependency.DependencyPath;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -152,8 +153,10 @@ public class PathBasedBasisMapping implements DependencyPathBasisMapping {
      * Returns the set of keys known by this {@link BasisMapping}
      */
     public Set<String> keySet() {
-        // TODO: Throw something not null.
-        return null;
+        Set<String> keys = new HashSet<String>();
+        for (PathSignature path : pathToIndex.keySet())
+            keys.add(path.toString());
+        return keys;
     }
 
     /**

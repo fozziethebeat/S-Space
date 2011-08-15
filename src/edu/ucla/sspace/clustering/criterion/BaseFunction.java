@@ -282,7 +282,11 @@ public abstract class BaseFunction implements CriterionFunction {
     }
 
     /**
-     * Returns a {@link DoubleVector} that is equal to {@code c - v}.
+     * Returns a {@link DoubleVector} that is equal to {@code c - v}.  This
+     * method is used instead of the one in {@link VectorMath} so that a {@link
+     * DenseDynamicMagnitudeVector} can be used to represent the difference.
+     * This vector type is optimized for when many calls to magnitude are
+     * interleaved with updates to a few dimensions in the vector.
      */
     protected static DoubleVector subtract(DoubleVector c, DoubleVector v) {
         DoubleVector newCentroid = new DenseDynamicMagnitudeVector(c.length());

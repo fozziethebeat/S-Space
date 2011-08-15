@@ -44,7 +44,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An implementation of a simple, highly accurate streaming K Means algorithm.
- * It is based on a forthcoming paper.
+ * It is based on a the following paper:
+ *
+ * <ul>
+ *   <li> Braverman, V., Meyerson, A., Ostrovsky, R., Roytman, A., Shindler, M.,
+ *   and Tagiku, B.  Streaming k-means on Well-Clusterable Data.  In Proceedings
+ *   of SODA. 2011, 26-40.  Available online <a
+ *   href="www.cs.ucla.edu/~shindler/StreamingKMeans_soda11.pdfSimilar">here</a>
+ *   </li>
+ * </ul>
  *
  * </p>
  *
@@ -56,8 +64,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * points assigned to each centroid, clearing out all centroids, and then
  * treating the old centroids as new heavily weighted data points.  This process
  * happens automatically when one of several thresholds are passed.
- *
- * TODO: Add link to braverman paper.
  *
  * @author Keith Stevens
  */

@@ -42,6 +42,27 @@ import java.util.TreeSet;
  * requesting the option value.  In the case of options corresponding to
  * classnames, the accessor assumes that no argument constructor exists.
  *
+ * </p>
+ *
+ * Below are some common usages of this class:
+ *
+ * <pre>
+ * 
+ * ArgOptions opts = new ArgOptions();
+ * opts.addOption('c', "numClusters", "the number of clusters",
+ *                true, "INT", "Required");
+ * opts.addOption('C', "clustering", "the clustering algorithm",
+ *                true, "CLASSNAME", "Required");
+ * opts.addOption('v', "verbose", "true if logs should be emitted",
+ *                false, null, "Optional");
+ * opts.parseOptions(args);
+ *
+ * int numClusters = opts.getIntOption('c');
+ * boolean verbose = opts.hasOption('v');
+ * String clusterName = opts.getStringOption('C');
+ *
+ * </pre>
+ *
  * @author David Jurgens
  */
 public class ArgOptions {

@@ -56,7 +56,9 @@ import java.util.logging.Logger;
 
 
 /**
- * This class is thread-safe
+ * This {@link SemanticSpace} wraps a {@link Map} from strings to {@link
+ * Vector}s.  Both {@link #processDocument} and {@link #processSpace} are
+ * no-ops.
  *
  * @author Keith Stevens
  */
@@ -80,12 +82,27 @@ public class VectorMapSemanticSpace<T extends Vector> implements SemanticSpace {
      */
     private String spaceName;    
 
+    /**
+     * Creates a new {@link VectorMapSemanticSpace} around the pre-existing
+     * {@link Map}.
+     */
     public VectorMapSemanticSpace(Map<String, T> wordSpace,
                                   String spaceName,
                                   int dimensions) {
-      this.wordSpace = wordSpace;
-      this.dimensions = dimensions;
-      this.spaceName = spaceName;
+        if (wordSpace == null)
+            throw new IllegalArgumentException(
+                    "the wordSpace must be non-null");
+        if (spaceName == null)
+            throw new IllegalArgumentException(
+                    "the spaceName must be non-null");
+        if (dimensions <= 0)
+            throw new IllegalArgumentException(
+                    "the VectorMapSemanticSpace must have more " +
+                    "than 0 dimensions");
+
+        this.wordSpace = wordSpace;
+        this.dimensions = dimensions;
+        this.spaceName = spaceName;
     }
 
     /**

@@ -52,11 +52,20 @@ import java.util.logging.Logger;
  *
  * </p>
  *
- * There are several various on computing the conductance of a matrix.  This
- * base class does most of the heavy lifting, such as computing the centorids.
- * This class also re-orders the data points such that each region is composd of
- * the most similar vectors.  The resulting cut will be non continuous in the
- * original data set, but will be continious in the re-ordered version.
+ * There are several variations on computing the conductance of a matrix.  This
+ * class does nearly all of the heavy computation, except for computing the
+ * second eigen vector of an affinity matrix.   Subclasses need only implement
+ * {@link #computeSecondEigenVector}, which should return a dense {@link
+ * DoubleVector} that represents the eigen values of the affinity matrix.
+ * Implementations are suggested to avoid explicitly computing the full affinity
+ * matrix.
+ *
+ * </p>
+ *
+ * This abstract class provides the rest of the needed functionality for {@link
+ * EigenCut}, such as computing the objective functions, selecting an optimal
+ * conductance cut accross the affinity matrix, and computing the split
+ * partitions.
  * 
  * @author Keith Stevens
  */
@@ -137,7 +146,8 @@ public abstract class BaseSpectralCut implements EigenCut {
         rho = new DenseVector(vectorLength);
         pSum = 0;
         for (int r = 0; r < matrix.rows(); ++r) {
-            double dot = dotProduct(matrixRowSums, matrix.getRowVector(r));
+            double dot = VectorMath.dotProduct(
+                    matrixRowSums, matrix.getRowVector(r));
             pSum += dot;
             rho.set(r, dot);
         }
@@ -255,7 +265,8 @@ public abstract class BaseSpectralCut implements EigenCut {
                 matrixRowSums, 1/((double) dataMatrix.rows()));
         double score = 0;
         for (int r = 0; r < dataMatrix.rows(); ++r)
-            score += dotProduct(centroid, dataMatrix.getRowVector(r));
+            score += VectorMath.dotProduct(
+                    centroid, dataMatrix.getRowVector(r));
         return score;
     }
 
@@ -301,7 +312,7 @@ public abstract class BaseSpectralCut implements EigenCut {
 
         // Compute the total distance of each asisgned point to it's centroid.
         for (int i = 0; i < assignments.length; ++i)
-            score += dotProduct(
+            score += VectorMath.dotProduct(
                     centroids[assignments[i]], data.getRowVector(i));
         return score;
     }
@@ -370,7 +381,7 @@ public abstract class BaseSpectralCut implements EigenCut {
             else {
                 DoubleVector centroid = centroids[assignment];
                 intraClusterScore += (centroidSizes[assignment] -
-                                      dotProduct(v, centroid));
+                                      VectorMath.dotProduct(v, centroid));
                 VectorMath.add(centroid, v);
                 numComparisons[assignment] += centroidSizes[assignment];
             }
@@ -397,13 +408,13 @@ public abstract class BaseSpectralCut implements EigenCut {
      */
     protected static DoubleVector orthonormalize(DoubleVector v,  
                                                  DoubleVector other) {
-        double dot = dotProduct(v, other);
+        double dot = VectorMath.dotProduct(v, other);
         dot -= v.get(0) * other.get(0);
         if (other.get(0) != 0d) {
             dot /= other.get(0);
             v.add(0, -dot);
         }
-        dot = dotProduct(v, v);
+        dot = VectorMath.dotProduct(v, v);
         if (1/dot == 0d || dot == 0)
             return v;
 
@@ -436,7 +447,7 @@ public abstract class BaseSpectralCut implements EigenCut {
         double rhoY = rhoSum - rho.get(0);
 
         // Compute the dot product between the first possible cut.
-        double u = dotProduct(x, y); 
+        double u = VectorMath.dotProduct(x, y); 
 
         // Find the current conductance for the cut, assume that this is the
         // best so far.
@@ -450,8 +461,8 @@ public abstract class BaseSpectralCut implements EigenCut {
             // Compute the new value of u, the denominator for computing the
             // conductance.
             DoubleVector vector = matrix.getRowVector(i);
-            double xv = dotProduct(x, vector);
-            double yv = dotProduct(y, vector);
+            double xv = VectorMath.dotProduct(x, vector);
+            double yv = VectorMath.dotProduct(y, vector);
             u = u - xv + yv + 1;
 
             // Shift over vectors from y to x.
@@ -470,28 +481,6 @@ public abstract class BaseSpectralCut implements EigenCut {
             }
         }
         return cutIndex+1;
-    }
-
-    /**
-     * Computes the dot product when the second vector may be sparse.
-     */
-    protected static double dotProduct(DoubleVector v1, DoubleVector v2) {
-        double dot = 0;
-        if (v2 instanceof SparseDoubleVector) {
-            SparseDoubleVector sv2 = (SparseDoubleVector) v2;
-            int[] nonZeros = sv2.getNonZeroIndices();
-            for (int index : nonZeros) {
-                double v2Value = v2.get(index);
-                dot += v2Value * v1.get(index);
-            }
-        } else {
-            for (int i = 0; i < v2.length(); ++i) {
-                double v2Value = v2.get(i);
-                dot += v2Value * v1.get(i);
-            }
-        }
-
-        return dot;
     }
 
     /**

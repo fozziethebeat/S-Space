@@ -37,7 +37,6 @@ import edu.ucla.sspace.vector.VectorMath;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import java.util.logging.Logger;
 
@@ -62,7 +61,19 @@ import java.util.logging.Logger;
  *   </li>
  * </ul>
  *
- * TODO: Update javadoc.
+ * This class utilizes a {@link EigenCut} instance to compute a spectral
+ * partition of a dataset.  Given a single data set, it will recursively
+ * partition that data set using a {@link EigenCut} instance until one of two
+ * limits: all data points are in a unique cluster, or the maximum number of
+ * partitions have been made, as set by the number of clusters.  Once all
+ * paritions are made, neighboring paritions may be merged according to the
+ * objective scores returned by the {@link EigenCut} instance.  If {@link
+ * cluster(Matrix, int)} is used, the requested number of clusters,
+ * or fewer, will be returned, otherwise the algorithm will decide on the
+ * correct number of clusters.
+ *
+ * @see EigenCut
+ * @see BaseSpectralCut
  *
  * @author Keith Stevens
  */
@@ -74,12 +85,32 @@ public class SpectralClustering {
     private static final Logger LOGGER =
         Logger.getLogger(SpectralClustering.class.getName());
 
+    /**
+     * The amount of weight given to inter-cluster similarity when using the
+     * relaxed correlation objective function.
+     */
     private final double alpha;
 
+    /**
+     * {@code 1 - alpha}, the weight given to intra-cluster dis-similarity.
+     */
     private final double beta;
 
+    /**
+     * A generator function that creates new fresh instances of a {@link
+     * EigenCut} implementation on demand.  This is used to reduce the
+     * reflection overhead, as many {@link EigenCut} instances may be needed.
+     */
     private final Generator<EigenCut> cutterGenerator;
 
+    /**
+     * Creates a new {@link SpectralClustering} instance.
+     *
+     * @param alpha The weight given to inter cluster similarity for the relaxed
+     *        correlation objective function.  {@code beta} will be set to
+     *        {@link 1 - alpha}.
+     * @param cutterGenerator A {@link Generator} of {@link EigenCut} instances.
+     */
     public SpectralClustering(double alpha,
                               Generator<EigenCut> cutterGenerator) {
         this.alpha = alpha;
@@ -87,6 +118,13 @@ public class SpectralClustering {
         this.cutterGenerator = cutterGenerator;
     }
 
+    /**
+     * Returns the Cluster {@link Assignments} of each data point in {@link
+     * matrix}.  This method will determine a "good" number of clusters
+     * algorithmiclly.  This method also uses the relaxed correlation objective
+     * function, as the k-means objective function would always keep each data
+     * point in it's own cluster.
+     */
     public Assignments cluster(Matrix matrix) {
         ClusterResult r = fullCluster(scaleMatrix(matrix), 0);
         verbose("Created " + r.numClusters + " clusters");
@@ -98,6 +136,12 @@ public class SpectralClustering {
         return new Assignments(r.numClusters, assignments, matrix);
     }
 
+    /**
+     * Returns the Cluster {@ link Assignments} for each data point in {@link
+     * matrix}.  This method will return at most {@code maxClusters}.  If {@code
+     * useKMeans} is true, the K-means objective function is used to merge
+     * clusters, otherwise the relaxed correlation function is used.
+     */
     public Assignments cluster(Matrix matrix,
                                 int maxClusters,
                                 boolean useKMeans) {
@@ -115,6 +159,12 @@ public class SpectralClustering {
         return new Assignments(r.numClusters, assignments, matrix);
     }
 
+    /**
+     * Returns a scaled {@link Matrix}, where each row is the unit
+     * magnitude version of the corresponding row vector in {@link matrix}.
+     * This is required so that dot product computations over a large number of
+     * data points can be distributed, wherease the cosine similarity cannot be.
+     */
     private Matrix scaleMatrix(Matrix matrix) {
         // Scale every data point such that it has a dot product of 1 with
         // itself.  This will make further calculations easier since the dot
@@ -140,6 +190,11 @@ public class SpectralClustering {
         }
     }
 
+    /**
+     * Returns a {@link ClusterResult} when {@link matrix} is spectrally
+     * clustered at a given {@link depth}.  This will recursively call itself
+     * until the number of rows in {@code matrix} is less than or equal to 1.
+     */
     private ClusterResult fullCluster(Matrix matrix,
                                       int depth) {
         verbose("Clustering at depth " + depth);
@@ -150,6 +205,8 @@ public class SpectralClustering {
         if (matrix.rows() <= 1) 
             return new ClusterResult(new int[matrix.rows()], 1);
 
+        // Get a fresh new eigen cutter and compute the specral cut of the
+        // matrix.
         EigenCut eigenCutter = cutterGenerator.generate();
         eigenCutter.computeCut(matrix);
 
@@ -173,6 +230,8 @@ public class SpectralClustering {
 
         verbose("Merging at depth " + depth);
 
+        // Compute the relaxed correlation objective function over the split
+        // partitions found so far.
         double splitObjective = eigenCutter.getSplitObjective(
                 alpha, beta,
                 leftResult.numClusters, leftResult.assignments,
@@ -209,16 +268,29 @@ public class SpectralClustering {
         return new ClusterResult(assignments, numClusters);
     }
 
+    /**
+     * Returns {@code maxClusters} {@link LimitedResult}s using spectral
+     * clustering with the relaxed correlation objective function.
+     */
     private LimitedResult[] limitedCluster(Matrix matrix,
                                            int maxClusters) {
         return limitedCluster(matrix, maxClusters, false);
     }
 
+    /**
+     * Returns {@code maxClusters} {@link LimitedResult}s using spectral
+     * clustering.  If {@code useKMeans}, the k-means objective function is used
+     * for merging, other wise the relaxed correlation objective function is
+     * used.
+     */
     private LimitedResult[] limitedCluster(Matrix matrix,
                                            int maxClusters,
                                            boolean useKMeans) {
         verbose("Clustering for " + maxClusters + " clusters.");
 
+        // Get a fresh new EigenCut first so that we can compute the RhoSum of
+        // the matrix, which is useful when computing the objective function for
+        // the merged result.
         EigenCut eigenCutter = cutterGenerator.generate();
 
         // If the matrix has only one element or the depth is equal to the
@@ -231,6 +303,9 @@ public class SpectralClustering {
                 result = new KMeansLimitedResult(new int[matrix.rows()], 1,
                         eigenCutter.getKMeansObjective());
             else
+                // When computing the inter-cluster similarity for the full
+                // matrix, this is simply rhowSum with out any self-similarity
+                // scores.
                 result = new SpectralLimitedResult(new int[matrix.rows()], 1, 
                         eigenCutter.getMergedObjective(alpha, beta),
                         eigenCutter.rhoSum() - matrix.rows() / 2.0,
@@ -238,6 +313,8 @@ public class SpectralClustering {
             return new LimitedResult[] {result};
         }
 
+        // Get a fresh new eigen cutter and compute the specral cut of the
+        // matrix.
         eigenCutter.computeCut(matrix);
 
         Matrix leftMatrix = eigenCutter.getLeftCut();
@@ -253,6 +330,9 @@ public class SpectralClustering {
                 result = new KMeansLimitedResult(new int[matrix.rows()], 1,
                         eigenCutter.getKMeansObjective());
             else
+                // When computing the inter-cluster similarity for the full
+                // matrix, this is simply rhowSum with out any self-similarity
+                // scores.
                 result = new SpectralLimitedResult(new int[matrix.rows()], 1, 
                         eigenCutter.getMergedObjective(alpha, beta),
                         eigenCutter.rhoSum() - matrix.rows() / 2.0,
@@ -271,6 +351,8 @@ public class SpectralClustering {
 
         verbose("Merging at for: " + maxClusters + " clusters");
 
+        // Get the re-ordering mapping for each partition.   Using this
+        // re-ordering, compute objective function for the entire data matrix.
         int[] leftReordering = eigenCutter.getLeftReordering();
         int[] rightReordering = eigenCutter.getRightReordering();
 
@@ -279,26 +361,43 @@ public class SpectralClustering {
             results[0] = new KMeansLimitedResult(new int[matrix.rows()], 1,
                     eigenCutter.getKMeansObjective());
         else
+            // When computing the inter-cluster similarity for the full
+            // matrix, this is simply rhowSum with out any self-similarity
+            // scores.
             results[0] = new SpectralLimitedResult(new int[matrix.rows()], 1, 
                     eigenCutter.getMergedObjective(alpha, beta),
                     eigenCutter.rhoSum() - matrix.rows() / 2.0,
                     (matrix.rows() * (matrix.rows()-1)) / 2);
 
+        // Each LimitedResult is ordered based on the number of clusters found.
+        // Iterate through each clustering result computed for each partition
+        // and find combined set of cluter assignments that satisfies the
+        // requested number of clusters.
         for (int i = 0; i < leftResults.length; ++i) {
             LimitedResult leftResult = leftResults[i];
+
+            // If there are no assignments found for this number of clusters,
+            // skip it.
             if (leftResult == null)
                 continue;
 
             for (int j = 0; j < rightResults.length; ++j) {
                 LimitedResult rightResult = rightResults[j];
+
+                // If there are no assignments found for this number of
+                // clusters, skip it.
                 if (rightResult == null)
                     continue;
 
+                // Compute the number of clusters found when using both the left
+                // and right parititons.
                 int numClusters =
                     leftResult.numClusters + rightResult.numClusters - 1;
                 if (numClusters >= results.length)
                     continue;
 
+                // Compute the combined objective function when using both the
+                // left and right partition results.
                 LimitedResult newResult;
                 if (useKMeans)
                     newResult = leftResult.combine(leftResult, rightResult,
@@ -309,8 +408,12 @@ public class SpectralClustering {
                             leftReordering, rightReordering,
                             eigenCutter.rhoSum());
 
+                // If no assignments have been made so far for this number of
+                // clusters, or the found score is better than the old score,
+                // store the combined LimitedResult as the best result for the
+                // number of clusters.
                 if (results[numClusters] == null ||
-                    results[numClusters].score() < newResult.score())
+                    results[numClusters].compareTo(newResult) < 0)
                     results[numClusters] = newResult;
             }
         }
@@ -320,19 +423,43 @@ public class SpectralClustering {
 
 
 
+    /**
+     * Logs data to info.
+     */
     private void verbose(String out) {
         LOGGER.info(out);
     }
 
+    /**
+     * A internal helper class that can combine cluster results from two
+     * separate partions using a particular objective function.
+     */
     private abstract class LimitedResult {
+        
+        /**
+         * The data assignments for a single {@link LimitedResult}.
+         */
         public int[] assignments;
+
+        /**
+         * The number of clusters.
+         */
         public int numClusters;
 
+        /**
+         * Creates a new {@link LimitedResult} using the given assignments and
+         * number of clusters.
+         */
         public LimitedResult(int[] assignments, int numClusters) {
             this.assignments = assignments;
             this.numClusters = numClusters;
         }
 
+        /**
+         * Combines the assignments made between two {@link LimitedResult}s.
+         * The cluster ids in {@code res2} will be increased based on the number
+         * of clusters in {@code res1}.
+         */
         int[] combineAssignments(LimitedResult res1, LimitedResult res2,
                                  int[] ordering1, int[] ordering2) {
             int[] newAssignments = new int[
@@ -346,16 +473,40 @@ public class SpectralClustering {
             return newAssignments;
         }
 
+        /**
+         * Returns the objective function score for this result.
+         */
         abstract double score();
+
+        /**
+         * Returns greater than 0 when {@code this} {@link LimitedResult} should
+         * be selected over {@code other}.
+         */
+        abstract double compareTo(LimitedResult other);
+
+        /**
+         * Returns a combined {@link LimitedResult} based on two existing {@link
+         * LimitedResult}s.
+         */
         abstract LimitedResult combine(LimitedResult res1, LimitedResult res2,
                                        int[] ordering1, int[] ordering2,
                                        double extra);
     }
 
+    /**
+     * Computes the k-means objective when combining two {@link LimitedResult}s.
+     */
     private class KMeansLimitedResult extends LimitedResult {
         
+        /**
+         * The k-means objective score for this result.
+         */
         public double score;
 
+        /**
+         * Creates a new {@link KMeansLimitedResult} with a given objective
+         * score.
+         */
         public KMeansLimitedResult(int[] assignments,
                                   int numClusters,
                                   double score) {
@@ -363,6 +514,10 @@ public class SpectralClustering {
             this.score = score;
         }
 
+        /**
+         * Returns a new {@link KMeansLimitedResult} with an update scored based
+         * on the scores of {@code res1} and {@code res2}.
+         */
         LimitedResult combine(LimitedResult res1, LimitedResult res2,
                               int[] ordering1, int[] ordering2,
                               double extra) {
@@ -377,51 +532,101 @@ public class SpectralClustering {
                     newAssignments, newNumClusters, newScore);
         }
 
+        /**
+         * Returns the k-means objective score.
+         */
         public double score() {
             return score;
         }
+
+        /**
+         * Returns greater than 0 when this score is greater than other's score.
+         */
+        public double compareTo(LimitedResult other) {
+            return this.score() - other.score();
+        }
     }
 
+    /**
+     * Computes the relaxed correlation objective function when combining two
+     * {@link LimitedResult}s.
+     */
     private class SpectralLimitedResult extends LimitedResult {
 
+        /**
+         * The total inter-cluster similarity.
+         */
         public double totalScore;
-        public double rawIntraScore;
-        public int intraCount;
 
+        /**
+         * The full intra-cluster similarity.
+         */
+        public double rawInterScore;
+
+        /**
+         * The number of intra-cluster similarity comparisons.
+         */
+        public int interCount;
+
+        /**
+         * Constructs a new {@link SpectralLimitedResult}.
+         */
         public SpectralLimitedResult(int[] assignments, int numClusters,
-                                     double totalScore, double rawIntraScore,
-                                     int intraCount) {
+                                     double totalScore, double rawInterScore,
+                                     int interCount) {
             super(assignments, numClusters);
 
             this.totalScore = totalScore;
-            this.rawIntraScore = rawIntraScore;
-            this.intraCount = intraCount;
+            this.rawInterScore = rawInterScore;
+            this.interCount = interCount;
         }
 
+        /**
+         * Returns {@link totalScore}.
+         */
         public double score() {
             return totalScore;
         }
 
-        LimitedResult combine(LimitedResult res1, LimitedResult res2,
-                              int[] ordering1, int[] ordering2,
-                              double rhoSum) {
+        /**
+         * Returns greater than 0 when other's score is greater than this score.
+         */
+        public double compareTo(LimitedResult other) {
+            return other.score() - this.score();
+        }
+
+        /**
+         * Returns the combined {@link LimitedResult} when using the
+         * relaxed correlation objective function. 
+         */ 
+        LimitedResult combine(LimitedResult res1, LimitedResult res2, 
+                              int[] ordering1, int[] ordering2, double rhoSum) {
+            // Assume that both are SpectralLimitedResults.
             SpectralLimitedResult sres1 = (SpectralLimitedResult) res1;
             SpectralLimitedResult sres2 = (SpectralLimitedResult) res2;
 
+            // Get the raw combined assignments and the number of clusters.
             int[] newAssignments = combineAssignments(
                     res1, res2, ordering1, ordering2);
             int newNumClusters = res1.numClusters + res2.numClusters;
 
-            double newIntraScore = sres1.rawIntraScore + sres2.rawIntraScore;
-            int newCount = sres1.intraCount + sres2.intraCount;
+            // Use the raw inter-cluster similarity to compute the new
+            // inter-cluster similarity and the number of inter-cluster
+            // similarity computations.
+            double newInterScore = sres1.rawInterScore + sres2.rawInterScore;
+            int newCount = sres1.interCount + sres2.interCount;
 
-            double interClusterScore =
-                (rhoSum-newAssignments.length) / 2.0 - newIntraScore;
-            newIntraScore = newCount - newIntraScore;
-            double newScore = alpha * newIntraScore + beta * interClusterScore;
+            // We can compute the intra cluster scores by taking subtracting out
+            // any self-similarity scores, any duplicate similarity scores, and
+            // the inter-cluster similarity scores from rhoSum.  This leaves
+            // only the intra-cluster similarity scores behind.
+            double intraClusterScore =
+                (rhoSum-newAssignments.length) / 2.0 - newInterScore;
+            newInterScore = newCount - newInterScore;
+            double newScore = alpha * newInterScore + beta * intraClusterScore;
 
             return new SpectralLimitedResult(newAssignments, newNumClusters,
-                                            newScore, newIntraScore, newCount);
+                                            newScore, newInterScore, newCount);
         }
     }
 

@@ -190,7 +190,7 @@ public class OnlineKMeans<T extends DoubleVector>
             while (elementIter.hasNext()) {
                 Cluster<T> cluster = elementIter.next();
                 similarity = cluster.compareWithVector(value);
-                if (similarity > bestScore) {
+                if (similarity >= bestScore) {
                     bestScore = similarity;
                     bestMatch = cluster;
                     bestIndex = i;

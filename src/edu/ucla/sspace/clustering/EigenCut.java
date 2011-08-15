@@ -29,6 +29,9 @@ import edu.ucla.sspace.vector.DoubleVector;
 /**
  * An interface for computing the spectral cut of a {@link Matrix}.
  *
+ * This interface is based on the spectral clustering algorithm described in the
+ * following two papers:
+ *
  * <ul>
  *   <li style="font-family:Garamond, Georgia, serif">Cheng, D., Kannan, R.,
  *     Vempala, S., Wang, G.  (2006).  A Divide-and-Merge Methodology for
@@ -45,7 +48,33 @@ import edu.ucla.sspace.vector.DoubleVector;
  *   </li>
  * </ul>
  *
- * TODO: Add javadoc explaining papers
+ * To briefly summarize, these algorithms take in a data matrix and attempt to
+ * recursively split the matrix using a spectral cut accross the according to
+ * the link structure of the data points.  The algorithm assumes that the data
+ * matrix is sparse and uses several optimizations to avoid computing the full
+ * affinity matrix in memory, which would be both large and dense.  Instead, the
+ * algorithm computes the dot product between each data point and the centroid
+ * of all data points.  These values are then used to scale the data matrix and
+ * compute the second eigen vector of the affinity matrix.  The second eigen
+ * vector is used to find an optimal cut accross the affinity matrix.  The
+ * "left" side of the cut should be made accessible by {@link getLeftCut} and
+ * the "right" side of the cut should be made accessible by {@link getRightCut}.
+ *
+ * </p>
+ *
+ * Once the data matrix has been split until every data point is in it's own
+ * partition, the algorithm merges portions of the tree using one of two
+ * objective functions.  The first, and most often used, is a relaxed
+ * correlation objective function.  This method balances inter cluster
+ * similarity and intra cluster dissimilarity, with a varying weight between
+ * the two scores.  {@link #getMergedObjective} and {@link #getSplitObjective}
+ * compute this objective function, with the first method computing the score
+ * when the full data matrix is used and the second method computing the score
+ * accross a given set of paritions.  The second objective function is the
+ * standard k-means objective function.  {@link #getKMeansObjective} computes
+ * this, with one method computing the objective of the data set as a single
+ * cluster and the other method computing the objective over a given set of
+ * clusters.
  *
  * @see BaseSpectralCut
  *
@@ -54,13 +83,15 @@ import edu.ucla.sspace.vector.DoubleVector;
 public interface EigenCut {
 
     /**
-     * Returns the sum of values in {@code rho}.
+     * Returns the sum of values in {@code rho}.  This is equivalent to
+     * sum({@code matrix} * {@code matrix}').
      */
     double rhoSum();
 
     /**
      * Computes the similarity between each data point and centroid of the data
-     * set.
+     * set.  This is essentially the row sums of the affinity matrix for {@code
+     * matrix}.
      */
     DoubleVector computeRhoSum(Matrix matrix);
 
