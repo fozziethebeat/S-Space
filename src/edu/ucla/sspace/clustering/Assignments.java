@@ -159,6 +159,11 @@ public class Assignments implements Iterable<Assignment> {
     public SparseDoubleVector[] getCentroids(SparseMatrix dataMatrix) {
         // Initialzie the centroid vectors and the cluster sizes.
         SparseDoubleVector[] centroids = new SparseDoubleVector[numClusters];
+
+        // If for some odd reason, no clusters were found, return no centroids.
+        if (numClusters == 0)
+            return centroids;
+
         int[] counts = new int[numClusters];
         for (int c = 0; c < numClusters; ++c)
             centroids[c] = new CompactSparseVector(dataMatrix.columns());

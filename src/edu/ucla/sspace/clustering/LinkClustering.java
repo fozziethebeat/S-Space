@@ -133,7 +133,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
      * The work used by all {@code LinkClustering} instances to perform
      * multi-threaded operations.
      */
-    private static final WorkQueue WORK_QUEUE = new WorkQueue();
+    private final WorkQueue workQueue;
     
     /**
      * The merges for the prior run of this clustering algorithm
@@ -158,6 +158,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         mergeOrder = null;
         edgeList = null;
         numRows = 0;
+        workQueue = WorkQueue.getWorkQueue();
     }
 
     /**
@@ -254,10 +255,10 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         
         // Register a task group for calculating all of the partition
         // densitities
-        Object key = WORK_QUEUE.registerTaskGroup(mergeOrder.size());
+        Object key = workQueue.registerTaskGroup(mergeOrder.size());
         for (int p = 0; p < mergeOrder.size(); ++p) {
             final int part = p;
-            WORK_QUEUE.add(key, new Runnable() {
+            workQueue.add(key, new Runnable() {
                     public void run() {
                         // Get the merges for this particular partitioning of
                         // the links
@@ -306,8 +307,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         }
 
         // Wait for all the partition densities to be calculated
-        WORK_QUEUE.await(key);
-
+        workQueue.await(key);
 
         Map.Entry<Double,Integer> densest = partitionDensities.lastEntry();
         LOGGER.fine("Partition " + densest.getValue() + 
@@ -378,10 +378,10 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             new SparseSymmetricMatrix(
                 new SparseHashMatrix(numEdges, numEdges));
 
-        Object key = WORK_QUEUE.registerTaskGroup(numEdges);
+        Object key = workQueue.registerTaskGroup(numEdges);
         for (int i = 0; i < numEdges; ++i) {
             final int row = i;
-            WORK_QUEUE.add(key, new Runnable() {
+            workQueue.add(key, new Runnable() {
                     public void run() {
                         for (int j = row; j < numEdges; ++j) {
                             Edge e1 = edgeList.get(row);
@@ -397,7 +397,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
                     }
                 });            
         }
-        WORK_QUEUE.await(key);
+        workQueue.await(key);
         return edgeSimMatrix;
     }
 

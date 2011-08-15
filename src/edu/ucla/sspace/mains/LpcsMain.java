@@ -25,12 +25,20 @@ import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
+import edu.ucla.sspace.matrix.AffinityMatrixCreator;
+
 import edu.ucla.sspace.nonlinear.LocalityPreservingCooccurrenceSpace;
+
+import edu.ucla.sspace.sim.CosineSimilarity;
+import edu.ucla.sspace.sim.SimilarityFunction;
+
+import edu.ucla.sspace.util.ReflectionUtil;
 
 import java.io.IOError;
 import java.io.IOException;
 
 import java.util.Properties;
+
 
 /**
  * An executable class for running {@link LocalityPreservingCooccurrenceSpace}
@@ -67,19 +75,18 @@ public class LpcsMain extends GenericMain {
                           "the number of dimensions in the semantic space",
                           true, "INT", "Algorithm Options"); 
         options.addOption('e', "edgeType", 
-                          "the method to used for adding edge to the " +
-                          "affinity matrix",
-                          true, "EdgeType", "Algorithm Options"); 
-        options.addOption('E', "edgeTypeParam", 
-                          "a parameter that the EdgeType selection process " +
-                          "may use",
+                          "the AffinityMatrixCreator that will select " +
+                          "edges for an affinity matrix",
+                          true, "CLASSNAME", "Required"); 
+        options.addOption('E', "edgeSimParam", 
+                          "a parameter that the edge selection method may use.",
                           true, "DOUBLE", "Algorithm Options"); 
-        options.addOption('W', "edgeWeighting", 
-                          "the method for weighting edges in the affinity " +
-                          "matrix",
-                          true, "EdgeWeighting", "Algorithm Options"); 
+        options.addOption('W', "kernelSim", 
+                          "the SimilarityFunction for weighting edges in " +
+                          "the affinity matrix",
+                          true, "CLASSNAME", "Required"); 
         options.addOption('G', "edgeWeightingParam", 
-                          "a parameter for the edge weighting process",
+                          "a parameter that the kernelSim method may use.",
                           true, "DOUBLE", "Algorithm Options");
         options.addOption('s', "windowSize",
                           "The number of words to inspect to the left and " +
@@ -98,7 +105,19 @@ public class LpcsMain extends GenericMain {
     }
     
     protected SemanticSpace getSpace() {
-        return new LocalityPreservingCooccurrenceSpace();
+        AffinityMatrixCreator creator = ReflectionUtil.getObjectInstance(
+                argOptions.getStringOption('e'));
+        if (argOptions.hasOption("edgeTypeParam"))
+            creator.setParams(argOptions.getIntOption("edgeTypeParam"));
+
+        SimilarityFunction edgeSim = new CosineSimilarity();
+        SimilarityFunction kernelSim = ReflectionUtil.getObjectInstance(
+                argOptions.getStringOption("edgeWeighting"));
+        if (argOptions.hasOption("edgeWeighting"))
+            kernelSim.setParams(argOptions.getIntOption("edgeWeightingParam"));
+        creator.setFunctions(edgeSim, kernelSim);
+
+        return new LocalityPreservingCooccurrenceSpace(creator);
     }
 
     /**
@@ -113,35 +132,10 @@ public class LpcsMain extends GenericMain {
         // use the System properties in case the user specified them as
         // -Dprop=<val> to the JVM directly.
         Properties props = System.getProperties();
-
-         if (argOptions.hasOption("windowSize")) {
-             props.setProperty(
-                     LocalityPreservingCooccurrenceSpace.WINDOW_SIZE_PROPERTY,
-                     argOptions.getStringOption("windowSize"));
-         }
-        if (argOptions.hasOption("dimensions")) {
-            props.setProperty(LocalityPreservingCooccurrenceSpace.LPCS_DIMENSIONS_PROPERTY,
-                              argOptions.getStringOption("dimensions"));
-        }
-        if (argOptions.hasOption("edgeType")) {
+        if (argOptions.hasOption("windowSize")) {
             props.setProperty(
-                LocalityPreservingCooccurrenceSpace.LPCS_AFFINITY_EDGE_PROPERTY,
-                argOptions.getStringOption("edgeType"));
-        }
-        if (argOptions.hasOption("edgeTypeParam")) {
-            props.setProperty(
-                LocalityPreservingCooccurrenceSpace.LPCS_AFFINITY_EDGE_PARAM_PROPERTY,
-                argOptions.getStringOption("edgeTypeParam"));
-        }
-        if (argOptions.hasOption("edgeWeighting")) {
-            props.setProperty(
-                LocalityPreservingCooccurrenceSpace.LPCS_AFFINITY_EDGE_WEIGHTING_PROPERTY,
-                argOptions.getStringOption("edgeWeighting"));
-        }
-        if (argOptions.hasOption("edgeWeightingParam")) {
-            props.setProperty(
-                LocalityPreservingCooccurrenceSpace.LPCS_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY,
-                argOptions.getStringOption("edgeWeightingParam"));
+                LocalityPreservingCooccurrenceSpace.WINDOW_SIZE_PROPERTY,
+                argOptions.getStringOption("windowSize"));
         }
         return props;
     }

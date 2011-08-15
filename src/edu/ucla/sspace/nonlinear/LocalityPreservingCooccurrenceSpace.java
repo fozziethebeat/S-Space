@@ -25,12 +25,9 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.Statistics;
 
-import edu.ucla.sspace.hal.EvenWeighting;
 import edu.ucla.sspace.hal.WeightingFunction;
 
 import edu.ucla.sspace.matrix.AffinityMatrixCreator;
-import edu.ucla.sspace.matrix.AffinityMatrixCreator.EdgeType;
-import edu.ucla.sspace.matrix.AffinityMatrixCreator.EdgeWeighting;
 import edu.ucla.sspace.matrix.AtomicMatrix;
 import edu.ucla.sspace.matrix.GrowingSparseMatrix;
 import edu.ucla.sspace.matrix.LocalityPreservingProjection;
@@ -44,6 +41,7 @@ import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;
+import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.Pair;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
@@ -118,18 +116,6 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     public static final String LPCS_DIMENSIONS_PROPERTY =
         PROPERTY_PREFIX + ".dimensions";
 
-    public static final String LPCS_AFFINITY_EDGE_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeType";
-
-    public static final String LPCS_AFFINITY_EDGE_PARAM_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeTypeParam";
-
-    public static final String LPCS_AFFINITY_EDGE_WEIGHTING_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeWeighting";
-
-    public static final String LPCS_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeWeightingParam";
-    
     /**
      * The default number of words before and after the focus word to include
      */
@@ -138,11 +124,11 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     /**
      * The default {@code WeightingFunction} to use.
      */        
-    public static final WeightingFunction DEFAULT_WEIGHTING = 
-        new EvenWeighting();
+    public static final String DEFAULT_WEIGHTING = 
+        "edu.ucla.sspace.hal.EvenWeighting";
 
     /**
-     * Logger for HAL
+     * Logger for LocalityPreservingCooccurrenceSpace.
      */
     private static final Logger LOGGER = 
         Logger.getLogger(LocalityPreservingCooccurrenceSpace.class.getName());
@@ -187,17 +173,24 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     private Matrix reduced;
 
     /**
+     * The {@link AffinityMatrixCreator}.
+     */
+    private AffinityMatrixCreator affinityCreator;
+
+    /**
      * Constructs a new instance using the system properties for configuration.
      */
-    public LocalityPreservingCooccurrenceSpace() {
-        this(System.getProperties());
+    public LocalityPreservingCooccurrenceSpace(AffinityMatrixCreator creator) {
+        this(creator, System.getProperties());
     }
     
     /**
      * Constructs a new instance using the provided properties for
      * configuration.
      */
-    public LocalityPreservingCooccurrenceSpace(Properties properties) {
+    public LocalityPreservingCooccurrenceSpace(AffinityMatrixCreator creator,
+                                               Properties properties) {
+        affinityCreator = creator;
         cooccurrenceMatrix = new GrowingSparseMatrix();
         atomicMatrix = Matrices.synchronizedMatrix(cooccurrenceMatrix);
         reduced = null;
@@ -210,30 +203,11 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
             ? Integer.parseInt(windowSizeProp)
             : DEFAULT_WINDOW_SIZE;
 
-        String weightFuncProp = 
-        properties.getProperty(WEIGHTING_FUNCTION_PROPERTY);
-        weighting = (weightFuncProp == null) 
-            ? DEFAULT_WEIGHTING
-            : loadWeightingFunction(weightFuncProp);
+        weighting = ReflectionUtil.getObjectInstance(
+                properties.getProperty(
+                    WEIGHTING_FUNCTION_PROPERTY, DEFAULT_WEIGHTING));
     }
 
-    /**
-     * Creates an instance of {@link WeightingFunction} based on the provide
-     * class name.
-     */
-    private static WeightingFunction loadWeightingFunction(String classname) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<WeightingFunction> clazz = 
-            (Class<WeightingFunction>)Class.forName(classname);
-            WeightingFunction wf = clazz.newInstance();
-            return wf;
-        } catch (Exception e) {
-            // rethrow based on any reflection errors
-            throw new Error(e);
-        }
-    }
-    
     /**
      * {@inheritDoc}
      */
@@ -393,11 +367,7 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
 
         // Set all of the default properties
         int dimensions = 300; 
-        EdgeType edgeType = EdgeType.NEAREST_NEIGHBORS;
-        double edgeTypeParam = 20;
-        EdgeWeighting weighting = EdgeWeighting.COSINE_SIMILARITY;
-        double edgeWeightParam = 0; // unused with default weighting
-        
+
         // Then load any of the user-specified properties
         String dimensionsProp = 
             properties.getProperty(LPCS_DIMENSIONS_PROPERTY);
@@ -408,39 +378,6 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
                 throw new IllegalArgumentException(
                     LPCS_DIMENSIONS_PROPERTY + " is not an integer: " +
                     dimensionsProp);
-            }
-        }
-        
-        String edgeTypeProp = 
-            properties.getProperty(LPCS_AFFINITY_EDGE_PROPERTY);
-        if (edgeTypeProp != null) 
-            edgeType = EdgeType.valueOf(edgeTypeProp.toUpperCase());
-        String edgeTypeParamProp = 
-            properties.getProperty(LPCS_AFFINITY_EDGE_PARAM_PROPERTY);
-        if (edgeTypeParamProp != null) {
-            try {
-                edgeTypeParam = Double.parseDouble(edgeTypeParamProp);
-            } catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException(
-                    LPCS_AFFINITY_EDGE_PARAM_PROPERTY + 
-                    " is not an double: " + edgeTypeParamProp);
-            }
-        }
-        
-        String edgeWeightingProp = 
-            properties.getProperty(LPCS_AFFINITY_EDGE_WEIGHTING_PROPERTY);
-        if (edgeWeightingProp != null) 
-            weighting = EdgeWeighting.valueOf(
-                edgeWeightingProp.toUpperCase());
-        String edgeWeightingParamProp = properties.getProperty(
-            LPCS_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY);
-        if (edgeWeightingParamProp != null) {
-            try {
-                edgeWeightParam = Double.parseDouble(edgeWeightingParamProp);
-            } catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException(
-                    LPCS_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY + 
-                    " is not an double: " + edgeWeightingParamProp);
             }
         }
         
@@ -457,9 +394,8 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
         }
 
         // Calculate the affinity matrix for the cooccurrence matrix
-        MatrixFile affinityMatrix = AffinityMatrixCreator.calculate(
-            cooccurrenceMatrix, Similarity.SimType.COSINE, 
-            edgeType, edgeTypeParam, weighting, edgeWeightParam);
+        MatrixFile affinityMatrix = affinityCreator.calculate(
+                cooccurrenceMatrix);
         
         // Using the affinity matrix as a guide to locality, project the
         // co-occurrence matrix into the lower dimensional subspace

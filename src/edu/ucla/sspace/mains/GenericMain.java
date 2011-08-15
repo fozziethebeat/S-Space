@@ -35,6 +35,7 @@ import edu.ucla.sspace.util.CombinedIterator;
 import edu.ucla.sspace.util.LimitedIterator;
 import edu.ucla.sspace.util.LoggerUtil;
 import edu.ucla.sspace.util.ReflectionUtil;
+import edu.ucla.sspace.util.WorkQueue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,6 +55,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 /**
  * A base class for running {@link SemanticSpace} algorithms.  All derived main
@@ -390,6 +392,9 @@ public abstract class GenericMain {
         if (argOptions.hasOption("threads")) {
             numThreads = argOptions.getIntOption("threads");
         }
+        // Initialize the work queue so that any system that uses one is
+        // limitedto the number of processes specified by the command line. 
+        WorkQueue.getWorkQueue(numThreads);
 
         boolean overwrite = true;
         if (argOptions.hasOption("overwrite")) {
@@ -562,8 +567,13 @@ public abstract class GenericMain {
 
         final AtomicInteger count = new AtomicInteger(0);
         
+        WorkQueue queue = WorkQueue.getWorkQueue(numThreads);
+        Object key = queue.registerTaskGroup(numThreads);
+
+        long processStart = System.currentTimeMillis();
+        verbose("Beginning processing using %d threads", numThreads);
         for (int i = 0; i < numThreads; ++i) {
-            Thread t = new Thread() {
+            queue.add(key, new Runnable() {
                 public void run() {
                     // repeatedly try to process documents while some still
                     // remain
@@ -582,22 +592,11 @@ public abstract class GenericMain {
                                 docNumber, ((endTime - startTime) / 1000d));
                     }
                 }
-            };
-            threads.add(t);
+            });;
         }
 
-        long processStart = System.currentTimeMillis();
+        queue.await(key);
         
-        // start all the threads processing
-        for (Thread t : threads)
-            t.start();
-
-        verbose("Beginning processing using %d threads", numThreads);
-
-        // wait until all the documents have been parsed
-        for (Thread t : threads)
-            t.join();
-
         verbose("Processed all %d documents in %.3f total seconds",
                 count.get(),
                 ((System.currentTimeMillis() - processStart) / 1000d));            
