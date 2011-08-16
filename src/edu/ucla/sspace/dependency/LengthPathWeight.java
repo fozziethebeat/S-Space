@@ -34,7 +34,6 @@ public class LengthPathWeight implements DependencyPathWeight {
      * {@inheritDoc}
      */
     public double scorePath(DependencyPath path) {
-        // Subtract 1 to get the number of relations
-        return 1d / (path.length() - 1);
+        return 1d / (path.length());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens
+ * Copyright 2010 Keith Stevens 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,20 +21,34 @@
 
 package edu.ucla.sspace.clustering;
 
+import edu.ucla.sspace.clustering.Assignment;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
 
 /**
- * An implementation of a {@link Assignment} where a data point may be assigned
- * to multiple clusters
+ * A set of soft assignment.  Each data point may be assigned to multiple
+ * clusters.  None of the particular clusters have any relationship with each
+ * other.
+ *
+ * @author Keith Stevens
  */
 public class SoftAssignment implements Assignment {
 
     /**
-     * The array holding the single assignment.
+     * The array of assignments.
      */
-    private final int[] assignments;
+    private int[] assignments;
+    
+    /**
+     * Constructs a new {@link SoftAssignment} based on the given array of
+     * assignments.
+     */
+    public SoftAssignment(int[] assignments) {
+        this.assignments = assignments;
+    }
 
     /**
      * Creates a new {@link SoftAssignment} where the data point is assigned to
@@ -62,5 +76,16 @@ public class SoftAssignment implements Assignment {
      */
     public int[] assignments() {
         return assignments;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int length() {
+        return assignments.length;
+    }
+
+    public String toString() {
+        return "SoftAssignment" + Arrays.toString(assignments);
     }
 }

@@ -21,40 +21,22 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.common.Similarity;
-import edu.ucla.sspace.common.Statistics;
-
-import edu.ucla.sspace.index.DoubleVectorGenerator;
-import edu.ucla.sspace.index.RandomOrthogonalVectorGenerator;
-
+import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
-import edu.ucla.sspace.matrix.Matrix.Type;
-import edu.ucla.sspace.matrix.MatrixIO;
-import edu.ucla.sspace.matrix.MatrixIO.Format;
-import edu.ucla.sspace.matrix.RowMaskedMatrix;
-import edu.ucla.sspace.matrix.SparseRowMaskedMatrix;
 import edu.ucla.sspace.matrix.SparseMatrix;
 
-import edu.ucla.sspace.util.Pair;
+import edu.ucla.sspace.util.Generator;
 
-import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.ScaledDoubleVector;
+import edu.ucla.sspace.vector.ScaledSparseDoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.VectorMath;
-import edu.ucla.sspace.vector.VectorIO;
-
-import java.io.File;
 
 import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.List;
 
 import java.util.logging.Logger;
 
@@ -79,15 +61,23 @@ import java.util.logging.Logger;
  *   </li>
  * </ul>
  *
+ * This class utilizes a {@link EigenCut} instance to compute a spectral
+ * partition of a dataset.  Given a single data set, it will recursively
+ * partition that data set using a {@link EigenCut} instance until one of two
+ * limits: all data points are in a unique cluster, or the maximum number of
+ * partitions have been made, as set by the number of clusters.  Once all
+ * paritions are made, neighboring paritions may be merged according to the
+ * objective scores returned by the {@link EigenCut} instance.  If {@link
+ * cluster(Matrix, int)} is used, the requested number of clusters,
+ * or fewer, will be returned, otherwise the algorithm will decide on the
+ * correct number of clusters.
+ *
+ * @see EigenCut
+ * @see BaseSpectralCut
+ *
  * @author Keith Stevens
  */
-public class SpectralClustering implements Clustering {
-
-    public static final String PROPERTY_PREFIX = 
-        "edu.ucla.sspace.clustering.SpectralClustering";
-
-    public static final String ALPHA_PROPERTY =
-        PROPERTY_PREFIX + ".alpha";
+public class SpectralClustering {
 
     /**
      * The logger used to record all output.
@@ -96,135 +86,159 @@ public class SpectralClustering implements Clustering {
         Logger.getLogger(SpectralClustering.class.getName());
 
     /**
-     * The default intra cluster similarity weight.
+     * The amount of weight given to inter-cluster similarity when using the
+     * relaxed correlation objective function.
      */
-    private static final Double DEFAULT_ALPHA = .4;
+    private final double alpha;
 
-    public Assignment[] cluster(Matrix matrix, Properties props) {
-        return cluster(matrix, Integer.MAX_VALUE, props);
+    /**
+     * {@code 1 - alpha}, the weight given to intra-cluster dis-similarity.
+     */
+    private final double beta;
+
+    /**
+     * A generator function that creates new fresh instances of a {@link
+     * EigenCut} implementation on demand.  This is used to reduce the
+     * reflection overhead, as many {@link EigenCut} instances may be needed.
+     */
+    private final Generator<EigenCut> cutterGenerator;
+
+    /**
+     * Creates a new {@link SpectralClustering} instance.
+     *
+     * @param alpha The weight given to inter cluster similarity for the relaxed
+     *        correlation objective function.  {@code beta} will be set to
+     *        {@link 1 - alpha}.
+     * @param cutterGenerator A {@link Generator} of {@link EigenCut} instances.
+     */
+    public SpectralClustering(double alpha,
+                              Generator<EigenCut> cutterGenerator) {
+        this.alpha = alpha;
+        this.beta = 1 - alpha;
+        this.cutterGenerator = cutterGenerator;
     }
 
-    public Assignment[] cluster(Matrix matrix,
-                                int maxClusters,
-                                Properties props) {
-        String alphaProp = props.getProperty(ALPHA_PROPERTY);
-        double alpha = (alphaProp == null)
-            ? DEFAULT_ALPHA
-            : Double.parseDouble(alphaProp);
-
-        double beta = 1 - alpha;
-
-        // Cluster the matrix recursively.
-        ClusterResult r = realCluster(matrix, alpha, beta, maxClusters, 0);
+    /**
+     * Returns the Cluster {@link Assignments} of each data point in {@link
+     * matrix}.  This method will determine a "good" number of clusters
+     * algorithmiclly.  This method also uses the relaxed correlation objective
+     * function, as the k-means objective function would always keep each data
+     * point in it's own cluster.
+     */
+    public Assignments cluster(Matrix matrix) {
+        ClusterResult r = fullCluster(scaleMatrix(matrix), 0);
         verbose("Created " + r.numClusters + " clusters");
+
         Assignment[] assignments = new HardAssignment[r.assignments.length];
         for (int i = 0; i < r.assignments.length; ++i)
             assignments[i] = new HardAssignment(r.assignments[i]);
 
-        return assignments;
+        return new Assignments(r.numClusters, assignments, matrix);
     }
 
-    private ClusterResult realCluster(Matrix matrix,
-                                      double alpha,
-                                      double beta,
-                                      int maxClusters,
+    /**
+     * Returns the Cluster {@ link Assignments} for each data point in {@link
+     * matrix}.  This method will return at most {@code maxClusters}.  If {@code
+     * useKMeans} is true, the K-means objective function is used to merge
+     * clusters, otherwise the relaxed correlation function is used.
+     */
+    public Assignments cluster(Matrix matrix,
+                                int maxClusters,
+                                boolean useKMeans) {
+        // Cluster the matrix recursively.
+        LimitedResult[] results = limitedCluster(
+                scaleMatrix(matrix), maxClusters, useKMeans);
+        LimitedResult r = results[maxClusters-1];
+
+        verbose("Created " + r.numClusters + " clusters");
+
+        Assignment[] assignments = new HardAssignment[r.assignments.length];
+        for (int i = 0; i < r.assignments.length; ++i)
+            assignments[i] = new HardAssignment(r.assignments[i]);
+
+        return new Assignments(r.numClusters, assignments, matrix);
+    }
+
+    /**
+     * Returns a scaled {@link Matrix}, where each row is the unit
+     * magnitude version of the corresponding row vector in {@link matrix}.
+     * This is required so that dot product computations over a large number of
+     * data points can be distributed, wherease the cosine similarity cannot be.
+     */
+    private Matrix scaleMatrix(Matrix matrix) {
+        // Scale every data point such that it has a dot product of 1 with
+        // itself.  This will make further calculations easier since the dot
+        // product distrubutes when the cosine similarity does not.
+        if (matrix instanceof SparseMatrix) {
+            List<SparseDoubleVector> scaledVectors =
+                new ArrayList<SparseDoubleVector>(matrix.rows());
+            SparseMatrix sm = (SparseMatrix) matrix;
+            for (int r = 0; r < matrix.rows(); ++r) {
+                SparseDoubleVector v = sm.getRowVector(r);
+                scaledVectors.add(new ScaledSparseDoubleVector(
+                            v, 1/v.magnitude()));
+            }
+            return Matrices.asSparseMatrix(scaledVectors);
+        } else {
+            List<DoubleVector> scaledVectors = 
+                new ArrayList<DoubleVector>(matrix.rows());
+            for (int r = 0; r < matrix.rows(); ++r) {
+                DoubleVector v = matrix.getRowVector(r);
+                scaledVectors.add(new ScaledDoubleVector(v, 1/v.magnitude()));
+            }
+            return Matrices.asMatrix(scaledVectors);
+        }
+    }
+
+    /**
+     * Returns a {@link ClusterResult} when {@link matrix} is spectrally
+     * clustered at a given {@link depth}.  This will recursively call itself
+     * until the number of rows in {@code matrix} is less than or equal to 1.
+     */
+    private ClusterResult fullCluster(Matrix matrix,
                                       int depth) {
         verbose("Clustering at depth " + depth);
 
         // If the matrix has only one element or the depth is equal to the
         // maximum number of desired clusters then all items are in a single
         // cluster.
-        if (matrix.rows() == 1 || depth == maxClusters)
+        if (matrix.rows() <= 1) 
             return new ClusterResult(new int[matrix.rows()], 1);
 
-        int vectorLength = matrix.rows();
-        DoubleVector matrixRowSums = computeMatrixRowSum(matrix);
-        double magnitude = 0;
-        for (int i = 0; i < matrixRowSums.length(); ++i)
-            magnitude += Math.pow(matrixRowSums.get(i), 2);
-        magnitude = Math.sqrt(magnitude);
+        // Get a fresh new eigen cutter and compute the specral cut of the
+        // matrix.
+        EigenCut eigenCutter = cutterGenerator.generate();
+        eigenCutter.computeCut(matrix);
 
-        // Compute p.
-        DoubleVector p = new DenseVector(vectorLength);
-        double pSum = 0;
-        for (int r = 0; r < matrix.rows(); ++r) {
-            double dot = cosineSimilarity(
-                    matrixRowSums, magnitude, matrix.getRowVector(r));
-            pSum += dot;
-            p.set(r, dot);
-        }
-
-        // Compute pi, and D.
-        DoubleVector pi = new DenseVector(vectorLength);
-        DoubleVector D = new DenseVector(vectorLength);
-        DoubleVector piDInverse = new DenseVector(vectorLength);
-        for (int i = 0; i < vectorLength; ++i) {
-            double piValue = p.get(i)/pSum;
-            pi.set(i, piValue);
-            if (piValue > 0d) {
-                D.set(i, Math.sqrt(piValue));
-                piDInverse.set(i, piValue / D.get(i));
-            }
-        }
-
-        DoubleVector v = computeSecondEigenVector(matrix, piDInverse, D, p);
-
-        // Sort the rows of the original matrix based on their v values.
-        Index[] elementIndices = new Index[v.length()];
-        for (int i = 0; i < v.length(); ++i)
-            elementIndices[i] = new Index(v.get(i), i);
-        Arrays.sort(elementIndices);
-
-        int cutIndex = computeCut(matrix, p, elementIndices);
-
-        // Compute the split masked sub matrices from the original.
-        LinkedHashSet<Integer> leftMatrixRows = new LinkedHashSet<Integer>();
-        LinkedHashSet<Integer> rightMatrixRows = new LinkedHashSet<Integer>();
-        int i = 0;
-        for (Index index : elementIndices) {
-            if (i <= cutIndex)
-                leftMatrixRows.add(index.index);
-            else
-                rightMatrixRows.add(index.index);
-            i++;
-        }
-
-        // Create the split permuted matricies.
-        Matrix leftMatrix = null;
-        Matrix rightMatrix = null;
-        if (matrix instanceof SparseMatrix) {
-            leftMatrix = new SparseRowMaskedMatrix((SparseMatrix) matrix,
-                                                   leftMatrixRows);
-            rightMatrix = new SparseRowMaskedMatrix((SparseMatrix) matrix,
-                                                    rightMatrixRows);
-        } else {
-            leftMatrix = new RowMaskedMatrix(matrix, leftMatrixRows);
-            rightMatrix = new RowMaskedMatrix(matrix, rightMatrixRows);
-        }
+        Matrix leftMatrix = eigenCutter.getLeftCut();
+        Matrix rightMatrix = eigenCutter.getRightCut();
 
         verbose(String.format("Splitting into two matricies %d-%d",
                               leftMatrix.rows(), rightMatrix.rows()));
 
+        // If the compute decided that the matrix should not be split, short
+        // circuit any attempts to further cut the matrix.
+        if (leftMatrix.rows() == matrix.rows() ||
+            rightMatrix.rows() == matrix.rows())
+            return new ClusterResult(new int[matrix.rows()], 1);
+
         // Do clustering on the left and right branches.
         ClusterResult leftResult =
-            realCluster(leftMatrix, alpha, beta, maxClusters, depth+1);
+            fullCluster(leftMatrix, depth+1);
         ClusterResult rightResult =
-            realCluster(rightMatrix, alpha, beta, maxClusters, depth+1);
+            fullCluster(rightMatrix, depth+1);
 
         verbose("Merging at depth " + depth);
 
-        // Compute the objective when we keep the two branches split.
-        double intraClusterScore = 
-            computeIntraClusterScore(leftResult, leftMatrix) +
-            computeIntraClusterScore(rightResult, rightMatrix);
-
-        double interClusterScore = (pSum / 2) - intraClusterScore;
-        double splitObjective = alpha * intraClusterScore + interClusterScore;
+        // Compute the relaxed correlation objective function over the split
+        // partitions found so far.
+        double splitObjective = eigenCutter.getSplitObjective(
+                alpha, beta,
+                leftResult.numClusters, leftResult.assignments,
+                rightResult.numClusters, rightResult.assignments);
 
         // Compute the objective when we merge the two branches together.
-        int numRows = matrix.rows();
-        double mergedObjective = alpha *
-            ((numRows * (numRows + 1) / 2) - pSum/2);
+        double mergedObjective = eigenCutter.getMergedObjective(alpha, beta);
 
         // If the merged objective value is less than the split version, combine
         // all clusters into one.
@@ -241,265 +255,378 @@ public class SpectralClustering implements Clustering {
             // avoid duplicate cluster ids.
             numClusters = leftResult.numClusters + rightResult.numClusters;
 
-            for (int index = 0; index < leftResult.assignments.length; ++index)
-                assignments[elementIndices[index].index] =
+            int[] leftReordering = eigenCutter.getLeftReordering();
+            int[] rightReordering = eigenCutter.getRightReordering();
+
+            for (int index = 0; index < leftReordering.length; ++index)
+                assignments[leftReordering[index]] = 
                     leftResult.assignments[index];
-            int offset = leftResult.assignments.length;
-            for (int index = 0; index < rightResult.assignments.length; ++index)
-                assignments[elementIndices[index + offset].index] =
+            for (int index = 0; index < rightReordering.length; ++index)
+                assignments[rightReordering[index]] =
                     rightResult.assignments[index] + leftResult.numClusters;
         }
         return new ClusterResult(assignments, numClusters);
-
-    }
-
-    private DoubleVector computeSecondEigenVector(Matrix matrix,
-                                                  DoubleVector piDInverse,
-                                                  DoubleVector D,
-                                                  DoubleVector p) {
-        int vectorLength = piDInverse.length();
-        // Step 1, generate a random vector, v,  that is orthogonal to
-        // pi*D-Inverse.
-        DoubleVectorGenerator<DoubleVector> generator =
-            new RandomOrthogonalVectorGenerator(vectorLength, piDInverse);
-        DoubleVector v = generator.generate();
-
-        int log = (int) Statistics.log2(vectorLength);
-        for (int k = 0; k < log; ++k) {
-            // Step 2, repeated, (a) normalize v (b) set v = Q*v, where Q = D *
-            // R-Inverse * matrix * matrix-Transpose * D-Inverse.
-            normalize(v);
-
-            // v = Q*v is broken into 4 sub steps that allow for sparse
-            // multiplications. 
-            // Step 2b-1) v = D-Inverse*v.
-            for (int i = 0; i < vectorLength; ++ i)
-                if (D.get(i) != 0d)
-                    v.set(i, v.get(i) / D.get(i));
-
-            // Step 2b-2) v = matrix-Transpose * v.
-            DoubleVector newV = computeMatrixTransposeV(matrix, v);
-
-            // Step 2b-3) v = matrix * v.
-            computeMatrixDotV(matrix, newV, v);
-
-            // Step 2b-4) v = D*R-Inverse * v. Note that R is a diagonal matrix
-            // with p as the values along the diagonal.
-            for (int i = 0; i < vectorLength; ++i) {
-                double oldValue = v.get(i);
-                double newValue = oldValue * D.get(i) / p.get(i);
-                v.set(i, newValue);
-            }
-        }
-
-        for (int i = 0; i < vectorLength; ++i)
-            v.set(i, v.get(i) / D.get(i));
-
-        return v;
-    }
-
-    private int computeCut(Matrix matrix,
-                           DoubleVector p,
-                           Index[] elementIndices) {
-        // Compute the conductance of the newly sorted matrix.
-        DoubleVector x = new DenseVector(matrix.columns());
-        DoubleVector y = new DenseVector(matrix.columns());
-
-        // First compute x and y, which are summations of different cuts of the
-        // matrix, starting with x being the first row and y being the summation
-        // of all other rows.  While doing this, also compute different
-        // summations of values in the p vector using the same cut.
-        VectorMath.add(x, matrix.getRowVector(elementIndices[0].index));
-        double lLeft = p.get(elementIndices[0].index);
-        double lRight = 0;
-        for (int i = 1; i < elementIndices.length; ++i) {
-            VectorMath.add(y, matrix.getRowVector(elementIndices[i].index));
-            lRight += p.get(elementIndices[i].index);
-        }
-
-        double u = Similarity.cosineSimilarity(x, y); 
-
-        // Find the minimum conductance.
-        double minConductance = u / Math.min(lLeft, lRight);
-        int cutIndex = 0;
-        for (int i = 1; i < elementIndices.length - 1; ++i) {
-            // Compute the new value of u, the denominator for computing the
-            // conductance.
-            DoubleVector vector = matrix.getRowVector(elementIndices[i].index);
-            u = u - Similarity.cosineSimilarity(x, vector) +
-                    Similarity.cosineSimilarity(y, vector) + 1;
-
-            // Shift over vectors from y to x.
-            VectorMath.add(x, vector);
-            VectorMath.subtract(y, vector);
-
-            // Shift over values from the p vector.
-            lLeft += p.get(elementIndices[i].index);
-            lRight -= p.get(elementIndices[i].index);
-
-            // Recompute the new conductance and check if it's the smallest.
-            double conductance = u / Math.min(lLeft, lRight);
-            if (conductance < minConductance) {
-                minConductance = conductance;
-                cutIndex = i;
-            }
-        }
-        return cutIndex;
     }
 
     /**
-     * Computes the dot product when the second vector may be sparse and the
-     * first vector has a known magnitude.
+     * Returns {@code maxClusters} {@link LimitedResult}s using spectral
+     * clustering with the relaxed correlation objective function.
      */
-    private double cosineSimilarity(DoubleVector v1,
-                                    double v1Magnitude,
-                                    DoubleVector v2) {
-        double dot = 0;
-        double v2Magnitude = 0;
-        if (v2 instanceof SparseDoubleVector) {
-            SparseDoubleVector sv2 = (SparseDoubleVector) v2;
-            int[] nonZeros = sv2.getNonZeroIndices();
-            for (int index : nonZeros) {
-                double v2Value = v2.get(index);
-                v2Magnitude += Math.pow(v2Value, 2);
-                dot += v2Value * v1.get(index);
-            }
-        } else {
-            for (int i = 0; i < v2.length(); ++i) {
-                double v2Value = v2.get(i);
-                v2Magnitude += Math.pow(v2Value, 2);
-                dot += v2Value * v1.get(i);
+    private LimitedResult[] limitedCluster(Matrix matrix,
+                                           int maxClusters) {
+        return limitedCluster(matrix, maxClusters, false);
+    }
+
+    /**
+     * Returns {@code maxClusters} {@link LimitedResult}s using spectral
+     * clustering.  If {@code useKMeans}, the k-means objective function is used
+     * for merging, other wise the relaxed correlation objective function is
+     * used.
+     */
+    private LimitedResult[] limitedCluster(Matrix matrix,
+                                           int maxClusters,
+                                           boolean useKMeans) {
+        verbose("Clustering for " + maxClusters + " clusters.");
+
+        // Get a fresh new EigenCut first so that we can compute the RhoSum of
+        // the matrix, which is useful when computing the objective function for
+        // the merged result.
+        EigenCut eigenCutter = cutterGenerator.generate();
+
+        // If the matrix has only one element or the depth is equal to the
+        // maximum number of desired clusters then all items are in a single
+        // cluster.
+        if (matrix.rows() <= 1 || maxClusters <= 1) {
+            eigenCutter.computeRhoSum(matrix);
+            LimitedResult result;
+            if (useKMeans)
+                result = new KMeansLimitedResult(new int[matrix.rows()], 1,
+                        eigenCutter.getKMeansObjective());
+            else
+                // When computing the inter-cluster similarity for the full
+                // matrix, this is simply rhowSum with out any self-similarity
+                // scores.
+                result = new SpectralLimitedResult(new int[matrix.rows()], 1, 
+                        eigenCutter.getMergedObjective(alpha, beta),
+                        eigenCutter.rhoSum() - matrix.rows() / 2.0,
+                        (matrix.rows() * (matrix.rows()-1)) / 2);
+            return new LimitedResult[] {result};
+        }
+
+        // Get a fresh new eigen cutter and compute the specral cut of the
+        // matrix.
+        eigenCutter.computeCut(matrix);
+
+        Matrix leftMatrix = eigenCutter.getLeftCut();
+        Matrix rightMatrix = eigenCutter.getRightCut();
+
+        // If the compute decided that the matrix should not be split, short
+        // circuit any attempts to further cut the matrix.
+        if (leftMatrix.rows() == matrix.rows() ||
+            rightMatrix.rows() == matrix.rows()) {
+            eigenCutter.computeRhoSum(matrix);
+            LimitedResult result;
+            if (useKMeans)
+                result = new KMeansLimitedResult(new int[matrix.rows()], 1,
+                        eigenCutter.getKMeansObjective());
+            else
+                // When computing the inter-cluster similarity for the full
+                // matrix, this is simply rhowSum with out any self-similarity
+                // scores.
+                result = new SpectralLimitedResult(new int[matrix.rows()], 1, 
+                        eigenCutter.getMergedObjective(alpha, beta),
+                        eigenCutter.rhoSum() - matrix.rows() / 2.0,
+                        (matrix.rows() * (matrix.rows()-1)) / 2);
+            return new LimitedResult[] {result};
+        }
+
+        verbose(String.format("Splitting into two matricies %d-%d",
+                              leftMatrix.rows(), rightMatrix.rows()));
+
+        // Do clustering on the left and right branches.
+        LimitedResult[] leftResults =
+            limitedCluster(leftMatrix, maxClusters-1, useKMeans);
+        LimitedResult[] rightResults =
+            limitedCluster(rightMatrix, maxClusters-1, useKMeans);
+
+        verbose("Merging at for: " + maxClusters + " clusters");
+
+        // Get the re-ordering mapping for each partition.   Using this
+        // re-ordering, compute objective function for the entire data matrix.
+        int[] leftReordering = eigenCutter.getLeftReordering();
+        int[] rightReordering = eigenCutter.getRightReordering();
+
+        LimitedResult[] results = new LimitedResult[maxClusters];
+        if (useKMeans)
+            results[0] = new KMeansLimitedResult(new int[matrix.rows()], 1,
+                    eigenCutter.getKMeansObjective());
+        else
+            // When computing the inter-cluster similarity for the full
+            // matrix, this is simply rhowSum with out any self-similarity
+            // scores.
+            results[0] = new SpectralLimitedResult(new int[matrix.rows()], 1, 
+                    eigenCutter.getMergedObjective(alpha, beta),
+                    eigenCutter.rhoSum() - matrix.rows() / 2.0,
+                    (matrix.rows() * (matrix.rows()-1)) / 2);
+
+        // Each LimitedResult is ordered based on the number of clusters found.
+        // Iterate through each clustering result computed for each partition
+        // and find combined set of cluter assignments that satisfies the
+        // requested number of clusters.
+        for (int i = 0; i < leftResults.length; ++i) {
+            LimitedResult leftResult = leftResults[i];
+
+            // If there are no assignments found for this number of clusters,
+            // skip it.
+            if (leftResult == null)
+                continue;
+
+            for (int j = 0; j < rightResults.length; ++j) {
+                LimitedResult rightResult = rightResults[j];
+
+                // If there are no assignments found for this number of
+                // clusters, skip it.
+                if (rightResult == null)
+                    continue;
+
+                // Compute the number of clusters found when using both the left
+                // and right parititons.
+                int numClusters =
+                    leftResult.numClusters + rightResult.numClusters - 1;
+                if (numClusters >= results.length)
+                    continue;
+
+                // Compute the combined objective function when using both the
+                // left and right partition results.
+                LimitedResult newResult;
+                if (useKMeans)
+                    newResult = leftResult.combine(leftResult, rightResult,
+                            leftReordering, rightReordering, 0);
+                else
+                    newResult = leftResult.combine(
+                            leftResult, rightResult,
+                            leftReordering, rightReordering,
+                            eigenCutter.rhoSum());
+
+                // If no assignments have been made so far for this number of
+                // clusters, or the found score is better than the old score,
+                // store the combined LimitedResult as the best result for the
+                // number of clusters.
+                if (results[numClusters] == null ||
+                    results[numClusters].compareTo(newResult) < 0)
+                    results[numClusters] = newResult;
             }
         }
-        v2Magnitude = Math.sqrt(v2Magnitude);
 
-        return dot / (v1Magnitude * v2Magnitude);
+        return results;
     }
+
+
 
     /**
-     * Returns the dot product between the transpose of a given matrix and a
-     * given vector.  This method has special casing for a {@code SparseMatrix}.
-     * This method also assumes that {@code matrix} is row based and iterates
-     * over each of the values in the row before iterating over another row.
+     * Logs data to info.
      */
-    private DoubleVector computeMatrixTransposeV(Matrix matrix,
-                                                 DoubleVector v) {
-        DoubleVector newV = new DenseVector(matrix.columns());
-        if (matrix instanceof SparseMatrix) {
-            SparseMatrix smatrix = (SparseMatrix) matrix;
-            for (int r = 0; r < smatrix.rows(); ++r) {
-                SparseDoubleVector row = smatrix.getRowVector(r);
-                int[] nonZeros = row.getNonZeroIndices();
-                for (int c : nonZeros)
-                    newV.add(c, row.get(c) * v.get(r));
-            }
-        } else {
-            for (int r = 0; r < matrix.rows(); ++r)
-                for (int c = 0; c < matrix.columns(); ++c)
-                    newV.add(c, matrix.get(r, c) * v.get(r));
-        }
-        return newV;
-    }
-
-    /**
-     * Computes the dot product between a given matrix and a given vector {@code
-     * newV}.  The result is stored in {@code v}.  This method has special
-     * casing for when {@code matrix} is a {@code SparseMatrix}.  This method
-     * also assumes that {@code matrix} is row based and iterates over each of
-     * the values in the row before iterating over another row.
-     */
-    private void computeMatrixDotV(Matrix matrix,
-                                   DoubleVector newV,
-                                   DoubleVector v) {
-        // Special case for sparse matrices.
-        if (matrix instanceof SparseMatrix) {
-            SparseMatrix smatrix = (SparseMatrix) matrix;
-            for (int r = 0; r < smatrix.rows(); ++r) {
-                double vValue = 0;
-                SparseDoubleVector row = smatrix.getRowVector(r);
-                int[] nonZeros = row.getNonZeroIndices();
-                for (int c : nonZeros)
-                    vValue += row.get(c) * newV.get(c);
-                v.set(r, vValue);
-            }
-        } else {
-            // Handle dense matrices.
-            for (int r = 0; r < matrix.rows(); ++r) {
-                double vValue = 0;
-                for (int c = 0; c < matrix.columns(); ++c)
-                    vValue += matrix.get(r, c) * newV.get(c);
-                v.set(r, vValue);
-            }
-        }
-    }
-
-    /**
-     * Computes the inter cluster objective for a clustering result.
-     *
-     * @param result The set of cluster assignments for a set of vectors.
-     * @param m the matrix containing each row in the cluster result.
-     */
-    private double computeIntraClusterScore(ClusterResult result,
-                                            Matrix m) {
-        DoubleVector[] centroids = new DoubleVector[result.numClusters];
-        double intraClusterScore = 0;
-        for (int i = 0; i < result.assignments.length; ++i) {
-            int assignment = result.assignments[i];
-            DoubleVector v = m.getRowVector(i);
-            if (centroids[assignment] == null)
-                centroids[assignment] = Vectors.copyOf(v);
-            else {
-                DoubleVector centroid = centroids[assignment];
-                intraClusterScore += Similarity.cosineSimilarity(centroid, v);
-                VectorMath.add(centroid, v);
-            }
-        }
-        return intraClusterScore;
-    }
-
-    /**
-     * Compute the row sums of the values in {@code matrix} and returns the
-     * values in a vector of length {@code matrix.columns()}.
-     */
-    private <T extends Matrix> DoubleVector computeMatrixRowSum(T matrix) {
-        DoubleVector rowSums = new DenseVector(matrix.columns());
-        for (int r = 0; r < matrix.rows(); ++r)
-            VectorMath.add(rowSums, matrix.getRowVector(r));
-        return rowSums;
-    }
-
-    /**
-     * Normalizes using the the largest value in the vector.
-     */
-    private void normalize(DoubleVector v) {
-        double maxValue = 0;
-        for (int i = 0; i < v.length(); ++i)
-            maxValue += Math.pow(v.get(i), 2);
-        maxValue = Math.sqrt(maxValue);
-        for (int i = 0; i < v.length(); ++i)
-            v.set(i, v.get(i) / maxValue);
-    }
-
     private void verbose(String out) {
         LOGGER.info(out);
     }
 
     /**
-     * A simple comparable data struct holding a row vector's weight and the
-     * vector's original index in a matrix.
+     * A internal helper class that can combine cluster results from two
+     * separate partions using a particular objective function.
      */
-    private class Index implements Comparable {
-        public final double weight;
-        public final int index;
+    private abstract class LimitedResult {
+        
+        /**
+         * The data assignments for a single {@link LimitedResult}.
+         */
+        public int[] assignments;
 
-        public Index(double weight, int index) {
-            this.weight = weight;
-            this.index = index;
+        /**
+         * The number of clusters.
+         */
+        public int numClusters;
+
+        /**
+         * Creates a new {@link LimitedResult} using the given assignments and
+         * number of clusters.
+         */
+        public LimitedResult(int[] assignments, int numClusters) {
+            this.assignments = assignments;
+            this.numClusters = numClusters;
         }
 
-        public int compareTo(Object other) {
-            Index i = (Index) other;
-            return (int) (this.weight - i.weight);
+        /**
+         * Combines the assignments made between two {@link LimitedResult}s.
+         * The cluster ids in {@code res2} will be increased based on the number
+         * of clusters in {@code res1}.
+         */
+        int[] combineAssignments(LimitedResult res1, LimitedResult res2,
+                                 int[] ordering1, int[] ordering2) {
+            int[] newAssignments = new int[
+                res1.assignments.length + res2.assignments.length];
+
+            for (int k = 0; k < ordering1.length; ++k)
+                newAssignments[ordering1[k]] = res1.assignments[k];
+            for (int k = 0; k < ordering2.length; ++k)
+                newAssignments[ordering2[k]] =
+                    res2.assignments[k] + res1.numClusters;
+            return newAssignments;
+        }
+
+        /**
+         * Returns the objective function score for this result.
+         */
+        abstract double score();
+
+        /**
+         * Returns greater than 0 when {@code this} {@link LimitedResult} should
+         * be selected over {@code other}.
+         */
+        abstract double compareTo(LimitedResult other);
+
+        /**
+         * Returns a combined {@link LimitedResult} based on two existing {@link
+         * LimitedResult}s.
+         */
+        abstract LimitedResult combine(LimitedResult res1, LimitedResult res2,
+                                       int[] ordering1, int[] ordering2,
+                                       double extra);
+    }
+
+    /**
+     * Computes the k-means objective when combining two {@link LimitedResult}s.
+     */
+    private class KMeansLimitedResult extends LimitedResult {
+        
+        /**
+         * The k-means objective score for this result.
+         */
+        public double score;
+
+        /**
+         * Creates a new {@link KMeansLimitedResult} with a given objective
+         * score.
+         */
+        public KMeansLimitedResult(int[] assignments,
+                                  int numClusters,
+                                  double score) {
+            super(assignments, numClusters);
+            this.score = score;
+        }
+
+        /**
+         * Returns a new {@link KMeansLimitedResult} with an update scored based
+         * on the scores of {@code res1} and {@code res2}.
+         */
+        LimitedResult combine(LimitedResult res1, LimitedResult res2,
+                              int[] ordering1, int[] ordering2,
+                              double extra) {
+            KMeansLimitedResult kres1 = (KMeansLimitedResult) res1;
+            KMeansLimitedResult kres2 = (KMeansLimitedResult) res2;
+
+            int[] newAssignments = combineAssignments(
+                    res1, res2, ordering1, ordering2);
+            int newNumClusters = res1.numClusters + res2.numClusters;
+            double newScore = kres1.score + kres2.score;
+            return new KMeansLimitedResult(
+                    newAssignments, newNumClusters, newScore);
+        }
+
+        /**
+         * Returns the k-means objective score.
+         */
+        public double score() {
+            return score;
+        }
+
+        /**
+         * Returns greater than 0 when this score is greater than other's score.
+         */
+        public double compareTo(LimitedResult other) {
+            return this.score() - other.score();
+        }
+    }
+
+    /**
+     * Computes the relaxed correlation objective function when combining two
+     * {@link LimitedResult}s.
+     */
+    private class SpectralLimitedResult extends LimitedResult {
+
+        /**
+         * The total inter-cluster similarity.
+         */
+        public double totalScore;
+
+        /**
+         * The full intra-cluster similarity.
+         */
+        public double rawInterScore;
+
+        /**
+         * The number of intra-cluster similarity comparisons.
+         */
+        public int interCount;
+
+        /**
+         * Constructs a new {@link SpectralLimitedResult}.
+         */
+        public SpectralLimitedResult(int[] assignments, int numClusters,
+                                     double totalScore, double rawInterScore,
+                                     int interCount) {
+            super(assignments, numClusters);
+
+            this.totalScore = totalScore;
+            this.rawInterScore = rawInterScore;
+            this.interCount = interCount;
+        }
+
+        /**
+         * Returns {@link totalScore}.
+         */
+        public double score() {
+            return totalScore;
+        }
+
+        /**
+         * Returns greater than 0 when other's score is greater than this score.
+         */
+        public double compareTo(LimitedResult other) {
+            return other.score() - this.score();
+        }
+
+        /**
+         * Returns the combined {@link LimitedResult} when using the
+         * relaxed correlation objective function. 
+         */ 
+        LimitedResult combine(LimitedResult res1, LimitedResult res2, 
+                              int[] ordering1, int[] ordering2, double rhoSum) {
+            // Assume that both are SpectralLimitedResults.
+            SpectralLimitedResult sres1 = (SpectralLimitedResult) res1;
+            SpectralLimitedResult sres2 = (SpectralLimitedResult) res2;
+
+            // Get the raw combined assignments and the number of clusters.
+            int[] newAssignments = combineAssignments(
+                    res1, res2, ordering1, ordering2);
+            int newNumClusters = res1.numClusters + res2.numClusters;
+
+            // Use the raw inter-cluster similarity to compute the new
+            // inter-cluster similarity and the number of inter-cluster
+            // similarity computations.
+            double newInterScore = sres1.rawInterScore + sres2.rawInterScore;
+            int newCount = sres1.interCount + sres2.interCount;
+
+            // We can compute the intra cluster scores by taking subtracting out
+            // any self-similarity scores, any duplicate similarity scores, and
+            // the inter-cluster similarity scores from rhoSum.  This leaves
+            // only the intra-cluster similarity scores behind.
+            double intraClusterScore =
+                (rhoSum-newAssignments.length) / 2.0 - newInterScore;
+            newInterScore = newCount - newInterScore;
+            double newScore = alpha * newInterScore + beta * intraClusterScore;
+
+            return new SpectralLimitedResult(newAssignments, newNumClusters,
+                                            newScore, newInterScore, newCount);
         }
     }
 

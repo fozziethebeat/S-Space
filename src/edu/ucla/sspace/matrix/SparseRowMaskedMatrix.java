@@ -41,9 +41,16 @@ import java.util.Set;
  * matrix has been created and submatrices of the large matrix need to be
  * treated as full {@code SparseMatrix} instances; rather than copy the data,
  * this class provides a way of representing the original data as a partial
- * view.<p>
+ * view.
+ *
+ * </p>
  *
  * All methods are write-through to the original backing matrix.
+ *
+ * </p>
+ *
+ * This matrix recomputes the mapping if the {@link Matrix} being masked is also
+ * a {@link RowMaskedMatrix}, thus preventing a recursive call to row lookups.
  *
  * @author David Jurgens
  *
@@ -51,6 +58,8 @@ import java.util.Set;
  */
 public class SparseRowMaskedMatrix extends RowMaskedMatrix 
         implements SparseMatrix {
+
+    private final SparseMatrix matrix;
 
     /**
      * Creates a partial view of the provided sparse matrix using the bits set
@@ -60,8 +69,9 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      *         index is greater than the number of rows present in {@code
      *         matrix}
      */
-    public SparseRowMaskedMatrix(Matrix matrix, BitSet included) {
+    public SparseRowMaskedMatrix(SparseMatrix matrix, BitSet included) {
         super(matrix, included);
+        this.matrix = matrix;
     }
 
     /**
@@ -75,9 +85,33 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      *         that is less than 0 or greater than the number of rows present in
      *         {@code matrix}
      */
-    public SparseRowMaskedMatrix(Matrix matrix, Set<Integer> included) {
+    public SparseRowMaskedMatrix(SparseMatrix matrix, Set<Integer> included) {
         super(matrix, included);
+        this.matrix = matrix;
     }
+
+    /**
+     * Creates a partial view of the provided sparse matrix using the the
+     * integer mapping to specify which rows should be included in the matrix.  
+     *
+     * @throws IllegalArgumentException if {@code included} specifies a value
+     *         that is less than 0 or greater than the number of rows present in
+     *         {@code matrix}
+     */
+    public SparseRowMaskedMatrix(SparseMatrix matrix, int[] reordering) {
+        super(matrix, reordering);
+
+        // If the given matrix is already a RowMaskedMatrix, connect to the
+        // inner backing matrix.  This will prevent a deep nesting of
+        // RowMaskMatrix lookups when algorithms recursively remap a mapped
+        // matrix.
+        if (matrix instanceof SparseRowMaskedMatrix) {
+            SparseRowMaskedMatrix srmm = (SparseRowMaskedMatrix) matrix;
+            this.matrix = srmm.matrix;
+        } else
+            this.matrix = matrix;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -97,13 +131,6 @@ public class SparseRowMaskedMatrix extends RowMaskedMatrix
      * {@inheritDoc}
      */
     public SparseDoubleVector getRowVector(int row) {
-        int cols = columns();
-        SparseDoubleVector v = new SparseHashDoubleVector(cols);
-        for (int col = 0; col < cols; ++col) {
-            double d = get(row, col);
-            if (d != 0)
-                v.set(col, d);
-        }
-        return v;
+        return matrix.getRowVector(getRealRow(row));
     }
 }

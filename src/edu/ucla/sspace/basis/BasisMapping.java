@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.basis;
 
+import java.util.Set;
+
 
 /**
  * An interface for specifying how a set of features can be mapped to a vector
@@ -63,8 +65,25 @@ public interface BasisMapping<T,E> {
     E getDimensionDescription(int dimension);
 
     /**
+     * Returns the set of keys known by this {@link BasisMapping}
+     */
+    Set<E> keySet();
+
+    /**
      * Returns the number of dimensions currently represented in this basis
      * mapping.
      */
     int numDimensions();    
+
+    /**
+     * Sets the read only state of the basis mapping.  This is intended for when
+     * the basis mapping is needed to map to a known set of values, and any
+     * unknown values are left unmapped.
+     */
+    void setReadOnly(boolean readOnly);
+
+    /**
+     * Returns true if the {@link BasisMapping} is read only, false otherwise.
+     */
+    boolean isReadOnly();
 }

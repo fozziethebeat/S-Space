@@ -241,7 +241,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
     /**
      * {@inheritDoc}
      */
-    public Assignment[] cluster(Matrix matrix, Properties props) {
+    public Assignments cluster(Matrix matrix, Properties props) {
         String minSimProp = props.getProperty(MIN_CLUSTER_SIMILARITY_PROPERTY);
         String numClustProp = props.getProperty(NUM_CLUSTERS_PROPERTY);
         String simFuncProp = props.getProperty(SIMILARITY_FUNCTION_PROPERTY);
@@ -269,7 +269,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             try {
                 double clusterSimThresh = Double.parseDouble(minSimProp);
                 return toAssignments(cluster(matrix, clusterSimThresh, 
-                                             linkage, simFunc, -1));                
+                                             linkage, simFunc, -1), matrix, -1);
             } catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
                     "Cluster similarity threshold was not a valid double: " +
@@ -285,7 +285,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * {@inheritDoc} The value of the {@code numClusters} parameter will
      * override the {@value #NUM_CLUSTERS_PROPERTY} if it was specified.
      */
-    public Assignment[] cluster(Matrix m,
+    public Assignments cluster(Matrix m,
                                 int numClusters,
                                 Properties props) {
         double clusterSimilarityThreshold =
@@ -301,7 +301,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
                     SIMILARITY_FUNCTION_PROPERTY,
                     DEFAULT_SIMILARITY_FUNCTION_PROPERTY));
         return toAssignments(cluster(m, clusterSimilarityThreshold, linkage,
-                                     similarityFunction, numClusters));
+                                     similarityFunction, numClusters),
+                             m, numClusters);
     }
 
     /**
@@ -319,7 +320,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      *         the cluster number to which that row was assigned.  Cluster
      *         numbers will start at 0 and increase.
      */
-    static int[] partitionRows(Matrix m, int numClusters,
+    public static int[] partitionRows(Matrix m, int numClusters,
                                       ClusterLinkage linkage,
                                       SimType similarityFunction) {
         return cluster(m, -1, linkage, similarityFunction, numClusters);
@@ -344,7 +345,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      *         numbers will start at 0 and increase.
      */
     @SuppressWarnings("unchecked")
-    static int[] clusterRows(Matrix m, double clusterSimilarityThreshold,
+    public static int[] clusterRows(Matrix m, double clusterSimilarityThreshold,
                                     ClusterLinkage linkage,
                                     SimType similarityFunction) {
         return cluster(m, clusterSimilarityThreshold, linkage, 
@@ -1083,11 +1084,17 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * Coverts an array containing each row's clustering assignment into an
      * array of {@link HardAssignment} instances.
      */
-    private static Assignment[] toAssignments(int[] rowAssignments) {
+    private static Assignments toAssignments(int[] rowAssignments,
+                                             Matrix matrix,
+                                             int numClusters) {
+        if (numClusters == -1) 
+            for (int assignment : rowAssignments)
+                numClusters = Math.max(numClusters, assignment+1);
+
         Assignment[] assignments = new Assignment[rowAssignments.length];
         for (int i = 0; i < rowAssignments.length; ++i)
             assignments[i] = new HardAssignment(rowAssignments[i]);
-        return assignments;
+        return new Assignments(numClusters, assignments, matrix);
     }
 
     /**

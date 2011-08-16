@@ -33,32 +33,50 @@ import java.nio.channels.FileChannel;
  */
 public class NoTransform implements Transform {
 
-    public NoTransform() { }
-
+    /**
+     * {@inheritDoc}
+     */
     public File transform(File inputMatrixFile, MatrixIO.Format format) 
             throws IOException {
         return inputMatrixFile;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void transform(File inputMatrixFile, MatrixIO.Format inputFormat, 
                           File outputMatrixFile) 
-	    throws IOException {
-        FileChannel original = 
+            throws IOException {
+        FileChannel original =
             new FileInputStream(inputMatrixFile).getChannel();
         FileChannel copy = new FileOutputStream(outputMatrixFile).getChannel();
     
-	// Duplicate the contents of the input matrix in the provided file
+        // Duplicate the contents of the input matrix in the provided file
         copy.transferFrom(original, 0, original.size());
     
         original.close();
         copy.close();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Matrix transform(Matrix input) {
         return input;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix transform(Matrix input, Matrix output) {
+        Matrices.copyTo(input, output);
+        return output;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
-	return "no";
+        return "no";
     }    
 }

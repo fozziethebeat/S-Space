@@ -63,7 +63,7 @@ public interface Clustering {
      * @return an array of {@link Assignment} instances that indicate zero or
      *         more clusters to which each row belongs.
      */
-    Assignment[] cluster(Matrix matrix, Properties props);
+    Assignments cluster(Matrix matrix, Properties props);
 
     /**
      * Clusters the set of rows in the given {@code Matrix} into the specified
@@ -79,5 +79,5 @@ public interface Clustering {
      * @return an array of {@link Assignment} instances that indicate zero or
      *         more clusters to which each row belongs.
      */
-    Assignment[] cluster(Matrix matrix, int numClusters, Properties props);
+    Assignments cluster(Matrix matrix, int numClusters, Properties props);
 }

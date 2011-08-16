@@ -106,16 +106,6 @@ import java.util.logging.Logger;
 public abstract class GenericMain {
 
     /**
-     * The property for setting a unique corpus reader.  This corpus reader must
-     * have a no argument constructor and implement {@code Iterator<Document>}.
-     * Since this is expected to be a rare use case, this is done as a property
-     * instead of a standard command line argument to keep the argument space
-     * from being poluted.
-     */
-    public static final String CORPUS_READER_PROPERTY =
-        "edu.ucla.sspace.mains.GenericMain.corpusReader";
-
-    /**
      * Extension used for all saved semantic space files.
      */
     public static final String EXT = ".sspace";    
@@ -299,50 +289,22 @@ public abstract class GenericMain {
      * @throws Error if no document source is specified
      */
     protected Iterator<Document> getDocumentIterator() throws IOException {
-        // Check to see if a corpus reader was specified as a property.  If it
-        // was, this reader overrides any command line arguments.
-        String readerProperty = 
-            System.getProperties().getProperty(CORPUS_READER_PROPERTY);
-        if (readerProperty != null)
-            return ReflectionUtil.getObjectInstance(readerProperty);
+        Collection<Iterator<Document>> docIters =
+          new LinkedList<Iterator<Document>>();
 
-        Iterator<Document> docIter = null;
-
-        String fileList = (argOptions.hasOption("fileList"))
-            ? argOptions.getStringOption("fileList")
-            : null;
-
-        String docFile = (argOptions.hasOption("docFile"))
-            ? argOptions.getStringOption("docFile")
-            : null;
-        if (fileList == null && docFile == null) {
+        // Handle the fileList and docList options.  If neither option is
+        // provided, throw an error.
+        if (argOptions.hasOption('f'))
+            addFileIterators(docIters, 
+                             argOptions.getStringOption('f').split(","));
+        else if (argOptions.hasOption('d'))
+            addDocIterators(docIters,
+                            argOptions.getStringOption('d').split(","));
+        else 
             throw new Error("must specify document sources");
-        }
 
-        // Second, determine where the document input sources will be coming
-        // from.
-        Collection<Iterator<Document>> docIters = 
-            new LinkedList<Iterator<Document>>();
-
-        if (fileList != null) {
-            String[] fileNames = fileList.split(",");
-            // we have a file that contains the list of all document files we
-            // are to process
-            for (String s : fileNames) {
-                docIters.add(new FileListDocumentIterator(s));
-            }
-        }
-        if (docFile != null) {
-            String[] fileNames = docFile.split(",");
-            // all the documents are listed in one file, with one document per
-            // line
-            for (String s : fileNames) {
-                docIters.add(new OneLinePerDocumentIterator(s));
-            }
-        }
-
-        // combine all of the document iterators into one iterator.
-        docIter = new CombinedIterator<Document>(docIters);
+        // Combine all of the document iterators into one iterator.
+        Iterator<Document> docIter = new CombinedIterator<Document>(docIters);
 
         // Return a limited iterator if requested.
         if (argOptions.hasOption("docLimit"))
@@ -351,6 +313,26 @@ public abstract class GenericMain {
 
         // Otherwise return the standard iterator.
         return docIter;
+    }
+
+    /**
+     * Adds a {@link FileListDocumentIterator} to {@code docIters} for each file
+     * name provided.
+     */
+    protected void addFileIterators(Collection<Iterator<Document>> docIters,
+                                    String[] fileNames) throws IOException {
+        for (String s : fileNames)
+            docIters.add(new FileListDocumentIterator(s));
+    }
+
+    /**
+     * Adds a {@link OneLinePerDocumentIterator} to {@code docIters} for each
+     * file name provided.
+     */
+    protected void addDocIterators(Collection<Iterator<Document>> docIters,
+                                   String[] fileNames) throws IOException {
+        for (String s : fileNames)
+            docIters.add(new OneLinePerDocumentIterator(s));
     }
 
     /**
@@ -379,9 +361,6 @@ public abstract class GenericMain {
         if (verbose) 
             LoggerUtil.setLevel(Level.FINE);
 
-        // all the documents are listed in one file, with one document per line
-        Iterator<Document> docIter = getDocumentIterator();
-        
         // Check whether this class supports mutlithreading when deciding how
         // many threads to use by default
         int numThreads = (isMultiThreaded)
@@ -427,6 +406,9 @@ public abstract class GenericMain {
 
         SemanticSpace space = getSpace(); 
         
+        // all the documents are listed in one file, with one document per line
+        Iterator<Document> docIter = getDocumentIterator();
+        
         processDocumentsAndSpace(space, docIter, numThreads, props);
 
         File outputPath = new File(argOptions.getPositionalArg(0));
@@ -469,19 +451,28 @@ public abstract class GenericMain {
 
         System.out.println("output File: " + outputFile);
 
+        long startTime = System.currentTimeMillis();
+        saveSSpace(space, outputFile);
+        long endTime = System.currentTimeMillis();
+        verbose("printed space in %.3f seconds",
+                ((endTime - startTime) / 1000d));
+
+        postProcessing();
+    }
+
+    /**
+     * Serializes the {@link SemanticSpace} object to {@code outputFile}.
+     * This uses {@code outputFormat} if set by the commandline.  If not, this
+     * uses the {@link SSpaceFormat} returned by {@link #getSpaceFormat}.
+     */
+    protected void saveSSpace(SemanticSpace sspace, File outputFile)
+      throws IOException{
         SSpaceFormat format = (argOptions.hasOption("outputFormat"))
             ? SSpaceFormat.valueOf(
                 argOptions.getStringOption("outputFormat").toUpperCase())
             : getSpaceFormat();
 
-        long startTime = System.currentTimeMillis();
-        SemanticSpaceIO.save(space, outputFile, format);
-        long endTime = System.currentTimeMillis();
-
-        verbose("printed space in %.3f seconds",
-                ((endTime - startTime) / 1000d));
-
-        postProcessing();
+        SemanticSpaceIO.save(sspace, outputFile, format);
     }
 
     /**

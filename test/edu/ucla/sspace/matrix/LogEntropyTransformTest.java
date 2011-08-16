@@ -21,14 +21,55 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.matrix.MatrixIO.Format;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
+
 public class LogEntropyTransformTest {
+
+    @Test public void testTransformFile() throws IOException {
+        int[][] testInput = {{0, 0, 0, 0, 1, 1, 2, 4, 5, 0},
+                             {0, 1, 1, 2, 0, 1, 5, 2, 8,10},
+                             {1, 5, 0, 0, 1, 0, 6, 3, 7, 9},
+                             {0, 1, 0, 1, 0, 1, 2, 0, 3, 0},
+                             {1, 5, 7, 0, 0, 1, 6,10, 2,45},
+                             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
+
+        double[][] testOutput= {{ 0.00000, 0.00000, 0.00000, 0.00000, 0.38645, 0.38645, 0.61251, 0.89732, 0.99897, 0.00000},
+            { 0.00000, 0.25367, 0.25367, 0.40205, 0.00000, 0.25367, 0.65572, 0.40205, 0.80411, 0.87755},
+            { 0.24794, 0.64092, 0.00000, 0.00000, 0.24794, 0.00000, 0.69607, 0.49589, 0.74383, 0.82365},
+            { 0.00000, 0.35109, 0.00000, 0.35109, 0.00000, 0.35109, 0.55646, 0.00000, 0.70218, 0.00000},
+            { 0.40021, 1.03453, 1.20063, 0.00000, 0.00000, 0.40021, 1.12354, 1.38450, 0.63432, 2.21059},
+            { 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000}};
+
+        double error = .00001;
+        Matrix inputMatrix = new YaleSparseMatrix(6, 10);
+        for (int row = 0; row < 6; ++row)
+            for (int col = 0; col < 10; ++col)
+                inputMatrix.set(row, col, testInput[row][col]);
+        File mfile = File.createTempFile("testLogEntropy", "dat");
+        mfile.deleteOnExit();
+        MatrixIO.writeMatrix(
+                inputMatrix, mfile, Format.SVDLIBC_SPARSE_BINARY);
+        Transform transform = new LogEntropyTransform();
+        File outFile = transform.transform(
+                mfile, Format.SVDLIBC_SPARSE_BINARY);
+        Matrix outMatrix = MatrixIO.readMatrix(
+                outFile, Format.SVDLIBC_SPARSE_BINARY);
+        assertEquals(inputMatrix.rows(), outMatrix.rows());
+        assertEquals(inputMatrix.columns(), outMatrix.columns());
+        for (int r = 0; r < outMatrix.rows(); ++r)
+            for (int c = 0; c < outMatrix.columns(); ++c)
+                assertEquals(testOutput[r][c], outMatrix.get(r, c), .00001);
+    }
 
     @Test public void testMatrixTransformSize() {
         int[][] testInput = {{0, 0, 0, 0, 1, 1, 2, 4, 5, 0},

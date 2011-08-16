@@ -323,6 +323,35 @@ public class MatrixIO {
     }
 
     /**
+     * Returns a {@link FileTransformer} for an {@link Matrix} file encodeded in
+     * the provided {@link Format}.
+     *
+     * @param format the format of a {@link Matrix} that will be transformed
+     *
+     * @return A {@link FileTransformer} for the given format
+     */
+    public static FileTransformer fileTransformer(Format format) {
+        switch (format) {
+            case MATLAB_SPARSE:
+                return new MatlabSparseFileTransformer();
+            case SVDLIBC_SPARSE_TEXT:
+                return new SvdlibcSparseTextFileTransformer();
+            case SVDLIBC_DENSE_TEXT:
+                return new SvdlibcDenseTextFileTransformer();
+            case SVDLIBC_SPARSE_BINARY:
+                return new SvdlibcSparseBinaryFileTransformer();
+            case SVDLIBC_DENSE_BINARY:
+                return new SvdlibcDenseBinaryFileTransformer();
+            default:
+                throw new UnsupportedOperationException(
+                        "Transforming format " + format + " is currently " +
+                        "not implemented.  Please email " +
+                        "s-space-research-dev@googlegroups.com to have this " +
+                        "implemented.");
+        }
+    }
+
+    /**
      * Reads in a matrix in the {@link Format#MATLAB_SPARSE} format and writes
      * it to the output file in {@link Format#SVDLIBC_SPARSE_TEXT} format.
      */
@@ -1283,7 +1312,7 @@ public class MatrixIO {
                 if (nonZeroPerCol[col] > 0) {
                     for (int row = 0; row < matrix.rows(); ++row) {
                         double val = matrix.get(row, col);
-                        if (val != 0) {
+                        if (val != 0d) {
                             // NOTE: need to convert to float since this is what
                             // SVDLIBC uses
                             pw.println(row + " " + 

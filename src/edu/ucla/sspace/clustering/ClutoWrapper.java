@@ -80,7 +80,7 @@ class ClutoWrapper {
      *         increase.  Rows that were not able to be clustered will be
      *         assigned a -1 value.
      */
-    static Assignment[] cluster(Matrix matrix, String clmethod,
+    static Assignments cluster(Matrix matrix, String clmethod,
                                 String crtFunction, int numClusters)
             throws IOException {
         Assignment[] assignments = new Assignment[matrix.rows()];        
@@ -89,7 +89,7 @@ class ClutoWrapper {
         cluster(assignments, matrix, clmethod, crtFunction,
                 numClusters, outputFile);
         extractAssignments(outputFile, assignments);
-        return assignments;
+        return new Assignments(numClusters, assignments, matrix);
     }
 
 
@@ -191,7 +191,7 @@ class ClutoWrapper {
             output.append(line).append("\n");
         clutoOutput = output.toString();
         if (LOGGER.isLoggable(Level.FINE))
-            LOGGER.fine(clutoOutput);
+            System.err.println(clutoOutput);
 	    
         int exitStatus = 0;
         try {

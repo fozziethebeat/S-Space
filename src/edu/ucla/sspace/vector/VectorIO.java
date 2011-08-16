@@ -42,27 +42,6 @@ public class VectorIO {
     private VectorIO() { }
 
     /**
-     * Read a Vector from the specified file.  {@f} is interpreted as a
-     * plain text file with array values separated by whitespace.
-     *
-     * @param f A whitespace separated file of double values.
-     *
-     * @return A double array of values in {@code f}.
-     */
-    public static double[] readector(File f) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(f));
-        String[] valueStrs = (br.readLine()).trim().split("\\s+");
-
-        double[] values = new double[valueStrs.length];
-        for (int i = 0; i < valueStrs.length; ++i) {
-            values[i] = Double.parseDouble(valueStrs[i]);
-        }
-
-        br.close();
-        return values;
-    }
-
-    /**
      * Read a double array from the specified file.  {@f} is interpreted as a
      * plain text file with array values separated by whitespace.
      *
@@ -93,10 +72,17 @@ public class VectorIO {
      */
     public static String toString(Vector vector) {
         StringBuilder sb = new StringBuilder(vector.length() * 5);
-        
-        for (int i = 0; i < vector.length() - 1; ++i)
-            sb.append(vector.getValue(i).doubleValue()).append(" ");
-        sb.append(vector.getValue(vector.length() - 1).doubleValue());
+        if (vector instanceof SparseDoubleVector) {
+            SparseDoubleVector sdv = (SparseDoubleVector) vector;
+            int[] nz = sdv.getNonZeroIndices();
+            sb.append(nz[0]).append(",").append(sdv.get(nz[0]));
+            for (int i = 1; i < nz.length; ++i)
+              sb.append(";").append(nz[i]).append(",").append(sdv.get(nz[i]));
+        } else {
+            for (int i = 0; i < vector.length() - 1; ++i)
+                sb.append(vector.getValue(i).doubleValue()).append(" ");
+            sb.append(vector.getValue(vector.length() - 1).doubleValue());
+        }
         
         return sb.toString();
     }

@@ -60,5 +60,30 @@ public class TfIdfTransformTest {
                              outputMatrix.get(row, col), error);
         }
     }
-}
 
+    @Test public void testNonSquareMatrix() {
+        int[][] testInput = {{6, 0, 5},
+                             {0, 1, 1},
+                             {1, 5, 0},
+                             {0, 1, 0},
+                             {1, 5, 7},
+                             {1, 1, 1}};
+
+        double[][] testOutput= {{}};
+
+        double error = .00001;
+        Matrix inputMatrix = new YaleSparseMatrix(6, 3);
+        for (int row = 0; row < 6; ++row)
+            for (int col = 0; col < 3; ++col)
+                inputMatrix.set(row, col, testInput[row][col]);
+
+        Transform transform = new TfIdfTransform();
+        Matrix outputMatrix = transform.transform(inputMatrix);
+        for (int row = 0; row < 6; ++row) {
+            for (int col = 0; col < 3; ++col)
+                System.out.println(outputMatrix.get(row, col));
+                //assertEquals(testOutput[row][col],
+                //             outputMatrix.get(row, col), error);
+        }
+    }
+}

@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.common;
 
+import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFile;
@@ -98,9 +101,8 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
     /**
      * A mapping from a word to the row index in the that word-document matrix
      * that contains occurrence counts for that word.
-     * TODO: Replace this with a basis mapping.
      */
-    private final ConcurrentMap<String,Integer> termToIndex;
+    private final BasisMapping<String, String> termToIndex;
 
     /**
      * The counter for recording the current, largest word index in the
@@ -142,8 +144,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      *         the backing array files required for processing
      */
     public GenericTermDocumentVectorSpace() throws IOException {
-        this(false, new ConcurrentHashMap<String, Integer>(),
-             Matrices.getMatrixBuilderForSVD());
+        this(false,new StringBasisMapping(),Matrices.getMatrixBuilderForSVD());
     }
 
     /**
@@ -153,7 +154,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      * @param readHeaderToken If true, the first token of each document will be
      *        read and passed to {@link #handleDocumentHeader(int, String)
      *        handleDocumentHeader}, which by default discards the header.
-     * @param termToIndex The {@link ConcurrentMap} used to map strings to
+     * @param termToIndex The {@link BasisMapping} used to map strings to
      *        indices.
      * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
      *        document vectors to disk which later get processed in {@link
@@ -164,7 +165,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      */
     public GenericTermDocumentVectorSpace(
             boolean readHeaderToken,
-            ConcurrentMap<String, Integer> termToIndex,
+            BasisMapping<String, String> termToIndex,
             MatrixBuilder termDocumentMatrixBuilder) throws IOException {
         this.readHeaderToken = readHeaderToken;
         this.termToIndex = termToIndex;
@@ -221,7 +222,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
             
             // Add the term to the total list of terms to ensure it has a proper
             // index.  If the term was already added, this method is a no-op
-            addTerm(word);
+            termToIndex.getDimension(word);
             Integer termCount = termCounts.get(word);
 
             // update the term count
@@ -247,37 +248,14 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         SparseArray<Integer> documentColumn = 
             new SparseIntHashArray(totalNumberOfUniqueWords);
         for (Map.Entry<String,Integer> e : termCounts.entrySet())
-            documentColumn.set(termToIndex.get(e.getKey()), e.getValue());
+            documentColumn.set(
+                    termToIndex.getDimension(e.getKey()), e.getValue());
 
         // Update the term-document matrix with the results of processing the
         // document.
         termDocumentMatrixBuilder.addColumn(documentColumn);
     }
     
-    /**
-     * Adds the term to the list of terms and gives it an index, or if the term
-     * has already been added, does nothing.
-     * TODO: Replace this with a basis mapping.
-     */
-    private void addTerm(String term) {
-        Integer index = termToIndex.get(term);
-
-        if (index == null) {
-
-            synchronized(this) {
-                // recheck to see if the term was added while blocking
-                index = termToIndex.get(term);
-                // if some other thread has not already added this term while
-                // the current thread was blocking waiting on the lock, then add
-                // it.
-                if (index == null) {
-                    index = Integer.valueOf(termIndexCounter.getAndIncrement());
-                    termToIndex.put(term, index);
-                }
-            }
-        }
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -290,11 +268,9 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      */
     public Vector getVector(String word) {
         // determine the index for the word
-        Integer index = termToIndex.get(word);
+        int index = termToIndex.getDimension(word);
         
-        return (index == null)
-            ? null
-            : wordSpace.getRowVector(index.intValue());
+        return (index < 0) ? null : wordSpace.getRowVector(index);
     }
 
     /**

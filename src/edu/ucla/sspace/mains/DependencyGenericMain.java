@@ -28,18 +28,17 @@ import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyExtractorManager;
 import edu.ucla.sspace.dependency.WaCKyDependencyExtractor;
 
+import edu.ucla.sspace.text.UkWacDependencyFileIterator;
 import edu.ucla.sspace.text.DependencyFileDocumentIterator;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.TokenFilter;
 import edu.ucla.sspace.text.Stemmer;
 
-import edu.ucla.sspace.util.CombinedIterator;
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import java.io.IOException;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Iterator;
 
 
@@ -77,12 +76,19 @@ public abstract class DependencyGenericMain extends GenericMain {
                           "XML configuration file for the format of a " +
                           "dependency parse",
                           true, "FILE", 
-                          "Advanced Dependency Parsing Properties");
+                          "Advanced Dependency Parsing");
         options.addOption('D', "dependencyParseFormat",
                           "the name of the dependency parsed format for " +
                           "the corpus (defalt: CoNLL)",
                           true, "STR", 
-                          "Advanced Dependency Parsing Properties");
+                          "Advanced Dependency Parsing");
+        options.addOption('H', "discardHeaderLines",
+                          "If true, the first line in every dependency parse " +
+                          "document will be discarded.  This is useful if " +
+                          "the first line corresponds to a document or " +
+                          "instance identifier and not acually part of the " +
+                          "parsed text.  (Default: false)",
+                          false, null, "Advanced Dependency Parsing");
     }
 
     /**
@@ -96,71 +102,48 @@ public abstract class DependencyGenericMain extends GenericMain {
         TokenFilter filter = (argOptions.hasOption("tokenFilter"))
             ? TokenFilter.loadFromSpecification(argOptions.getStringOption('F'))
             : null;
-        Stemmer stemmer = (argOptions.hasOption("stemmer"))
-            ? ReflectionUtil.<Stemmer>
-                 getObjectInstance(argOptions.getStringOption('Z'))
-            : null;
 
-        
-        String format = (argOptions.hasOption("dependencyParseFormat"))
-            ? argOptions.getStringOption("dependencyParseFormat")
-            : "CoNLL";
-            
+        Stemmer stemmer = argOptions.getObjectOption("stemmingAlgorithm", null);
+        String format = argOptions.getStringOption(
+            "dependencyParseFormat", "CoNLL");
+
         if (format.equals("CoNLL")) {
             DependencyExtractor e = (argOptions.hasOption('G'))
                 ? new CoNLLDependencyExtractor(argOptions.getStringOption('G'), 
                                                filter, stemmer)
                 : new CoNLLDependencyExtractor(filter, stemmer);
-            DependencyExtractorManager.addExtractor("CoNLL", e);
-        }
-        else if (format.equals("WaCKy")) {
+            DependencyExtractorManager.addExtractor("CoNLL", e, true);
+        } else if (format.equals("WaCKy")) {
             if (argOptions.hasOption('G'))
                 throw new IllegalArgumentException(
                     "WaCKy does not support configuration with -G");
             DependencyExtractor e = 
                 new WaCKyDependencyExtractor(filter, stemmer);
-            DependencyExtractorManager.addExtractor("WaCKy", e);
-        }
-        else 
+            DependencyExtractorManager.addExtractor("WaCKy", e, true);
+        } else 
             throw new IllegalArgumentException(
                 "Unrecognized dependency parsed format: " + format);
     }
 
     /**
-     * Returns a {@link Document} iterator for all dependency parsed documents
-     * specified through the command line.
-     *
-     * @throws IllegalArgumentException if the {@code --docFile} argument isn't
-     *         set.
+     * Throws {@link UnsupportedOperationException}.
      */
-    protected Iterator<Document> getDocumentIterator() throws IOException {
-        Iterator<Document> docIter = null;
+    protected void addFileIterators(Collection<Iterator<Document>> docIters,
+                                    String[] fileNames) throws IOException {
+        throw new UnsupportedOperationException(
+          "A file based document iterator does not exist");
+    }
 
-        String docFile = (argOptions.hasOption("docFile"))
-            ? argOptions.getStringOption("docFile")
-            : null;
-
-        if (docFile == null) {
-            throw new Error("must specify document sources");
-        }
-
-        // Second, determine where the document input sources will be coming
-        // from.
-        Collection<Iterator<Document>> docIters = 
-            new LinkedList<Iterator<Document>>();
-
-        if (docFile != null) {
-            String[] fileNames = docFile.split(",");
-            // all the documents are listed in one file, with one document per
-            // line
-            for (String s : fileNames) {
-                docIters.add(new DependencyFileDocumentIterator(s));
-            }
-        }
-
-        // combine all of the document iterators into one iterator.
-        docIter = new CombinedIterator<Document>(docIters);
-        return docIter;
+    /**
+     * Adds a {@link DependencyFileDocumentIterator} to {@code docIters} for
+     * each file name provided.
+     */
+    protected void addDocIterators(Collection<Iterator<Document>> docIters,
+                                   String[] fileNames) throws IOException {
+        boolean removeHeader = argOptions.hasOption('H');
+        for (String s : fileNames)
+          docIters.add(
+              new DependencyFileDocumentIterator(s, removeHeader));
     }
 
     /**
@@ -182,5 +165,4 @@ public abstract class DependencyGenericMain extends GenericMain {
             + "\n\n" + DEPENDENCY_EXTRACTOR_DESCRIPTION
             + "\n\n" + OptionDescriptions.HELP_DESCRIPTION);
     }
-
 }

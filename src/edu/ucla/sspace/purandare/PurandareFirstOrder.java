@@ -22,6 +22,7 @@
 package edu.ucla.sspace.purandare;
 
 import edu.ucla.sspace.clustering.Assignment;
+import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.ClutoClustering;
 
 import edu.ucla.sspace.common.SemanticSpace;
@@ -34,6 +35,7 @@ import edu.ucla.sspace.matrix.GrowingSparseMatrix;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
+import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.SparseRowMaskedMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 import edu.ucla.sspace.matrix.SparseOnDiskMatrix;
@@ -533,7 +535,7 @@ public class PurandareFirstOrder implements SemanticSpace {
         int documents = documentCounter.get();
         // Use the number of times the term occurred in the corpus to determine
         // how many rows (contexts) in the matrix.
-        Matrix contextsForCurTerm = new YaleSparseMatrix(
+        SparseMatrix contextsForCurTerm = new YaleSparseMatrix(
             termCounts.get(termIndex).get(), termToIndex.size());
         int contextsSeen = 0;
         for (int d = 0; d < documents; ++d) {
@@ -595,7 +597,7 @@ public class PurandareFirstOrder implements SemanticSpace {
             return;
         }
 
-        Assignment[] clusterAssignment = 
+        Assignments clusterAssignment = 
             new ClutoClustering().cluster(contexts, numClusters, 
                                           ClutoClustering.Method.AGGLOMERATIVE,
                                           ClutoClustering.Criterion.UPGMA);
@@ -615,11 +617,11 @@ public class PurandareFirstOrder implements SemanticSpace {
 
         // For each of the contexts, determine which cluster it was in and sum
         // it value with the other contexts
-        for (int row = 0; row < clusterAssignment.length; ++row) {
+        for (int row = 0; row < clusterAssignment.size(); ++row) {
             // Check whether this row was assigned a cluster
-            if (clusterAssignment[row].assignments().length == 0)
+            if (clusterAssignment.get(row).assignments().length == 0)
                 continue;                
-            int assignment = clusterAssignment[row].assignments()[0];                
+            int assignment = clusterAssignment.get(row).assignments()[0];                
             clusterSize[assignment]++;
 
             DoubleVector contextVector = contexts.getRowVector(row);

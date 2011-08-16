@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.nonlinear;
 
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Similarity;
@@ -196,7 +198,7 @@ public class LocalityPreservingSemanticAnalysis
      *         the backing array files required for processing
      */
     public LocalityPreservingSemanticAnalysis() throws IOException {
-        super(false, new ConcurrentHashMap<String, Integer>(),
+        super(false, new StringBasisMapping(),
               new SvdlibcSparseBinaryMatrixBuilder(true));
     }
 

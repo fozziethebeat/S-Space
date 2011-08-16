@@ -48,6 +48,10 @@ class SparseListMatrix<T extends SparseDoubleVector> extends ListMatrix<T>
         super(vectorList);
     }
 
+    public SparseListMatrix(List<T> vectorList, int columns) {
+        super(vectorList, columns);
+    }
+
     /**
      * {@inheritDoc}
      */

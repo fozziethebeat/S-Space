@@ -41,23 +41,51 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     private String pos;
 
     /**
+     * The lemmatized version of {@code word}.
+     */
+    private String lemma;
+
+    /**
      * The list of neighbors of this node.
      */
     private List<DependencyRelation> neighbors;
 
     /**
      * Creates a new {@link SimpleDependencyTreeNode} node for the provided
-     * word, with the provided parent link.  Initially the children list is
+     * word, with the provided part of speech.  Initially the neighbor list is
      * empty.
      */
     public SimpleDependencyTreeNode(String word, String pos) {
-        neighbors = new LinkedList<DependencyRelation>();
-        if (word == null || pos == null)
-            throw new NullPointerException("Arguments must be non-null");
-        this.word = word;
-        this.pos = pos;
+        this(word, pos, word);
     }
 
+    public SimpleDependencyTreeNode(String word, String pos, String lemma) {
+        this(word, pos, lemma, new LinkedList<DependencyRelation>());
+    }
+
+    /**
+     * Creates a new {@link SimpleDependencyTreeNode} node for the provided
+     * word, with the provided part of speech and neighbor list.
+     */
+    public SimpleDependencyTreeNode(String word,
+                                    String pos, 
+                                    List<DependencyRelation> neighbors) {
+        this(word, pos, "", neighbors);
+    }
+
+    /**
+     * Creates a new {@link SimpleDependencyTreeNode} node for the provided
+     * word, with the provided part of speech and neighbor list.
+     */
+    public SimpleDependencyTreeNode(String word,
+                                    String pos, 
+                                    String lemma,
+                                    List<DependencyRelation> neighbors) {
+      this.word = word;
+      this.pos = pos;
+      this.neighbors = neighbors;
+      this.lemma = lemma;
+    }
 
     /**
      * Adds a relation from node to another node.
@@ -75,8 +103,9 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     public boolean equals(Object o) {
         if (o instanceof SimpleDependencyTreeNode) {
             SimpleDependencyTreeNode n = (SimpleDependencyTreeNode)o;
-            return pos.equals(n.pos)
-                && word.equals(n.word);
+            return pos.equals(n.pos) && 
+                   word.equals(n.word) &&
+                   lemma.equals(n.lemma);
             // NOTE: testing for neighbor equality is important, i.e.
             // neighbors.equals(n.neighbors); however, both classes .equal()
             // method call the others, resulting in mutual recursion and an
@@ -85,10 +114,17 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
         return false;
     }
 
+    /**
+     * Returns a hash that is the XOR of the part of speech hash and the word
+     * hash.
+     */
     public int hashCode() {
         return pos.hashCode() ^ word.hashCode();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public List<DependencyRelation> neighbors() {
         return neighbors;
     }
@@ -101,15 +137,18 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     }
 
     /**
-     * Sets the word contained by this node.  This method is provided for
-     * updating the parse tree's node contents after construction.
-     */ 
-    void setWord(String word) {
-        this.word = word;
-    }
-
+     * Returns "word:pos".
+     */
     public String toString() {
         return word + ":" + pos;
+    }
+          
+    /**
+     * Sets the word contained by this node.  This method is provided for
+     * updating the parse tree's node contents after construction.
+     */
+    void setWord(String word) {
+        this.word = word;
     }
     
     /**
@@ -117,5 +156,12 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
      */
     public String word() {
         return word;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String lemma() {
+        return lemma;
     }
 }

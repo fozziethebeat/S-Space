@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.common;
 
+import edu.ucla.sspace.util.SerializableUtil;
+
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.SparseVector;
@@ -265,15 +267,7 @@ public class SemanticSpaceIO {
 
         if (format.equals(SemanticSpaceIO.SSpaceFormat.SERIALIZE)) {
             LOGGER.fine("Loading serialized SemanticSpace from " + sspaceFile);
-            ObjectInputStream ois = 
-                new ObjectInputStream(new FileInputStream(sspaceFile));           
-            SemanticSpace sspace = null;
-            try {
-                sspace = (SemanticSpace)(ois.readObject());
-            } catch (ClassNotFoundException cnfe) {
-                throw new IOException(cnfe);
-            }
-            return sspace;
+            return SerializableUtil.load(sspaceFile);
         }
         // For SemanticSpace instances that have not been serialized, decide
         // whether they fit into memory before determing how to represent their
@@ -357,10 +351,7 @@ public class SemanticSpaceIO {
             break;
         case SERIALIZE: 
             LOGGER.fine("Saving " + sspace + " to disk as serialized object");
-            ObjectOutputStream oos = 
-                new ObjectOutputStream(new FileOutputStream(output));
-            oos.writeObject(sspace);
-            oos.close();
+            SerializableUtil.save(sspace, output);
             break;
         default:
             assert false : format;
@@ -486,7 +477,8 @@ public class SemanticSpaceIO {
 
         for (String word : words) {
             pw.print(word + "|");
-            // for each vector, write all the non-zero elements and their indices
+            // for each vector, write all the non-zero elements and their
+            // indices
             Vector vector = sspace.getVector(word);
             StringBuilder sb = null;
             if (vector instanceof SparseVector) {

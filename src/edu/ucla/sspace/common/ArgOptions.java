@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.common;
 
+import edu.ucla.sspace.util.ReflectionUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -32,16 +34,38 @@ import java.util.TreeSet;
 
 
 /**
- * A utility class for parsing command line arguments.
+ * A utility class for parsing command line arguments.  Command line arguments
+ * can be added with long options, short options, or both.  Option keys cannot
+ * be repeated.  After all desired options have been added, {@code parseOptions}
+ * must be called, which will disect an array of Strings and create values for
+ * each option.  For all option types, a default value may be specified when
+ * requesting the option value.  In the case of options corresponding to
+ * classnames, the accessor assumes that no argument constructor exists.
+ *
+ * </p>
+ *
+ * Below are some common usages of this class:
+ *
+ * <pre>
+ * 
+ * ArgOptions opts = new ArgOptions();
+ * opts.addOption('c', "numClusters", "the number of clusters",
+ *                true, "INT", "Required");
+ * opts.addOption('C', "clustering", "the clustering algorithm",
+ *                true, "CLASSNAME", "Required");
+ * opts.addOption('v', "verbose", "true if logs should be emitted",
+ *                false, null, "Optional");
+ * opts.parseOptions(args);
+ *
+ * int numClusters = opts.getIntOption('c');
+ * boolean verbose = opts.hasOption('v');
+ * String clusterName = opts.getStringOption('C');
+ *
+ * </pre>
  *
  * @author David Jurgens
  */
 public class ArgOptions {
-
-    //
-    // Positional args and optionsToValue only contain data after processArgs
-    // has been called.
-    //
 
     /**
      * The list of positional args
@@ -171,12 +195,13 @@ public class ArgOptions {
                 "value name must be supposed");
         }
 
-        Option o = new Option(shortName, longName, description, valueName);
+        Option o = new Option(shortName, longName, description,
+                              valueName, optionGroupName);
         
         if (shortNameToOption.containsKey(shortName) || 
             (longName != null && longNameToOption.containsKey(longName))) {
             throw new IllegalArgumentException(
-                "Already specified value with same name");
+                "Already specified value with the name: " + longName);
         }
         else {
             shortNameToOption.put(shortName, o);
@@ -192,6 +217,42 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Removes the {@link Option} mapped by the given {@code shortName}.  This
+     * also removes the mapping from the long name if one exists.
+     *
+     * @param shortName The short name key of the option to remove.
+     */
+    public void removeOption(char shortName) {
+        Option option = shortNameToOption.remove(shortName);
+        if (option == null)
+            return;
+
+        String longName = option.longName;
+        if (longName != null)
+            longNameToOption.remove(longName);
+
+        Set<Option> groupOptions = groupToOptions.get(option.optionGroupName);
+        groupOptions.remove(option);
+    }
+
+    /**
+     * Removes the {@link Option} mapped by the given {@code longName}.  This
+     * also removes the mapping from the short name if one exists.
+     *
+     * @param longName The long name key of the option to remove.
+     */
+    public void removeOption(String longName) {
+        Option option = longNameToOption.remove(longName);
+        if (option == null)
+            return;
+
+        char shortName = option.shortName;
+        shortNameToOption.remove(shortName);
+
+        Set<Option> groupOptions = groupToOptions.get(option.optionGroupName);
+        groupOptions.remove(option);
+    }
 
     /**
      *
@@ -353,6 +414,12 @@ public class ArgOptions {
         return o;
     }
 
+    /**
+     * Returns the double value associated with the {@code shortName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public double getDoubleOption(char shortName) {
         Option o = getOption(shortName);
         if (optionToValue.containsKey(o)) {
@@ -364,6 +431,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public double getDoubleOption(char shortName, double defaultValue) {
         Option o = getOption(shortName);
         return optionToValue.containsKey(o)
@@ -371,6 +442,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the double value associated with the {@code optionName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public double getDoubleOption(String optionName) {
         Option o = getOption(optionName);
         if (optionToValue.containsKey(o)) {
@@ -382,6 +459,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public double getDoubleOption(String optionName, double defaultValue) {
         Option o = getOption(optionName);
         return optionToValue.containsKey(o)
@@ -389,6 +470,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the long value associated with the {@code shortName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public long getLongOption(char shortName) {
         Option o = getOption(shortName);
         if (optionToValue.containsKey(o)) {
@@ -400,6 +487,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public long getLongOption(char shortName, long defaultValue) {
         Option o = getOption(shortName);
         return optionToValue.containsKey(o)
@@ -407,6 +498,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the long value associated with the {@code optionName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public long getLongOption(String optionName) {
         Option o = getOption(optionName);
         if (optionToValue.containsKey(o)) {
@@ -418,6 +515,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public long getLongOption(String optionName, long defaultValue) {
         Option o = getOption(optionName);
         return optionToValue.containsKey(o)
@@ -425,6 +526,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the int value associated with the {@code shortName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public int getIntOption(char shortName) {
         Option o = getOption(shortName);
         if (optionToValue.containsKey(o)) {
@@ -436,6 +543,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public int getIntOption(char shortName, int defaultValue) {
         Option o = getOption(shortName);
         return optionToValue.containsKey(o)
@@ -443,6 +554,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the int value associated with the {@code optionName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public int getIntOption(String optionName) {
         Option o = getOption(optionName);
         if (optionToValue.containsKey(o)) {
@@ -454,6 +571,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public int getIntOption(String optionName, int defaultValue) {
         Option o = getOption(optionName);
         return optionToValue.containsKey(o)
@@ -461,6 +582,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the boolean value associated with the {@code shortName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public boolean getBooleanOption(char shortName) {
         Option o = getOption(shortName);
         if (optionToValue.containsKey(o)) {
@@ -472,6 +599,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public boolean getBooleanOption(char shortName, boolean defaultValue) {
         Option o = getOption(shortName);
         return optionToValue.containsKey(o)
@@ -479,6 +610,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the boolean value associated with the {@code optionName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public boolean getBooleanOption(String optionName) {
         Option o = getOption(optionName);
         if (optionToValue.containsKey(o)) {
@@ -490,6 +627,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code optionName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public boolean getBooleanOption(String optionName, boolean defaultValue) {
         Option o = getOption(optionName);
         return optionToValue.containsKey(o)
@@ -497,6 +638,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the String value associated with the {@code shortName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public String getStringOption(char shortName) {
         Option o = getOption(shortName);
         if (optionToValue.containsKey(o)) {
@@ -508,6 +655,10 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns the value associated with the {@code shortName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public String getStringOption(char shortName, String defaultValue) {
         Option o = getOption(shortName);
         return optionToValue.containsKey(o)
@@ -515,6 +666,12 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns the boolean value associated with the {@code optionName} option.
+     *
+     * @throws IllegalArgumentException If no value was provided for {@code
+     *         shortName}
+     */
     public String getStringOption(String optionName) {
         Option o = getOption(optionName);
         if (optionToValue.containsKey(o)) {
@@ -526,6 +683,38 @@ public class ArgOptions {
         }
     }
 
+    /**
+     * Returns a class instance of the class specified associated with {@code
+     * optionName}, or {@code defaultValue} if there is no value for the
+     * argument.  This method assumes that the class has a no argument
+     * constructor.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getObjectOption(char optionName, T defaultValue) {
+        Option o = getOption(optionName);
+        if (optionToValue.containsKey(o))
+            return (T) ReflectionUtil.getObjectInstance(optionToValue.get(o));
+        return defaultValue;
+    }
+
+    /**
+     * Returns a class instance of the class specified associated with {@code
+     * optionName}, or {@code defaultValue} if there is no value for the
+     * argument.  This method assumes that the class has a no argument
+     * constructor.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getObjectOption(String optionName, T defaultValue) {
+        Option o = getOption(optionName);
+        if (optionToValue.containsKey(o))
+            return (T) ReflectionUtil.getObjectInstance(optionToValue.get(o));
+        return defaultValue;
+    }
+
+    /**
+     * Returns the value associated with the {@code optionName}, or {@code
+     * defaultValue} if no value was found during parsing.
+     */
     public String getStringOption(String optionName, String defaultValue) {
         Option o = getOption(optionName);
         return optionToValue.containsKey(o)
@@ -533,11 +722,17 @@ public class ArgOptions {
             : defaultValue;
     }
 
+    /**
+     * Returns true if there is a value for the long option name.
+     */
     public boolean hasOption(String optionName) {
         Option o = longNameToOption.get(optionName);
         return (o == null) ? false : optionToValue.containsKey(o);
     }
 
+    /**
+     * Returns true if there is a value for the short option name.
+     */
     public boolean hasOption(char shortName) {
         Option o = shortNameToOption.get(shortName);
         return (o == null) ? false : optionToValue.containsKey(o);
@@ -669,12 +864,16 @@ public class ArgOptions {
 
         final String valueName;
         
+        final String optionGroupName;
+
         public Option(char shortName, String longName, 
-                      String description, String valueName) {
+                      String description, String valueName,
+                      String optionGroupName) {
             this.shortName = shortName;
             this.longName = longName;
             this.description = description;
             this.valueName = valueName;
+            this.optionGroupName = optionGroupName;
         }
 
         public int compareTo(Option o) {
