@@ -22,8 +22,10 @@
 package edu.ucla.sspace.text;
 
 import java.io.File;
+import java.io.Reader;
 
 import java.util.Arrays;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -80,18 +82,19 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
     public void initialize(String fileName) {
         filesToExplore = new Stack<Queue<File>>();
 
-        LinkedList<File> files = new LinkedList<File>();
+        Queue<File> files = new ArrayDeque<File>();
         filesToExplore.push(files);
 
         // If the given file is a directory, store the sub files as the first
-        // files to explore.  Otherwise the given file name is the only file to
-        // iterate over.
+        // files to explore, in sorted order.  Otherwise the given file name is
+        // the only file to iterate over.
         File start = new File(fileName);
-        if (start.isDirectory())
-            files.addAll(Arrays.asList(start.listFiles()));
-        else
+        if (start.isDirectory()) {
+            File[] listed = start.listFiles();
+            Arrays.sort(listed);
+            files.addAll(Arrays.asList(listed));
+        } else
             files.add(start);
-        Collections.sort(files);
     }
 
     /**
@@ -141,7 +144,7 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
 
     /**
      * Returns a cleaned version of the document if document processing is
-     * enabled
+     * enabled, otherwise the document text is returned unmodified.
      *
      * @see DocumentPreprocessor#process(String)
      */
@@ -191,7 +194,7 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
         if (f.isDirectory()) {
             File[] subFiles = f.listFiles();
             Arrays.sort(subFiles);
-            filesToExplore.push(Arrays.asList(subFiles));
+            filesToExplore.push(new ArrayDeque<File>(Arrays.asList(subFiles)));
             return findNextDoc();
         }
 

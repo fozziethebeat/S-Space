@@ -316,7 +316,7 @@ public abstract class GenericMain {
              throw new Error("Must specify document sources");
 
         // combine all of the document iterators into one iterator.
-        docIter = new CombinedIterator<Document>(docIters);
+        Iterator<Document> docIter = new CombinedIterator<Document>(docIters);
 
         // Return a limited iterator if requested.
         if (argOptions.hasOption("docLimit"))
