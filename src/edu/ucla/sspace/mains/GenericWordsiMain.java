@@ -358,7 +358,8 @@ public abstract class GenericWordsiMain extends GenericMain {
 
         // Otherwise, read in all of the documents into a list, shuffle it, and
         // return an iterator over that list.  This is needed to ensure that the
-        // ordering does not bias the clustering algorithm.
+        // ordering does not bias the clustering algorithm.  NOTE that this
+        // assumes that the entire corpus can fit into memory.
         List<Document> docList = new LinkedList<Document>();
         while (docIter.hasNext())
             docList.add(docIter.next());

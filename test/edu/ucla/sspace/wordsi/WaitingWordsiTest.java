@@ -147,7 +147,7 @@ public class WaitingWordsiTest {
             assignments[2] = new HardAssignment(1);
             assignments[3] = new HardAssignment(1);
 
-            return new Assignments(2, assignments);
+            return new Assignments(2, assignments, matrix);
         }
 
         public Assignments cluster(Matrix matrix, int numC, Properties props) {
@@ -168,7 +168,7 @@ public class WaitingWordsiTest {
             assignments[3] = new HardAssignment(1);
 
             calledWithNumC = true;
-            return new Assignments(2, assignments);
+            return new Assignments(2, assignments, matrix);
         }
     }
 

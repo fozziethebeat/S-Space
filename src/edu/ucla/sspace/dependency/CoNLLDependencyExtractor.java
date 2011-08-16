@@ -147,6 +147,26 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
     }
 
     /**
+     * Creates a new {@link CoNLLDependencyExtractor} that assumes the default
+     * ordering for {@code Malt} dependency parses and uses the given {@link
+     * TokenFilter} and {@link Stemmer} and the given indices for each feature.
+     */
+    public CoNLLDependencyExtractor(TokenFilter filter, Stemmer stemmer,
+                                    int idIndex, int formIndex, int lemmaIndex,
+                                    int posIndex, int parentIndex, 
+                                    int relationIndex) {
+        this.filter = filter;
+        this.stemmer = stemmer;
+
+        this.idIndex = idIndex;
+        this.formIndex = formIndex;
+        this.lemmaIndex = lemmaIndex;
+        this.posIndex = posIndex;
+        this.parentIndex = parentIndex;
+        this.relationIndex = relationIndex;
+    }
+
+    /**
      * Creates a new {@link CoNLLDependencyExtractor} by parsing a {@code Malt}
      * configuration file, which specifies the order in which the output is
      * formatted.
@@ -283,7 +303,8 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
             // to create an offset for the parent ids.
             int realId = Integer.parseInt(nodeFeatures[idIndex]);
             if ((realId == 0 && nodes.size() != offset) ||
-                (realId == 1 && nodes.size() != offset && nodes.size() != offset+1))
+                (realId == 1 &&
+                 nodes.size() != offset && nodes.size() != offset+1))
                 offset = nodes.size();
 
             // Get the node id and the parent node id.

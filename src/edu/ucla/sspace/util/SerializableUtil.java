@@ -49,6 +49,16 @@ public class SerializableUtil {
     private SerializableUtil() { }
 
     /**
+     * Serializes the object to a file with the provided file name.
+     *
+     * @param o the object to be stored in the file
+     * @param file the file name in which the object should be stored
+     */
+    public static void save(Object o, String file) {
+        save(o, new File(file));
+    }
+
+    /**
      * Serializes the object to the provided file.
      *
      * @param o the object to be stored in the file
@@ -100,6 +110,18 @@ public class SerializableUtil {
         } catch (ClassNotFoundException cnfe) {
             throw new IOError(cnfe);
         }
+    }
+
+    /**
+     * Loads a serialized object of the specifed type from the file.
+     *
+     * @param fileName the file name from which an object should be loaded
+     *
+     * @return the object that was serialized in the file
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T load(String fileName) {
+        return load(new File(fileName));
     }
 
     /**

@@ -90,7 +90,7 @@ public class CoNLLDependencyExtractorTest {
      * passed in string is expected to contain the relation for each node that
      * is connected to {@code relation}.
      */
-    private void evaluateRelations(DependencyTreeNode node,
+    protected void evaluateRelations(DependencyTreeNode node,
                                    List<DependencyRelation> expectedRelations) {
         // Check that the relations have the expected number 
         assertEquals(expectedRelations.size(), node.neighbors().size());
@@ -111,7 +111,7 @@ public class CoNLLDependencyExtractorTest {
      * A simple helper method for checking that the root node in the first
      * sentence is correctly linked up."
      */
-    private void testFirstRoot(DependencyTreeNode[] relations, int index) {
+    protected void testFirstRoot(DependencyTreeNode[] relations, int index) {
         // Check the basics of the node.
         assertEquals("is", relations[index].word());
         assertEquals("VBZ", relations[index].pos());
@@ -136,7 +136,7 @@ public class CoNLLDependencyExtractorTest {
      * A simple helper method for checking that the root node in the second
      * sentence is correctly linked up."
      */
-    private void testSecondRoot(DependencyTreeNode[] relations, int index) {
+    protected void testSecondRoot(DependencyTreeNode[] relations, int index) {
         // Check the basics of the node.
         assertEquals("beskattning", relations[index].word());
         assertEquals("N", relations[index].pos());

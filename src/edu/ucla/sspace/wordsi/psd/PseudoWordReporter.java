@@ -124,8 +124,9 @@ public class PseudoWordReporter implements AssignmentReporter {
                 String secondKey = f.getKey();
                 List<Integer> counts = f.getValue();
                 for (int i = 0; i < counts.size(); ++i)
-                    writer.printf("%s %s %d %d\n",
-                                  firstKey, secondKey, i, counts.get(i));
+                    if (counts.get(i) > 0)
+                        writer.printf("%s %s %d %d\n",
+                                      firstKey, secondKey, i, counts.get(i));
             }
         }
         writer.close();
