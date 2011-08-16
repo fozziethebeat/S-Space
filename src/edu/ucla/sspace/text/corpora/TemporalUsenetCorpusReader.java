@@ -19,20 +19,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.text.corpora;
+
 
 /**
- * A subclass of {@code BloglinesCorpusReader} that always includes timestamps.
+ * A subclass of {@code UsenetCorpusReader} that always includes timestamps.
  *
  * @author Keith Stevens
  */
-public class TemporalBloglinesCorpusReader extends BloglinesCorpusReader {
+public class TemporalUsenetCorpusReader extends UsenetCorpusReader {
 
-    /**
-     * Creates a {@code BloglinesCorpusReader} that will always include
-     * timestamps.
-     */
-    public TemporalBloglinesCorpusReader(String corpusFileName) {
-        super(corpusFileName, true);
+    public TemporalUsenetCorpusReader() {
+        super(true);
     }
 }

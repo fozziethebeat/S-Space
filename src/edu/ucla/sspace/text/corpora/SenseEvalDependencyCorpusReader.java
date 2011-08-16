@@ -19,7 +19,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.text.corpora;
+
+import edu.ucla.sspace.text.DirectoryCorpusReader;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -50,15 +52,6 @@ public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
      * The index of the next instance to parse.
      */
     private int currentNodeIndex;
-
-    /**
-     * Creates a new {@link SenseEvalDependencyCorpusReader} with the given
-     * filename as the senseEval07 dependency xml file.
-     */
-    public SenseEvalDependencyCorpusReader(String corpusFileName) {
-        super(corpusFileName);
-        init();
-    }
 
     /**
      * {@inheritDoc}

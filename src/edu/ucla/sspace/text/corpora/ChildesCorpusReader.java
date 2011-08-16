@@ -19,7 +19,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.text.corpora;
+
+import edu.ucla.sspace.text.DirectoryCorpusReader;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -57,10 +59,8 @@ public class ChildesCorpusReader extends DirectoryCorpusReader {
      */
     private boolean oneUtterancePerDoc;
 
-    public ChildesCorpusReader(String corpusFileName) {
-        super(corpusFileName);
+    public ChildesCorpusReader() {
         oneUtterancePerDoc = true;
-        init();
     }
 
     /**

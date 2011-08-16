@@ -19,7 +19,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.text.corpora;
+
+import edu.ucla.sspace.text.DirectoryCorpusReader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -67,22 +69,19 @@ public class UsenetCorpusReader extends DirectoryCorpusReader {
     private final boolean useTimestamps;
 
     /**
-     * Creates a reader for USENET document, starting with the specified file.
+     * Creates a reader for USENET document that ignores timestamps.
      */
     public UsenetCorpusReader(String corpusFileName) {
-        this(corpusFileName, false);
+        this(false);
     }
 
     /** 
-     * Creates a reader for USENET document, starting with the specified file
-     * and, if {@code includeTimestamps} is {@code true}, prepending the
-     * creation date of each document as the first token in the document.
+     * Creates a reader for USENET document.  If {@code includeTimestamps} is
+     * {@code true}, prepending the creation date of each document as the first
+     * token in the document.
      */
-    public UsenetCorpusReader(String corpusFileName,
-                              boolean includeTimestamps) {
-        super(corpusFileName);
+    public UsenetCorpusReader(boolean includeTimestamps) {
         useTimestamps = includeTimestamps;
-        init();
     }
 
     /**

@@ -19,7 +19,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.text.corpora;
+
+import edu.ucla.sspace.text.DirectoryCorpusReader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -50,22 +52,11 @@ public class BloglinesCorpusReader extends DirectoryCorpusReader {
     private final boolean useTimestamps;
 
     /**
-     * Creates a new {@code BloglinesCorpusReader} from a given file name,
-     * without time stamps.
-     */
-    public BloglinesCorpusReader(String corpusFileName) {
-        this(corpusFileName, false);
-    }
-
-    /**
      * Creates a new {@code BloglinesCorpusReader} from a given file name that
      * will include time stamps if {@code includeTimeStamps} is true.
      */
-    public BloglinesCorpusReader(String corpusFileName,
-                                 boolean includeTimeStamps) {
-        super(corpusFileName);
-        useTimestamps = includeTimeStamps;
-        init();
+    public BloglinesCorpusReader(boolean includeTimeStamps) {
+        this.useTimestamps = includeTimeStamps;
     }
 
     /**

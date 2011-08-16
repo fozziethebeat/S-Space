@@ -26,6 +26,7 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
+import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.FileListDocumentIterator;
 import edu.ucla.sspace.text.IteratorFactory;
@@ -104,16 +105,6 @@ import java.util.logging.Logger;
  * @author David Jurgens
  */
 public abstract class GenericMain {
-
-    /**
-     * The property for setting a unique corpus reader.  This corpus reader must
-     * have a no argument constructor and implement {@code Iterator<Document>}.
-     * Since this is expected to be a rare use case, this is done as a property
-     * instead of a standard command line argument to keep the argument space
-     * from being poluted.
-     */
-    public static final String CORPUS_READER_PROPERTY =
-        "edu.ucla.sspace.mains.GenericMain.corpusReader";
 
     /**
      * Extension used for all saved semantic space files.
@@ -252,10 +243,18 @@ public abstract class GenericMain {
         options.addOption('d', "docFile", 
                           "a file where each line is a document", true,
                           "FILE[,FILE...]", "Required (at least one of)");
-         options.addOption('X', "docLimit",
-                           "The maximum number of documents from the corpus " + 
-                           "to use (default: infinit)",
-                           true, "INT", "Program Options");
+        options.addOption('R', "corpusReader", 
+                          "Specifies a CorpusReader which will " +
+                          "automatically parse the document files that are " +
+                          "not in the formats expected by -f and -d.  Note " +
+                          "that this overrides both -f and -d.",
+                          true, "CLASSNAME,FILE[,FILE...]",
+                          "Required (at least one of)");
+
+        options.addOption('X', "docLimit",
+                          "The maximum number of documents from the corpus " + 
+                          "to use (default: infinit)",
+                          true, "INT", "Program Options");
 
         // Add run time options.
         options.addOption('o', "outputFormat", "the .sspace format to use",
@@ -292,54 +291,29 @@ public abstract class GenericMain {
 
     /**
      * Returns the iterator for all of the documents specified on the command
-     * line or throws an {@code Error} if no documents are specified.
-     * Subclasses should override this method if they provide document input by
-     * some other manner than a file list or document list.
+     * line or throws an {@code Error} if no documents are specified.  If
+     * subclasses should override either {@link #addFileIterators} or {@link
+     * #addDocIterators} if they use different file format.  Alternatively,
+     * oen can implement a {@link edu.ucla.sspace.text.CorpusReader} and use the
+     * {@code -R} option.
      *
      * @throws Error if no document source is specified
      */
     protected Iterator<Document> getDocumentIterator() throws IOException {
-        // Check to see if a corpus reader was specified as a property.  If it
-        // was, this reader overrides any command line arguments.
-        String readerProperty = 
-            System.getProperties().getProperty(CORPUS_READER_PROPERTY);
-        if (readerProperty != null)
-            return ReflectionUtil.getObjectInstance(readerProperty);
-
-        Iterator<Document> docIter = null;
-
-        String fileList = (argOptions.hasOption("fileList"))
-            ? argOptions.getStringOption("fileList")
-            : null;
-
-        String docFile = (argOptions.hasOption("docFile"))
-            ? argOptions.getStringOption("docFile")
-            : null;
-        if (fileList == null && docFile == null) {
-            throw new Error("must specify document sources");
-        }
-
-        // Second, determine where the document input sources will be coming
-        // from.
         Collection<Iterator<Document>> docIters = 
             new LinkedList<Iterator<Document>>();
 
-        if (fileList != null) {
-            String[] fileNames = fileList.split(",");
-            // we have a file that contains the list of all document files we
-            // are to process
-            for (String s : fileNames) {
-                docIters.add(new FileListDocumentIterator(s));
-            }
-        }
-        if (docFile != null) {
-            String[] fileNames = docFile.split(",");
-            // all the documents are listed in one file, with one document per
-            // line
-            for (String s : fileNames) {
-                docIters.add(new OneLinePerDocumentIterator(s));
-            }
-        }
+         if (argOptions.hasOption('R'))
+             addCorpusReaderIterators(
+                     docIters, argOptions.getStringOption('R').split(","));
+         else if (argOptions.hasOption('f'))
+             addFileIterators(
+                     docIters, argOptions.getStringOption('f').split(","));
+         else if (argOptions.hasOption('d'))
+             addDocIterators(
+                     docIters, argOptions.getStringOption('d').split(","));
+         else 
+             throw new Error("Must specify document sources");
 
         // combine all of the document iterators into one iterator.
         docIter = new CombinedIterator<Document>(docIters);
@@ -351,6 +325,41 @@ public abstract class GenericMain {
 
         // Otherwise return the standard iterator.
         return docIter;
+    }
+
+    /**
+     * Adds a corpus reader for each file listed.  The first value in {@code
+     * fileNames} is expected to be the class type of the corpus reader.
+     */
+    protected void addCorpusReaderIterators(
+            Collection<Iterator<Document>> docIters,
+            String[] fileNames) throws IOException {
+        String readerType = fileNames[0];
+        for (int i = 1; i < fileNames.length; ++i) {
+            CorpusReader reader = ReflectionUtil.getObjectInstance(readerType);
+            reader.initialize(fileNames[i]);
+            docIters.add(reader);
+        }
+    }
+
+    /**
+     * Adds a {@link FileListDocumentIterator} to {@code docIters} for each file
+     * name provided.
+     */
+    protected void addFileIterators(Collection<Iterator<Document>> docIters,
+                                    String[] fileNames) throws IOException {
+        for (String s : fileNames)
+            docIters.add(new FileListDocumentIterator(s));
+    }
+
+    /**
+     * Adds a {@link OneLinePerDocumentIterator} to {@code docIters} for each
+     * file name provided.
+     */
+    protected void addDocIterators(Collection<Iterator<Document>> docIters,
+                                   String[] fileNames) throws IOException {
+        for (String s : fileNames)
+            docIters.add(new OneLinePerDocumentIterator(s));
     }
 
     /**

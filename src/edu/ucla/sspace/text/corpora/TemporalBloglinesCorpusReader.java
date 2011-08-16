@@ -21,15 +21,18 @@
 
 package edu.ucla.sspace.text;
 
-
 /**
- * A subclass of {@code UsenetCorpusReader} that always includes timestamps.
+ * A subclass of {@code BloglinesCorpusReader} that always includes timestamps.
  *
  * @author Keith Stevens
  */
-public class TemporalUsenetCorpusReader extends UsenetCorpusReader {
+public class TemporalBloglinesCorpusReader extends BloglinesCorpusReader {
 
-    public TemporalUsenetCorpusReader(String corpusFileName) {
-        super(corpusFileName, true);
+    /**
+     * Creates a {@code BloglinesCorpusReader} that will always include
+     * timestamps.
+     */
+    public TemporalBloglinesCorpusReader() {
+        super(true);
     }
 }

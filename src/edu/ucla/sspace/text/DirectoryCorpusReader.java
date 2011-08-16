@@ -39,13 +39,7 @@ import java.util.Stack;
  * will need to implement a method that will traverse a single file at a time
  * and return string forms of documents.
  */
-public abstract class DirectoryCorpusReader implements Iterator<Document> {
-
-    public static final String PROPERTY_PREFIX = 
-        "edu.ucla.sspace.text.DirectoryCorpusReader";
-
-    public static final String NO_PRE_PROCESS_PROPERTY =
-        PROPERTY_PREFIX + ".nopreprocess";
+public abstract class DirectoryCorpusReader implements CorpusReader {
 
     /**
      * The set of directories, represented as a queue of files, that need to be
@@ -65,20 +59,25 @@ public abstract class DirectoryCorpusReader implements Iterator<Document> {
     private final DocumentPreprocessor processor;
 
     /**
-     * Constructs a new {@link DirectoryCoprusReader} from an initial file
-     * with the system properties. 
+     * Constructs a new {@link DirectoryCoprusReader} that uses no {@link
+     * DocumentPreprocessor}.
      */
-    public DirectoryCorpusReader(String startingFile) {
-        this(startingFile, System.getProperties());
+    public DirectoryCorpusReader() {
+        this(null);
     }
 
     /**
-     * Constructs a new {@link DirectoryCoprusReader} from an initial file.  If
-     * that file is a real file, it will be the only file read.  If the file
-     * given is a directory, all the files and sub directories will be read by
-     * this reader.
+     * Constructs a new {@link DirectoryCoprusReader} that uses {@link
+     * processor} to pre-process any raw text extracted from a corpus file.
      */
-    public DirectoryCorpusReader(String startingFile, Properties props) {
+    public DirectoryCorpusReader(DocumentPreprocessor processor) {
+        this.processor = processor;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void initialize(String fileName) {
         filesToExplore = new Stack<Queue<File>>();
 
         LinkedList<File> files = new LinkedList<File>();
@@ -87,29 +86,22 @@ public abstract class DirectoryCorpusReader implements Iterator<Document> {
         // If the given file is a directory, store the sub files as the first
         // files to explore.  Otherwise the given file name is the only file to
         // iterate over.
-        File start = new File(startingFile);
-        if (start.isDirectory()) {
-            File[] subFiles = start.listFiles();
-            Arrays.sort(subFiles);
-            files.addAll(Arrays.asList(subFiles));
-        } else
+        File start = new File(fileName);
+        if (start.isDirectory())
+            files.addAll(Arrays.asList(start.listFiles()));
+        else
             files.add(start);
         Collections.sort(files);
-
-        if (props.getProperty(NO_PRE_PROCESS_PROPERTY) == null)
-            processor = new DocumentPreprocessor();
-        else 
-            processor = null;
     }
 
     /**
-     * Sets up the iterator so that the first call to next returns a document.
-     * THIS MUST BE CALLED IN CONSTRUCTORS FOR SUB CLASSES.
+     * Unsupported.
+     *
+     * @throws UnsupportedOperationException when called
      */
-    protected void init() {
-        String currentDoc = findNextDoc();
-        setupCurrentDoc(currentDoc);
-        nextLine = advance();
+    public void initialize(Reader baseReader) {
+        throw new UnsupportedOperationException(
+                "Cannot form a DirectoryCorpusReader from a Reader instance");
     }
 
     /**
@@ -151,7 +143,7 @@ public abstract class DirectoryCorpusReader implements Iterator<Document> {
      * Returns a cleaned version of the document if document processing is
      * enabled
      *
-     * @see DocumentProcessor#process(String)
+     * @see DocumentPreprocessor#process(String)
      */
     protected String cleanDoc(String document) {
         return (processor != null) ? processor.process(document) : document;
@@ -199,7 +191,7 @@ public abstract class DirectoryCorpusReader implements Iterator<Document> {
         if (f.isDirectory()) {
             File[] subFiles = f.listFiles();
             Arrays.sort(subFiles);
-            filesToExplore.push(new LinkedList<File>(Arrays.asList(subFiles)));
+            filesToExplore.push(Arrays.asList(subFiles));
             return findNextDoc();
         }
 
