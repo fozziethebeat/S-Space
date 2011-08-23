@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.util.DirectoryWalker;
+
 import java.io.File;
 import java.io.Reader;
 
@@ -44,10 +46,9 @@ import java.util.Stack;
 public abstract class DirectoryCorpusReader implements CorpusReader {
 
     /**
-     * The set of directories, represented as a queue of files, that need to be
-     * evaluated.
+     * The list of files to explore based on some initial file.
      */
-    private Stack<Queue<File>> filesToExplore;
+    private Iterator<File> filesToExplore;
 
     /**
      * The String representing the next document to return.
@@ -80,21 +81,7 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
      * {@inheritDoc}
      */
     public void initialize(String fileName) {
-        filesToExplore = new Stack<Queue<File>>();
-
-        Queue<File> files = new ArrayDeque<File>();
-        filesToExplore.push(files);
-
-        // If the given file is a directory, store the sub files as the first
-        // files to explore, in sorted order.  Otherwise the given file name is
-        // the only file to iterate over.
-        File start = new File(fileName);
-        if (start.isDirectory()) {
-            File[] listed = start.listFiles();
-            Arrays.sort(listed);
-            files.addAll(Arrays.asList(listed));
-        } else
-            files.add(start);
+        filesToExplore = (new DirectoryWalker(new File(fileName))).iterator();
     }
 
     /**
@@ -140,7 +127,7 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
      * Sets up any data members needed to process the current file being
      * processed.
      */
-    protected abstract void setupCurrentDoc(String currentDocName);
+    protected abstract void setupCurrentDoc(File currentDoc);
 
     /**
      * Returns a cleaned version of the document if document processing is
@@ -160,49 +147,18 @@ public abstract class DirectoryCorpusReader implements CorpusReader {
     protected String advance() {
         String newDoc = advanceInDoc();
         if (newDoc == null) {
-            String currentDoc = findNextDoc();
-            if (currentDoc == null)
+            // If there are no more files to explore, just return null to
+            // indicate an empty reader.
+            if (!filesToExplore.hasNext())
                 return null;
-            setupCurrentDoc(currentDoc);
-            newDoc = advanceInDoc();
+
+            // Otherwise setup the reader with the next document File.
+            setupCurrentDoc(filesToExplore.next());
+
+            // Now that the File is setup, recursively try to return the
+            // next document.
+            return advance();
         }
         return newDoc;
-    }
-
-    /**
-     * Returns the next file name that can be processed to extract documents.
-     * Files are found by recursively searching the directory structure.
-     */
-    private String findNextDoc() {
-        if (filesToExplore.empty())
-            return null;
-
-        // Check that there are files in this current directory worth exploring.
-        // If there are not any files, remove this directory from the list of
-        // files to explore and return whatever can be found in the next set of
-        // files.
-        Queue<File> files = filesToExplore.peek();
-        if (files.size() == 0) {
-            filesToExplore.pop();
-            return findNextDoc();
-        }
-
-        // Check the next file in the queue.  If it is a directory, recurse
-        // into that directory and return whatever the contents of what is found
-        // there.
-        File f = files.remove();
-        if (f.isDirectory()) {
-            File[] subFiles = f.listFiles();
-            Arrays.sort(subFiles);
-            filesToExplore.push(new ArrayDeque<File>(Arrays.asList(subFiles)));
-            return findNextDoc();
-        }
-
-        // Skip over hidden files.
-        if (f.isHidden())
-            return findNextDoc();
-
-        // The file is a real file worth extracting documents from.
-        return f.getPath();
     }
 }

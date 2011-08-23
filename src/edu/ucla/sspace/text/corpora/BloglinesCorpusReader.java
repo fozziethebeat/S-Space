@@ -63,7 +63,7 @@ public class BloglinesCorpusReader extends DirectoryCorpusReader {
      * Sets up a {@code BufferedReader} to read through a single file with
      * multiple blog entries.
      */
-    protected void setupCurrentDoc(String currentDocName) {
+    protected void setupCurrentDoc(File currentDocName) {
         try {
             bloglinesReader =
                 new BufferedReader(new FileReader(currentDocName));

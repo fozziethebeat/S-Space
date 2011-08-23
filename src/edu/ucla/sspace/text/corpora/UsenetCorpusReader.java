@@ -88,14 +88,14 @@ public class UsenetCorpusReader extends DirectoryCorpusReader {
      * Sets up a {@code BufferedReader} to read through a single file with
      * multiple blog entries.
      */
-    protected void setupCurrentDoc(String currentDocName) {
+    protected void setupCurrentDoc(File currentDocName) {
         try {
             usenetReader =
                 new BufferedReader(new FileReader(currentDocName));
             // Extract the time stamp of the current doc.  All usenet files are
             // named in the format "text.text.date.txt".  the date portion is
             // formated with YYYYMMDD followed with extra information.
-            String[] parsedName = currentDocName.split("\\.");
+            String[] parsedName = currentDocName.getName().split("\\.");
             String date = parsedName[parsedName.length - 2];
             Calendar calendar = new GregorianCalendar(
                     Integer.parseInt(date.substring(0, 4)),

@@ -23,6 +23,7 @@ package edu.ucla.sspace.text.corpora;
 
 import edu.ucla.sspace.text.DirectoryCorpusReader;
 
+import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 
@@ -66,7 +67,7 @@ public class ChildesCorpusReader extends DirectoryCorpusReader {
     /**
      * Parses the content of the given file and extracts the set of utterances.
      */
-    protected void setupCurrentDoc(String currentDocName) {
+    protected void setupCurrentDoc(File currentDocName) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();

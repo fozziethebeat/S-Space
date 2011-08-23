@@ -21,10 +21,13 @@
 
 package edu.ucla.sspace.text.corpora;
 
-import edu.ucla.sspace.text.DirectoryCorpusReader;
+import edu.ucla.sspace.text.CorpusReader;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.StringDocument;
 
 import java.io.IOError;
 import java.io.IOException;
+import java.io.Reader;
 
 import java.util.Iterator;
 
@@ -34,6 +37,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import org.xml.sax.InputSource;
 
 
 /**
@@ -54,7 +59,7 @@ import org.w3c.dom.NodeList;
  *
  * @author Keith Stevens
  */
-public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
+public class SenseEvalDependencyCorpusReader implements CorpusReader {
 
     /**
      * The list of instances in a file.
@@ -67,9 +72,14 @@ public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
     private int currentNodeIndex;
 
     /**
+     * The contents of the current document.
+     */
+    private String currentDoc;
+
+    /**
      * {@inheritDoc}
      */
-    protected void setupCurrentDoc(String currentDocName) {
+    public void initialize(String currentDocName) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
@@ -77,6 +87,7 @@ public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
             org.w3c.dom.Document currentXmlDoc = db.parse(currentDocName);
             instances = currentXmlDoc.getElementsByTagName("instance");
             currentNodeIndex = 0;
+            currentDoc = null;
         } catch (javax.xml.parsers.ParserConfigurationException pce) {
             pce.printStackTrace();
         } catch (org.xml.sax.SAXException saxe) {
@@ -87,10 +98,54 @@ public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public void initialize(Reader docReader) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            org.w3c.dom.Document currentXmlDoc = db.parse(
+                    new InputSource(docReader));
+            instances = currentXmlDoc.getElementsByTagName("instance");
+            currentNodeIndex = 0;
+            currentDoc = null;
+        } catch (javax.xml.parsers.ParserConfigurationException pce) {
+            pce.printStackTrace();
+        } catch (org.xml.sax.SAXException saxe) {
+            saxe.printStackTrace();
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public synchronized boolean hasNext() {
+        return currentDoc != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public synchronized Document next() {
+        Document doc = new StringDocument(currentDoc);
+        currentDoc = advance();
+        return doc;
+    }
+
+    /**
+     * Throws {@link UnsupportedOperationException} if called.
+     */
+    public synchronized void remove() {
+        throw new UnsupportedOperationException("Remove not permitted.");
+    }
+
+    /**
      * Iterates over the instances in a file and appends the words to create a
      * new document.
      */
-    protected String advanceInDoc() {
+    protected String advance() {
         if (currentNodeIndex >= instances.getLength())
             return null;
         Element instance = (Element) instances.item(currentNodeIndex++);

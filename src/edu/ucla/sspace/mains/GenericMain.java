@@ -246,8 +246,7 @@ public abstract class GenericMain {
         options.addOption('R', "corpusReader", 
                           "Specifies a CorpusReader which will " +
                           "automatically parse the document files that are " +
-                          "not in the formats expected by -f and -d.  Note " +
-                          "that this overrides both -f and -d.",
+                          "not in the formats expected by -f and -d.",
                           true, "CLASSNAME,FILE[,FILE...]",
                           "Required (at least one of)");
 
@@ -306,13 +305,14 @@ public abstract class GenericMain {
          if (argOptions.hasOption('R'))
              addCorpusReaderIterators(
                      docIters, argOptions.getStringOption('R').split(","));
-         else if (argOptions.hasOption('f'))
+         if (argOptions.hasOption('f'))
              addFileIterators(
                      docIters, argOptions.getStringOption('f').split(","));
-         else if (argOptions.hasOption('d'))
+         if (argOptions.hasOption('d'))
              addDocIterators(
                      docIters, argOptions.getStringOption('d').split(","));
-         else 
+
+         if (docIters.size() == 0)
              throw new Error("Must specify document sources");
 
         // combine all of the document iterators into one iterator.
