@@ -48,11 +48,14 @@ public class PseudoWordReporterTest {
         reporter.finalizeReport();
 
         String computed = stream.toString();
+        System.out.println(computed);
         int[] dogCounts = new int[] {0, 0, 1, 0, 0, 2};
         int[] catCounts = new int[] {0, 2, 0, 0, 0, 1};
         for (int i = 0; i < dogCounts.length; ++i) {
-            assertTrue(computed.contains("catdog dog "+i+" "+dogCounts[i]));
-            assertTrue(computed.contains("catdog cat "+i+" "+catCounts[i]));
+            if (dogCounts[i] != 0)
+                assertTrue(computed.contains("catdog dog "+i+" "+dogCounts[i]));
+            if (catCounts[i] != 0)
+                assertTrue(computed.contains("catdog cat "+i+" "+catCounts[i]));
         }
     }
 
