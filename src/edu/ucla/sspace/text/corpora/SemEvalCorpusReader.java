@@ -72,20 +72,60 @@ import org.xml.sax.helpers.DefaultHandler;
  * framework which requires the focus word information and the instance id
  * infomration.
  *
+ * </p>
+ *
+ * Note that this is implemented as a {@link DefaultHandler} for a {@link
+ * SAXParser} due to difficult nature of the SemEval WSI xml format.  Line based
+ * methods do not work as the entire xml document is contained on a single line.
+ * Furthermore, the test set has an addition nested tag that specifies the
+ * target sentence.  This information is discarded as it is does not specify the
+ * focus word in each context.  Instead, this lemmatizes each word until it
+ * finds a context word that matches the lemmatized version of the instance id.
+ *
  * @author Keith Stevens
  */
 public class SemEvalCorpusReader extends DefaultHandler 
                                  implements CorpusReader {
 
+
+    /**
+     * The list of processed contexts.
+     */
     List<String> contexts;
+
+    /**
+     * An iterator over the contexts parsed from a single xml file.
+     */
     Iterator<String> contextIter;
+
+    /**
+     * A boolean marker signifying that the parser is in the context tag.
+     */
     private boolean inContext;
 
+    /**
+     * The current instance id.
+     */
     private String instanceId;
+
+    /**
+     * The current instance word's lemma.
+     */
+    private String lemma;
+
+    /**
+     * A {@link StringBuilder} for forming the current context.
+     */
     private StringBuilder context;
 
+    /**
+     * A stemmer for discovering the focus word of each context.
+     */
     private final Stemmer stemmer;
 
+    /**
+     * Creates a new {@link SemEvalCorpusReader}.
+     */
     public SemEvalCorpusReader() {
         contexts = new ArrayList<String>();
         inContext = false;
@@ -93,6 +133,9 @@ public class SemEvalCorpusReader extends DefaultHandler
         context = new StringBuilder();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void initialize(Reader reader) {
         SAXParserFactory saxfac = SAXParserFactory.newInstance();
         saxfac.setValidating(false);
@@ -120,6 +163,9 @@ public class SemEvalCorpusReader extends DefaultHandler
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void initialize(String fileName) {
         SAXParserFactory saxfac = SAXParserFactory.newInstance();
         saxfac.setValidating(false);
@@ -147,6 +193,9 @@ public class SemEvalCorpusReader extends DefaultHandler
         }
     }
 
+    /**
+     * Extracts the instance id for the current context.
+     */
     @Override
     public void startElement(String uri, String localName, 
                              String name, Attributes atts)
@@ -154,17 +203,21 @@ public class SemEvalCorpusReader extends DefaultHandler
         if (!name.endsWith(".train") && !name.endsWith(".test") && !inContext) {
             inContext = true;
             instanceId = name;
+            String[] wordPosId = instanceId.split("\\.");
+            lemma = stemmer.stem(wordPosId[0]);
         }
     }
 
+    /**
+     * Ends the current context and stores all of the information in {@code
+     * contexts}.
+     */
     @Override
     public void endElement(String uri, String localName, String name)
             throws SAXException {
         if (name.equals(instanceId)) {
             inContext = false;
 
-            String[] wordPosId = instanceId.split("\\.");
-            String lemma = stemmer.stem(wordPosId[0]);
 
             String[] tokens = context.toString().split("\\s+");
             context.setLength(0);
@@ -182,6 +235,9 @@ public class SemEvalCorpusReader extends DefaultHandler
         }
     }
 
+    /**
+     * Appends the text to the current context.
+     */
     @Override
     public void characters(char[] ch, int start, int length)
             throws SAXException {
@@ -204,7 +260,7 @@ public class SemEvalCorpusReader extends DefaultHandler
     }
 
     /**
-     * {@inheritDoc}
+     * Throws {@link UnsupportedOperationException}.
      */
     public void remove() {
         throw new UnsupportedOperationException("Cannot remove documents");

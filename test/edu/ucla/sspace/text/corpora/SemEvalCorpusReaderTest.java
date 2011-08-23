@@ -38,42 +38,36 @@ import static org.junit.Assert.*;
 /**
  * @author Keith Stevens
  */
-public class PukWacCorpusReaderTest {
+public class SemEvalCorpusReaderTest {
 
-    public static final String TEST_TEXT =
-        "<text>\n" +
-        "<s>\n" +
-        "the blah blah blah\n" +
-        "chicken blah blah blah\n" +
-        "ate blah blah blah\n" +
-        "a blah blah blah\n" +
-        "dog blah blah blah\n" +
-        ". blah blah blah\n" +
-        "</s>\n" +
-        "<s>\n" +
-        "bob blah blah blah\n" +
-        "rocks blah blah blah\n" +
-        "! blah blah blah\n" +
-        "</s>\n" +
-        "</text>\n" +
-        "<text>\n" +
-        "<s>\n" +
-        "blah blah blah\n" +
-        "bloh blah blah\n" +
-        "</s>\n" +
-        "</text>\n";
+    private final String TRAIN_TEXT =
+        "<cat.n.train><cat.n.1>chicken cat bar</cat.n.1></cat.n.train>";
 
-    @Test public void testIterator() throws Exception {
-        CorpusReader reader = new PukWacCorpusReader();
+    private final String TEST_TEXT=
+        "<cat.n.test><cat.n.1>chicken <TargetSentence>cat</TargetSentence> bar</cat.n.1></cat.n.test>";
+
+    @Test public void testTrainReader() throws Exception {
+        CorpusReader reader = new SemEvalCorpusReader();
+        reader.initialize(new StringReader(TRAIN_TEXT));
+
+        Iterator<Document> iter = reader;
+        assertTrue(iter.hasNext());
+        assertEquals("cat.n.1 chicken |||| cat bar",
+                     iter.next().reader().readLine().trim());
+
+        assertFalse(iter.hasNext());
+    }
+
+    @Test public void testTestReader() throws Exception {
+        CorpusReader reader = new SemEvalCorpusReader();
         reader.initialize(new StringReader(TEST_TEXT));
-        Iterator<Document> docIter = reader;
-        assertTrue(docIter.hasNext());
-        assertEquals("the chicken ate a dog . bob rocks ! ",
-                     docIter.next().reader().readLine());
-        assertTrue(docIter.hasNext());
-        assertEquals("blah bloh ",
-                     docIter.next().reader().readLine());
-        assertFalse(docIter.hasNext());
+
+        Iterator<Document> iter = reader;
+        assertTrue(iter.hasNext());
+        assertEquals("cat.n.1 chicken |||| cat bar",
+                     iter.next().reader().readLine().trim());
+
+        assertFalse(iter.hasNext());
     }
 }
 
