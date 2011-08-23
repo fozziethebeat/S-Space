@@ -57,43 +57,43 @@ public class OneLinePerDocumentIterator implements Iterator<Document> {
      *         documentsFile}
      */
     public OneLinePerDocumentIterator(String documentsFile) 
-	    throws IOException {
-	    
-	documentsReader = new BufferedReader(new FileReader(documentsFile));
-	nextLine = documentsReader.readLine();
+            throws IOException {
+            
+        documentsReader = new BufferedReader(new FileReader(documentsFile));
+        nextLine = documentsReader.readLine();
     }
     
     /**
      * Returns {@code true} if there are more documents in the provided file.
      */
     public synchronized boolean hasNext() { 
-	return nextLine != null;
+        return nextLine != null;
     }    
 
     /**
      * Returns the next document from the file.
      */
     public synchronized Document next() {
-	Document next = new StringDocument(nextLine);
-	try {
-	    nextLine = documentsReader.readLine();
+        Document next = new StringDocument(nextLine);
+        try {
+            nextLine = documentsReader.readLine();
 
-	    // close the stream if there were no more lines
-	    if (nextLine == null) {
-		documentsReader.close();
-	    }
-	} catch (Throwable t) {
-	    t.printStackTrace();
-	    nextLine = null;
-	}
-	return next;
-    }	
+            // close the stream if there were no more lines
+            if (nextLine == null) {
+                documentsReader.close();
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            nextLine = null;
+        }
+        return next;
+    }        
 
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */
     public void remove() {
-	throw new UnsupportedOperationException(
-	    "removing documents is not supported");
+        throw new UnsupportedOperationException(
+            "removing documents is not supported");
     }
 }

@@ -33,4 +33,9 @@ public interface Assignment {
      * Returns the cluster id's that a specific data point was assigned to.
      */
     int[] assignments();
+
+    /**
+     * Returns the number of assignments given for this data point.
+     */
+    int length();
 }

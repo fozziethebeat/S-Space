@@ -26,6 +26,7 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.SparseMatrix;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.Vector;
@@ -342,7 +343,7 @@ public class StaticSemanticSpace implements SemanticSpace {
             }
             rowVectors[row] = new CompactSparseVector(indices, values, cols);
         }
-        return Matrices.asMatrix(Arrays.asList(rowVectors));
+        return Matrices.asSparseMatrix(Arrays.asList(rowVectors));
     }
 
     /**

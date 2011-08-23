@@ -34,6 +34,7 @@
   <property name="hadoop.dir" value="opt/hadoop"/>
   <property name="package" value="edu.ucla.sspace"/>
   <property name="bin.dir" value="bin"/>
+  <property name="test.dir" value="test"/>
   <property name="tools.dir" value="tools"/>
   <property name="version" value="1.6"/>
 
@@ -76,7 +77,7 @@
     **
     **-->
 
-  <target name="lib" depends="sspace-jar,sspace-src-jar"/>
+  <target name="lib" depends="jar,src"/>
   
   <target name="compile">
     <!-- Ensure that the build output directories are always present -->
@@ -215,8 +216,8 @@
     **-->
 
   
-  <target name="sspace-jar" depends="compile">
-    <jar destfile="${dist.dir}/sspace-lib.jar" basedir="classes">
+  <target name="jar" depends="compile">
+    <jar destfile="${bin.dir}/sspace-lib.jar" basedir="classes">
       <include name="**/*.class"/>
       <exclude name="jnt/*"/>
       <manifest>
@@ -231,7 +232,7 @@
     </jar>
   </target>
 
-  <target name="sspace-src-jar" depends="compile">
+  <target name="src" depends="compile">
     <jar destfile="${dist.dir}/sspace-src.jar" basedir="src">
       <include name="**/*.java"/>
       <exclude name="jnt/*"/>

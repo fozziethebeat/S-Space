@@ -78,7 +78,9 @@ public class VectorMath {
                                    DoubleVector vector2) {
         if (vector2.length() != vector1.length())
             throw new IllegalArgumentException(
-                    "Vectors of different sizes cannot be added");
+                    "Vectors of different sizes cannot be added.  " +
+                    "Lengths are: vector1: " + vector1.length() +
+                    ", vector2: " + vector2.length());
         // If vector is a sparse vector, simply get the non zero values and
         // add them to this instance.
         if (vector2 instanceof SparseVector)
@@ -419,6 +421,39 @@ public class VectorMath {
         for (int i = 0; i < length; ++i)
             left.set(i, left.get(i) * right.get(i));
         return left;
+    }
+    /**
+     * Multiply the values in {@code a} and {@code b} and store the
+     * product in a new {@link CompactSparseVector} This is an element by
+     * element multiplication.
+     *
+     * @param a The left {@code Vector} to multiply
+     * @param b The right {@code Vector} to multiply.
+     *
+     * @return The product of {@code left} and {@code right}
+     */
+    public static SparseDoubleVector multiplyUnmodified(SparseDoubleVector a,
+                                                        SparseDoubleVector b) {
+        SparseDoubleVector result = new CompactSparseVector();
+        int[] nonZerosA = a.getNonZeroIndices();
+        int[] nonZerosB = b.getNonZeroIndices();
+        if (nonZerosA.length == 0 || nonZerosB.length == 0)
+            return result;
+
+        if (nonZerosA[nonZerosA.length-1] > nonZerosB[nonZerosB.length-1]) {
+            SparseDoubleVector t = b;
+            b = a;
+            a = t;
+        }
+        nonZerosA = a.getNonZeroIndices();
+
+        for (int index : nonZerosA) {
+            double v = a.get(index);
+            double w = b.get(index);
+            if (w != 0d)
+                result.set(index, v*w);
+        }
+        return result;
     }
 
     /**

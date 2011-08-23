@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.util.Duple;
+
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vectors;
@@ -71,6 +73,11 @@ public class OnDiskMatrix implements Matrix {
     private final DoubleBuffer[] matrixRegions;
 
     /**
+     * The {@code File} instances that back the matrix regions
+     */
+    private final File[] backingFiles;
+
+    /**
      * The number of rows stored in this {@code Matrix}.
      */
     private final int rows;
@@ -101,12 +108,15 @@ public class OnDiskMatrix implements Matrix {
         int numRegions = 
             (int)(((long)rows * cols) / MAX_ELEMENTS_PER_REGION) + 1;
         matrixRegions = new DoubleBuffer[numRegions];
+        backingFiles = new File[numRegions];
         for (int region = 0; region < numRegions; ++region) {
             int sizeInBytes = (region + 1 == numRegions) 
                 ? (int)((((long)rows * cols) 
                          % MAX_ELEMENTS_PER_REGION) * BYTES_PER_DOUBLE)
                 : MAX_ELEMENTS_PER_REGION * BYTES_PER_DOUBLE;
-            matrixRegions[region] = createTempBuffer(sizeInBytes);
+            Duple<DoubleBuffer,File> d = createTempBuffer(sizeInBytes);
+            matrixRegions[region] = d.x;
+            backingFiles[region] = d.y;
         }
      }
 
@@ -114,7 +124,7 @@ public class OnDiskMatrix implements Matrix {
      *
      * @param size the size of the buffer in bytes
      */
-    private static DoubleBuffer createTempBuffer(int size) {
+    private static Duple<DoubleBuffer,File> createTempBuffer(int size) {
         try {
             File f = File.createTempFile("OnDiskMatrix",".matrix");
             // Make sure the temp file goes away since it can get fairly large
@@ -125,7 +135,7 @@ public class OnDiskMatrix implements Matrix {
             DoubleBuffer contextBuffer = 
                 fc.map(MapMode.READ_WRITE, 0, size).asDoubleBuffer();
             fc.close();
-            return contextBuffer;
+            return new Duple<DoubleBuffer,File>(contextBuffer, f);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
@@ -296,5 +306,21 @@ public class OnDiskMatrix implements Matrix {
      */
     public int rows() {
         return rows;
+    }
+
+    /**
+     * Upon finalize, deletes all of the backing files.  This is most necessary
+     * when the JVM is long-running with many {@code OnDiskMatrix} instances
+     * that are not deleted until exit.
+     */
+    @Override protected void finalize() { 
+        // Delete all of the backing files, silently catching all errors
+        for (File f : backingFiles) {           
+            try {
+                f.delete();
+            } catch (Throwable t) {
+                // silent
+            }
+        }
     }
 }

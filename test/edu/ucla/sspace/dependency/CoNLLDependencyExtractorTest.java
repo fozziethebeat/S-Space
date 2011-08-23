@@ -52,21 +52,45 @@ public class CoNLLDependencyExtractorTest {
         "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
         "12  .   _   .   .   _   3   P   _   _";
 
-    public static final String DOUBLE_PARSE =
-        "\n\n" +
-        SINGLE_PARSE +
-        "\n\n" +
+    public static final String SECOND_PARSE =
         "1   Individuell _   AJ  AJ  _   2   AT  _   _\n" +
         "2   beskattning _   N   VN  _   0   ROOT    _   _\n" +
         "3   av  _   PR  PR  _   2   ET  _   _\n" +
         "4   arbetsinkomster _   N   NN  SS  3   PA  _   _\n";
 
+    public static final String DOUBLE_PARSE =
+        "\n\n" +
+        SINGLE_PARSE +
+        "\n\n" +
+        SECOND_PARSE;
+
+    public static final String CONCATONATED_PARSE =
+        SINGLE_PARSE + "\n" + SECOND_PARSE;
+
+    public static final String DOUBLE_ZERO_OFFSET_PARSE = 
+        "0   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
+        "1   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+        "2   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
+        "3   a   _   DT  DT  _   5   NMOD    _   _\n" +
+        "4   columnist   _   NN  NN  _   3   PRD _   _\n" +
+        "5   for _   IN  IN  _   5   NMOD    _   _\n" +
+        "6   the _   DT  DT  _   9   NMOD    _   _\n" +
+        "7   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
+        "8   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+        "9   in  _   IN  IN  _   9   ADV _   _\n" +
+        "10  London  _   NNP NNP _   10  PMOD    _   _\n" +
+        "11  .   _   .   .   _   3   P   _   _" + "\n" +
+        "0   Individuell _   AJ  AJ  _   2   AT  _   _\n" +
+        "1   beskattning _   N   VN  _   0   ROOT    _   _\n" +
+        "2   av  _   PR  PR  _   2   ET  _   _\n" +
+        "3   arbetsinkomster _   N   NN  SS  3   PA  _   _\n";
+ 
     /**
      * A simple function that tests the neighbors for a given relation.  The
      * passed in string is expected to contain the relation for each node that
      * is connected to {@code relation}.
      */
-    private void evaluateRelations(DependencyTreeNode node,
+    protected void evaluateRelations(DependencyTreeNode node,
                                    List<DependencyRelation> expectedRelations) {
         // Check that the relations have the expected number 
         assertEquals(expectedRelations.size(), node.neighbors().size());
@@ -81,6 +105,54 @@ public class CoNLLDependencyExtractorTest {
             expectedRelations.remove(rel);
         }
         assertEquals(0, expectedRelations.size());
+    }
+
+    /**
+     * A simple helper method for checking that the root node in the first
+     * sentence is correctly linked up."
+     */
+    protected void testFirstRoot(DependencyTreeNode[] relations, int index) {
+        // Check the basics of the node.
+        assertEquals("is", relations[index].word());
+        assertEquals("VBZ", relations[index].pos());
+
+        // Test that the root node does not have a link to itself.
+        DependencyRelation[] expectedRelations = new DependencyRelation[] {
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
+                                         "SBJ",
+                                         new SimpleDependencyTreeNode("holt", "NNP")),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
+                                         "PRD",
+                                         new SimpleDependencyTreeNode("columnist", "NN")),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
+                                         "P",
+                                         new SimpleDependencyTreeNode(".", "."))
+        };
+        evaluateRelations(relations[index],
+                          new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
+    }
+
+    /**
+     * A simple helper method for checking that the root node in the second
+     * sentence is correctly linked up."
+     */
+    protected void testSecondRoot(DependencyTreeNode[] relations, int index) {
+        // Check the basics of the node.
+        assertEquals("beskattning", relations[index].word());
+        assertEquals("N", relations[index].pos());
+
+        // Test expected relation for each of the links for "beskattning".
+        DependencyRelation[] expectedRelations = new DependencyRelation[] {
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
+                                         "AT",
+                                         new SimpleDependencyTreeNode("individuell", "AJ")),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
+                                         "ET",
+                                         new SimpleDependencyTreeNode("av", "PR"))
+        };
+        
+        evaluateRelations(relations[index],
+                          new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
     }
 
     @Test public void testSingleExtraction() throws Exception {
@@ -120,23 +192,15 @@ public class CoNLLDependencyExtractorTest {
         assertTrue(relations != null);
         assertEquals(12, relations.length);
 
+        testFirstRoot(relations, 2);
+
         relations = extractor.readNextTree(doc.reader());
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
-        // Test expected relation for each of the links for "beskattning".
-        DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
-                                         "AT",
-                                         new SimpleDependencyTreeNode("individuell", "AJ")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
-                                         "ET",
-                                         new SimpleDependencyTreeNode("av", "PR"))
-        };
-        
-        evaluateRelations(relations[1], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
+        testSecondRoot(relations, 1);
     }
-
+    
     @Test public void testRootNode() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
         Document doc = new StringDocument(SINGLE_PARSE);
@@ -144,22 +208,26 @@ public class CoNLLDependencyExtractorTest {
 
         assertEquals(12, relations.length);
 
-        // Check the basics of the node.
-        assertEquals("is", relations[2].word());
-        assertEquals("VBZ", relations[2].pos());
+        testFirstRoot(relations, 2);
+    }
 
-        // Test that the root node does not have a link to itself.
-        DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "SBJ",
-                                         new SimpleDependencyTreeNode("holt", "NNP")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "PRD",
-                                         new SimpleDependencyTreeNode("columnist", "NN")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "P",
-                                         new SimpleDependencyTreeNode(".", "."))
-        };
-        evaluateRelations(relations[2], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
+    @Test public void testConcatonatedTrees() throws Exception {
+        DependencyExtractor extractor = new CoNLLDependencyExtractor();
+        Document doc = new StringDocument(CONCATONATED_PARSE);
+        DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
+        
+        assertEquals(16, relations.length);
+        testFirstRoot(relations, 2);
+        testSecondRoot(relations, 13);
+    }
+
+    @Test public void testConcatonatedTreesZeroOffset() throws Exception {
+        DependencyExtractor extractor = new CoNLLDependencyExtractor();
+        Document doc = new StringDocument(DOUBLE_ZERO_OFFSET_PARSE);
+        DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
+        
+        assertEquals(16, relations.length);
+        testFirstRoot(relations, 2);
+        testSecondRoot(relations, 13);
     }
 }

@@ -25,16 +25,26 @@ import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
+import edu.ucla.sspace.dependency.DependencyPathAcceptor;
 import edu.ucla.sspace.dependency.DependencyExtractor;
+import edu.ucla.sspace.dependency.DependencyExtractorManager;
+import edu.ucla.sspace.dependency.UniversalPathAcceptor;
 
 import edu.ucla.sspace.svs.StructuredVectorSpace;
+import edu.ucla.sspace.svs.PointWiseCombinor;
+import edu.ucla.sspace.svs.VectorCombinor;
 
+import edu.ucla.sspace.util.ReflectionUtil;
+
+import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 
 import java.util.Properties;
 
 /**
+ * NOTE: NOT MEANT TO BE PART OF WORDSI-UPDATE.
+ *
  * An executable class for running {@link StructuredVectorSpace}
  * (StructuredVectorSpace) from the command line.  This class takes in several
  * command line arguments.
@@ -128,28 +138,16 @@ public class StructuredVectorSpaceMain extends DependencyGenericMain {
         options.addOption('a', "pathAcceptor",
                           "The DependencyPathAcceptor to use",
                           true, "CLASSNAME", "Algorithm Options");
-        options.addOption('W', "pathWeighter",
-                          "The DependencyPathWeight to use",
+        options.addOption('c', "vectorCombinor",
+                          "The VectorCombinor to use",
                           true, "CLASSNAME", "Algorithm Options");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         StructuredVectorSpaceMain svs =  new StructuredVectorSpaceMain();
-        try {
-            svs.run(args);
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
+        svs.run(args);
     }
     
-    /**
-     * {@inheritDoc}
-     */
-    protected SSpaceFormat getSpaceFormat() {
-        return SSpaceFormat.SPARSE_BINARY;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -157,27 +155,37 @@ public class StructuredVectorSpaceMain extends DependencyGenericMain {
         // Ensure that the configured DependencyExtactor is in place prior to
         // constructing the SVS
         setupDependencyExtractor();        
-        return new StructuredVectorSpace();
+
+        DependencyPathAcceptor acceptor;
+        if (argOptions.hasOption("pathAcceptor"))
+            acceptor = ReflectionUtil.getObjectInstance(
+                    argOptions.getStringOption("pathAcceptor"));
+        else
+            acceptor = new UniversalPathAcceptor();
+
+        VectorCombinor combinor;
+        if (argOptions.hasOption("pathAcceptor"))
+            combinor = ReflectionUtil.getObjectInstance(
+                    argOptions.getStringOption("vectorCombinor"));
+        else
+            combinor = new PointWiseCombinor();
+
+        DependencyExtractor extractor = 
+            DependencyExtractorManager.getDefaultExtractor();
+        return new StructuredVectorSpace(extractor, acceptor, combinor);
     }
 
     /**
      * {@inheritDoc}
      */
     protected Properties setupProperties() {
-        // use the System properties in case the user specified them as
-        // -Dprop=<val> to the JVM directly.
-        Properties props = System.getProperties();
+        return System.getProperties();
+    }
 
-        if (argOptions.hasOption("pathAcceptor"))
-            props.setProperty(
-                    StructuredVectorSpace.DEPENDENCY_ACCEPTOR_PROPERTY,
-                    argOptions.getStringOption("pathAcceptor"));
-
-        if (argOptions.hasOption("pathWeighter"))
-            props.setProperty(
-                    StructuredVectorSpace.DEPENDENCY_WEIGHT_PROPERTY,
-                    argOptions.getStringOption("pathWeighter"));
-
-        return props;
+    /**
+     * {@inheritDoc}
+     */
+    protected SSpaceFormat getSpaceFormat() {
+        return SSpaceFormat.SERIALIZE;
     }
 }

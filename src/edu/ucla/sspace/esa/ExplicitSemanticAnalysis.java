@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.esa;
 
+import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
@@ -83,7 +86,7 @@ public class ExplicitSemanticAnalysis extends GenericTermDocumentVectorSpace {
      * Constructs a new {@link ExplicitSemanticAnalysis} instance.
      */
     public ExplicitSemanticAnalysis() throws IOException {
-        super(true, new ConcurrentHashMap<String, Integer>(),
+        super(true, new StringBasisMapping(), 
               new SvdlibcSparseBinaryMatrixBuilder());
 
         // We use a synchronized and growable array list in order to save space.
@@ -97,7 +100,7 @@ public class ExplicitSemanticAnalysis extends GenericTermDocumentVectorSpace {
      * Constructs a new {@code ExplicitSemanticAnalysis} using the provided
      * objects for processing.
      *
-     * @param termToIndex The {@link ConcurrentMap} used to map strings to
+     * @param termToIndex The {@link BasisMapping} used to map strings to
      *        indices.
      * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
      *        document vectors to disk which later get processed in {@link
@@ -107,7 +110,7 @@ public class ExplicitSemanticAnalysis extends GenericTermDocumentVectorSpace {
      *         the backing array files required for processing
      */
     public ExplicitSemanticAnalysis(
-            ConcurrentMap<String, Integer> termToIndex,
+            BasisMapping<String, String> termToIndex,
             MatrixBuilder termDocumentMatrixBuilder) throws IOException {
         super(true, termToIndex, termDocumentMatrixBuilder);
 

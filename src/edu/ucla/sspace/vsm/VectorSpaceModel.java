@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.vsm;
 
+import edu.ucla.sspace.basis.BasisMapping;
+
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
@@ -132,7 +134,7 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      * @param readHeaderToken If true, the first token of each document will be
      *        read and passed to {@link #handleDocumentHeader(int, String)
      *        handleDocumentHeader}, which discards the header.
-     * @param termToIndex The {@link ConcurrentMap} used to map strings to
+     * @param termToIndex The {@link BasisMapping} used to map strings to
      *        indices.
      * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
      *        document vectors to disk which later get processed in {@link
@@ -143,7 +145,7 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      */
     public VectorSpaceModel(
             boolean readHeaderToken,
-            ConcurrentMap<String, Integer> termToIndex,
+            BasisMapping<String, String> termToIndex,
             MatrixBuilder termDocumentMatrixBuilder) throws IOException {
         super(readHeaderToken, termToIndex, termDocumentMatrixBuilder);
     }

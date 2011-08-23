@@ -205,6 +205,10 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
      */
     public boolean remove(K key, V value) {
         Set<V> values = map.get(key);
+        // If the value has already been removed, return early.
+        if (values == null)
+            return false;
+
         boolean removed = values.remove(value);
         if (removed)
             range--;

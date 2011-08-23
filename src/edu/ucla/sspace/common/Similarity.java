@@ -280,14 +280,9 @@ public class Similarity {
 
     /**
      * Returns the cosine similarity of the two {@code DoubleVector}.
-     *
-     * @throws IllegaleArgumentException when the length of the two vectors are
-     *                                   not the same.
      */
     @SuppressWarnings("unchecked")
     public static double cosineSimilarity(DoubleVector a, DoubleVector b) {
-        check(a,b);
-
         double dotProduct = 0.0;
         double aMagnitude = a.magnitude();
         double bMagnitude = b.magnitude();
@@ -300,30 +295,27 @@ public class Similarity {
             // are in each vector.  This value is used to select the iteration
             // order, which affects the number of get(value) calls.
             boolean useA =
-                (a instanceof SparseVector && b instanceof SparseVector)
-                && ((SparseVector)a).getNonZeroIndices().length <
-                   ((SparseVector)b).getNonZeroIndices().length;
-            
+                (a.length() < b.length() ||
+                 (a instanceof SparseVector && b instanceof SparseVector) &&
+                 ((SparseVector)a).getNonZeroIndices().length <
+                 ((SparseVector)b).getNonZeroIndices().length);
+
             // Choose the smaller of the two to use in computing the dot
             // product.  Because it would be more expensive to compute the
             // intersection of the two sets, we assume that any potential
             // misses would be less of a performance hit.
             if (useA) {
-                for (DoubleEntry e : ((Iterable<DoubleEntry>)a)) {
-                    int index = e.index();                    
-                    double aValue = e.value();
-                    double bValue = b.get(index);
-                    dotProduct += aValue * bValue;
-                }
+                DoubleVector t = a;
+                a = b;
+                b = t;
             }
-            else {
-                for (DoubleEntry e : ((Iterable<DoubleEntry>)b)) {
-                    int index = e.index();                    
-                    double aValue = a.get(index);
-                    double bValue = e.value();
-                    dotProduct += aValue * bValue;
-                }
-            }            
+
+            for (DoubleEntry e : ((Iterable<DoubleEntry>)b)) {
+                int index = e.index();                    
+                double aValue = a.get(index);
+                double bValue = e.value();
+                dotProduct += aValue * bValue;
+            }
         }
 
         // Check whether both vectors are sparse.  If so, use only the non-zero
@@ -333,28 +325,55 @@ public class Similarity {
             SparseVector svB = (SparseVector)b;
             int[] nzA = svA.getNonZeroIndices();
             int[] nzB = svB.getNonZeroIndices();
+
             // Choose the smaller of the two to use in computing the dot
             // product.  Because it would be more expensive to compute the
             // intersection of the two sets, we assume that any potential
             // misses would be less of a performance hit.
-            if (nzA.length < nzB.length) {
-                for (int nz : nzA) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
+            if (a.length() < b.length() ||
+                nzA.length < nzB.length) {
+                DoubleVector t = a;
+                a = b;
+                b = t;
             }
-            else {
-                for (int nz : nzB) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
+
+            for (int nz : nzB) {
+                double aValue = a.get(nz);
+                double bValue = b.get(nz);
+                dotProduct += aValue * bValue;
             }
+        }
+
+        // Check if the second vector is sparse.  If so, use only the non-zero
+        // indices of b to speed up the computation by avoiding zero
+        // multiplications.
+        else if (b instanceof SparseVector) {
+            SparseVector svB = (SparseVector)b;
+            for (int nz : svB.getNonZeroIndices())
+                dotProduct += b.get(nz) * a.get(nz);
+        }
+
+        // Check if the first vector is sparse.  If so, use only the non-zero
+        // indices of a to speed up the computation by avoiding zero
+        // multiplications.
+        else if (a instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            for (int nz : svA.getNonZeroIndices())
+                dotProduct += b.get(nz) * a.get(nz);
         }
 
         // Otherwise, just assume both are dense and compute the full amount
         else {
+            // Swap the vectors such that the b is the shorter vector and a is
+            // the longer vector, or of equal length.   In the case that the two
+            // vectors of unequal length, this will prevent any calls to out of
+            // bounds values in the smaller vector.
+            if (a.length() < b.length()) {
+                DoubleVector t = a;
+                a = b;
+                b = t;
+            }
+
             for (int i = 0; i < b.length(); i++) {
                 double aValue = a.get(i);
                 double bValue = b.get(i);
@@ -390,25 +409,22 @@ public class Similarity {
                 (a instanceof SparseVector && b instanceof SparseVector)
                 && ((SparseVector)a).getNonZeroIndices().length <
                    ((SparseVector)b).getNonZeroIndices().length;
+
             // Choose the smaller of the two to use in computing the dot
             // product.  Because it would be more expensive to compute the
             // intersection of the two sets, we assume that any potential
             // misses would be less of a performance hit.
             if (useA) {
-                for (IntegerEntry e : ((Iterable<IntegerEntry>)a)) {
-                    int index = e.index();                    
-                    int aValue = e.value();
-                    int bValue = b.get(index);
-                    dotProduct += aValue * bValue;
-                }
+                IntegerVector t = a;
+                a = b;
+                b = t;
             }
-            else {
-                for (IntegerEntry e : ((Iterable<IntegerEntry>)b)) {
-                    int index = e.index();                    
-                    int aValue = a.get(index);
-                    int bValue = e.value();
-                    dotProduct += aValue * bValue;
-                }
+
+            for (IntegerEntry e : ((Iterable<IntegerEntry>)b)) {
+                int index = e.index();                    
+                int aValue = a.get(index);
+                int bValue = e.value();
+                dotProduct += aValue * bValue;
             }            
         }
 
@@ -664,6 +680,35 @@ public class Similarity {
                 if (!sparseIndicesA.contains(nonZero))
                     sum += Math.pow(b.get(nonZero), 2);
             return sum;
+        } else if (b instanceof SparseVector) {
+            // If b is sparse, use a special case where we use the cached
+            // magnitude of a and the sparsity of b to avoid most of the
+            // computations.
+            SparseVector sb = (SparseVector) b;
+            int[] bNonZero = sb.getNonZeroIndices();
+            double sum = 0;
+
+            // Get the magnitude for a.  This value will often only be computed
+            // once for the first vector once since the DenseVector caches the
+            // magnitude, thus saving a large amount of computation.
+            double aMagnitude = Math.pow(a.magnitude(), 2);
+
+            // Compute the difference between the nonzero values of b and the
+            // corresponding values for a.
+            for (int index : bNonZero) {
+                double value = a.get(index);
+                // Decrement a's value at this index from it's magnitude.
+                aMagnitude -= Math.pow(value, 2);
+                sum += Math.pow(value - b.get(index), 2);
+            }
+
+            // Since the rest of b's values are 0, the difference between a and
+            // b for these values is simply the magnitude of indices which have
+            // not yet been traversed in a.  This corresponds to the modified
+            // magnitude that was computed.
+            sum += aMagnitude;
+
+            return (sum < 0d) ? 0 : Math.sqrt(sum);
         }
 
         double sum = 0;

@@ -70,11 +70,25 @@ public interface Transform {
                    File outputMatrixFile) throws IOException;
 
     /**
-     * Returns a transformed matrix based on the given matrix.
+     * Returns a transformed matrix based on the given matrix.  By default,
+     * algorithms will store the transformed values in place.  Since a few
+     * algorithms cannot be done in place, this is optional.  (optional
+     * operation).
      *
      * @param input the matrix to be transformed
      *
-     * @return the transformed version of the input matrix
+     * @return a pointer to {@code input} after it has been transformed
      */
     Matrix transform(Matrix input);
+
+    /**
+     * Returns a transformed matrix based on the given matrix.
+     *
+     * @param input the matrix to be transformed
+     * @param output values transformed from {@code input} will be stored in
+     *        this matrix
+     *
+     * @return {@code output}, the transformed version of the input matrix
+     */
+    Matrix transform(Matrix input, Matrix output); 
 }

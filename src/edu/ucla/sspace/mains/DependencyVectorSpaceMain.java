@@ -75,6 +75,10 @@ public class DependencyVectorSpaceMain extends DependencyGenericMain {
                           "the BasisMapping to decide the dimension " +
                           "representations",
                           true, "CLASSNAME", "Algorithm Options");
+        options.addOption('l', "pathLength",
+                          "the maximum path length that will be accepted " +
+                          "(default: any).",
+                          true, "INT", "Algorithm Options");
     }
 
     public static void main(String[] args) {
@@ -101,7 +105,8 @@ public class DependencyVectorSpaceMain extends DependencyGenericMain {
         // Ensure that the configured DependencyExtactor is in place prior to
         // constructing the SVS
         setupDependencyExtractor();        
-        return new DependencyVectorSpace();
+        return new DependencyVectorSpace(
+                System.getProperties(), argOptions.getIntOption('l', 0));
     }
 
     /**

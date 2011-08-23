@@ -51,7 +51,7 @@ public class SparseHashVector<T extends Number>
      * The magnitude of the vector or -1 if the value is currently invalid needs
      * to be recomputed
      */
-    private double magnitude;
+    protected double magnitude;
 
     /** 
      * Create a {@code SparseHashVector} with the given size, having no
@@ -102,7 +102,9 @@ public class SparseHashVector<T extends Number>
      */
     public double magnitude() {
         // Check whether the current magnitude is valid and if not, recompute it
+        System.out.println(magnitude);
         if (magnitude < 0) {
+            System.out.println("mag");
             magnitude = 0;
             for (int nz : getNonZeroIndices()) {
                 double d = vector.get(nz).doubleValue();

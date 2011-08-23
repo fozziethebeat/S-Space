@@ -40,9 +40,16 @@ import java.util.Set;
  * original.  This class is intended to be use when a large matrix has been
  * created and submatrices of the large matrix need to be treated as full {@code
  * Matrix} instances; rather than copy the data, this class provides a way of
- * representing the original data as a partial view.<p>
+ * representing the original data as a partial view.
+ *
+ * </p>
  *
  * All methods are write-through to the original backing matrix.
+ *
+ * </p>
+ *
+ * This matrix recomputes the mapping if the {@link Matrix} being masked is also
+ * a {@link RowMaskedMatrix}, thus preventing a recursive call to row lookups.
  *
  * @author David Jurgens
  */
@@ -62,7 +69,7 @@ public class RowMaskedMatrix implements Matrix {
      * A mapping from the virtual row number to the actual row number in the
      * backing matrix
      */
-    private final Map<Integer,Integer> rowToReal;
+    private final int[] rowToReal;
 
     /**
      * Creates a partial view of the provided matrix using the bits set to
@@ -74,15 +81,15 @@ public class RowMaskedMatrix implements Matrix {
      */
     public RowMaskedMatrix(Matrix matrix, BitSet included) {
         this.backingMatrix = matrix;
-        rowToReal = new HashMap<Integer,Integer>();
+        rowToReal = new int[included.cardinality()];
         for (int i = included.nextSetBit(0), row = 0; i >= 0; 
                  i = included.nextSetBit(i+1), row++) {
             if (i >= matrix.rows())
                 throw new IllegalArgumentException(
                     "specified row not present in original matrix: " + i);
-            rowToReal.put(row, i);
+            rowToReal[row] = i;
         }
-        rows = rowToReal.size();
+        rows = rowToReal.length;
     }
 
     /**
@@ -98,7 +105,7 @@ public class RowMaskedMatrix implements Matrix {
      */
     public RowMaskedMatrix(Matrix matrix, Set<Integer> included) {
         backingMatrix = matrix;
-        rowToReal = new HashMap<Integer,Integer>();
+        rowToReal = new int[included.size()];
         // Sort the row values in included first so the mapping is set up so
         // that to virtual row refers to a real row whose index is less than any
         // lesser virtual row's real row.
@@ -108,12 +115,10 @@ public class RowMaskedMatrix implements Matrix {
             if (j < 0 || j >= matrix.rows())
                 throw new IllegalArgumentException("Cannot specify a row " +
                     "outside the original matrix dimensions:" + j);
-            rowArr[i++] = j;
+            rowToReal[i++] = j;
         }
-        Arrays.sort(rowArr);
-        for (i = 0; i < rowArr.length; ++i)
-            rowToReal.put(i, rowArr[i]);
-        rows = rowArr.length;
+        Arrays.sort(rowToReal);
+        rows = rowToReal.length;
     }
 
     /**
@@ -127,27 +132,67 @@ public class RowMaskedMatrix implements Matrix {
      */
     public RowMaskedMatrix(Matrix matrix, LinkedHashSet<Integer> included) {
         backingMatrix = matrix;
-        rowToReal = new HashMap<Integer,Integer>();
+        rowToReal = new int[included.size()];
 
         int i = 0;;
         for (Integer j : included) {
             if (j < 0 || j >= matrix.rows())
                 throw new IllegalArgumentException("Cannot specify a row " +
                     "outside the original matrix dimensions:" + j);
-            rowToReal.put(i++, j);
+            rowToReal[i++] = j;
         }
-        rows = rowToReal.size();
+        rows = rowToReal.length;
+    }
+
+    /**
+     * Creates a partial view of the provided matrix using the integers in the
+     * array of indices.  
+     *
+     * @throws IllegalArgumentException if {@code included} specifies a value
+     *         that is less than 0 or greater than the number of rows present in
+     *         {@code matrix}
+     */
+    public RowMaskedMatrix(Matrix matrix, int[] reordering) {
+        rowToReal = new int[reordering.length];
+        rows = reordering.length;
+
+        // If the given matrix is already a RowMaskedMatrix, connect to the
+        // inner backing matrix and compute the transitive row ordering mapping.
+        // This will prevent a deep nesting of RowMaskMatrix lookups when
+        // algorithms recursively remap a mapped matrix.
+        if (matrix instanceof RowMaskedMatrix) {
+            RowMaskedMatrix rmm = (RowMaskedMatrix) matrix;
+            this.backingMatrix = rmm.backingMatrix;
+
+            for (int i = 0; i < reordering.length; ++i) {
+                int j = reordering[i];
+                if (j < 0 || j >= matrix.rows())
+                    throw new IllegalArgumentException("Cannot specify a row " +
+                    "outside the original matrix dimensions:" + j);
+
+                rowToReal[i] = rmm.rowToReal[j];
+            }
+        } else {
+            backingMatrix = matrix;
+            for (int i = 0; i < reordering.length; ++i) {
+                int j = reordering[i];
+                if (j < 0 || j >= matrix.rows())
+                    throw new IllegalArgumentException("Cannot specify a row " +
+                    "outside the original matrix dimensions:" + j);
+                rowToReal[i] = j;
+            }
+        }
     }
 
     /**
      * Returns the row in the backing matrix that the {@code virtualRow} value
      * is mapped to in the row-masked matrix.
      */
-    private int getRealRow(int virtualRow) {
+    protected int getRealRow(int virtualRow) {
         if (virtualRow < 0 || virtualRow >= rows)
             throw new IndexOutOfBoundsException(
                 "row out of bounds: " + virtualRow);
-        return rowToReal.get(virtualRow);
+        return rowToReal[virtualRow];
     }
 
     /**
@@ -162,8 +207,8 @@ public class RowMaskedMatrix implements Matrix {
      */
     public double[] getColumn(int column) {
         double[] col = new double[rows];
-        for (Map.Entry<Integer,Integer> e : rowToReal.entrySet())
-            col[e.getKey()] = backingMatrix.get(e.getValue(), column);
+        for (int i = 0; i < rowToReal.length; ++i)
+            col[i] = backingMatrix.get(rowToReal[i], column);
         return col;
     }
 
@@ -200,8 +245,8 @@ public class RowMaskedMatrix implements Matrix {
      */
     public double[][] toDenseArray() {
         double[][] arr = new double[rows][backingMatrix.columns()];
-        for (Map.Entry<Integer,Integer> e : rowToReal.entrySet())
-            arr[e.getKey()] = backingMatrix.getRow(e.getValue());
+        for (int i = 0; i < rowToReal.length; ++i)
+            arr[i] = backingMatrix.getRow(rowToReal[i]);
         return arr;
     }
 
@@ -226,8 +271,8 @@ public class RowMaskedMatrix implements Matrix {
         if (values.length != rows)
             throw new IllegalArgumentException("cannot set a column " +
                 "whose dimensions are different than the matrix");
-        for (Map.Entry<Integer,Integer> e : rowToReal.entrySet())
-            backingMatrix.set(e.getValue(), e.getKey(), values[e.getKey()]);
+        for (int i = 0; i < rowToReal.length; ++i)
+            backingMatrix.set(rowToReal[i], column, values[i]);
     }
 
     /**
@@ -243,9 +288,8 @@ public class RowMaskedMatrix implements Matrix {
                 backingMatrix.set(getRealRow(nz), nz, values.get(nz));
         }
         else {
-            for (Map.Entry<Integer,Integer> e : rowToReal.entrySet())
-                backingMatrix.set(e.getValue(), e.getKey(), 
-                                  values.get(e.getKey()));
+            for (int i = 0; i < rowToReal.length; ++i)
+                backingMatrix.set(rowToReal[i], i, values.get(i));
         }
     }
 
@@ -261,5 +305,20 @@ public class RowMaskedMatrix implements Matrix {
      */
     public void setRow(int row, DoubleVector values) {
         backingMatrix.setRow(getRealRow(row), values);
+    }
+
+    /**
+     * Returns the {@code backingMatrix} that is being masked.
+     */
+    public Matrix backingMatrix() {
+        return backingMatrix;
+    }
+
+    /**
+     * Returns the mapping from indices in this {@link RowMaskedMatrix} to the
+     * real indices in the {@code backingMatrix}.
+     */
+    public int[] reordering() {
+        return rowToReal;
     }
 }
