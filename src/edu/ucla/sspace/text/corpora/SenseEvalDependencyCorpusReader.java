@@ -37,9 +37,22 @@ import org.w3c.dom.NodeList;
 
 
 /**
- * A corpus reader for the SenseEvalDependency corpus.  Individual files will be traversed
- * using an xml parser.  Each of the sentences composing the context of a word
- * instance will be returned as a single {@link Document}.
+ * A corpus reader for the SenseEvalDependency corpus.  Individual files will be
+ * traversed using an xml parser.  Each of the sentences composing the context
+ * of a word instance will be returned as a single {@link Document}.
+ *
+ * This {@link CorpusReader} returns documents in the following format:
+ *
+ * </br>
+ *
+ * word_instance_id focus_word text ...
+ *
+ * </br>
+ *
+ * This is particularly neccesary for the evaluating against the SemEval testing
+ * framework which requires the focus word information and the instance id
+ *
+ * @author Keith Stevens
  */
 public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
 

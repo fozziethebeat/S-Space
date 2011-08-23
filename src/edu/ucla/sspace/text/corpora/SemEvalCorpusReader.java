@@ -3,10 +3,10 @@
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
- * This file is part of the C-Cat package and is covered under the terms and
+ * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
  *
- * The C-Cat package is free software: you can redistribute it and/or modify
+ * The S-Space package is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation and distributed hereunder to you.
  *
@@ -52,6 +52,26 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
+ * Reads the xml corpus files for the SemEval 2010 Word Sense Induction task,
+ * available <a
+ * href=http://semeval2.fbk.eu/semeval2.php?location=tasks#T2">here</a>.  Each
+ * file contains all of the contexts for a single word.  The xml files should be
+ * unchanged from their original format.  
+ *
+ * </p>
+ *
+ * This {@link CorpusReader} returns documents in the following format:
+ *
+ * </br>
+ *
+ * word_instance_id text ... ||| *focus_word* text ... 
+ *
+ * </br>
+ *
+ * This is particularly neccesary for the evaluating against the SemEval testing
+ * framework which requires the focus word information and the instance id
+ * infomration.
+ *
  * @author Keith Stevens
  */
 public class SemEvalCorpusReader extends DefaultHandler 
