@@ -47,10 +47,9 @@ public class SemEvalCorpusReaderTest {
         "<cat.n.test><cat.n.1>chicken <TargetSentence>cat</TargetSentence> bar</cat.n.1></cat.n.test>";
 
     @Test public void testTrainReader() throws Exception {
-        CorpusReader reader = new SemEvalCorpusReader();
-        reader.initialize(new StringReader(TRAIN_TEXT));
+        CorpusReader<Document> reader = new SemEvalCorpusReader();
+        Iterator<Document> iter = reader.read(new StringReader(TRAIN_TEXT));
 
-        Iterator<Document> iter = reader;
         assertTrue(iter.hasNext());
         assertEquals("cat.n.1 chicken |||| cat bar",
                      iter.next().reader().readLine().trim());
@@ -59,10 +58,9 @@ public class SemEvalCorpusReaderTest {
     }
 
     @Test public void testTestReader() throws Exception {
-        CorpusReader reader = new SemEvalCorpusReader();
-        reader.initialize(new StringReader(TEST_TEXT));
+        CorpusReader<Document> reader = new SemEvalCorpusReader();
+        Iterator<Document> iter = reader.read(new StringReader(TEST_TEXT));
 
-        Iterator<Document> iter = reader;
         assertTrue(iter.hasNext());
         assertEquals("cat.n.1 chicken |||| cat bar",
                      iter.next().reader().readLine().trim());

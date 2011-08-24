@@ -64,9 +64,8 @@ public class PukWacCorpusReaderTest {
         "</text>\n";
 
     @Test public void testIterator() throws Exception {
-        CorpusReader reader = new PukWacCorpusReader();
-        reader.initialize(new StringReader(TEST_TEXT));
-        Iterator<Document> docIter = reader;
+        CorpusReader<Document> reader = new PukWacCorpusReader();
+        Iterator<Document> docIter = reader.read(new StringReader(TEST_TEXT));
         assertTrue(docIter.hasNext());
         assertEquals("the chicken ate a dog . bob rocks ! ",
                      docIter.next().reader().readLine());

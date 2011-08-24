@@ -22,6 +22,9 @@
 package edu.ucla.sspace.text.corpora;
 
 import edu.ucla.sspace.text.DirectoryCorpusReader;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.DocumentPreprocessor;
+import edu.ucla.sspace.text.StringDocument;
 
 import java.io.File;
 import java.io.IOError;
@@ -42,81 +45,118 @@ import org.w3c.dom.NodeList;
  * using an xml parser.  Documents can be returned either as all of the
  * utterances in a file or a single utterance.
  */
-public class ChildesCorpusReader extends DirectoryCorpusReader {
+public class ChildesCorpusReader extends DirectoryCorpusReader<Document> {
 
     /**
-     * The list of utterances in a file.
+     * Constructs a new {@link ChildesCorpusReader} that uses no preprocessing
+     * before documents are returned.
      */
-    private NodeList utterances;
-
-    /**
-     * The index of the current node being traversed, if one utterance is being
-     * considered a document.
-     */
-    private int currentNodeIndex;
-
-    /**
-     * True if each utterance in a file is considered a document.
-     */
-    private boolean oneUtterancePerDoc;
-
     public ChildesCorpusReader() {
-        oneUtterancePerDoc = true;
+        super();
     }
 
     /**
-     * Parses the content of the given file and extracts the set of utterances.
+     * Constructs a new {@link ChildesCorpusReader} that uses {@link
+     * preprocessor} to clean documents before they  are returned.
      */
-    protected void setupCurrentDoc(File currentDocName) {
-        try {
+    public ChildesCorpusReader(DocumentPreprocessor preprocessor) {
+        super(preprocessor);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected Iterator<Document> corpusIterator(Iterator<File> files) {
+        return new ChildesFileIterator(files);
+    }
+
+    public class ChildesFileIterator extends BaseFileIterator {
+
+        /**
+         * The list of utterances in a file.
+         */
+        private NodeList utterances;
+
+        /**
+         * The index of the current node being traversed, if one utterance is
+         * being considered a document.
+         */
+        private int currentNodeIndex;
+
+        /**
+         * True if each utterance in a file is considered a document.
+         */
+        private boolean oneUtterancePerDoc;
+
+        /**
+         * The {@link DocumentBuilder} used to parse xml files.
+         */
+        private final DocumentBuilder db;
+
+        public ChildesFileIterator(Iterator<File> files) {
+            super(files);
+            oneUtterancePerDoc = true;
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            System.out.println(currentDocName);
-            org.w3c.dom.Document currentXmlDoc = db.parse(currentDocName);
-            utterances = currentXmlDoc.getElementsByTagName("u");
-            currentNodeIndex = 0;
-        } catch (javax.xml.parsers.ParserConfigurationException pce) {
-            pce.printStackTrace();
-        } catch (org.xml.sax.SAXException saxe) {
-            saxe.printStackTrace();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
+            DocumentBuilder d = null;
+            try {
+                d = dbf.newDocumentBuilder();
+            } catch (javax.xml.parsers.ParserConfigurationException pce) {
+                pce.printStackTrace();
+            }
+            db = d;
         }
-    }
 
-    /**
-     * Iterates over the utterances in a file and appends the words to create a
-     * new document.
-     */
-    protected String advanceInDoc() {
-        if (currentNodeIndex >= utterances.getLength())
-            return null;
-
-        StringBuilder utteranceBuilder = new StringBuilder();
-        if (oneUtterancePerDoc)
-            addTextFromUtterance((Element) utterances.item(currentNodeIndex++),
-                                 utteranceBuilder);
-        else {
-            for (int i = 0; i < utterances.getLength(); ++i) {
-                addTextFromUtterance((Element) utterances.item(i),
-                                     utteranceBuilder);
-                utteranceBuilder.append(". ");
+        /**
+         * Parses the content of the given file and extracts the set of
+         * utterances.
+         */
+        protected void setupCurrentDoc(File currentDocName) {
+            try {
+                org.w3c.dom.Document currentXmlDoc = db.parse(currentDocName);
+                utterances = currentXmlDoc.getElementsByTagName("u");
+                currentNodeIndex = 0;
+            } catch (org.xml.sax.SAXException saxe) {
+                saxe.printStackTrace();
+            } catch (IOException ioe) {
+                throw new IOError(ioe);
             }
         }
-        return utteranceBuilder.toString();
-    }
 
-    /**
-     * Adds words from a single utterance to a string builder.
-     */
-    private void addTextFromUtterance(Element utterance,
-                                      StringBuilder utteranceBuilder) {
-        NodeList words = utterance.getElementsByTagName("w");
-        // Iterate over the words and get just the word text.
-        for (int j = 0; j < words.getLength(); ++j) {
-            Element wordNode = (Element) words.item(j);
-            String word = wordNode.getFirstChild().getNodeValue();
-            utteranceBuilder.append(word).append(" ");
+        /**
+         * Iterates over the utterances in a file and appends the words to
+         * create a new document.
+         */
+        protected Document advanceInDoc() {
+            if (currentNodeIndex >= utterances.getLength())
+                return null;
+
+            StringBuilder utteranceBuilder = new StringBuilder();
+            if (oneUtterancePerDoc)
+                addTextFromUtterance(
+                        (Element) utterances.item(currentNodeIndex++),
+                        utteranceBuilder);
+            else {
+                for (int i = 0; i < utterances.getLength(); ++i) {
+                    addTextFromUtterance((Element) utterances.item(i),
+                                         utteranceBuilder);
+                    utteranceBuilder.append(". ");
+                }
+            }
+            return new StringDocument(utteranceBuilder.toString());
+        }
+
+        /**
+         * Adds words from a single utterance to a string builder.
+         */
+        private void addTextFromUtterance(Element utterance,
+                                          StringBuilder utteranceBuilder) {
+            NodeList words = utterance.getElementsByTagName("w");
+            // Iterate over the words and get just the word text.
+            for (int j = 0; j < words.getLength(); ++j) {
+                Element wordNode = (Element) words.item(j);
+                String word = wordNode.getFirstChild().getNodeValue();
+                utteranceBuilder.append(word).append(" ");
+            }
         }
     }
 }

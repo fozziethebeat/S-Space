@@ -23,8 +23,17 @@
 
 package edu.ucla.sspace.text.corpora;
 
+import edu.ucla.sspace.text.CorpusReader;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.StringDocument;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.IOError;
+import java.io.Reader;
+
+import java.util.Iterator;
 
 
 /**
@@ -37,42 +46,105 @@ import java.io.IOError;
  *
  * @author Keith Stevens
  */
-public class PukWacDependencyCorpusReader extends PukWacCorpusReader {
+public class PukWacDependencyCorpusReader implements CorpusReader<Document> {
 
     /**
-     * Advances the {@link CorpusReader} one {@link Document} a head in the
-     * text.  Returns {@code null} when no more documents are found in the file.
+     * {@inheritDoc}
      */
-    protected String advance() {
-        StringBuilder sb = new StringBuilder();
+    public Iterator<Document> read(String fileName) {
         try {
-            for (String line = null; (line = reader.readLine()) != null; ) {
-                // Skip the tags that denote when the document starts, and the
-                // sentence delimiters.  Also skip any empty lines.
-                if (line.startsWith("<text") ||
-                    line.startsWith("</text>") ||
-                    line.startsWith("<s>") ||
-                    line.length() == 0)
-                    continue;
-                // Break the loop when we read the deliminter for the sentence.
-                if (line.startsWith("</s>"))
-                    break;
-
-                // Append the line as it is to the string builder. Assume that
-                // the dependency extractor is able to handle whatever format
-                // the lines are in. 
-                sb.append(line).append("\n");
-            }
+            return read(new FileReader(fileName));
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
+    }
 
-        // Return null if nothing was read, indicating that the above loop
-        // reached the end of it's input.
-        if (sb.length() == 0)
-            return null;
+    /**
+     * {@inheritDoc}
+     */
+    public Iterator<Document> read(Reader baseReader) {
+        return new UkWacIterator(new BufferedReader(baseReader));
+    }
 
-        return sb.toString();
+    public class UkWacIterator implements Iterator<Document> {
+
+        /**
+         * The {@link BufferedReader} for reading lines in the corpus.
+         */
+        protected BufferedReader reader;
+
+        /**
+         * The text of the next document to return.
+         */
+        private String next;
+
+        public UkWacIterator(BufferedReader reader) {
+            this.reader = reader;
+            this.next = advance();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Document next() {
+            Document doc = new StringDocument(next);
+            next = advance();
+            return doc;
+        }
+
+        /**
+         * Unsupported.
+         *
+         * @throws UnsupportedOperationException When called.
+         */
+        public void remove() {
+            throw new UnsupportedOperationException(
+                    "Cannot remove documents from a CorpusReader");
+        }
+
+        /**
+         * Advances the {@link CorpusReader} one {@link Document} a head in the
+         * text.  Returns {@code null} when no more documents are found in the
+         * file.
+         */
+        protected String advance() {
+            StringBuilder sb = new StringBuilder();
+            try {
+                for (String line = null; (line = reader.readLine()) != null; ) {
+                    // Skip the tags that denote when the document starts, and
+                    // the sentence delimiters.  Also skip any empty lines.
+                    if (line.startsWith("<text") ||
+                        line.startsWith("</text>") ||
+                        line.startsWith("<s>") ||
+                        line.length() == 0)
+                        continue;
+                    // Break the loop when we read the deliminter for the
+                    // sentence.
+                    if (line.startsWith("</s>"))
+                        break;
+
+                    // Append the line as it is to the string builder. Assume
+                    // that the dependency extractor is able to handle whatever
+                    // format the lines are in. 
+                    sb.append(line).append("\n");
+                }
+            } catch (IOException ioe) {
+                throw new IOError(ioe);
+            }
+
+            // Return null if nothing was read, indicating that the above loop
+            // reached the end of it's input.
+            if (sb.length() == 0)
+                return null;
+
+            return sb.toString();
+        }
     }
 }
-

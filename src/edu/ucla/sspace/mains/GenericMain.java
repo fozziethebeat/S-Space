@@ -250,11 +250,6 @@ public abstract class GenericMain {
                           true, "CLASSNAME,FILE[,FILE...]",
                           "Required (at least one of)");
 
-        options.addOption('X', "docLimit",
-                          "The maximum number of documents from the corpus " + 
-                          "to use (default: infinit)",
-                          true, "INT", "Program Options");
-
         // Add run time options.
         options.addOption('o', "outputFormat", "the .sspace format to use",
                           true, "FORMAT", 
@@ -334,12 +329,10 @@ public abstract class GenericMain {
     protected void addCorpusReaderIterators(
             Collection<Iterator<Document>> docIters,
             String[] fileNames) throws IOException {
-        String readerType = fileNames[0];
-        for (int i = 1; i < fileNames.length; ++i) {
-            CorpusReader reader = ReflectionUtil.getObjectInstance(readerType);
-            reader.initialize(fileNames[i]);
-            docIters.add(reader);
-        }
+        CorpusReader<Document> reader =
+            ReflectionUtil.getObjectInstance(fileNames[0]);
+        for (int i = 1; i < fileNames.length; ++i)
+            docIters.add(reader.read(fileNames[0]));
     }
 
     /**

@@ -74,9 +74,8 @@ public class PukWacDependencyCorpusReaderTest {
         "</text>\n";
 
     @Test public void testIterator() throws Exception {
-        CorpusReader reader = new PukWacDependencyCorpusReader();
-        reader.initialize(new StringReader(TEST_TEXT));
-        Iterator<Document> docIter = reader;
+        CorpusReader<Document> reader = new PukWacDependencyCorpusReader();
+        Iterator<Document> docIter = reader.read(new StringReader(TEST_TEXT));
         assertTrue(docIter.hasNext());
         assertEquals(FIRST_SENTENCE, readAll(docIter.next()));
         assertTrue(docIter.hasNext());

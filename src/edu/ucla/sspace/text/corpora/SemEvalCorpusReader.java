@@ -30,6 +30,8 @@ import edu.ucla.sspace.text.StringDocument;
 import edu.ucla.sspace.text.EnglishStemmer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.Reader;
@@ -85,58 +87,12 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Keith Stevens
  */
 public class SemEvalCorpusReader extends DefaultHandler 
-                                 implements CorpusReader {
-
-
-    /**
-     * The list of processed contexts.
-     */
-    List<String> contexts;
-
-    /**
-     * An iterator over the contexts parsed from a single xml file.
-     */
-    Iterator<String> contextIter;
-
-    /**
-     * A boolean marker signifying that the parser is in the context tag.
-     */
-    private boolean inContext;
-
-    /**
-     * The current instance id.
-     */
-    private String instanceId;
-
-    /**
-     * The current instance word's lemma.
-     */
-    private String lemma;
-
-    /**
-     * A {@link StringBuilder} for forming the current context.
-     */
-    private StringBuilder context;
-
-    /**
-     * A stemmer for discovering the focus word of each context.
-     */
-    private final Stemmer stemmer;
-
-    /**
-     * Creates a new {@link SemEvalCorpusReader}.
-     */
-    public SemEvalCorpusReader() {
-        contexts = new ArrayList<String>();
-        inContext = false;
-        stemmer = new EnglishStemmer();
-        context = new StringBuilder();
-    }
+                                 implements CorpusReader<Document> {
 
     /**
      * {@inheritDoc}
      */
-    public void initialize(Reader reader) {
+    public Iterator<Document> read(Reader reader) {
         SAXParserFactory saxfac = SAXParserFactory.newInstance();
         saxfac.setValidating(false);
 
@@ -148,8 +104,9 @@ public class SemEvalCorpusReader extends DefaultHandler
             saxfac.setFeature("http://xml.org/sax/features/external-general-entities", false);
             saxfac.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             SAXParser saxParser = saxfac.newSAXParser();
-            saxParser.parse(new InputSource(reader), this);
-            contextIter = contexts.iterator();
+            SemEvalHandler handler = new SemEvalHandler();
+            saxParser.parse(new InputSource(reader), handler);
+            return handler.contexts.iterator();
         } catch (IOException ioe) {
             throw new IOError(ioe);
         } catch (SAXNotRecognizedException e1) {
@@ -166,104 +123,105 @@ public class SemEvalCorpusReader extends DefaultHandler
     /**
      * {@inheritDoc}
      */
-    public void initialize(String fileName) {
-        SAXParserFactory saxfac = SAXParserFactory.newInstance();
-        saxfac.setValidating(false);
-
-        // Ignore a number of xml features, like dtd grammars and validation.
+    public Iterator<Document> read(String fileName) {
         try {
-            saxfac.setFeature("http://xml.org/sax/features/validation", false);
-            saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-            saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            saxfac.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            saxfac.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            SAXParser saxParser = saxfac.newSAXParser();
-            saxParser.parse(new File(fileName), this);
-            contextIter = contexts.iterator();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        } catch (SAXNotRecognizedException e1) {
-            throw new RuntimeException(e1);
-        }catch (SAXNotSupportedException e1) {
-            throw new RuntimeException(e1);
-        } catch (ParserConfigurationException e1) {
-            throw new RuntimeException(e1);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
+            return read(new FileReader(fileName));
+        } catch (FileNotFoundException fnfe) {
+            throw new IOError(fnfe);
         }
     }
 
-    /**
-     * Extracts the instance id for the current context.
-     */
-    @Override
-    public void startElement(String uri, String localName, 
-                             String name, Attributes atts)
-            throws SAXException {
-        if (!name.endsWith(".train") && !name.endsWith(".test") && !inContext) {
-            inContext = true;
-            instanceId = name;
-            String[] wordPosId = instanceId.split("\\.");
-            lemma = stemmer.stem(wordPosId[0]);
-        }
-    }
+    public class SemEvalHandler extends DefaultHandler {
 
-    /**
-     * Ends the current context and stores all of the information in {@code
-     * contexts}.
-     */
-    @Override
-    public void endElement(String uri, String localName, String name)
-            throws SAXException {
-        if (name.equals(instanceId)) {
+        /**
+         * The list of processed contexts.
+         */
+        List<Document> contexts;
+
+        /**
+         * A boolean marker signifying that the parser is in the context tag.
+         */
+        private boolean inContext;
+
+        /**
+         * The current instance id.
+         */
+        private String instanceId;
+
+        /**
+         * The current instance word's lemma.
+         */
+        private String lemma;
+
+        /**
+         * A {@link StringBuilder} for forming the current context.
+         */
+        private StringBuilder context;
+
+        /**
+         * A stemmer for discovering the focus word of each context.
+         */
+        private final Stemmer stemmer;
+
+        public SemEvalHandler() {
+            contexts = new ArrayList<Document>();
             inContext = false;
-
-
-            String[] tokens = context.toString().split("\\s+");
-            context.setLength(0);
-            context.append(instanceId).append(" ");
-            for (int i = 0; i < tokens.length; ++i) {
-                String stem = stemmer.stem(tokens[i]);
-                if (stem.equals(lemma)) {
-                    context.append("|||| ");
-                    tokens[i] = lemma;
-                }
-                context.append(tokens[i]).append(" ");
-            }
-            contexts.add(context.toString());
-            context.setLength(0);
+            context = new StringBuilder();
+            stemmer = new EnglishStemmer();
         }
-    }
 
-    /**
-     * Appends the text to the current context.
-     */
-    @Override
-    public void characters(char[] ch, int start, int length)
-            throws SAXException {
-        if (inContext)
-            context.append(new String(ch, start, length));
-    }
+        /**
+         * Extracts the instance id for the current context.
+         */
+        @Override
+        public void startElement(String uri, String localName, 
+                                 String name, Attributes atts)
+                throws SAXException {
+            if (!name.endsWith(".train") &&
+                !name.endsWith(".test") &&
+                !inContext) {
+                inContext = true;
+                instanceId = name;
+                String[] wordPosId = instanceId.split("\\.");
+                lemma = stemmer.stem(wordPosId[0]);
+            }
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    public boolean hasNext() {
-        return contextIter.hasNext();
-    }
+        /**
+         * Ends the current context and stores all of the information in {@code
+         * contexts}.
+         */
+        @Override
+        public void endElement(String uri, String localName, String name)
+                throws SAXException {
+            if (name.equals(instanceId)) {
+                inContext = false;
 
-    /**
-     * {@inheritDoc}
-     */
-    public Document next() {
-        return new StringDocument(contextIter.next());
-    }
 
-    /**
-     * Throws {@link UnsupportedOperationException}.
-     */
-    public void remove() {
-        throw new UnsupportedOperationException("Cannot remove documents");
+                String[] tokens = context.toString().split("\\s+");
+                context.setLength(0);
+                context.append(instanceId).append(" ");
+                for (int i = 0; i < tokens.length; ++i) {
+                    String stem = stemmer.stem(tokens[i]);
+                    if (stem.equals(lemma)) {
+                        context.append("|||| ");
+                        tokens[i] = lemma;
+                    }
+                    context.append(tokens[i]).append(" ");
+                }
+                contexts.add(new StringDocument(context.toString()));
+                context.setLength(0);
+            }
+        }
+
+        /**
+         * Appends the text to the current context.
+         */
+        @Override
+        public void characters(char[] ch, int start, int length)
+                throws SAXException {
+            if (inContext)
+                context.append(new String(ch, start, length));
+        }
     }
 }
-

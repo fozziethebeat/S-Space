@@ -25,6 +25,8 @@ import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.StringDocument;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.Reader;
@@ -59,56 +61,30 @@ import org.xml.sax.InputSource;
  *
  * @author Keith Stevens
  */
-public class SenseEvalDependencyCorpusReader implements CorpusReader {
-
-    /**
-     * The list of instances in a file.
-     */
-    private NodeList instances;
-
-    /**
-     * The index of the next instance to parse.
-     */
-    private int currentNodeIndex;
-
-    /**
-     * The contents of the current document.
-     */
-    private String currentDoc;
+public class SenseEvalDependencyCorpusReader implements CorpusReader<Document> {
 
     /**
      * {@inheritDoc}
      */
-    public void initialize(String currentDocName) {
+    public Iterator<Document> read(String currentDocName) {
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            System.out.println(currentDocName);
-            org.w3c.dom.Document currentXmlDoc = db.parse(currentDocName);
-            instances = currentXmlDoc.getElementsByTagName("instance");
-            currentNodeIndex = 0;
-            currentDoc = null;
-        } catch (javax.xml.parsers.ParserConfigurationException pce) {
-            pce.printStackTrace();
-        } catch (org.xml.sax.SAXException saxe) {
-            saxe.printStackTrace();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
+            return read(new FileReader(currentDocName));
+        } catch (FileNotFoundException fnfe) {
+            throw new IOError(fnfe);
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public void initialize(Reader docReader) {
+    public Iterator<Document> read(Reader docReader) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             org.w3c.dom.Document currentXmlDoc = db.parse(
                     new InputSource(docReader));
-            instances = currentXmlDoc.getElementsByTagName("instance");
-            currentNodeIndex = 0;
-            currentDoc = null;
+            return new SenseEvalIterator(
+                    currentXmlDoc.getElementsByTagName("instance"));
         } catch (javax.xml.parsers.ParserConfigurationException pce) {
             pce.printStackTrace();
         } catch (org.xml.sax.SAXException saxe) {
@@ -116,43 +92,68 @@ public class SenseEvalDependencyCorpusReader implements CorpusReader {
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
+        return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public synchronized boolean hasNext() {
-        return currentDoc != null;
-    }
+    public class SenseEvalIterator implements Iterator<Document> {    
 
-    /**
-     * {@inheritDoc}
-     */
-    public synchronized Document next() {
-        Document doc = new StringDocument(currentDoc);
-        currentDoc = advance();
-        return doc;
-    }
+        /**
+         * The list of instances in a file.
+         */
+        private NodeList instances;
 
-    /**
-     * Throws {@link UnsupportedOperationException} if called.
-     */
-    public synchronized void remove() {
-        throw new UnsupportedOperationException("Remove not permitted.");
-    }
+        /**
+         * The index of the next instance to parse.
+         */
+        private int currentNodeIndex;
 
-    /**
-     * Iterates over the instances in a file and appends the words to create a
-     * new document.
-     */
-    protected String advance() {
-        if (currentNodeIndex >= instances.getLength())
-            return null;
-        Element instance = (Element) instances.item(currentNodeIndex++);
-        String instanceId = instance.getAttribute("id");
-        String word = instance.getAttribute("name");
-        String text = instance.getFirstChild().getNodeValue();
+        /**
+         * The contents of the current document.
+         */
+        private String currentDoc;
 
-        return String.format("%s\n%s\n%s", instanceId, word, text);
+        public SenseEvalIterator(NodeList instances) {
+            this.instances = instances;
+            currentDoc = null;
+            currentNodeIndex = 0;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public synchronized boolean hasNext() {
+            return currentDoc != null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public synchronized Document next() {
+            Document doc = new StringDocument(currentDoc);
+            currentDoc = advance();
+            return doc;
+        }
+
+        /**
+         * Throws {@link UnsupportedOperationException} if called.
+         */
+        public synchronized void remove() {
+            throw new UnsupportedOperationException("Remove not permitted.");
+        }
+
+        /**
+         * Iterates over the instances in a file and appends the words to create
+         * a new document.
+         */
+        protected String advance() {
+            if (currentNodeIndex >= instances.getLength())
+                return null;
+            Element instance = (Element) instances.item(currentNodeIndex++);
+            String instanceId = instance.getAttribute("id");
+            String word = instance.getAttribute("name");
+            String text = instance.getFirstChild().getNodeValue();
+
+            return String.format("%s\n%s\n%s", instanceId, word, text);
+        }
     }
 }
