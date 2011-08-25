@@ -28,6 +28,7 @@ import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.StringDocument;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.IOError;
@@ -51,9 +52,9 @@ public class PukWacDependencyCorpusReader implements CorpusReader<Document> {
     /**
      * {@inheritDoc}
      */
-    public Iterator<Document> read(String fileName) {
+    public Iterator<Document> read(File file) {
         try {
-            return read(new FileReader(fileName));
+            return read(new FileReader(file));
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }

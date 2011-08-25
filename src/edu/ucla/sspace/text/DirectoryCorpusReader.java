@@ -84,9 +84,8 @@ public abstract class DirectoryCorpusReader<D extends Document>
      *        that contains numerous text files that can be processed by a
      *        subclass of {@link DirectoryCoprusReader}.
      */
-    public Iterator<D> read(String dirName) {
-        return corpusIterator(
-                (new DirectoryWalker(new File(dirName))).iterator());
+    public Iterator<D> read(File dir) {
+        return corpusIterator((new DirectoryWalker(dir)).iterator());
     }
 
     /**

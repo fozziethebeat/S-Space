@@ -23,6 +23,7 @@
 
 package edu.ucla.sspace.text;
 
+import java.io.File;
 import java.io.Reader;
 import java.util.Iterator;
 
@@ -38,14 +39,14 @@ public interface CorpusReader<D extends Document> {
 
     /**
      * Returns a {@link Iterator} that traverses the documents containted in 
-     * a file with the given {@code fileName}.
+     * the given {@code file}.
      *
-     * @param fileName The name of a text file holding documents in a format
+     * @param file A text file holding documents in a format
      *        that is readable by a particular {@link CorpusReader}.  This text
      *        file may have it's own unique text structure or an xml format.
      *        Each {@link CorpusReader} should specify the expected text format.
      */
-    Iterator<D> read(String fileName);
+    Iterator<D> read(File file);
 
     /**
      * Retrusn a {@link Iterator} that traverses the documents contained in

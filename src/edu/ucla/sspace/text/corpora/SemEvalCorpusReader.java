@@ -123,9 +123,9 @@ public class SemEvalCorpusReader extends DefaultHandler
     /**
      * {@inheritDoc}
      */
-    public Iterator<Document> read(String fileName) {
+    public Iterator<Document> read(File file) {
         try {
-            return read(new FileReader(fileName));
+            return read(new FileReader(file));
         } catch (FileNotFoundException fnfe) {
             throw new IOError(fnfe);
         }

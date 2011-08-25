@@ -332,7 +332,7 @@ public abstract class GenericMain {
         CorpusReader<Document> reader =
             ReflectionUtil.getObjectInstance(fileNames[0]);
         for (int i = 1; i < fileNames.length; ++i)
-            docIters.add(reader.read(fileNames[0]));
+            docIters.add(reader.read(new File(fileNames[0])));
     }
 
     /**

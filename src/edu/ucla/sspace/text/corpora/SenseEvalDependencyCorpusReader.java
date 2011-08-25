@@ -25,6 +25,7 @@ import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.StringDocument;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOError;
@@ -66,9 +67,9 @@ public class SenseEvalDependencyCorpusReader implements CorpusReader<Document> {
     /**
      * {@inheritDoc}
      */
-    public Iterator<Document> read(String currentDocName) {
+    public Iterator<Document> read(File file) {
         try {
-            return read(new FileReader(currentDocName));
+            return read(new FileReader(file));
         } catch (FileNotFoundException fnfe) {
             throw new IOError(fnfe);
         }
