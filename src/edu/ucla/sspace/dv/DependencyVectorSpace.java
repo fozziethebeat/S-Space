@@ -224,6 +224,8 @@ public class DependencyVectorSpace
      */
     private final DependencyPathAcceptor acceptor;
 
+    private final int pathLength;
+
     /**
      * Creates and configures this {@code DependencyVectorSpace} with the
      * default set of parameters.  The default values are:<ul>
@@ -234,15 +236,42 @@ public class DependencyVectorSpace
      * </ul>
      */
     public DependencyVectorSpace() {
-        this(System.getProperties());
+        this(System.getProperties(), 0);
     }
    
     /**
      * Creates and configures this {@code DependencyVectorSpace} with the
-     * according to the provided properties.  If no properties are specified,
-     * the default values are used.
+     * default set of parameters.  The default values are:<ul>
+     *   <li> a {@link WordBasedBasisMapping} is used for dimensions;
+     *   <li> a {@link FlatPathWeight} is used to weight accepted paths;
+     *   <li> and a {@link MinimumTemplateAcceptor} is used to filter the paths
+     *        in a sentence.
+     * </ul>
      */
     public DependencyVectorSpace(Properties properties) {
+        this(properties, 0);
+    }
+
+    /**
+    /**
+     * Creates and configures this {@code DependencyVectorSpace} with the
+     * default set of parameters.  The default values are:<ul>
+     *   <li> a {@link WordBasedBasisMapping} is used for dimensions;
+     *   <li> a {@link FlatPathWeight} is used to weight accepted paths;
+     *   <li> and a {@link MinimumTemplateAcceptor} is used to filter the paths
+     *        in a sentence.
+     * </ul>
+     *
+     * @param properties The {@link Properties} setting the above options
+     * @param pathLength The maximum valid path length.  Must be non-negative.
+     *        If zero, an the maximum path length used by the {@link
+     *        DependencyPathAcceptor} will be used.
+     */
+    public DependencyVectorSpace(Properties properties, int pathLength) {
+        if (pathLength < 0)
+            throw new IllegalArgumentException(
+                    "path length must be non-negative");
+
         termToVector = new HashMap<String,SparseDoubleVector>();
         
         String basisMappingProp = 
@@ -265,6 +294,10 @@ public class DependencyVectorSpace
             ? new MinimumPennTemplateAcceptor()
             : ReflectionUtil.<DependencyPathAcceptor>
                 getObjectInstance(acceptorProp);
+
+        this.pathLength = (pathLength == 0)
+            ? acceptor.maxPathLength()
+            : pathLength;
 
         extractor = DependencyExtractorManager.getDefaultExtractor();
     }
@@ -370,9 +403,8 @@ public class DependencyVectorSpace
                 // Get all the valid paths starting from this word.  The
                 // acceptor will filter out any paths that don't contain the
                 // semantic connections we're looking for.
-                Iterator<DependencyPath> paths = 
-                    new FilteredDependencyIterator(nodes[wordIndex], acceptor,
-                                                   acceptor.maxPathLength());
+                Iterator<DependencyPath> paths = new FilteredDependencyIterator(
+                            nodes[wordIndex], acceptor, pathLength);
                 
                 // For each of the paths rooted at the focus word, update the
                 // co-occurrences of the focus word in the dimension that the

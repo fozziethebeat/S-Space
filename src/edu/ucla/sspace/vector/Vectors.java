@@ -261,6 +261,16 @@ public class Vectors {
         return new SynchronizedVector(vector);
     }
 
+    public static DoubleVector scaleByMagnitude(DoubleVector vector) {
+        if (vector instanceof SparseDoubleVector)
+            return scaleByMagnitude((SparseDoubleVector) vector);
+        return new ScaledDoubleVector(vector, 1d/vector.magnitude());
+    }
+
+    public static DoubleVector scaleByMagnitude(SparseDoubleVector vector) {
+        return new ScaledSparseDoubleVector(vector, 1d/vector.magnitude());
+    }
+
     /**
      * Returns a subview for the given {@code DoubleVector} with a specified
      * offset and length.
@@ -383,13 +393,14 @@ public class Vectors {
             return null;
         DoubleVector result = null;
 
-        if (source instanceof DenseVector) {
+        if (source instanceof SparseDoubleVector) {
+            result = new CompactSparseVector(source.length());
+            copyFromSparseVector(result, source);
+        } else if (source instanceof DenseVector ||
+                   source instanceof ScaledDoubleVector) {
             result = new DenseVector(source.length());
             for (int i = 0; i < source.length(); ++i)
                 result.set(i, source.get(i));
-        } else if (source instanceof CompactSparseVector) {
-            result = new CompactSparseVector(source.length());
-            copyFromSparseVector(result, source);
         } else if (source instanceof AmortizedSparseVector) {
             result = new AmortizedSparseVector(source.length());
             copyFromSparseVector(result, source);

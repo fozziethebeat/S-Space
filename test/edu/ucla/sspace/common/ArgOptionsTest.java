@@ -45,6 +45,45 @@ public class ArgOptionsTest {
     assertTrue(options.hasOption('v'));
   }
 
+  @Test (expected=IllegalArgumentException.class)
+  public void removeShortOptionTest() {
+      ArgOptions options = new ArgOptions();
+      options.addOption('v', null, null);
+      options.removeOption('v');
+
+      assertTrue(!options.prettyPrint().contains("-v"));
+
+      String[] testArgs = {"-v", "location"};
+      options.parseOptions(testArgs);
+      assertEquals(2, options.numPositionalArgs());
+  }
+
+  @Test (expected=IllegalArgumentException.class)
+  public void removeShortWithLongOptionTest() {
+      ArgOptions options = new ArgOptions();
+      options.addOption('v', "verbose", null);
+      options.removeOption('v');
+
+      assertTrue(!options.prettyPrint().contains("-v"));
+      assertTrue(!options.prettyPrint().contains("--verbose"));
+
+      String[] testArgs = {"-v", "location"};
+      options.parseOptions(testArgs);
+  }
+
+  @Test (expected=IllegalArgumentException.class)
+  public void removeLongOptionTest() {
+      ArgOptions options = new ArgOptions();
+      options.addOption('v', "verbose", null);
+      options.removeOption("verbose");
+
+      assertTrue(!options.prettyPrint().contains("-v"));
+      assertTrue(!options.prettyPrint().contains("--verbose"));
+
+      String[] testArgs = {"-v", "location"};
+      options.parseOptions(testArgs);
+  }
+
   public static junit.framework.Test suite() {
     return new junit.framework.JUnit4TestAdapter(ArgOptionsTest.class);
   }

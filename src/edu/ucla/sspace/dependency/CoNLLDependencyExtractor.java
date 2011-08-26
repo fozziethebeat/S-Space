@@ -147,6 +147,26 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
     }
 
     /**
+     * Creates a new {@link CoNLLDependencyExtractor} that assumes the default
+     * ordering for {@code Malt} dependency parses and uses the given {@link
+     * TokenFilter} and {@link Stemmer} and the given indices for each feature.
+     */
+    public CoNLLDependencyExtractor(TokenFilter filter, Stemmer stemmer,
+                                    int idIndex, int formIndex, int lemmaIndex,
+                                    int posIndex, int parentIndex, 
+                                    int relationIndex) {
+        this.filter = filter;
+        this.stemmer = stemmer;
+
+        this.idIndex = idIndex;
+        this.formIndex = formIndex;
+        this.lemmaIndex = lemmaIndex;
+        this.posIndex = posIndex;
+        this.parentIndex = parentIndex;
+        this.relationIndex = relationIndex;
+    }
+
+    /**
      * Creates a new {@link CoNLLDependencyExtractor} by parsing a {@code Malt}
      * configuration file, which specifies the order in which the output is
      * formatted.
@@ -258,7 +278,10 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
         // Read each line in the document to extract the feature set for each
         // word in the sentence.
         int id = 0;
+        int offset = 0;
         for (String line = null; ((line = reader.readLine()) != null); ) {
+            line = line.trim();
+
             // If a new line is encountered and no lines have been handled yet,
             // skip all new lines.
             if (line.length() == 0 && nodes.size() == 0)
@@ -275,10 +298,22 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
             // CoNLL formats using tabs between features.
             String[] nodeFeatures = line.split("\\s+");
 
+            // Multiple parse trees may be within the same set of lines, so in
+            // order for the later parse trees to be linked correctly, we need
+            // to create an offset for the parent ids.
+            int realId = Integer.parseInt(nodeFeatures[idIndex]);
+            if ((realId == 0 && nodes.size() != offset) ||
+                (realId == 1 &&
+                 nodes.size() != offset && nodes.size() != offset+1))
+                offset = nodes.size();
+
             // Get the node id and the parent node id.
-            int parent = Integer.parseInt(nodeFeatures[parentIndex]) - 1;
+            int parent =
+                Integer.parseInt(nodeFeatures[parentIndex]) - 1 + offset;
 
             String word = getWord(nodeFeatures);
+
+            String lemma = getLemma(nodeFeatures, word);
 
             // Get the part of speech of the node.
             String pos = nodeFeatures[posIndex];
@@ -288,12 +323,12 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
 
             // Create the new relation.
             SimpleDependencyTreeNode curNode = 
-                new SimpleDependencyTreeNode(word, pos);
+                new SimpleDependencyTreeNode(word, pos, lemma);
 
             // Set the dependency link between this node and it's parent node.
-            // If the parent is negative then the node itself is a root node and
-            // has no parent.
-            if (parent > 0) {
+            // If the parent's real index  is negative then the node itself is a
+            // root node and has no parent.
+            if (parent - offset > 0) {
                 // If the parent has already been seen, add the relation
                 // directly.
                 if (parent < nodes.size()) {
@@ -351,6 +386,10 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
         // Filter if neccessary.
         if (filter != null && !filter.accept(word))
             return IteratorFactory.EMPTY_TOKEN;
+        return word;
+    }
+
+    private String getLemma(String[] nodeFeatures, String word) {
         // Get the lemma and check it's value.  Stem if needed.
         String lemma = nodeFeatures[lemmaIndex];
         if (lemma.equals("_"))

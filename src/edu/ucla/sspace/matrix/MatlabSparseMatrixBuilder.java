@@ -177,9 +177,7 @@ public class MatlabSparseMatrixBuilder implements MatrixBuilder {
             throw new IllegalStateException(
                 "Cannot add columns to a MatrixBuilder that is finished");
 
-        int[] nonZero = column.getElementIndices();
-        
-        for (int r : nonZero) {
+        for (int r : column.getElementIndices()) {
             // NB: Matlab sparse format is in [row col val] format
             //
             // NOTE: Matlab indices start at 1, not 0, so update all the row
@@ -257,6 +255,13 @@ public class MatlabSparseMatrixBuilder implements MatrixBuilder {
      */
     public Format getMatrixFormat() {
         return MatrixIO.Format.MATLAB_SPARSE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public MatrixFile getMatrixFile() {
+        return new MatrixFile(getFile(), getMatrixFormat());
     }
 
     /**

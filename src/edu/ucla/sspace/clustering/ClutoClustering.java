@@ -154,7 +154,7 @@ public class ClutoClustering implements Clustering {
      * Throws an {@link UnsupportedOperationException} if called, as CLUTO
      * requires the number of clusters to be specified.
      */
-    public Assignment[] cluster(Matrix matrix, Properties properties) {
+    public Assignments cluster(Matrix matrix, Properties properties) {
         throw new UnsupportedOperationException(
             "CLUTO requires the number of clusters to be specified and " +
             "therefore cannot be invoked using this method.");
@@ -166,7 +166,7 @@ public class ClutoClustering implements Clustering {
      * @param properties the properties to use for clustering with CLUTO.  See
      *        {@link ClutoClustering} for the list of supported properties.
      */
-    public Assignment[] cluster(Matrix matrix, int numClusters, 
+    public Assignments cluster(Matrix matrix, int numClusters, 
                                 Properties properties) {
         Method clmethod = DEFAULT_CLUSTER_METHOD;
         String methodProp = properties.getProperty(CLUSTER_METHOD);
@@ -190,7 +190,7 @@ public class ClutoClustering implements Clustering {
      * @return an array of {@link Assignment} instances that indicate zero or
      *         more clusters to which each row belongs.
      */
-    public Assignment[] cluster(Matrix matrix, int numClusters, 
+    public Assignments cluster(Matrix matrix, int numClusters, 
                                 Method clusterMethod,
                                 Criterion criterionMethod) {
         try {

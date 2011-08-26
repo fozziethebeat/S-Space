@@ -30,8 +30,7 @@ import java.util.List;
 
 /**
  * A {@link Matrix} implementation that buildes a matrix out of a list of
- * {@link DoubleVector}s.  All mutation methods throw {@code
- * UnsupportedOperationException}.
+ * {@link DoubleVector}s.  
  *
  * @author Keith Stevens
  */
@@ -68,6 +67,15 @@ class ListMatrix<T extends DoubleVector> implements Matrix {
                     "Cannot create ragged matrix from list of vectors");
             this.vectors.add(t);
         }        
+    }
+
+    public ListMatrix(List<T> vectors, int columns) {
+        if (vectors.size() == 0)
+            throw new IllegalArgumentException(
+                "Must provide at least one vector");
+        // Copy the contents to an ArrayList to guarantee O(1) row access
+        this.vectors = new ArrayList<T>(vectors);
+        this.columns = columns;
     }
 
     /**

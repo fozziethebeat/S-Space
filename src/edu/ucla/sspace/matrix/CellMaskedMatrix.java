@@ -42,12 +42,12 @@ public class CellMaskedMatrix implements Matrix {
     /**
      * The mapping for rows from new indices to old indices.
      */
-    private final int[] rowMaskMap;
+    protected final int[] rowMaskMap;
 
     /**
      * The mapping for columns from new indices to old indices.
      */
-    private final int[] colMaskMap;
+    protected final int[] colMaskMap;
 
     /**
      * The original underlying matrix.

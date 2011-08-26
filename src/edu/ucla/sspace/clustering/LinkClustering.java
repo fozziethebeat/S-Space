@@ -169,7 +169,9 @@ public class LinkClustering implements Clustering, java.io.Serializable {
      * @throws IllegalArgumentException if {@code matrix} is not square, or is
      *         not an instance of {@link SparseMatrix}
      */
-    public Assignment[] cluster(Matrix matrix, int numClusters, Properties props) {
+    public Assignments cluster(Matrix matrix, 
+                               int numClusters,
+                               Properties props) {
         LOGGER.warning("Link clustering does not take a specified number of " +
                        "clusters.  Clustering the matrix anyway.");
         return cluster(matrix, props);
@@ -181,7 +183,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
      * @throws IllegalArgumentException if {@code matrix} is not square, or is
      *         not an instance of {@link SparseMatrix}
      */
-    public Assignment[] cluster(Matrix matrix, Properties props) { 
+    public Assignments cluster(Matrix matrix, Properties props) { 
         if (matrix.rows() != matrix.columns()) 
             throw new IllegalArgumentException("Input matrix is not square. " +
                 "Matrix is expected to be a square matrix whose values (i,j) " +
@@ -339,12 +341,13 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             clusterId++;
         }
 
+        int numClusters = 0;
         Assignment[] nodeAssignments = new Assignment[rows];
         for (int i = 0; i < nodeAssignments.length; ++i) {
             nodeAssignments[i] = 
                 new SoftAssignment(nodeClusters.get(i));
         }
-        return nodeAssignments;
+        return new Assignments(numClusters, nodeAssignments, matrix);
     }
 
     /**
@@ -550,7 +553,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
      * @throws IllegalStateException if this instance has not yet finished a
      *         clustering solution.
      */
-    public Assignment[] getSolution(int solutionNum) {
+    public Assignments getSolution(int solutionNum) {
         if (solutionNum < 0 || solutionNum >= mergeOrder.size()) {
             throw new IllegalArgumentException(
                 "not a valid solution: " + solutionNum);
@@ -589,11 +592,9 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         }
 
         Assignment[] nodeAssignments = new Assignment[numRows];
-        for (int i = 0; i < nodeAssignments.length; ++i) {
-            nodeAssignments[i] = 
-                new SoftAssignment(nodeClusters.get(i));
-        }
-        return nodeAssignments;        
+        for (int i = 0; i < nodeAssignments.length; ++i)
+            nodeAssignments[i] = new SoftAssignment(nodeClusters.get(i));
+        return new Assignments(clusterId, nodeAssignments);
     }
 
     /**

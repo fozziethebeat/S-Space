@@ -304,6 +304,13 @@ public class ClutoSparseMatrixBuilder implements MatrixBuilder {
     /**
      * {@inheritDoc}
      */
+    public MatrixFile getMatrixFile() {
+        return new MatrixFile(getFile(), getMatrixFormat());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public synchronized boolean isFinished() {
         return isFinished;
     }

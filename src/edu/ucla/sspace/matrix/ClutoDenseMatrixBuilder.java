@@ -75,8 +75,8 @@ public class ClutoDenseMatrixBuilder implements MatrixBuilder {
 
     /**
      * The total number of columns in the matrix.  This value is continuously
-     * updated as new columns are seen and is not valid until the matrix has been
-     * finished.
+     * updated as new columns are seen and is not valid until the matrix has
+     * been finished.
      */
     private int numCols;
 
@@ -193,13 +193,11 @@ public class ClutoDenseMatrixBuilder implements MatrixBuilder {
         // However, because this is an implementation artifact, we can't check
         // for it explicitly with an exception.  Therefore, put in an assert to
         // indicate what is likely going on if asserts are enabled for debugging
-        // they symptoms.
+        // these symptoms.
         assert row.length() != Integer.MAX_VALUE : "adding a column whose " +
             "length is Integer.MAX_VALUE (was likley left unspecified in the " +
             " constructor).";
 
-        // For dense Vectors, find which values are non-zero and write only
-        // those
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < row.length(); ++i)
             sb.append(row.getValue(i).doubleValue()).append(" ");
@@ -247,9 +245,17 @@ public class ClutoDenseMatrixBuilder implements MatrixBuilder {
     }
 
     /**
+     * {@inheritDoc}
      */
     public Format getMatrixFormat() {
-        return MatrixIO.Format.CLUTO_SPARSE;
+        return MatrixIO.Format.CLUTO_DENSE;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public MatrixFile getMatrixFile() {
+        return new MatrixFile(getFile(), getMatrixFormat());
     }
 
     /**

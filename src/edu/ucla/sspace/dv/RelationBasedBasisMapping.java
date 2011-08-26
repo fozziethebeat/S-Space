@@ -21,11 +21,9 @@
 
 package edu.ucla.sspace.dv;
 
-import edu.ucla.sspace.dependency.DependencyPath;
+import edu.ucla.sspace.basis.AbstractBasisMapping;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import edu.ucla.sspace.dependency.DependencyPath;
 
 
 /**
@@ -36,28 +34,11 @@ import java.util.Map;
  *
  * @author David Jurgens
  */
-public class RelationBasedBasisMapping implements DependencyPathBasisMapping {
+public class RelationBasedBasisMapping 
+    extends AbstractBasisMapping<DependencyPath, String> 
+    implements DependencyPathBasisMapping {
 
-    /**
-     * A map that represents the word space by mapping terms and their relations
-     * to the dimension they are represented by.
-     */
-    private Map<String,Integer> termAndRelationToIndex;
-
-    /**
-     * A cache of the reverse {@code termToIndex} mapping.  This field is only
-     * updated on calls to {@link #getDimensionDescription(int)} when the
-     * mapping has chanaged since the previous call.
-     */
-    private String[] indexToTermAndRelationCache;
-
-    /**
-     * Creates an empty {@code RelationBasedBasisMapping}.
-     */
-    public RelationBasedBasisMapping() {
-        termAndRelationToIndex = new HashMap<String,Integer>();
-        indexToTermAndRelationCache = new String[0];
-    }
+    private static final long serialVersionUID = 1L;
 
     /**
      * Returns the dimension number corresponding to the term at the end of the
@@ -69,64 +50,10 @@ public class RelationBasedBasisMapping implements DependencyPathBasisMapping {
      */
     public int getDimension(DependencyPath path) {
         String endToken = path.last().word();
+
         // Extract out how the current word is related to the last word in the
-        // path.  The last relation is the length - 2, due to length - 1 being
-        // the last node index and there are one-fewer relations than nodes.
-        String relation = path.getRelation(path.length() - 2);
-        return getDimension(endToken + "+" + relation);
-    }
-
-    /**
-     * Returns the dimension represention the occurrence of the provided token.
-     * If the token was not previously assigned an index, this method adds one
-     * for it and returns that index.
-     */
-    private int getDimension(String tokenAndRelation) {
-
-        Integer index = termAndRelationToIndex.get(tokenAndRelation);
-        if (index == null) {     
-            synchronized(this) {
-                // recheck to see if the term was added while blocking
-                index = termAndRelationToIndex.get(tokenAndRelation);
-                // if another thread has not already added this word while the
-                // current thread was blocking waiting on the lock, then add it.
-                if (index == null) {
-                    int i = termAndRelationToIndex.size();
-                    termAndRelationToIndex.put(tokenAndRelation, i);
-                    return i; // avoid the auto-boxing to assign i to index
-                }
-            }
-        }
-        return index;
-    }
-
-    /**
-     * Returns the word mapped to each dimension appended with a "+" and the
-     * relation with which the word occurs.  For example, "clock" occurring with
-     * the OBJ relation would return "clock+OBJ" for its dimension description.
-     */
-    public String getDimensionDescription(int dimension) {
-        if (dimension < 0 || dimension > termAndRelationToIndex.size())
-            throw new IllegalArgumentException(
-                "invalid dimension: " + dimension);
-        // If the cache is out of date, rebuild the reverse mapping.
-        if (termAndRelationToIndex.size() > indexToTermAndRelationCache.length) {
-            // Lock to ensure safe iteration
-            synchronized(this) {
-                indexToTermAndRelationCache = 
-                    new String[termAndRelationToIndex.size()];
-                for (Map.Entry<String,Integer> e : 
-                         termAndRelationToIndex.entrySet())
-                    indexToTermAndRelationCache[e.getValue()] = e.getKey();
-            }
-        }
-        return indexToTermAndRelationCache[dimension];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int numDimensions() { 
-        return termAndRelationToIndex.size();
+        // path.  
+        String relation = path.getRelation(path.length() - 1);
+        return getDimensionInternal(endToken + "+" + relation);
     }
 }

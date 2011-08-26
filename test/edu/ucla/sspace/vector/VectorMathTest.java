@@ -122,4 +122,28 @@ public class VectorMathTest {
         for (int i : nonZeros)
             a.add(i, b.get(i));
     }
+
+    @Test public void testMultiplyUnmodified() {
+        SparseDoubleVector v = new CompactSparseVector();
+        v.set(1, 10);
+        v.set(4, 10);
+        v.set(10, 10);
+        SparseDoubleVector w = new CompactSparseVector();
+        w.set(1, 2);
+        w.set(10, 3);
+        w.set(5, 10);
+
+        SparseDoubleVector u = VectorMath.multiplyUnmodified(v, w);
+        assertEquals(3, v.getNonZeroIndices().length);
+        assertEquals(10, v.get(1), .00001);
+        assertEquals(10, v.get(4), .00001);
+        assertEquals(10, v.get(10), .00001);
+        assertEquals(3, w.getNonZeroIndices().length);
+        assertEquals(2, w.get(1), .00001);
+        assertEquals(3, w.get(10), .00001);
+        assertEquals(10, w.get(5), .00001);
+        assertEquals(2, u.getNonZeroIndices().length);
+        assertEquals(20, u.get(1), .00001);
+        assertEquals(30, u.get(10), .00001);
+    }
 }

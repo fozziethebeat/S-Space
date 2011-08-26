@@ -42,6 +42,11 @@ public interface DependencyTreeNode {
     String word();
 
     /**
+     * The lemmatized version of the word, if there is any.
+     */
+    String lemma();
+
+    /**
      * Returns the part of speech tag for this node.
      */
     String pos();

@@ -111,10 +111,10 @@ class ExtendedPathView implements DependencyPath {
      * {@inheritDoc}
      */
     public String getRelation(int position) {
-        if (position < length - 2)
+        if (position < length - 1)
             return original.getRelation(position);
         // Check that the request isn't for an invalid index
-        else if (position > length - 1)
+        else if (position >= length)
             throw new IllegalArgumentException("invalid relation: " + position);
         else 
             return extension.relation();

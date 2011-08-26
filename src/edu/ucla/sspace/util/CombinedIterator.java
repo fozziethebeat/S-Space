@@ -77,7 +77,7 @@ public class CombinedIterator<T> implements Iterator<T> {
      * elements.
      */
     private void advance() {
-	if (!current.hasNext()) {
+	while (current != null && !current.hasNext()) {
 	    prev = current;
 	    current = iters.poll();
 	}

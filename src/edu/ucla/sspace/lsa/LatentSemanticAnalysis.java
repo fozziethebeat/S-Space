@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.lsa;
 
+import edu.ucla.sspace.basis.BasisMapping;
+
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
 import edu.ucla.sspace.matrix.LogEntropyTransform;

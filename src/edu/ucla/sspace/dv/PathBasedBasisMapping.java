@@ -25,8 +25,10 @@ import edu.ucla.sspace.dependency.DependencyPath;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -54,11 +56,18 @@ public class PathBasedBasisMapping implements DependencyPathBasisMapping {
     private String[] indexToPathCache;
 
     /**
+     * If set to true, the basis mapping will not create mappings for unseen
+     * dimensions.
+     */
+    private boolean readOnly;
+
+    /**
      * Creates an empty {@code PathBasedBasisMapping}.
      */
     public PathBasedBasisMapping() {
         pathToIndex = new HashMap<PathSignature,Integer>();
         indexToPathCache = new String[0];
+        readOnly = false;
     }
 
     /**
@@ -81,7 +90,7 @@ public class PathBasedBasisMapping implements DependencyPathBasisMapping {
     private int getDimension(PathSignature path) {
 
         Integer index = pathToIndex.get(path);
-        if (index == null) {     
+        if (index == null && !readOnly) {     
             synchronized(this) {
                 // recheck to see if the term was added while blocking
                 index = pathToIndex.get(path);
@@ -124,6 +133,30 @@ public class PathBasedBasisMapping implements DependencyPathBasisMapping {
      */
     public int numDimensions() { 
         return pathToIndex.size();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * Returns the set of keys known by this {@link BasisMapping}
+     */
+    public Set<String> keySet() {
+        Set<String> keys = new HashSet<String>();
+        for (PathSignature path : pathToIndex.keySet())
+            keys.add(path.toString());
+        return keys;
     }
 
     /**
