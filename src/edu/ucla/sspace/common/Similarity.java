@@ -21,6 +21,16 @@
 
 package edu.ucla.sspace.common;
 
+import edu.ucla.sspace.sim.AverageCommonFeatureRank;
+import edu.ucla.sspace.sim.CosineSimilarity;
+import edu.ucla.sspace.sim.EuclideanSimilarity;
+import edu.ucla.sspace.sim.JaccardIndex;
+import edu.ucla.sspace.sim.KLDivergence;
+import edu.ucla.sspace.sim.LinSimilarity;
+import edu.ucla.sspace.sim.PearsonCorrelation;
+import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.sim.SpearmanRankCorrelation;
+
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.IntegerEntry;
 
@@ -124,6 +134,29 @@ public class Similarity {
         }
 
         return m;
+    }
+
+    public static SimilarityFunction getSimilarityFunction(
+            SimType similarityType) {
+        switch (similarityType) {
+            case COSINE:
+                return new CosineSimilarity();
+            case PEARSON_CORRELATION:
+                return new PearsonCorrelation();
+            case EUCLIDEAN:
+                return new EuclideanSimilarity();
+            case SPEARMAN_RANK_CORRELATION:
+                return new SpearmanRankCorrelation();
+            case JACCARD_INDEX:
+                return new JaccardIndex();
+            case AVERAGE_COMMON_FEATURE_RANK:
+                return new AverageCommonFeatureRank();
+            case LIN:
+                return new LinSimilarity();
+            case KL_DIVERGENCE:
+                return new KLDivergence();
+        }
+        return null;
     }
 
     /**

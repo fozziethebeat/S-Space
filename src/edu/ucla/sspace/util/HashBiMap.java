@@ -44,12 +44,13 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     /**
      * An inverse mapping from values to keys.
      */
-    private BiMap<V, K> reverseMap;
+    private HashBiMap<V, K> reverseMap;
 
     /**
      * Creates an empty {@link HashBiMap}.
      */
     public HashBiMap() {
+        originalMap = new HashMap<K, V>();
         reverseMap = new HashBiMap<V, K>(new HashMap<V, K>(), this);
     }
 
@@ -71,7 +72,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * existing {@link BiMap}.  The original mapping is not recomputed for the
      * {@link BiMap} created in public  above constructor.
      */
-    private HashBiMap(Map<K, V> map, BiMap<V, K> reverse) {
+    private HashBiMap(Map<K, V> map, HashBiMap<V, K> reverse) {
         this.originalMap = map;
         this.reverseMap = reverse;
     }
@@ -151,7 +152,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * {@inheritDoc}
      */
     public V put(K key, V value) {
-        reverseMap.put(value, key);
+        reverseMap.originalMap.put(value, key);
         return originalMap.put(key, value);
     }
 
@@ -161,7 +162,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     public void putAll(Map<? extends K, ? extends V> m) {
         originalMap.putAll(m);
         for (Map.Entry<? extends K,? extends V> e : m.entrySet())
-            reverseMap.put(e.getValue(), e.getKey());
+            reverseMap.originalMap.put(e.getValue(), e.getKey());
     }
 
     /**
@@ -170,7 +171,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     public V remove(Object key) {
         V removed = originalMap.remove(key);
         if (removed != null)
-            reverseMap.remove(removed);
+            reverseMap.originalMap.remove(removed);
         return removed;
     }
 

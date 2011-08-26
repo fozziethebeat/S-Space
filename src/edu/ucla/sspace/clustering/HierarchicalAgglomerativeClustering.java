@@ -236,7 +236,11 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
     /**
      * The work used by all HAC instances to perform multi-threaded operations.
      */
-    private static final WorkQueue WORK_QUEUE = new WorkQueue();
+    private final WorkQueue workQueue;
+
+    public HierarchicalAgglomerativeClustering() {
+        this.workQueue = WorkQueue.getWorkQueue();
+    }
 
     /**
      * {@inheritDoc}
@@ -673,7 +677,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             double mostSimilarToMerged = -1;
             Integer mostSimilarToMergedId = null;            
 
-            // Recalculate the inter-cluster similarity of a cluster in two cases:
+            // Recalculate the inter-cluster similarity of a cluster in two
+            // cases:
             // 
             // 1) a cluster that paired with either of these two (i.e. was most
             // similar to one of them before the merge).  
@@ -745,10 +750,10 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
         // thread as the task key so any other thread executing this method
         // won't conflict.
         Object taskKey = 
-            WORK_QUEUE.registerTaskGroup(clusterAssignment.size());
+            workQueue.registerTaskGroup(clusterAssignment.size());
         for (Integer clusterId : clusterAssignment.keySet()) {
             final Integer clustId = clusterId;
-            WORK_QUEUE.add(taskKey, new Runnable() {
+            workQueue.add(taskKey, new Runnable() {
                     public void run() {
                           clusterSimilarities.put(clustId,
                               findMostSimilar(clusterAssignment, clustId, 
@@ -756,7 +761,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
                     }
                 });
         }        
-        WORK_QUEUE.await(taskKey);
+        workQueue.await(taskKey);
 
         LOGGER.finer("Assigning clusters");
         List<Merge> merges = new ArrayList<Merge>(rows - 1);
@@ -821,7 +826,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             if (clusterAssignment.size() == 1)
                 break;
 
-            // Recalculate the inter-cluster similarity of a cluster in two cases:
+            // Recalculate the inter-cluster similarity of a cluster in two
+            // cases:
             // 
             // 1) a cluster that paired with either of these two (i.e. was most
             // similar to one of them before the merge).  
@@ -832,7 +838,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             // Use size()-1 as the number of tasks because we skip adding a task
             // for computing the new cluster's similarity to itself
             taskKey = 
-                WORK_QUEUE.registerTaskGroup(clusterSimilarities.size() - 1);
+                workQueue.registerTaskGroup(clusterSimilarities.size() - 1);
 
             for (Map.Entry<Integer,Pairing> entry :
                      clusterSimilarities.entrySet()) {
@@ -848,7 +854,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
                 if (clusterId == c1index)
                     continue;
                 
-                WORK_QUEUE.add(taskKey, new Runnable() {
+                workQueue.add(taskKey, new Runnable() {
                         public void run() {                            
                             // Task-local state variables to use while
                             // recalculating the similarities
@@ -888,7 +894,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             }
             
             // Run each thread's comparisons
-            WORK_QUEUE.await(taskKey);
+            workQueue.await(taskKey);
 
             // Collect the results from the similarity map.  The highest
             // similarity should be the largest key in the map, with the
@@ -925,7 +931,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
                 new ArrayList<Map.Entry<Integer,Pairing>>(
                     clusterSimilarities.entrySet());
 
-            int numThreads = WORK_QUEUE.numThreads();
+            int numThreads = workQueue.numThreads();
             int comparisonsPerThread = toPartition.size() / numThreads;
 
             final ConcurrentNavigableMap<Double,Integer> mostSimilarMap 
@@ -997,7 +1003,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
             }
             
             // Run each thread's comparisons
-            WORK_QUEUE.run(similarityTasks);
+            workQueue.run(similarityTasks);
 
             // Collect the results from the similarity map.  The highest
             // similarity should be the largest key in the map, with the
