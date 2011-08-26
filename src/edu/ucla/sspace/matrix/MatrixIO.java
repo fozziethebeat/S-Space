@@ -1062,7 +1062,8 @@ public class MatrixIO {
         int rows = dis.readInt();
         int cols = dis.readInt();
         int nz = dis.readInt();
-        MATRIX_IO_LOGGER.fine(
+        //MATRIX_IO_LOGGER.fine(
+        System.out.println(
             String.format("Creating %s matrix %d rows, %d cols, %d nz%n",
                           ((transposeOnRead) ? "transposed" : ""),
                           rows, cols, nz));

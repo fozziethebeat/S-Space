@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.mains;
 
+import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
@@ -34,6 +37,7 @@ import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.SVD.Algorithm;
 
 import edu.ucla.sspace.util.ReflectionUtil;
+import edu.ucla.sspace.util.SerializableUtil;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -132,6 +136,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author David Jurgens
  */
 public class LSAMain extends GenericMain {
+
+    private BasisMapping<String, String> basis;
+
     private LSAMain() {
     }
 
@@ -148,16 +155,15 @@ public class LSAMain extends GenericMain {
         options.addOption('S', "svdAlgorithm", "a specific SVD algorithm to use"
                           , true, "SVD.Algorithm", 
                           "Advanced Algorithm Options");
+        options.addOption('B', "saveTermBasis",
+                          "If true, the term basis mapping will be stored " +
+                          "to the given file name",
+                          true, "FILE", "Optional");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         LSAMain lsa = new LSAMain();
-        try {
-            lsa.run(args);
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
+        lsa.run(args);
     }
     
     protected SemanticSpace getSpace() {
@@ -170,10 +176,10 @@ public class LSAMain extends GenericMain {
             String algName = argOptions.getStringOption("svdAlgorithm", "ANY");
             MatrixFactorization factorization = SVD.getFactorization(
                     Algorithm.valueOf(algName.toUpperCase()));
+            basis = new StringBasisMapping();
 
             return new LatentSemanticAnalysis(
-                false, dimensions, transform, factorization, false,
-                new ConcurrentHashMap<String, Integer>());
+                false, dimensions, transform, factorization, false, basis);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
@@ -185,6 +191,11 @@ public class LSAMain extends GenericMain {
      */
     protected SSpaceFormat getSpaceFormat() {
         return SSpaceFormat.BINARY;
+    }
+
+    protected void postProcessing() {
+        if (argOptions.hasOption('B'))
+            SerializableUtil.save(basis, argOptions.getStringOption('B'));
     }
 
     /**

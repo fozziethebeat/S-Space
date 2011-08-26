@@ -22,6 +22,7 @@
 package edu.ucla.sspace.lsa;
 
 import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
 
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
@@ -244,7 +245,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     public LatentSemanticAnalysis() throws IOException {
         this(false, 300, new LogEntropyTransform(),
              SVD.getFastestAvailableFactorization(), 
-             false, new ConcurrentHashMap<String, Integer>());
+             false, new StringBasisMapping());
     }
 
     /**
@@ -271,7 +272,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
                                   Transform transform,
                                   MatrixFactorization reducer,
                                   boolean readHeaderToken,
-                                  ConcurrentMap<String, Integer> termToIndex) 
+                                  BasisMapping<String, String> termToIndex)
             throws IOException {
         super(readHeaderToken, termToIndex, reducer.getBuilder());
         this.reducer = reducer;

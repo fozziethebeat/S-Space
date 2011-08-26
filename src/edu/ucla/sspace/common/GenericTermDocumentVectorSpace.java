@@ -105,12 +105,6 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
     private final BasisMapping<String, String> termToIndex;
 
     /**
-     * The counter for recording the current, largest word index in the
-     * word-document matrix.  Subclasses can use this for any reporting.
-     */
-    protected final AtomicInteger termIndexCounter;
-    
-    /**
      * The counter for recording the current number of documents observed.
      * Subclasses can use this for any reporting.
      */
@@ -169,7 +163,6 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
             MatrixBuilder termDocumentMatrixBuilder) throws IOException {
         this.readHeaderToken = readHeaderToken;
         this.termToIndex = termToIndex;
-        termIndexCounter = new AtomicInteger(0);
         documentCounter = new AtomicInteger(0);
 
         this.termDocumentMatrixBuilder = termDocumentMatrixBuilder;
@@ -242,7 +235,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
 
         // Get the total number of terms encountered so far, including any new
         // unique terms found in the most recent document
-        int totalNumberOfUniqueWords = termIndexCounter.get();
+        int totalNumberOfUniqueWords = termToIndex.numDimensions();
 
         // Convert the Map count to a SparseArray
         SparseArray<Integer> documentColumn = 
