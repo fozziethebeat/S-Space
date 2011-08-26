@@ -165,7 +165,7 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
                 // V could be large, so just keep it on disk.  
                 classFeatures = MatrixIO.readMatrix(
                         Vt, Format.SVDLIBC_DENSE_BINARY,
-                        Type.DENSE_ON_DISK);
+                        Type.DENSE_IN_MEMORY);
                 scaledClassFeatures = false;
 
                 // Sigma only has n values for an n^2 matrix, so make it sparse.
@@ -197,11 +197,9 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
             // values.
             for (int r = 0; r < dataClasses.rows(); ++r) {
                 for (int c = 0; c < dataClasses.columns(); ++c) {
-                    System.out.printf("%f ", dataClasses.get(r,c));
                     dataClasses.set(r, c, dataClasses.get(r, c) * 
                                           singularValues[c]);
                 }
-            System.out.println();
             }
         }
 

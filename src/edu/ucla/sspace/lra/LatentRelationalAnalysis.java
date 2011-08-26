@@ -26,6 +26,8 @@ import static edu.ucla.sspace.common.Similarity.cosineSimilarity;
 import edu.ucla.sspace.matrix.LogEntropyTransform;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
@@ -39,6 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.ObjectInputStream;
@@ -182,6 +185,13 @@ public class LatentRelationalAnalysis {
     private String DATA_DIR;
 
     /**
+     * The {@link MatrixFactorization} algorithm that will decompose the word by
+     * document feature space into two smaller feature spaces: a word by class
+     * feature space and a class by feature space.
+     */
+    private final MatrixFactorization reducer;
+
+    /**
      * Constructor for {@code LatentRelationalAnalysis}.
      *
      * @param corpus_directory a {@code String} containing the absolute path to
@@ -195,7 +205,9 @@ public class LatentRelationalAnalysis {
      */
     public LatentRelationalAnalysis(String corpus_directory, 
 				    String index_directory, 
-				    boolean do_index) {
+				    boolean do_index,
+                    MatrixFactorization reducer) {
+        this.reducer = reducer;
         //set system property for Wordnet database directory
         Properties sysProps = System.getProperties();
         sysProps.setProperty("wordnet.database.dir","/usr/share/wordnet");
@@ -892,29 +904,26 @@ public class LatentRelationalAnalysis {
 
     /**
      * Does the Singular Value Decomposition using the generated sparse matrix.
-     * The dimensions used cannot exceed the number of columns in the original matrix. 
+     * The dimensions used cannot exceed the number of columns in the original
+     * matrix. 
      *
      * @param sparse_matrix the sparse {@code Matrix}
      * @param dimensions the number of singular values to calculate
-     * @return a {@code double} containing the cosine similarity value of the analogy 
-     **/
-    public static Matrix[] computeSVD(Matrix sparse_matrix, int dimensions) {
-            try {
+     * @return The decomposed word space {@link Matrix}
+     */
+    public Matrix computeSVD(Matrix sparse_matrix, int dimensions) {
+        try {
             File rawTermDocMatrix = 
                 File.createTempFile("lra-term-document-matrix", ".dat");
-            MatrixIO.writeMatrix(sparse_matrix, rawTermDocMatrix, MatrixIO.Format.SVDLIBC_SPARSE_TEXT); 
-            Matrix[] usv = SVD.svd(rawTermDocMatrix, SVD.Algorithm.SVDLIBC, MatrixIO.Format.SVDLIBC_SPARSE_TEXT, dimensions);
-
-            if (usv[1].rows() < usv[0].columns()) { //can't do projection, if the dimensions don't match up...redo SVD with updated dimensions
-                dimensions = usv[1].rows();
-                System.err.println("Default dimensions too big...redoing SVD with new dimensions, k" + "=" + dimensions + " ...");
-                usv = SVD.svd(rawTermDocMatrix, SVD.Algorithm.SVDLIBC, MatrixIO.Format.SVDLIBC_SPARSE_TEXT, dimensions);
-            }
-            return usv;
-            } catch (Exception e){
-                System.err.println("could not compute SVD\n");
-                return null;
-            }
+            MatrixIO.writeMatrix(sparse_matrix, rawTermDocMatrix,
+                                 MatrixIO.Format.SVDLIBC_SPARSE_TEXT); 
+            MatrixFile mFile = new MatrixFile(
+                    rawTermDocMatrix, MatrixIO.Format.SVDLIBC_SPARSE_TEXT);
+            reducer.factorize(mFile, dimensions);
+            return reducer.dataClasses();
+        } catch (IOException ioe){
+            throw new IOError(ioe);
+        }
     }
 
     /**

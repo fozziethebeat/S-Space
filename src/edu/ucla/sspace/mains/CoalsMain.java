@@ -27,6 +27,11 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
 import edu.ucla.sspace.coals.Coals;
 
+import edu.ucla.sspace.matrix.CorrelationTransform;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.SVD;
+import edu.ucla.sspace.matrix.Transform;
+
 import java.io.IOException;
 
 import java.util.Properties;
@@ -86,21 +91,24 @@ public class CoalsMain extends GenericMain {
                             false, null, "Optional");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         CoalsMain coals = new CoalsMain();
-        try {
-            coals.run(args);
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
+        coals.run(args);
     }
     
     /**
      * {@inheritDoc}
      */
     public SemanticSpace getSpace() {
-        return new Coals();
+        Transform transform = new CorrelationTransform();
+        MatrixFactorization reducer = (argOptions.hasOption("reduce"))
+            ? SVD.getFastestAvailableFactorization()
+            : null;
+
+        return new Coals(transform, reducer, 
+                         argOptions.getIntOption("reducedDimension", 0),
+                         argOptions.getIntOption("maxWords", 0),
+                         argOptions.getIntOption("dimensions", 0));
     }
 
     /**
@@ -108,25 +116,5 @@ public class CoalsMain extends GenericMain {
      */
     protected SSpaceFormat getSpaceFormat() {
         return SSpaceFormat.SPARSE_BINARY;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Properties setupProperties() {
-          Properties props = System.getProperties();
-          if (argOptions.hasOption("reducedDimension"))
-              props.setProperty(
-                      Coals.REDUCE_DIMENSION_PROPERTY,
-                      argOptions.getStringOption("reducedDimension"));
-          if (argOptions.hasOption("reduce"))
-              props.setProperty(Coals.REDUCE_MATRIX_PROPERTY, "true");
-          if (argOptions.hasOption("dimensions"))
-              props.setProperty(Coals.MAX_DIMENSIONS_PROPERTY,
-                                argOptions.getStringOption("dimensions"));
-          if (argOptions.hasOption("maxWords"))
-              props.setProperty(Coals.MAX_WORDS_PROPERTY,
-                                argOptions.getStringOption("maxWords"));
-          return props;
     }
 }

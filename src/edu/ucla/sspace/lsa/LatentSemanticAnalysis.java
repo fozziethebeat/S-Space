@@ -328,6 +328,21 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     }
 
     /**
+     * Returns the number of documents processed by {@link
+     * LatentSemanticAnalysis} if the document space has been retained.
+     *
+     * @throws IllegalArgumentException If the document space has not been
+     *         retained.
+     */
+    public int documentSpaceSize() {
+        if (documentSpace == null)
+            throw new IllegalArgumentException(
+                    "The document space has not been retained or generated.");
+
+        return documentSpace.rows();
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @param properties {@inheritDoc} See this class's {@link

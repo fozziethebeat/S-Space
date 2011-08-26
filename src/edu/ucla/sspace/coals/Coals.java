@@ -27,16 +27,16 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.matrix.CellMaskedSparseMatrix;
 import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.AtomicGrowingSparseMatrix;
-import edu.ucla.sspace.matrix.CorrelationTransform;
 import edu.ucla.sspace.matrix.MatlabSparseMatrixBuilder;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixBuilder;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Normalize;
 import edu.ucla.sspace.matrix.SparseMatrix;
-import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
@@ -142,17 +142,17 @@ public class Coals implements SemanticSpace {
     /**
      * The default number of dimensions to reduce to.
      */
-    private static final String DEFAULT_REDUCE_DIMENSIONS = "800";
+    private static final int DEFAULT_REDUCE_DIMENSIONS = 800;
 
     /**
      * The default number of dimensions to save in the co-occurrance matrix.
      */
-    private static final String DEFAULT_MAX_DIMENSIONS = "14000";
+    private static final int DEFAULT_MAX_DIMENSIONS = 14000;
 
     /**
      * The default number of rows to save in the co-occurrance matrix.
      */
-    private static final String DEFAULT_MAX_WORDS = "15000";
+    private static final int DEFAULT_MAX_WORDS = 15000;
 
     /**
      * The name of this {@code SemanticSpace}
@@ -184,18 +184,24 @@ public class Coals implements SemanticSpace {
     /**
      * The final reduced matrix.
      */
-    Matrix finalCorrelation;
-
-    /**
-     * Specifies if the matrix has been reduced by SVD.
-     */
-    boolean reduceMatrix;
+    private Matrix finalCorrelation;
 
     /**
      * Specifies the number of reduced dimensions if the matrix is reduced by
      * SVD. 
      */
-    int reducedDimensions;
+    private final int reducedDimensions;
+
+    /**
+     * The maximum number of words that will be retained by {@link Coals}.
+     */
+    private final int maxWords;
+
+    /**
+     * The maximum number of co-occurring words that will be retained by {@link
+     * Coals}.
+     */
+    private final int maxDimensions;
 
     /**
      * A counter for keeping track of the index values of words.
@@ -203,13 +209,46 @@ public class Coals implements SemanticSpace {
     private int wordIndexCounter;
 
     /**
+     * The {@link MatrixFactorization} algorithm that will decompose the word by
+     * document feature space into two smaller feature spaces: a word by class
+     * feature space and a class by feature space.
+     */
+    private final MatrixFactorization reducer;
+
+    /**
+     * The {@link Transform} applied to the co-ocucrrence counts, if not {@code
+     * null}.
+     */
+    private final Transform transform;
+
+    public Coals(Transform transform, MatrixFactorization reducer) {
+        this(transform, reducer, DEFAULT_REDUCE_DIMENSIONS,
+             DEFAULT_MAX_WORDS, DEFAULT_MAX_DIMENSIONS);
+    }
+
+    /**
      * Creats a {@link Coals} instance.
      */
-    public Coals() {
+    public Coals(Transform transform,
+                 MatrixFactorization reducer,
+                 int reducedDimensions,
+                 int maxWords,
+                 int maxDimensions) {
         termToIndex = new HashMap<String, Integer>();
         totalWordFreq = new ConcurrentHashMap<String, AtomicInteger>();
         wordToSemantics = new HashMap<String, SparseDoubleVector>(1024, 4f);
         finalCorrelation = null;
+        this.transform = transform;
+        this.reducer = reducer;
+        this.reducedDimensions = (reducedDimensions == 0) 
+            ? DEFAULT_REDUCE_DIMENSIONS
+            : reducedDimensions;
+        this.maxWords = (maxWords == 0)
+            ? DEFAULT_MAX_WORDS 
+            : maxWords;
+        this.maxDimensions = (maxDimensions == 0)
+            ? DEFAULT_MAX_DIMENSIONS
+            : maxDimensions;
     }
 
     /**
@@ -232,7 +271,7 @@ public class Coals implements SemanticSpace {
 
     public String getSpaceName() {
         String ret = COALS_SSPACE_NAME;
-        if (reduceMatrix)
+        if (reducer != null)
             ret += "-svd-" + reducedDimensions;
         return ret;
     }
@@ -393,36 +432,25 @@ public class Coals implements SemanticSpace {
      * {@inheritDoc}
      */
     public void processSpace(Properties props) {
-        reduceMatrix =
-            props.getProperty(REDUCE_MATRIX_PROPERTY) != null;
-        reducedDimensions = Integer.parseInt(
-                props.getProperty(REDUCE_DIMENSION_PROPERTY,
-                                  DEFAULT_REDUCE_DIMENSIONS));
-        boolean normalize =
-            props.getProperty(DO_NOT_NORMALIZE_PROPERTY) == null;
-        int maxWords = Integer.parseInt(
-                props.getProperty(MAX_WORDS_PROPERTY,
-                                  DEFAULT_MAX_WORDS));
-        int maxDimensions = Integer.parseInt(
-                props.getProperty(MAX_DIMENSIONS_PROPERTY,
-                                  DEFAULT_MAX_DIMENSIONS));
-
         COALS_LOGGER.info("Droppring dimensions from co-occurrance matrix.");
         // Read in the matrix from a file with dimensions dropped.
         finalCorrelation = buildMatrix(maxWords, maxDimensions);
         COALS_LOGGER.info("Done dropping dimensions.");
 
-        if (normalize) {
+        if (transform != null) {
             COALS_LOGGER.info("Normalizing co-occurrance matrix.");
 
             // Normalize the matrix using correlation.
             int wordCount = finalCorrelation.rows();
-            Transform correlation = new CorrelationTransform();
-            finalCorrelation = correlation.transform(finalCorrelation);
+            finalCorrelation = transform.transform(finalCorrelation);
             COALS_LOGGER.info("Done normalizing co-occurrance matrix.");
         }
 
-        if (reduceMatrix) {
+        if (reducer != null) {
+            if (reducedDimensions > finalCorrelation.columns())
+                throw new IllegalArgumentException(
+                        "Cannot reduce to more dimensions than exist");
+
             COALS_LOGGER.info("Reducing using SVD.");
             try {
                 File coalsMatrixFile =
@@ -431,14 +459,12 @@ public class Coals implements SemanticSpace {
                 MatrixIO.writeMatrix(finalCorrelation,
                                      coalsMatrixFile,
                                      Format.SVDLIBC_SPARSE_BINARY);
-                if (reducedDimensions > finalCorrelation.columns())
-                    reducedDimensions = finalCorrelation.columns();
 
-                Matrix[] usv = SVD.svd(coalsMatrixFile,
-                                       SVD.Algorithm.ANY,
-                                       Format.SVDLIBC_SPARSE_BINARY,
-                                       reducedDimensions);
-                finalCorrelation = usv[0];
+                MatrixFile processedSpace = new MatrixFile(
+                        coalsMatrixFile, Format.SVDLIBC_SPARSE_BINARY);
+                reducer.factorize(processedSpace, reducedDimensions);
+
+                finalCorrelation = reducer.dataClasses();
             } catch (IOException ioe) {
                 throw new IOError(ioe);
             }
