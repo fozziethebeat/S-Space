@@ -33,6 +33,7 @@ import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.matrix.SvdlibcSparseBinaryMatrixBuilder;
 
 import java.util.Properties;
+import java.util.logging.Logger;
 
 
 /**
@@ -62,6 +63,9 @@ import java.util.Properties;
 public class NonNegativeMatrixFactorizationMultiplicative
         implements MatrixFactorization {
 
+    private static final Logger LOG = 
+        Logger.getLogger(NonNegativeMatrixFactorizationMultiplicative.class.getName());
+
     /**
      * The base property prefix.
      */
@@ -85,12 +89,12 @@ public class NonNegativeMatrixFactorizationMultiplicative
     /**
      * By default, use this many outer iterations.
      */
-    public static final String DEFAULT_OUTER_ITERATIONS = "300";
+    public static final String DEFAULT_OUTER_ITERATIONS = "30";
 
     /**
      * By default, use this many inner iterations.
      */
-    public static final String DEFAULT_INNER_ITERATIONS = "3";
+    public static final String DEFAULT_INNER_ITERATIONS = "1";
 
     /**
      * The data point to latent variable matrix.
@@ -168,6 +172,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
         //
         //   W <- W .* (AHt) ./ (W(HHt))
         for (int i = 0; i < outerLoop; ++i) {
+            LOG.info("Updating H matrix");
             // Update the H matrix by holding the W matrix fixed for a few
             // iterations.
             for (int j = 0; j < innerLoop; ++j) {
@@ -177,7 +182,9 @@ public class NonNegativeMatrixFactorizationMultiplicative
                 // will likely cause cache misses in Hprime, it's likely better
                 // than traversing _every_ cell in matrix, which may be in the
                 // millions.
+                long start = System.currentTimeMillis();
                 Matrix Hprime = new ArrayMatrix(H.rows(), H.columns());
+                double s = 0;
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int n = 0; n < matrix.rows(); ++n) {
                         SparseDoubleVector v = matrix.getRowVector(n);
@@ -187,8 +194,11 @@ public class NonNegativeMatrixFactorizationMultiplicative
                                              W.get(n,k) * v.get(m));
                     }
                 }
+                long end = System.currentTimeMillis();
+                LOG.info("Step 1: " + (end-start) + "ms");
 
                 // Compute WtW using standard matrix multiplication.
+                start = System.currentTimeMillis();
                 Matrix WtW = new ArrayMatrix(numDimensions, numDimensions);
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int l = 0; l < numDimensions; ++l) {
@@ -198,6 +208,8 @@ public class NonNegativeMatrixFactorizationMultiplicative
                         WtW.set(k, l, sum);
                     }
                 }
+                end = System.currentTimeMillis();
+                LOG.info("Step 2: " + (end-start) + "ms");
 
                 // Compute the final update to H which is
                 // H <- H .* (WtA)./ (WtWH).
@@ -211,6 +223,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
                 // store the updated values in Hprime because we only access
                 // each cell once, but we cannot use H itself since we need to
                 // maintain those values until every value of WtWH is computed.
+                start = System.currentTimeMillis();
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int m = 0; m < H.columns(); ++m) {
                         double sum = 0;
@@ -222,17 +235,21 @@ public class NonNegativeMatrixFactorizationMultiplicative
 
                     }
                 }
+                end = System.currentTimeMillis();
+                LOG.info("Step 3: " + (end-start) + "ms");
 
                 // Update H with the new value.
                 H = Hprime;
             }
 
+            LOG.info("Updating W matrix");
             // Update the H matrix by holding the W matrix fixed for a few
             // iterations.
             for (int j = 0; j < innerLoop; ++j) {
                 // Compute Wprime, which is AHt.  Since A is the left matrix, we
                 // can take advantage of it's sparsity using the standard matrix
                 // multiplication techniques.
+                long start = System.currentTimeMillis();
                 Matrix Wprime = new ArrayMatrix(W.rows(), W.columns());
                 for (int n = 0; n < matrix.rows(); ++ n) {
                     SparseDoubleVector v = matrix.getRowVector(n);
@@ -244,8 +261,11 @@ public class NonNegativeMatrixFactorizationMultiplicative
                         Wprime.set(n, k, sum);
                     }
                 }
+                long end = System.currentTimeMillis();
+                LOG.info("Step 4: " + (end-start) + "ms");
 
                 // Compute HHt using standard matrix multiplication.
+                start = System.currentTimeMillis();
                 Matrix HHt = new ArrayMatrix(numDimensions, numDimensions);
                 for (int k = 0; k < numDimensions; ++k) {
                     for (int l = 0; l < numDimensions; ++l) {
@@ -255,6 +275,8 @@ public class NonNegativeMatrixFactorizationMultiplicative
                         HHt.set(k, l, sum);
                     }
                 }
+                end = System.currentTimeMillis();
+                LOG.info("Step 5: " + (end-start) + "ms");
 
                 // Compute W(HHt) and update Wprime using the following update:
                 // W <- W .* (AHt) ./ (W(HHt)).
@@ -268,6 +290,7 @@ public class NonNegativeMatrixFactorizationMultiplicative
                 // each cell once, but we cannot use W itself since we need to
                 // maintain those values until every value of W(HHt) is
                 // computed.
+                start = System.currentTimeMillis();
                 for (int n = 0; n < W.rows(); ++n) {
                     for (int k = 0; k < W.columns(); ++k) {
                         double sum = 0;
@@ -278,10 +301,14 @@ public class NonNegativeMatrixFactorizationMultiplicative
                         Wprime.set(n, k, w * v / sum);
                     }
                 }
+                end = System.currentTimeMillis();
+                LOG.info("Step 6: " + (end-start) + "ms");
 
                 // Update W with Wprime.
                 W = Wprime;
             }
+
+            LOG.info("Finishedo processing outer loop: " + i);
         }
     }
 

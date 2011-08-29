@@ -10,7 +10,10 @@ import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;;
 
+import edu.ucla.sspace.util.LoggerUtil;
+
 import java.io.File;
+import java.util.logging.Level;
 
 /**
  * @author Keith Stevens
@@ -35,6 +38,8 @@ public class ReductionEval {
                           true, "NMF|SVD", "Required");
         options.parseOptions(args);
 
+        LoggerUtil.setLevel(Level.FINE);
+
         int dimensions = options.getIntOption('r');
         MatrixFactorization reducer = null;
         if (options.getStringOption('a').equals("NMF"))
@@ -52,10 +57,10 @@ public class ReductionEval {
 
         File wordSpaceFile = new File(options.getStringOption('w'));
         MatrixIO.writeMatrix(reducer.dataClasses(), wordSpaceFile,
-                             Format.MATLAB_SPARSE);
+                             Format.DENSE_TEXT);
 
         File docSpaceFile = new File(options.getStringOption('d'));
         MatrixIO.writeMatrix(reducer.classFeatures(), docSpaceFile,
-                             Format.MATLAB_SPARSE);
+                             Format.DENSE_TEXT);
     }
 }

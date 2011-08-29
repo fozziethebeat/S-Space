@@ -108,7 +108,7 @@ public abstract class AbstractSvd implements MatrixFactorization {
             for (int r = 0; r < classFeatures.rows(); ++r)
                 for (int c = 0; c < classFeatures.columns(); ++c)
                     classFeatures.set(r, c, classFeatures.get(r, c) * 
-                                            singularValues[c]);
+                                            singularValues[r]);
         }
 
         return classFeatures;

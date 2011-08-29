@@ -1062,8 +1062,7 @@ public class MatrixIO {
         int rows = dis.readInt();
         int cols = dis.readInt();
         int nz = dis.readInt();
-        //MATRIX_IO_LOGGER.fine(
-        System.out.println(
+        MATRIX_IO_LOGGER.fine(
             String.format("Creating %s matrix %d rows, %d cols, %d nz%n",
                           ((transposeOnRead) ? "transposed" : ""),
                           rows, cols, nz));
@@ -1093,7 +1092,7 @@ public class MatrixIO {
             m = Matrices.asSparseMatrix(Arrays.asList(rowArr));
         }
         else {
-            m = Matrices.create(rows, cols, matrixType);
+            m = new SparseHashMatrix(rows, cols);
             int entriesSeen = 0;
             int col = 0;
             for (; entriesSeen < nz; ++col) {
@@ -1104,6 +1103,8 @@ public class MatrixIO {
             }
         }
         dis.close();
+
+        MATRIX_IO_LOGGER.fine("Completed loading matrix");
         return m;
     }    
 
