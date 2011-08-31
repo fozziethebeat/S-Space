@@ -42,16 +42,19 @@ public class ReductionEval {
 
         int dimensions = options.getIntOption('r');
         MatrixFactorization reducer = null;
-        if (options.getStringOption('a').equals("NMF"))
+        Format format = null;
+        if (options.getStringOption('a').equals("NMF")) {
             reducer = new NonNegativeMatrixFactorizationMultiplicative();
-        else if (options.getStringOption('a').equals("SVD"))
+            format = Format.MATLAB_SPARSE;
+        } else if (options.getStringOption('a').equals("SVD")) {
             reducer = SVD.getFastestAvailableFactorization();
-        else
+            format = Format.SVDLIBC_SPARSE_BINARY;
+        } else
             System.exit(1);
 
 
         MatrixFile mFile = new MatrixFile(new File(options.getPositionalArg(0)),
-                                          Format.SVDLIBC_SPARSE_BINARY);
+                                          format);
 
         reducer.factorize(mFile, dimensions);
 
