@@ -56,8 +56,6 @@ public class ClusterSSpace {
         Set<String> words = sspace.getWords();
         List<DoubleVector> vectors = new ArrayList<DoubleVector>();
         for (String word : words) {
-            if (sspace.getVector(word) instanceof ScaledDoubleVector)
-                System.out.println("whaaat the fuuuu");
             vectors.add(Vectors.asDouble(sspace.getVector(word)));
         }
         Matrix matrix = Matrices.asMatrix(vectors);

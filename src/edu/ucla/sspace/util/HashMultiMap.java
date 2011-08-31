@@ -393,7 +393,6 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
             // have not been returned
             if (curValues.hasNext()) {
                 next = new MultiMapEntry(curKey, curValues.next());
-                //System.out.println("next = " + next);
             }
             else if (multiMapIterator.hasNext()) {
                 Map.Entry<K,Set<V>> e = multiMapIterator.next();
@@ -403,7 +402,6 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
                 // that no key is ever mapped to an empty set
                 assert curValues.hasNext() : "key is mapped to no values";
                 next = new MultiMapEntry(curKey, curValues.next());
-                //System.out.println("next = " + next);
             } else {
                 next = null;                
             }

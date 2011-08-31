@@ -222,7 +222,6 @@ public class WaCKyDependencyExtractor implements DependencyExtractor {
                 // Get the relation between this node and it's head node.
                 rel = nodeFeatures[relationIndex].toLowerCase();
             } catch (Exception e) {
-                System.out.println("offending line: " + line);
                 e.printStackTrace();
             }
 

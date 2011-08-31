@@ -102,9 +102,7 @@ public class SparseHashVector<T extends Number>
      */
     public double magnitude() {
         // Check whether the current magnitude is valid and if not, recompute it
-        System.out.println(magnitude);
         if (magnitude < 0) {
-            System.out.println("mag");
             magnitude = 0;
             for (int nz : getNonZeroIndices()) {
                 double d = vector.get(nz).doubleValue();

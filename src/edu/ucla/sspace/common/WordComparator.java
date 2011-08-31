@@ -142,7 +142,6 @@ public class WordComparator {
              }
         }
         
-        //System.out.println(executor.shutdownNow())
         return mostSimilar;
     }
 

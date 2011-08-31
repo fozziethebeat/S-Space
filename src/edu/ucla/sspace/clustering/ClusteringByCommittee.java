@@ -507,9 +507,6 @@ public class ClusteringByCommittee implements Clustering {
                 new Duple<Committee,Integer>(c, i));
             }
             
-            //         System.out.println("Most similar committees: " + 
-            //                            mostSimilarCommittees);
-            
             // while S is not empty {
             // let c be the most similar cluster to e
             for (Duple<Committee,Integer> p : mostSimilarCommittees.values()) {

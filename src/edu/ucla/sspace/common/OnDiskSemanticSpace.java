@@ -314,7 +314,6 @@ public class OnDiskSemanticSpace implements SemanticSpace {
         // Strip off the 4-byte (2 char) header
         if (containsHeader) {
             line = line.substring(4);
-            System.out.println(line);
         }        
 
         String[] dimensions = line.split("\\s");
@@ -350,7 +349,7 @@ public class OnDiskSemanticSpace implements SemanticSpace {
         textSSpace.moveToLine(lineNumber.intValue());
         String line = textSSpace.readLine();
         if (line == null)
-            System.out.printf("%s -> null row %d%n", word, lineNumber);
+            LOGGER.info(word + " -> null row " + lineNumber);
         double[] row = new double[dimensions];
             
         String[] termVectorPair = line.split("\\|");

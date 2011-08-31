@@ -163,7 +163,6 @@ public class NearestNeighborAffinityMatrixCreator
                 // Loop through each of the rows, gathering the statistics
                 // necessary to compute the affinity matrix.
                 for (int other = 0; other < rows; ++other) {
-                    //System.out.printf("cur: %d, other %d%n", row, other);
                     // Special case for the very first row
                     if (row == 0 && curRow == null) {
                         curRow = matrixIter.next();

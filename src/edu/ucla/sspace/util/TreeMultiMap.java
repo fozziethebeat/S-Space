@@ -524,7 +524,6 @@ public class TreeMultiMap<K,V>
 	    // have not been returned
 	    if (curValues != null && curValues.hasNext()) {
 		next = new MultiMapEntry(curKey, curValues.next());
-		//System.out.println("next = " + next);
 	    }
 	    else if (multiMapIterator.hasNext()) {
 		Map.Entry<K,Set<V>> e = multiMapIterator.next();

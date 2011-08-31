@@ -303,7 +303,6 @@ public class SvdlibcSparseBinaryMatrixBuilder implements MatrixBuilder {
             SparseVector s = (SparseVector)column;
             int[] nonZero = s.getNonZeroIndices();
             nonZeroValues += nonZero.length;
-            System.out.println(nonZero.length);
             try {
                 matrixDos.writeInt(nonZero.length);
                 for (int i : nonZero) {

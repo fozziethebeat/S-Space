@@ -33,6 +33,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import java.util.logging.Logger;
+
 
 /**
  * A utility class that receives a collection of tasks to execute internally and
@@ -73,6 +75,9 @@ import java.util.concurrent.TimeUnit;
  * @author David Jurgens
  */
 public class WorkQueue {
+
+    private static final Logger LOG =
+        Logger.getLogger(WorkQueue.class.getName());
 
     private static WorkQueue QUEUE;
 
@@ -130,7 +135,7 @@ public class WorkQueue {
         for (int i = 0; i < numThreads; ++i) {
             Thread t = new WorkerThread(workQueue);
             threads.add(t);
-            t.start();            
+            t.start();
         }
     }
 
@@ -169,7 +174,7 @@ public class WorkQueue {
                 "Unknown task group: " + taskGroupId);
         try {
             while(!latch.await(5, TimeUnit.SECONDS))
-                System.out.println("cur count: " + latch.getCount());
+                LOG.fine("cur count: " + latch.getCount());
             // Once finished, remove the key so it can be associated with a new
             // task
             taskKeyToLatch.remove(taskGroupId);

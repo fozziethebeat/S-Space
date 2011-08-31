@@ -67,7 +67,6 @@ public class SenseEvalDependencyCorpusReader extends DirectoryCorpusReader {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
-            System.out.println(currentDocName);
             org.w3c.dom.Document currentXmlDoc = db.parse(currentDocName);
             instances = currentXmlDoc.getElementsByTagName("instance");
             currentNodeIndex = 0;

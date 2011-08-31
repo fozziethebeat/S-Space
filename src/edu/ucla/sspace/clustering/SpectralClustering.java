@@ -173,16 +173,16 @@ public class SpectralClustering {
         // safe, since each call to fullCluster uses a new instance of a
         // EigenCutter which has all of the state for a particular partition.
         final ClusterResult[] results = new ClusterResult[2];
-        Object key = workQueue.registerTaskGroup(2);
-        workQueue.add(key, new Runnable() {
-            public void run() {
+        //Object key = workQueue.registerTaskGroup(2);
+        //workQueue.add(key, new Runnable() {
+        //    public void run() {
                 results[0] = fullCluster(leftMatrix, depth+1);
-            }});
-        workQueue.add(key, new Runnable() {
-            public void run() {
+        //    }});
+        //workQueue.add(key, new Runnable() {
+        //    public void run() {
                 results[1] = fullCluster(rightMatrix, depth+1);
-            }});
-        workQueue.await(key);
+        //    }});
+        //workQueue.await(key);
 
         ClusterResult leftResult = results[0];
         ClusterResult rightResult = results[1];
@@ -284,18 +284,18 @@ public class SpectralClustering {
         // safe, since each call to fullCluster uses a new instance of a
         // EigenCutter which has all of the state for a particular partition.
         final LimitedResult[][] subResults = new LimitedResult[2][];
-        Object key = workQueue.registerTaskGroup(2);
-        workQueue.add(key, new Runnable() {
-            public void run() {
+        //Object key = workQueue.registerTaskGroup(2);
+        //workQueue.add(key, new Runnable() {
+        //    public void run() {
                 subResults[0] = limitedCluster(
                     leftMatrix, maxClusters-1, useKMeans);
-            }});
-        workQueue.add(key, new Runnable() {
-            public void run() {
+        //    }});
+        //workQueue.add(key, new Runnable() {
+        //    public void run() {
                 subResults[1] = limitedCluster(
                     rightMatrix, maxClusters-1, useKMeans);
-            }});
-        workQueue.await(key);
+        //    }});
+        //workQueue.await(key);
 
         LimitedResult[] leftResults = subResults[0];
         LimitedResult[] rightResults = subResults[1];
