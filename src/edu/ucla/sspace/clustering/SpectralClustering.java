@@ -79,14 +79,14 @@ public class SpectralClustering {
 
     private final Generator<EigenCut> cutterGenerator;
 
-    private final WorkQueue workQueue;
+    //private final WorkQueue workQueue;
 
     public SpectralClustering(double alpha,
                               Generator<EigenCut> cutterGenerator) {
         this.alpha = alpha;
         this.beta = 1 - alpha;
         this.cutterGenerator = cutterGenerator;
-        this.workQueue = WorkQueue.getWorkQueue();
+        //this.workQueue = WorkQueue.getWorkQueue();
     }
 
     public Assignments cluster(Matrix matrix) {
@@ -173,16 +173,17 @@ public class SpectralClustering {
         // safe, since each call to fullCluster uses a new instance of a
         // EigenCutter which has all of the state for a particular partition.
         final ClusterResult[] results = new ClusterResult[2];
-        //Object key = workQueue.registerTaskGroup(2);
-        //workQueue.add(key, new Runnable() {
-        //    public void run() {
+        WorkQueue workQueue = new WorkQueue();
+        Object key = workQueue.registerTaskGroup(2);
+        workQueue.add(key, new Runnable() {
+            public void run() {
                 results[0] = fullCluster(leftMatrix, depth+1);
-        //    }});
-        //workQueue.add(key, new Runnable() {
-        //    public void run() {
+            }});
+        workQueue.add(key, new Runnable() {
+            public void run() {
                 results[1] = fullCluster(rightMatrix, depth+1);
-        //    }});
-        //workQueue.await(key);
+            }});
+        workQueue.await(key);
 
         ClusterResult leftResult = results[0];
         ClusterResult rightResult = results[1];
