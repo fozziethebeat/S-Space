@@ -281,7 +281,7 @@ public abstract class GenericWordsiMain extends GenericMain {
             BufferedReader br = new BufferedReader(new FileReader(
                         argOptions.getStringOption('a')));
             for (String line = null; (line = br.readLine()) != null; )
-                acceptedWords.add(line.trim());
+                acceptedWords.add(line.trim().toLowerCase());
             return acceptedWords;
         } catch (IOException ioe) {
             throw new IOError(ioe);

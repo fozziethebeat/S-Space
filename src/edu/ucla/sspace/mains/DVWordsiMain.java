@@ -188,7 +188,8 @@ public class DVWordsiMain extends GenericWordsiMain {
 
         // Otherwise return the normal extractor.
         return new DependencyContextExtractor(
-                        new CoNLLDependencyExtractor(), generator);
+                        new CoNLLDependencyExtractor(), generator,
+                        argOptions.hasOption('h'));
     }
 
     /**
