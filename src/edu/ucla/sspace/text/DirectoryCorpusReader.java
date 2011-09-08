@@ -21,9 +21,13 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.util.DirectoryWalker;
+
 import java.io.File;
+import java.io.Reader;
 
 import java.util.Arrays;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -35,28 +39,20 @@ import java.util.Stack;
 
 /**
  * An abstract base class for corpus reading iterators that need to traverse
- * through a directory structure to find files containing text.  Sub classes
- * will need to implement a method that will traverse a single file at a time
- * and return string forms of documents.
+ * through a large nested directory structure to find files containing text.
+ * Sub classes will need to implement a method that will traverse a single file
+ * at a time and return strings holding the contents of a single document..
+ *
+ * </p>
+ *
+ * Note that {@link initialize(String)} uses the argument as a directory name,
+ * and not the name of a text file to be processed.  This {@link CorpusReader}
+ * instead uses that directory name as the root directory of the nested
+ * directory structure.  This class also does not implement {@link
+ * initialize(Reader)}.
  */
-public abstract class DirectoryCorpusReader implements Iterator<Document> {
-
-    public static final String PROPERTY_PREFIX = 
-        "edu.ucla.sspace.text.DirectoryCorpusReader";
-
-    public static final String NO_PRE_PROCESS_PROPERTY =
-        PROPERTY_PREFIX + ".nopreprocess";
-
-    /**
-     * The set of directories, represented as a queue of files, that need to be
-     * evaluated.
-     */
-    private Stack<Queue<File>> filesToExplore;
-
-    /**
-     * The String representing the next document to return.
-     */
-    private String nextLine;
+public abstract class DirectoryCorpusReader<D extends Document>
+        implements CorpusReader<D> {
 
     /**
      * The document pre processor that will be used to remove any unwanted items
@@ -65,149 +61,145 @@ public abstract class DirectoryCorpusReader implements Iterator<Document> {
     private final DocumentPreprocessor processor;
 
     /**
-     * Constructs a new {@link DirectoryCoprusReader} from an initial file
-     * with the system properties. 
+     * Constructs a new {@link DirectoryCoprusReader} that uses no {@link
+     * DocumentPreprocessor}.
      */
-    public DirectoryCorpusReader(String startingFile) {
-        this(startingFile, System.getProperties());
+    public DirectoryCorpusReader() {
+        this(null);
     }
 
     /**
-     * Constructs a new {@link DirectoryCoprusReader} from an initial file.  If
-     * that file is a real file, it will be the only file read.  If the file
-     * given is a directory, all the files and sub directories will be read by
-     * this reader.
+     * Constructs a new {@link DirectoryCoprusReader} that uses {@link
+     * processor} to pre-process any raw text extracted from a corpus file.
      */
-    public DirectoryCorpusReader(String startingFile, Properties props) {
-        filesToExplore = new Stack<Queue<File>>();
-
-        LinkedList<File> files = new LinkedList<File>();
-        filesToExplore.push(files);
-
-        // If the given file is a directory, store the sub files as the first
-        // files to explore.  Otherwise the given file name is the only file to
-        // iterate over.
-        File start = new File(startingFile);
-        if (start.isDirectory()) {
-            File[] subFiles = start.listFiles();
-            Arrays.sort(subFiles);
-            files.addAll(Arrays.asList(subFiles));
-        } else
-            files.add(start);
-        Collections.sort(files);
-
-        if (props.getProperty(NO_PRE_PROCESS_PROPERTY) == null)
-            processor = new DocumentPreprocessor();
-        else 
-            processor = null;
+    public DirectoryCorpusReader(DocumentPreprocessor processor) {
+        this.processor = processor;
     }
 
     /**
-     * Sets up the iterator so that the first call to next returns a document.
-     * THIS MUST BE CALLED IN CONSTRUCTORS FOR SUB CLASSES.
-     */
-    protected void init() {
-        String currentDoc = findNextDoc();
-        setupCurrentDoc(currentDoc);
-        nextLine = advance();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public synchronized boolean hasNext() {
-        return nextLine != null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public synchronized Document next() {
-        Document doc = new StringDocument(nextLine);
-        nextLine = advance();
-        return doc;
-    }
-
-    /**
-     * Throws {@link UnsupportedOperationException} if called.
-     */
-    public synchronized void remove() {
-        throw new UnsupportedOperationException("Remove not permitted.");
-    }
-
-    /**
-     * Returns a new String representing a complete document extracted from
-     * {@code currentDoc}.
-     */
-    protected abstract String advanceInDoc();
-
-    /**
-     * Sets up any data members needed to process the current file being
-     * processed.
-     */
-    protected abstract void setupCurrentDoc(String currentDocName);
-
-    /**
-     * Returns a cleaned version of the document if document processing is
-     * enabled
+     * Initializes the {@link DirectoryCorpusReader} to start processing all
+     * files accessbile under the directory specified by {@code dirName}.  
      *
-     * @see DocumentProcessor#process(String)
+     * @param dirName A directory path containing a large directory structure
+     *        that contains numerous text files that can be processed by a
+     *        subclass of {@link DirectoryCoprusReader}.
      */
-    protected String cleanDoc(String document) {
-        return (processor != null) ? processor.process(document) : document;
+    public Iterator<D> read(File dir) {
+        return corpusIterator((new DirectoryWalker(dir)).iterator());
     }
 
     /**
-     * Returns the next String representing a complete document that is
-     * accessible by this {@code DirectoryCorpusReader}.  If all files have been
-     * traversed then this will return null.
+     * Unsupported.
      */
-    protected String advance() {
-        String newDoc = advanceInDoc();
-        if (newDoc == null) {
-            String currentDoc = findNextDoc();
-            if (currentDoc == null)
-                return null;
-            setupCurrentDoc(currentDoc);
-            newDoc = advanceInDoc();
-        }
-        return newDoc;
+    public Iterator<D> read(Reader reader) {
+        throw new UnsupportedOperationException(
+                "The DirectoryCorpusReader cannot convert a reader to a " +
+                "directory structur.");
     }
 
     /**
-     * Returns the next file name that can be processed to extract documents.
-     * Files are found by recursively searching the directory structure.
+     * Returns an {@link Iterator} over documents contained in the {@link File}s
+     * traversed by {@code fileIter}.  Sub-classes are encouraged to sub-class
+     * BaseFileIterator for the return value of this method.
      */
-    private String findNextDoc() {
-        if (filesToExplore.empty())
-            return null;
+    protected abstract Iterator<D> corpusIterator(Iterator<File> fileIter);
 
-        // Check that there are files in this current directory worth exploring.
-        // If there are not any files, remove this directory from the list of
-        // files to explore and return whatever can be found in the next set of
-        // files.
-        Queue<File> files = filesToExplore.peek();
-        if (files.size() == 0) {
-            filesToExplore.pop();
-            return findNextDoc();
-        }
-
-        // Check the next file in the queue.  If it is a directory, recurse
-        // into that directory and return whatever the contents of what is found
-        // there.
-        File f = files.remove();
-        if (f.isDirectory()) {
-            File[] subFiles = f.listFiles();
-            Arrays.sort(subFiles);
-            filesToExplore.push(new LinkedList<File>(Arrays.asList(subFiles)));
-            return findNextDoc();
-        }
-
-        // Skip over hidden files.
-        if (f.isHidden())
-            return findNextDoc();
-
-        // The file is a real file worth extracting documents from.
-        return f.getPath();
+    /**
+     * Unsupported.
+     *
+     * @throws UnsupportedOperationException when called
+     */
+    public void initialize(Reader baseReader) {
+        throw new UnsupportedOperationException(
+                "Cannot form a DirectoryCorpusReader from a Reader instance");
     }
-}
+
+    public abstract class BaseFileIterator implements Iterator<D> {
+
+        /**
+         * The list of files to explore based on some initial file.
+         */
+        private Iterator<File> filesToExplore;
+
+        /**
+         * The String representing the next document to return.
+         */
+        private D nextDoc;
+
+        /**
+         * Creates a new {@link BaseFileIterator}.
+         */
+        public BaseFileIterator(Iterator<File> filesToExplore) {
+            this.filesToExplore = filesToExplore;
+            this.nextDoc = null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean hasNext() {
+            return nextDoc != null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public D next() {
+            D doc = nextDoc;
+            nextDoc = advance();
+            return doc;
+        }
+
+        /**
+         * Throws {@link UnsupportedOperationException} if called.
+         */
+        public void remove() {
+            throw new UnsupportedOperationException("Remove not permitted.");
+        }
+
+        /**
+         * Returns a new String representing a complete document extracted from
+         * {@code currentDoc}.
+         */
+        protected abstract D advanceInDoc();
+
+        /**
+         * Sets up any data members needed to process the current file being
+         * processed.
+         */
+        protected abstract void setupCurrentDoc(File currentDoc);
+
+        /**
+         * Returns a cleaned version of the document if document processing is
+         * enabled, otherwise the document text is returned unmodified.
+         *
+         * @see DocumentPreprocessor#process(String)
+         */
+        protected String cleanDoc(String document) {
+            return (processor != null) ? processor.process(document) : document;
+        }
+
+        /**
+         * Returns the next String representing a complete document that is
+         * accessible by this {@code DirectoryCorpusReader}.  If all files have
+         * been traversed then this will return null.
+         */
+        protected D advance() {
+            D newDoc = advanceInDoc();
+            if (newDoc == null) {
+                // If there are no more files to explore, just return null to
+                // indicate an empty reader.
+                if (!filesToExplore.hasNext())
+                    return null;
+
+                // Otherwise setup the reader with the next document File.
+                setupCurrentDoc(filesToExplore.next());
+
+                // Now that the File is setup, recursively try to return the
+                // next document.
+                return advance();
+            }
+            return newDoc;
+        }
+    }
+ }
