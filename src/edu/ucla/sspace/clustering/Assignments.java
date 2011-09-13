@@ -228,7 +228,7 @@ public class Assignments implements Iterable<Assignment> {
         // increase the size of the cluster.
         int row = 0;
         for (Assignment assignment : assignments) {
-            if (assignment.length() != 0) {
+            if (assignment.length() != 0 && assignment.assignments()[0] != -1) {
                 counts[assignment.assignments()[0]]++;
                 DoubleVector centroid = centroids[assignment.assignments()[0]];
                 VectorMath.add(centroid, sm.getRowVector(row));

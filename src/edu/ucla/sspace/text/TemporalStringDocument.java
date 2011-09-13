@@ -24,9 +24,12 @@ package edu.ucla.sspace.text;
 import java.io.BufferedReader;
 import java.io.StringReader;
 
+
 /**
  * A {@code TemporalDocument} implementation backed by a {@code String} whose
  * contents are used for the document text.
+ *
+ * @author David Jurgens
  */
 public class TemporalStringDocument implements TemporalDocument {
 
@@ -45,24 +48,24 @@ public class TemporalStringDocument implements TemporalDocument {
      * text
      *
      * @param docText the document text
+     * @param timeStamp the time stamp in unix time associated with the document
      */
     public TemporalStringDocument(String docText, long timeStamp) {
-	reader = new BufferedReader(new StringReader(docText));
-	this.timeStamp = timeStamp;
+        reader = new BufferedReader(new StringReader(docText));
+        this.timeStamp = timeStamp;
     }
     
     /**
      * {@inheritDoc}
      */
     public BufferedReader reader() {
-	return reader;
+        return reader;
     }
 
     /**
      * {@inheritDoc}
      */
     public long timeStamp() {
-	return timeStamp;
+        return timeStamp;
     }
-
 }

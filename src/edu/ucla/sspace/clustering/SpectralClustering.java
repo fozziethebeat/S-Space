@@ -152,10 +152,20 @@ public class SpectralClustering {
         // Cluster the matrix recursively.
         LimitedResult[] results = limitedCluster(
                 scaleMatrix(matrix), maxClusters, useKMeans);
-        LimitedResult r = results[maxClusters-1];
 
+        // If the matrix could not be cut, there will be only one result
+        // returned, so check for that use case.
+        LimitedResult r = (results.length == 1)
+            ? results[0]
+            : results[maxClusters-1];
+
+        // Sometimes the desired number of clusters won't be computed, so find
+        // the next largest clustering result and return that instead.
+        for (int i = maxClusters -2; r == null && i >= 0; i--)
+            r = results[i];
+
+        // Convert the LimitedResult object into an Assignments object.
         verbose("Created " + r.numClusters + " clusters");
-
         Assignment[] assignments = new HardAssignment[r.assignments.length];
         for (int i = 0; i < r.assignments.length; ++i)
             assignments[i] = new HardAssignment(r.assignments[i]);

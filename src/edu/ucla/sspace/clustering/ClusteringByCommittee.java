@@ -355,6 +355,10 @@ public class ClusteringByCommittee implements Clustering {
                 mostSimilarElements.put(sim, r2);
             }
 
+            // If there were no similar elements to the current row, skip it.
+            if (mostSimilarElements.size() == 0)
+                continue;
+
             // 1.2) For each cluster discovered c compute the following score:
             //      |c| × avgsim(c), where |c| is the number of elements in c
             //      and avgsim(c) is the average pairwise similarity between
@@ -559,6 +563,9 @@ public class ClusteringByCommittee implements Clustering {
     public static List<CandidateCommittee> buildCommitteesForRow(
             Collection<Integer> rows, SparseMatrix sm, 
             double avgLinkMergeThresh) {
+        // If there are no candidate rows, just return early.
+        if (rows.size() == 0)
+            return new ArrayList<CandidateCommittee>();
 
         double AVG_LINK_MERGE_THRESHOLD = .25; // ????
 

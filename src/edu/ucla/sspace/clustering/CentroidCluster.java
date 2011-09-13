@@ -88,6 +88,7 @@ public class CentroidCluster<T extends DoubleVector> implements Cluster<T> {
      * {@inheritDoc}
      */
     public T centroid() {
+        // TODO Figure out how to return this as an immutable vector.
         return centroid;
     }
 
