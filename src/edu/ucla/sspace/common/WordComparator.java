@@ -24,24 +24,13 @@ package edu.ucla.sspace.common;
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.SortedMultiMap;
-import edu.ucla.sspace.util.WorkerThread;
+import edu.ucla.sspace.util.WorkQueue;
 
 import edu.ucla.sspace.vector.Vector;
-
-import java.lang.reflect.Method;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -57,9 +46,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WordComparator {
 
     /**
-     * The queue from which worker threads run word-word comparisons
+     * The {@link WorkQueue} from which worker threads run word-word comparisons
      */
-    private final BlockingQueue<Runnable> workQueue;
+    private final WorkQueue workQueue;
     
     /**
      * Creates this {@code WordComparator} with as many threads as processors.
@@ -72,10 +61,7 @@ public class WordComparator {
      * Creates this {@code WordComparator} with the specified number of threads.
      */
     public WordComparator(int numThreads) {
-        workQueue = new LinkedBlockingQueue<Runnable>();
-        for (int i = 0; i < numThreads; ++i) {
-            new WorkerThread(workQueue, 10).start();            
-        }
+        workQueue = WorkQueue.getWorkQueue(numThreads);
     }
 
     /**
@@ -88,7 +74,7 @@ public class WordComparator {
      */
     public SortedMultiMap<Double,String> getMostSimilar(
             final String word, final SemanticSpace sspace,
-            int numberOfSimilarWords, Similarity.SimType similarityType) {
+            int numberOfSimilarWords, final Similarity.SimType similarityType) {
 
         Vector v = sspace.getVector(word);
 
@@ -98,7 +84,12 @@ public class WordComparator {
         }
         
         final Vector vector = v;
+        return getMostSimilar(v, sspace, numberOfSimilarWords, similarityType);
+    }
 
+    public SortedMultiMap<Double,String> getMostSimilar(
+            final Vector vector, final SemanticSpace sspace,
+            int numberOfSimilarWords, final Similarity.SimType similarityType) {
         Set<String> words = sspace.getWords();
         
         // the most-similar set will automatically retain only a fixed number
@@ -107,94 +98,29 @@ public class WordComparator {
             new BoundedSortedMultiMap<Double,String>(numberOfSimilarWords,
                                                      false);
 
-        // The semaphore used to block until all the words have been compared.
-        // Use word-2 since we don't process the comparison of the word to
-        // itself, and we want one permit to be availabe after the last word is
-        // compared.  The negative ensures that the release() must happen before
-        // the main thread's acquire() will return.
-        final Semaphore comparisons = new Semaphore(0 - (words.size() - 2));
+        Object key = workQueue.registerTaskGroup(words.size());
 
-        // loop through all the other words computing their
-        // similarity
-        int submitted = 0;
-        for (String s : words) {
+        // loop through all the other words computing their similarity
+        for (final String other : words) {
+            workQueue.add(key, new Runnable() {
+                public void run() {
+                    Vector otherV = sspace.getVector(other);
+                    // Skip the comparison if the vectors are actually the same.
+                    if (otherV == vector)
+                        return;
 
-            final String other = s;
-            
-            // skip if it is ourselves
-            if (word.equals(other)) 
-                continue;
-
-             workQueue.offer(new Comparison(
-                         comparisons, sspace, vector,
-                         other, similarityType, mostSimilar));
-        }
-        
-        try {
-            comparisons.acquire();
-        } catch (InterruptedException ie) {
-            // check whether we were interrupted while still waiting for the
-            // comparisons to finish
-             if (comparisons.availablePermits() < 1) {
-                throw new IllegalStateException(
-                    "interrupted while waiting for word comparisons to finish", 
-                    ie);
-             }
-        }
-        
-        //System.out.println(executor.shutdownNow())
-        return mostSimilar;
-    }
-
-    /**
-     * A comparison task that compares the vector for the other word and updates
-     * the mapping from similarity to word.
-     */
-    private static class Comparison implements Runnable {
-        
-        private final Semaphore semaphore;
-
-        SemanticSpace sspace;
-        Vector vector;
-        String other;
-        Similarity.SimType similarityMeasure;
-        MultiMap<Double,String> mostSimilar;
-
-        public Comparison(Semaphore semaphore,
-                          SemanticSpace sspace,
-                          Vector vector,
-                          String other,
-                          Similarity.SimType similarityMeasure,
-                          MultiMap<Double,String> mostSimilar) {
-            this.semaphore = semaphore;
-            this.sspace = sspace;
-            this.vector = vector;
-            this.other = other;
-            this.similarityMeasure = similarityMeasure;
-            this.mostSimilar = mostSimilar;
-        }
-
-        public void run() {
-            try {            
-                Vector otherV = sspace.getVector(other);
-
-                Double similarity = Similarity.getSimilarity(
-                    similarityMeasure, vector, otherV);
-                
-                // lock on the Map, as it is not thread-safe
-                synchronized(mostSimilar) {
-                    mostSimilar.put(similarity, other);
+                    Double similarity = Similarity.getSimilarity(
+                        similarityType, vector, otherV);
+                    
+                    // lock on the Map, as it is not thread-safe
+                    synchronized(mostSimilar) {
+                        mostSimilar.put(similarity, other);
+                    }
                 }
-            } catch (Exception e) {
-                // Rethrow any reflection-related exception, as this situation
-                // should not normally occur since the Method being invoked
-                // comes directly from the Similarity class.
-                throw new Error(e);
-            } finally {
-                // notify that the word has been processed regardless of whether
-                // an error occurred
-                semaphore.release();
-            }
+            });
         }
+        
+        workQueue.await(key);
+        return mostSimilar;
     }
 }
