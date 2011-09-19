@@ -183,6 +183,7 @@ public class LogEntropyTransform extends BaseTransform {
             int numColumns = 0;
             int numRows = 0;
 
+            LOGGER.info("Computing the total row counts");
             // Compute the total count for each row.
             while (iter.hasNext()) {
                 MatrixEntry entry = iter.next();
@@ -198,6 +199,7 @@ public class LogEntropyTransform extends BaseTransform {
                     numColumns = entry.column() + 1;
             }
 
+            LOGGER.info("Computing the entropy of each row");
             // Compute the entropy sum of each row based on the occurances
             // of each row.
             rowEntropy = new double[numRows];
@@ -214,6 +216,7 @@ public class LogEntropyTransform extends BaseTransform {
                 rowEntropy[entry.row()] += probability * log2(probability);
             }
 
+            LOGGER.info("Scaling the entropy of the rows");
             // Scale the entropy by the log of the number of columns.
             for (int row = 0; row < numRows; ++row)
                 rowEntropy[row] = 1 + (rowEntropy[row] / log2(numColumns));

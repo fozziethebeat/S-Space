@@ -1092,7 +1092,7 @@ public class MatrixIO {
             m = Matrices.asSparseMatrix(Arrays.asList(rowArr));
         }
         else {
-            m = Matrices.create(rows, cols, matrixType);
+            m = new SparseHashMatrix(rows, cols);
             int entriesSeen = 0;
             int col = 0;
             for (; entriesSeen < nz; ++col) {
@@ -1103,6 +1103,8 @@ public class MatrixIO {
             }
         }
         dis.close();
+
+        MATRIX_IO_LOGGER.fine("Completed loading matrix");
         return m;
     }    
 

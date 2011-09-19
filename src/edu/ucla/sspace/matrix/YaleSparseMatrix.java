@@ -68,22 +68,31 @@ public class YaleSparseMatrix implements SparseMatrix {
     }
 
     /**
-     * Constructs a sparse matrix with the non zero values from the given two
-     * dimensional array.
+     * Constructs a sparse matrix using values from the given two dimension
+     * array.  Only non-zero values will be stored.
+     *
+     * @throws IllegalArgumentException If either the number of rows is equal to
+     *         0, or the column lengths are jagged
      */
     public YaleSparseMatrix(double[][] values) {
+        if (values.length == 0)
+            throw new IllegalArgumentException(
+                    "Matrix must have non zero size");
+
         this.rows = values.length;
         this.cols = values[0].length;
 
         sparseMatrix = new CompactSparseVector[rows];
         for (int r = 0; r < rows; ++r) {
+            if (values[r].length != cols)
+                throw new IllegalArgumentException(
+                        "Cannot form matrix from jagged array");
+
             sparseMatrix[r] = new CompactSparseVector(cols);
             for (int c = 0; c < cols; ++c)
                 if (values[r][c] != 0d)
-                    sparseMatrix[r].set(c, values[r][c]);
+                    set(r, c, values[r][c]);
         }
-
-
     }
 
     /**
