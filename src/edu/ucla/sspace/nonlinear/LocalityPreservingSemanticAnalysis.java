@@ -28,8 +28,6 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Similarity;
 
 import edu.ucla.sspace.matrix.AffinityMatrixCreator;
-import edu.ucla.sspace.matrix.AffinityMatrixCreator.EdgeType;
-import edu.ucla.sspace.matrix.AffinityMatrixCreator.EdgeWeighting;
 import edu.ucla.sspace.matrix.LocalityPreservingProjection;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFile;
@@ -91,47 +89,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * </dl> <p>
  *
- * Furthermore, this class offer four configurable parameters for impacting how
- * LPP is applied to the VSM.
- *
- * <dl style="margin-left: 1em">
- *
- * <dt> <i>Property:</i> <code><b>{@value #LPSA_AFFINITY_EDGE_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@link EdgeType.NEAREST_NEIGHBORS}.
- *
- * <dd style="padding-top: .5em">This property sets the how the affinity matrix
- *       is constructed from the initial vector space.  The default behavior is
- *       to use the 20 nearest neighbors.  See {@link EdgeType} for details.<p>
- *
- * <dt> <i>Property:</i> <code><b>{@value LPSA_AFFINITY_EDGE_PARAM_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@code 20}
- *
- * <dd style="padding-top: .5em">The property sets an optional parameter to the
- *      {@link EdgeType} selection.  The interpretation of this parameter is
- *      specific to the type of edge used.<p>
- *
- * <dt> <i>Property:</i> <code><b>{@value #LPSA_AFFINITY_EDGE_WEIGHTING_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@link EdgeWeighting.COSINE_SIMILARITY}.
- *
- * <dd style="padding-top: .5em">This property sets the type of weighting to use
- *      for words that are connected in the affinity matrix.  The default
- *      behavior is to use the cosine similarity of the words in the original
- *      VSM.  See {@link EdgeWeighting} for other options.<p>
- *
- * <dt> <i>Property:</i> <code><b>{@value LPSA_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@code 0}
- *
- * <dd style="padding-top: .5em">This property sets an optional parameters to
- *      the edge weighting mechanism.  In the default cosine similarity edge
- *      weighting, this parameter is unused.  See See {@link EdgeWeighting} for
- *      details on other options' usage of this parameter.<p>
- *
- * </dl> <p>
- *
  * <p>
  *
  * This class is thread-safe for concurrent calls of {@link
@@ -171,18 +128,10 @@ public class LocalityPreservingSemanticAnalysis
     public static final String LPSA_DIMENSIONS_PROPERTY =
         PROPERTY_PREFIX + ".dimensions";
 
-    public static final String LPSA_AFFINITY_EDGE_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeType";
-
-    public static final String LPSA_AFFINITY_EDGE_PARAM_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeTypeParam";
-
-    public static final String LPSA_AFFINITY_EDGE_WEIGHTING_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeWeighting";
-
-    public static final String LPSA_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY =
-        PROPERTY_PREFIX + ".affinityEdgeWeightingParam";
-
+    /**
+     * The {@link AffinityMatrixCreator}.
+     */
+    private final AffinityMatrixCreator affinityCreator;
 
     /**
      * The name prefix used with {@link #getName()}
@@ -191,15 +140,17 @@ public class LocalityPreservingSemanticAnalysis
         "lpsa-semantic-space";
 
     /**
-     * Constructs the {@code LocalityPreservingSemanticAnalysis} using the system properties
-     * for configuration.
+     * Constructs the {@code LocalityPreservingSemanticAnalysis} using the
+     * system properties for configuration.
      *
      * @throws IOException if this instance encounters any errors when creatng
      *         the backing array files required for processing
      */
-    public LocalityPreservingSemanticAnalysis() throws IOException {
+    public LocalityPreservingSemanticAnalysis(AffinityMatrixCreator creator) 
+            throws IOException {
         super(false, new StringBasisMapping(),
               new SvdlibcSparseBinaryMatrixBuilder(true));
+        this.affinityCreator = creator;
     }
 
     /**
@@ -230,10 +181,6 @@ public class LocalityPreservingSemanticAnalysis
 
             // Set all of the default properties
             int dimensions = 300; 
-            EdgeType edgeType = EdgeType.NEAREST_NEIGHBORS;
-            double edgeTypeParam = 20;
-            EdgeWeighting weighting = EdgeWeighting.COSINE_SIMILARITY;
-            double edgeWeightParam = 0; // unused with default weighting
 
             // Then load any of the user-specified properties
             String dimensionsProp = 
@@ -248,39 +195,6 @@ public class LocalityPreservingSemanticAnalysis
                 }
             }
 
-            String edgeTypeProp = 
-                properties.getProperty(LPSA_AFFINITY_EDGE_PROPERTY);
-            if (edgeTypeProp != null) 
-                edgeType = EdgeType.valueOf(edgeTypeProp.toUpperCase());
-            String edgeTypeParamProp = 
-                properties.getProperty(LPSA_AFFINITY_EDGE_PARAM_PROPERTY);
-            if (edgeTypeParamProp != null) {
-                try {
-                    edgeTypeParam = Double.parseDouble(edgeTypeParamProp);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalArgumentException(
-                        LPSA_AFFINITY_EDGE_PARAM_PROPERTY + 
-                        " is not an double: " + edgeTypeParamProp);
-                }
-            }
-
-            String edgeWeightingProp = 
-                properties.getProperty(LPSA_AFFINITY_EDGE_WEIGHTING_PROPERTY);
-            if (edgeWeightingProp != null) 
-                weighting = EdgeWeighting.valueOf(
-                    edgeWeightingProp.toUpperCase());
-            String edgeWeightingParamProp = properties.getProperty(
-                LPSA_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY);
-            if (edgeWeightingParamProp != null) {
-                try {
-                    edgeWeightParam = Double.parseDouble(edgeWeightingParamProp);
-                } catch (NumberFormatException nfe) {
-                    throw new IllegalArgumentException(
-                        LPSA_AFFINITY_EDGE_WEIGHTING_PARAM_PROPERTY + 
-                        " is not an double: " + edgeWeightingParamProp);
-                }
-            }
-
             LoggerUtil.verbose(LOG, "reducing to %d dimensions", dimensions);
 
             Matrix termDocMatrix = MatrixIO.readMatrix(
@@ -289,9 +203,8 @@ public class LocalityPreservingSemanticAnalysis
                 Matrix.Type.SPARSE_IN_MEMORY, true);
 
             // Calculate the affinity matrix for the term-doc matrix
-            MatrixFile affinityMatrix = AffinityMatrixCreator.calculate(
-                termDocMatrix, Similarity.SimType.COSINE, 
-                edgeType, edgeTypeParam, weighting, edgeWeightParam);
+            MatrixFile affinityMatrix = affinityCreator.calculate(
+                termDocMatrix);
 
             // Using the affinity matrix as a guide to locality, project the
             // co-occurrence matrix into the lower dimensional subspace

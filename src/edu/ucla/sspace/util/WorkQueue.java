@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * or for cases where not all of the data for the tasks is availabe at once
  * (although the number of tasks is known).
  *<pre>
- *WorkQueue q = new WorkQueue();
+ *WorkQueue q = WorkQueue.getWorkQueue();
  *Object taskGroupId = Thread.currentThread(); // a unique id
  *q.registerTaskGroup(taskGroupId, numTasks);
  *for (int i = 0; i < numTasks; ++i)
@@ -74,6 +74,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class WorkQueue {
 
+    private static WorkQueue QUEUE;
+
     /**
      * The list of all threads drawing work from the queue.
      */
@@ -90,10 +92,30 @@ public class WorkQueue {
     private final ConcurrentMap<Object,CountDownLatch> taskKeyToLatch;
     
     /**
+     * Returns the {@link WorkQueue} available to all processes.  If the queue
+     * has not been created yet, one will be created that uses all of the
+     * available processes.
+     */
+    public static WorkQueue getWorkQueue() {
+        return getWorkQueue(Runtime.getRuntime().availableProcessors());
+    }
+
+    /**
+     * Returns the {@link WorkQueue} available to all processes.  If the queue
+     * has not been created yet, one will be created that uses {@code numProcs}
+     * processes.
+     */
+    public static WorkQueue getWorkQueue(int numProcs) {
+        if (QUEUE == null)
+            QUEUE = new WorkQueue(numProcs);
+        return QUEUE;
+    }
+
+    /**
      * Creates a new work queue with the number of threads executing tasks the
      * same as the number as processors on the system.
      */
-    public WorkQueue() {
+    private WorkQueue() {
         this(Runtime.getRuntime().availableProcessors());
     }
 
@@ -101,7 +123,7 @@ public class WorkQueue {
      * Creates a new work queue with the specified number of threads executing
      * tasks.
      */
-    public WorkQueue(int numThreads) {
+    private WorkQueue(int numThreads) {
         workQueue = new LinkedBlockingQueue<Runnable>();
         threads = new ArrayList<Thread>();
         taskKeyToLatch = new ConcurrentHashMap<Object,CountDownLatch>();
@@ -186,8 +208,8 @@ public class WorkQueue {
     }
 
     /**
-     * Registers a new task group with the specified number of tasks to execute and 
-     * returns a task group identifier to use when registering its tasks.
+     * Registers a new task group with the specified number of tasks to execute
+     * and returns a task group identifier to use when registering its tasks.
      *
      * @param numTasks the number of tasks that will be eventually run as a part
      *        of this group.

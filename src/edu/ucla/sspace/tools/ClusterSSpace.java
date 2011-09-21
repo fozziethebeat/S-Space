@@ -10,11 +10,13 @@ import edu.ucla.sspace.clustering.Clustering;
 
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.SparseMatrix;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import edu.ucla.sspace.vector.DoubleVector;
-import edu.ucla.sspace.vector.ScaledDoubleVector;
+import edu.ucla.sspace.vector.SparseDoubleVector;
+import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 
 import java.util.ArrayList;
@@ -55,16 +57,29 @@ public class ClusterSSpace {
 
         Set<String> words = sspace.getWords();
         List<DoubleVector> vectors = new ArrayList<DoubleVector>();
+        List<SparseDoubleVector> sparseVectors =
+            new ArrayList<SparseDoubleVector>();
         for (String word : words) {
-            if (sspace.getVector(word) instanceof ScaledDoubleVector)
-                System.out.println("whaaat the fuuuu");
-            vectors.add(Vectors.asDouble(sspace.getVector(word)));
+            Vector v = sspace.getVector(word);
+            if (v instanceof SparseDoubleVector)
+                sparseVectors.add((SparseDoubleVector) v);
+            else
+                vectors.add(Vectors.asDouble(sspace.getVector(word)));
         }
-        Matrix matrix = Matrices.asMatrix(vectors);
+
         Properties props = System.getProperties();
-        Assignments assignments = (numClusters > 0) 
-            ? clustering.cluster(matrix, numClusters, props)
-            : clustering.cluster(matrix, props);
+        Assignments assignments = null;
+        if (sparseVectors.size() > 0) {
+            SparseMatrix matrix = Matrices.asSparseMatrix(sparseVectors);
+            assignments = (numClusters > 0) 
+                ? clustering.cluster(matrix, numClusters, props)
+                : clustering.cluster(matrix, props);
+        } else {
+            Matrix matrix = Matrices.asMatrix(vectors);
+            assignments = (numClusters > 0) 
+                ? clustering.cluster(matrix, numClusters, props)
+                : clustering.cluster(matrix, props);
+        }
 
         int a = 0;
         for (String word : words) {

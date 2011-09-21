@@ -26,24 +26,11 @@ import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.SortedMultiMap;
-import edu.ucla.sspace.util.WorkerThread;
+import edu.ucla.sspace.util.WorkQueue;
+
+import edu.ucla.sspace.sim.SimilarityFunction;
 
 import edu.ucla.sspace.vector.Vector;
-
-import java.lang.reflect.Method;
-
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -59,10 +46,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RowComparator {
 
     /**
-     * The queue from which worker threads run word-word comparisons
+     * The work used by all {@code LinkClustering} instances to perform
+     * multi-threaded operations.
      */
-    private final BlockingQueue<Runnable> workQueue;
-    
+    private final WorkQueue workQueue;
+
     /**
      * Creates this {@code WordComparator} with as many threads as processors.
      */
@@ -73,37 +61,55 @@ public class RowComparator {
     /**
      * Creates this {@code WordComparator} with the specified number of threads.
      */
-    public RowComparator(int numThreads) {
-        workQueue = new LinkedBlockingQueue<Runnable>();
-        for (int i = 0; i < numThreads; ++i) {
-            new WorkerThread(workQueue).start();            
-        }
+    public RowComparator(int numProcs) {
+        this.workQueue = WorkQueue.getWorkQueue(numProcs);
     }
 
     /**
      * Compares the specified row to all other rows, returning the k-nearest
      * rows according to the similarity metric.
      *
-     * @return a mapping from the similarity to the k most similar rows
+     * @param m The {@link Matrix} containing data points to be compared
+     * @param row The current row in {@code m} to be compared against all other
+     *        rows
+     * @param kNearestRows The number of most similar rows to retain
+     * @param similarityType The similarity method to use when comparing rows
+     *
+     * @return a mapping from the similarity to the {@code kNearestRows} most
+     *         similar rows
      */
     public SortedMultiMap<Double,Integer> getMostSimilar(
             Matrix m, int row,
             int kNearestRows, Similarity.SimType similarityType) {
+        return getMostSimilar(m, row, kNearestRows,
+                              Similarity.getSimilarityFunction(similarityType));
+    }
+
+    /**
+     * Compares the specified row to all other rows, returning the k-nearest
+     * rows according to the similarity metric.
+     *
+     * @param m The {@link Matrix} containing data points to be compared
+     * @param row The current row in {@code m} to be compared against all other
+     *        rows
+     * @param kNearestRows The number of most similar rows to retain
+     * @param simFunction The {@link SimilarityFunction} to use when comparing
+     *        rows
+     * @return a mapping from the similarity to the k most similar rows
+     */
+    public SortedMultiMap<Double,Integer> getMostSimilar(
+            Matrix m, int row,
+            int kNearestRows, SimilarityFunction simFunction) {
         
-        // the most-similar set will automatically retain only a fixed number
-        // of elements
+        
+        Object key = workQueue.registerTaskGroup(m.rows() - 1);
+
+        // the most-similar set will automatically retain only a fixed number of
+        // elements
         final SortedMultiMap<Double,Integer> mostSimilar =
             new BoundedSortedMultiMap<Double,Integer>(kNearestRows, false);
 
-        // The semaphore used to block until all the rows have been compared.
-        // Use rows-2 since we don't process the comparison of the word to
-        // itself, and we want one permit to be available after the last row is
-        // compared.  The negative ensures that the release() must happen before
-        // the main thread's acquire() will return.
-        final Semaphore comparisons = new Semaphore(0);
-
-        // loop through all the other words computing their
-        // similarity
+        // loop through all the other words computing their similarity
         int rows = m.rows();
         Vector v = m.getRowVector(row);
         for (int i = 0; i < rows; ++i) {
@@ -111,22 +117,12 @@ public class RowComparator {
             if (i == row) 
                 continue;
 
-            workQueue.offer(new Comparison(
-                            comparisons, m, v, i,
-                            similarityType, mostSimilar));
+            workQueue.add(key,
+                          new Comparison(m, v, i, simFunction, mostSimilar));
         }
         
-        try {
-            comparisons.acquire(rows - 1);
-        } catch (InterruptedException ie) {
-            // check whether we were interrupted while still waiting for the
-            // comparisons to finish
-            if (comparisons.availablePermits() < 1) {
-                throw new IllegalStateException(
-                    "interrupted while waiting for word comparisons to finish", 
-                    ie);
-            }
-        }
+        // Wait for all the partition densities to be calculated
+        workQueue.await(key);
         
         return mostSimilar;
     }
@@ -137,46 +133,31 @@ public class RowComparator {
      */
     private static class Comparison implements Runnable {
         
-        private final Semaphore semaphore;
         private final Matrix m;
         private final Vector row;
         private final int otherRow;
-        private final Similarity.SimType similarityMeasure;
+        private final SimilarityFunction simFunction;
         private final MultiMap<Double,Integer> mostSimilar;
 
-        public Comparison(Semaphore semaphore,
-                          Matrix m,
+        public Comparison(Matrix m,
                           Vector row,
                           int otherRow,
-                          Similarity.SimType similarityMeasure,
+                          SimilarityFunction simFunction,
                           MultiMap<Double,Integer> mostSimilar) {
-            this.semaphore = semaphore;
             this.m = m;
             this.row = row;
             this.otherRow = otherRow;
-            this.similarityMeasure = similarityMeasure;
+            this.simFunction = simFunction;
             this.mostSimilar = mostSimilar;
         }
 
         public void run() {
-            try {            
-
-                Double similarity = Similarity.getSimilarity(
-                    similarityMeasure, row, m.getRowVector(otherRow));
-                
-                // lock on the Map, as it is not thread-safe
-                synchronized(mostSimilar) {
-                    mostSimilar.put(similarity, otherRow);
-                }
-            } catch (Exception e) {
-                // Rethrow any reflection-related exception, as this situation
-                // should not normally occur since the Method being invoked
-                // comes directly from the Similarity class.
-                throw new Error(e);
-            } finally {
-                // notify that the word has been processed regardless of whether
-                // an error occurred
-                semaphore.release();
+            Double similarity = simFunction.sim(
+                    row, m.getRowVector(otherRow));
+            
+            // lock on the Map, as it is not thread-safe
+            synchronized(mostSimilar) {
+                mostSimilar.put(similarity, otherRow);
             }
         }
     }
