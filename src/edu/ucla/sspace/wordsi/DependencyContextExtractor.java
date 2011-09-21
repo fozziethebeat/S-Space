@@ -115,7 +115,7 @@ public class DependencyContextExtractor implements ContextExtractor {
 
             // Skip empty documents.
             if (nodes.length == 0)
-                    return;
+                return;
 
             // Examine the paths for each word in the sentence.
             for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
@@ -135,7 +135,7 @@ public class DependencyContextExtractor implements ContextExtractor {
 
                 // Create a new context vector.
                 SparseDoubleVector focusMeaning = generator.generateContext(
-                                nodes, wordIndex);
+                        nodes, wordIndex);
                 wordsi.handleContextVector(
                         focusWord, secondarykey, focusMeaning);
             }

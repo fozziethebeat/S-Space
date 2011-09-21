@@ -97,7 +97,7 @@ public class WCWordsiMain extends GenericWordsiMain {
      * {@inheritDoc}
      */
     protected void handleExtraOptions() {
-        // Create the weighting function.    If one is specified by the command
+        // Create the weighting function.  If one is specified by the command
         // line, create a new instance of it, otherwise default to
         // LinearWeighting.
         if (argOptions.hasOption('G'))

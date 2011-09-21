@@ -82,6 +82,11 @@ public abstract class AbstractBasisMapping<T, K> implements BasisMapping<T, K>,
             throw new IllegalArgumentException(
                 "invalid dimension: " + dimension);
 
+        // If the basis mapping was de-serialized, the mapping will be null, so
+        // re-set it.
+        if (indexToKeyCache == null)
+            indexToKeyCache = new ArrayList<K>();
+
         // If the cache is out of date, rebuild the reverse mapping.
         if (mapping.size() > indexToKeyCache.size()) {
             // Lock to ensure safe iteration

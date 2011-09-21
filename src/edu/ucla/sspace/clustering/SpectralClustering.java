@@ -26,6 +26,7 @@ import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.SparseMatrix;
 
 import edu.ucla.sspace.util.Generator;
+import edu.ucla.sspace.util.WorkQueue;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.ScaledDoubleVector;
@@ -103,6 +104,8 @@ public class SpectralClustering {
      */
     private final Generator<EigenCut> cutterGenerator;
 
+    private final WorkQueue workQueue;
+
     /**
      * Creates a new {@link SpectralClustering} instance.
      *
@@ -116,6 +119,7 @@ public class SpectralClustering {
         this.alpha = alpha;
         this.beta = 1 - alpha;
         this.cutterGenerator = cutterGenerator;
+        this.workQueue = WorkQueue.getWorkQueue();
     }
 
     /**
@@ -206,7 +210,7 @@ public class SpectralClustering {
      * until the number of rows in {@code matrix} is less than or equal to 1.
      */
     private ClusterResult fullCluster(Matrix matrix,
-                                      int depth) {
+                                      final int depth) {
         verbose("Clustering at depth " + depth);
 
         // If the matrix has only one element or the depth is equal to the
@@ -220,8 +224,8 @@ public class SpectralClustering {
         EigenCut eigenCutter = cutterGenerator.generate();
         eigenCutter.computeCut(matrix);
 
-        Matrix leftMatrix = eigenCutter.getLeftCut();
-        Matrix rightMatrix = eigenCutter.getRightCut();
+        final Matrix leftMatrix = eigenCutter.getLeftCut();
+        final Matrix rightMatrix = eigenCutter.getRightCut();
 
         verbose(String.format("Splitting into two matricies %d-%d",
                               leftMatrix.rows(), rightMatrix.rows()));
@@ -232,11 +236,25 @@ public class SpectralClustering {
             rightMatrix.rows() == matrix.rows())
             return new ClusterResult(new int[matrix.rows()], 1);
 
-        // Do clustering on the left and right branches.
-        ClusterResult leftResult =
-            fullCluster(leftMatrix, depth+1);
-        ClusterResult rightResult =
-            fullCluster(rightMatrix, depth+1);
+
+        // Do clustering on the left and right branches.  We can do this in
+        // parallel because all of the data members in this class are thread
+        // safe, since each call to fullCluster uses a new instance of a
+        // EigenCutter which has all of the state for a particular partition.
+        final ClusterResult[] results = new ClusterResult[2];
+        Object key = workQueue.registerTaskGroup(2);
+        workQueue.add(key, new Runnable() {
+            public void run() {
+                results[0] = fullCluster(leftMatrix, depth+1);
+            }});
+        workQueue.add(key, new Runnable() {
+            public void run() {
+                results[1] = fullCluster(rightMatrix, depth+1);
+            }});
+        workQueue.await(key);
+
+        ClusterResult leftResult = results[0];
+        ClusterResult rightResult = results[1];
 
         verbose("Merging at depth " + depth);
 
@@ -294,8 +312,8 @@ public class SpectralClustering {
      * used.
      */
     private LimitedResult[] limitedCluster(Matrix matrix,
-                                           int maxClusters,
-                                           boolean useKMeans) {
+                                           final int maxClusters,
+                                           final boolean useKMeans) {
         verbose("Clustering for " + maxClusters + " clusters.");
 
         // Get a fresh new EigenCut first so that we can compute the RhoSum of
@@ -327,8 +345,8 @@ public class SpectralClustering {
         // matrix.
         eigenCutter.computeCut(matrix);
 
-        Matrix leftMatrix = eigenCutter.getLeftCut();
-        Matrix rightMatrix = eigenCutter.getRightCut();
+        final Matrix leftMatrix = eigenCutter.getLeftCut();
+        final Matrix rightMatrix = eigenCutter.getRightCut();
 
         // If the compute decided that the matrix should not be split, short
         // circuit any attempts to further cut the matrix.
@@ -353,11 +371,26 @@ public class SpectralClustering {
         verbose(String.format("Splitting into two matricies %d-%d",
                               leftMatrix.rows(), rightMatrix.rows()));
 
-        // Do clustering on the left and right branches.
-        LimitedResult[] leftResults =
-            limitedCluster(leftMatrix, maxClusters-1, useKMeans);
-        LimitedResult[] rightResults =
-            limitedCluster(rightMatrix, maxClusters-1, useKMeans);
+        // Do clustering on the left and right branches.  We can do this in
+        // parallel because all of the data members in this class are thread
+        // safe, since each call to fullCluster uses a new instance of a
+        // EigenCutter which has all of the state for a particular partition.
+        final LimitedResult[][] subResults = new LimitedResult[2][];
+        Object key = workQueue.registerTaskGroup(2);
+        workQueue.add(key, new Runnable() {
+            public void run() {
+                subResults[0] = limitedCluster(
+                    leftMatrix, maxClusters-1, useKMeans);
+            }});
+        workQueue.add(key, new Runnable() {
+            public void run() {
+                subResults[1] = limitedCluster(
+                    rightMatrix, maxClusters-1, useKMeans);
+            }});
+        workQueue.await(key);
+
+        LimitedResult[] leftResults = subResults[0];
+        LimitedResult[] rightResults = subResults[1];
 
         verbose("Merging at for: " + maxClusters + " clusters");
 
