@@ -121,7 +121,7 @@ public class SerializableUtil {
      */
     @SuppressWarnings("unchecked")
     public static <T> T load(String fileName) {
-        return load(new File(fileName));
+        return (T) load(new File(fileName));
     }
 
     /**
