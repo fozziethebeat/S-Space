@@ -101,9 +101,10 @@ public class DVWCWordsiMain extends DVWordsiMain {
      */
     protected void handleExtraOptions() {
         // If the -L option is given, load the basis mapping from disk.
-        if (argOptions.hasOption('L'))
+        if (argOptions.hasOption('L')) {
             basis = loadObject(openLoadFile());
-        else 
+            basis.setReadOnly(true);
+        } else 
             basis = new StringBasisMapping();
     }
 

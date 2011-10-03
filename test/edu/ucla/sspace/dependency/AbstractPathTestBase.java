@@ -36,10 +36,10 @@ public class AbstractPathTestBase {
         List<DependencyRelation> path = new LinkedList<DependencyRelation>();
         for (String[] link : pathString) {
             DependencyTreeNode n1 = 
-                new SimpleDependencyTreeNode(link[0], link[1]);
+                new SimpleDependencyTreeNode(link[0], link[1], 0);
             String relation = link[2];
             DependencyTreeNode n2 = 
-                new SimpleDependencyTreeNode(link[3], link[4]);
+                new SimpleDependencyTreeNode(link[3], link[4], 0);
 
             path.add(new SimpleDependencyRelation(n1, relation, n2));
         }

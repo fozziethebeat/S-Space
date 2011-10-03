@@ -33,29 +33,29 @@ public class SubjObjRelationAcceptorTest {
 
     @Test public void testArbitraryLink() {        
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "not a relation",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 0), "not a relation",
+            new SimpleDependencyTreeNode("bar", "V", 0));
         assertFalse(acceptor.accept(r));
     }
 
     @Test public void testSubjLink() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "SBJ",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 0), "SBJ",
+            new SimpleDependencyTreeNode("bar", "V", 0));
         assertTrue(acceptor.accept(r));
     }
 
     @Test public void testObjLink() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "OBJ",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 0), "OBJ",
+            new SimpleDependencyTreeNode("bar", "V", 0));
         assertTrue(acceptor.accept(r));
     }
 
     @Test public void testNormalLink() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "NMOD",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 0), "NMOD",
+            new SimpleDependencyTreeNode("bar", "V", 0));
         assertFalse(acceptor.accept(r));
     }
 }

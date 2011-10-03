@@ -118,15 +118,18 @@ public class CoNLLDependencyExtractorTest {
 
         // Test that the root node does not have a link to itself.
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "SBJ",
-                                         new SimpleDependencyTreeNode("holt", "NNP")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "PRD",
-                                         new SimpleDependencyTreeNode("columnist", "NN")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
-                                         "P",
-                                         new SimpleDependencyTreeNode(".", "."))
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("is", "VBZ", 0), 
+                    "SBJ",
+                    new SimpleDependencyTreeNode("holt", "NNP", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("is", "VBZ", 0),
+                    "PRD",
+                    new SimpleDependencyTreeNode("columnist", "NN", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("is", "VBZ", 0),
+                    "P",
+                    new SimpleDependencyTreeNode(".", ".", 0))
         };
         evaluateRelations(relations[index],
                           new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
@@ -143,16 +146,19 @@ public class CoNLLDependencyExtractorTest {
 
         // Test expected relation for each of the links for "beskattning".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
-                                         "AT",
-                                         new SimpleDependencyTreeNode("individuell", "AJ")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
-                                         "ET",
-                                         new SimpleDependencyTreeNode("av", "PR"))
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("beskattning", "N", 0),
+                    "AT",
+                    new SimpleDependencyTreeNode("individuell", "AJ", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("beskattning", "N", 0),
+                    "ET",
+                    new SimpleDependencyTreeNode("av", "PR", 0))
         };
         
         evaluateRelations(relations[index],
-                          new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
+                          new LinkedList<DependencyRelation>(
+                              Arrays.asList(expectedRelations)));
     }
 
     @Test public void testSingleExtraction() throws Exception {
@@ -168,21 +174,26 @@ public class CoNLLDependencyExtractorTest {
 
         // Test expected relation for each of the links for "Review".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "NMOD",
-                                         new SimpleDependencyTreeNode("the", "DT")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "NMOD",
-                                         new SimpleDependencyTreeNode("literary", "NNP")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "ADV",
-                                         new SimpleDependencyTreeNode("in", "IN")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("for", "IN"),
-                                         "PMOD",
-                                         new SimpleDependencyTreeNode("review", "NNP"))
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    "NMOD",
+                    new SimpleDependencyTreeNode("the", "DT", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    "NMOD",
+                    new SimpleDependencyTreeNode("literary", "NNP", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    "ADV",
+                    new SimpleDependencyTreeNode("in", "IN", 0)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("for", "IN", 0),
+                    "PMOD",
+                    new SimpleDependencyTreeNode("review", "NNP", 0))
         };
 
-        evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
+        evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(
+                    Arrays.asList(expectedRelations)));
     }
 
     @Test public void testDoubleExtraction() throws Exception {

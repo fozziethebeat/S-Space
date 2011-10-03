@@ -38,6 +38,7 @@ import java.util.Iterator;
  * @author Keith Stevens
  */
 public class LexSubWordsiMain {
+
     public static void main(String[] args) {
         System.err.println("Loading wordsi.");
         Wordsi wordsi = new LexSubWordsi(args[3], args[0]);
@@ -105,7 +106,7 @@ public class LexSubWordsiMain {
 
                 Vector v = wordsiSpace.getVector(query);
                 if (v == null)
-                    break;
+                    return bestSense;
 
                 double sim = Similarity.cosineSimilarity(v, vector);
                 if (sim >= bestSim) {
@@ -113,7 +114,6 @@ public class LexSubWordsiMain {
                     bestSense = query;
                 }
             }
-            return bestSense;
         }
     }
 }

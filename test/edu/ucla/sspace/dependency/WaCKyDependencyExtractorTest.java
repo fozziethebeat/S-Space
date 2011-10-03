@@ -101,18 +101,22 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
 
         // Test expected relation for each of the links for "Review".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "NMOD",
-                                         new SimpleDependencyTreeNode("the", "DT")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "NMOD",
-                                         new SimpleDependencyTreeNode("literary", "NNP")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
-                                         "ADV",
-                                         new SimpleDependencyTreeNode("in", "IN")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("for", "IN"),
-                                         "PMOD",
-                                         new SimpleDependencyTreeNode("review", "NNP"))
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    "NMOD",
+                    new SimpleDependencyTreeNode("the", "DT", 1)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    "NMOD",
+                    new SimpleDependencyTreeNode("literary", "NNP", 2)),
+            new SimpleDependencyRelation(
+                    new SimpleDependencyTreeNode("review", "NNP", 1),
+                    "ADV",
+                    new SimpleDependencyTreeNode("in", "IN", 1)),
+            new SimpleDependencyRelation(
+                   new SimpleDependencyTreeNode("for", "IN", 1),
+                   "PMOD",
+                   new SimpleDependencyTreeNode("review", "NNP", 1))
         };
 
         evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));

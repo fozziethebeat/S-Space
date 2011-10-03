@@ -79,14 +79,14 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         MockWordsi wordsi = new MockWordsi(null, extractor);
         assertTrue(extractor.acceptWord(node, "cat", wordsi));
 
-        node = new SimpleDependencyTreeNode("ca", "n", "c", null);
+        node = new SimpleDependencyTreeNode("ca", "n", "c", 0, null);
         assertFalse(extractor.acceptWord(node, "c", wordsi));
 
-        node = new SimpleDependencyTreeNode("", "n", "c", null);
+        node = new SimpleDependencyTreeNode("", "n", "c", 0, null);
         assertFalse(extractor.acceptWord(node, "", wordsi));
     }
 
@@ -94,7 +94,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         assertEquals("cat", extractor.getPrimaryKey(node));
     }
 
@@ -102,7 +102,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         assertEquals("cat", extractor.getSecondaryKey(node, null));
     }
 
@@ -110,7 +110,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         assertEquals("header", extractor.getSecondaryKey(node, "header"));
     }
 

@@ -107,8 +107,10 @@ public class WCWordsiMain extends GenericWordsiMain {
             weighting = new LinearWeighting();
 
         // If the -L option is given, load the basis mapping from disk.
-        if (argOptions.hasOption('L'))
+        if (argOptions.hasOption('L')) {
             basis = loadObject(openLoadFile());
+            basis.setReadOnly(true);
+        }
         else 
             basis = new StringBasisMapping();
     }
