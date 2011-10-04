@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.basis;
 
+import java.util.Set;
+
 
 /**
  * A string based {@link BasisMapping}.  Keys must be strings and each dimension
@@ -31,6 +33,14 @@ package edu.ucla.sspace.basis;
 public class StringBasisMapping extends AbstractBasisMapping<String, String> {
 
     private static final long serialVersionUID = 1L;
+
+    public StringBasisMapping() {
+    }
+
+    public StringBasisMapping(Set<String> words) {
+        for (String word : words)
+            getDimension(word);
+    }
 
     /**
      * {@inheritDoc}

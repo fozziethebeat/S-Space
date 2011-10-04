@@ -28,63 +28,65 @@ import edu.ucla.sspace.vector.Vectors;
 
 
 /**
- * A decorator around a {@code Matrix} that keeps only the upper triangular
- * values while providing a symmetric view of the data.  This class only records
- * changes values where row &gt; col.  For all other values, the row and column
- * values are swapped and then the backing matrix is updated.  Note, that if the
- * provided backing matrix has existing values for indices row &lt; col, these
- * values will be ignored and never returned from any method.  Note the original
- * perfomance characteristics of the backing matrix are retained by this class.
+ * A symmetric dense matrix that only stores the values of the lower triangular.
+ * This class only records changes values where row &gt; col.  For all other
+ * values, the row and column values are swapped and then the backing matrix is
+ * updated.  
  *
- * <p>The primary benfit of this class is for storing large symmetric matrices
- * in half of the memory.
+ * </p>
+ *
+ * The primary benfit of this class is for storing large symmetric matrices in
+ * half of the memory.
  *
  * @author David Jurgens
- *
- * @see SparseSymmetricMatrix
  */
 public class SymmetricMatrix extends AbstractMatrix 
         implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * The matrix whose values back this matrix.
-     */
-    private final Matrix backing;
+    private final double[][] values;
+
+    private final int rows;
+
+    private final int columns;
 
     /**
-     * Constructs a sparse matrix with the specified dimensions.
+     * Constructs a new {@link SymmetricMatrix} with the specified dimensions.
      */
-    public SymmetricMatrix(Matrix backing) {
-        this.backing = backing;
+    public SymmetricMatrix(int rows, int columns) {
+        this.rows = rows;
+        this.columns = columns;
+
+        values = new double[rows][];
+        for (int r = 0; r < rows; ++r)
+            values[r] = new double[r+1];
     }
     
     /**
      * {@inheritDoc}
      */
     public int columns() {
-        return backing.columns();
+        return columns;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public double get(int row, int column) {
-        // Swap the ordering so only the upper triangular is read
-        if (row > column) {
+        // Swap the ordering so only the lower triangular is read
+        if (column > row) {
             int tmp = column;
             column = row;
             row = tmp;
         }
-        return backing.get(row, column);
+        return values[row][column];
     }
 
     /**
      * {@inheritDoc}
      */
     public DoubleVector getColumnVector(int column) {
-        int rows = rows();
         DenseVector col = new DenseVector(rows);
         for (int r = 0; r < rows; ++r)
             col.set(r, get(r, column));
@@ -95,9 +97,8 @@ public class SymmetricMatrix extends AbstractMatrix
      * {@inheritDoc}
      */
     public DoubleVector getRowVector(int row) {
-        int cols = columns();
-        DenseVector rowVec = new DenseVector(cols);
-        for (int c = 0; c < cols; ++c)
+        DenseVector rowVec = new DenseVector(columns);
+        for (int c = 0; c < columns; ++c)
             rowVec.set(c, get(row, c));
         return rowVec;
     }
@@ -106,19 +107,19 @@ public class SymmetricMatrix extends AbstractMatrix
      * {@inheritDoc}
      */
     public int rows() {
-        return backing.rows();
+        return rows;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public void set(int row, int column, double val) {
-        // Swap the ordering so only the upper triangular is written to
-        if (row > column) {
+        // Swap the ordering so only the lower triangular is written to
+        if (column > row) {
             int tmp = column;
             column = row;
             row = tmp;
         }
-        backing.set(row, column, val);
+        values[row][column] = val;
     }
 }

@@ -33,22 +33,22 @@ public class UniversalRelationAcceptorTest {
 
     @Test public void testArbitraryLink() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "not a relation",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 1), "not a relation",
+            new SimpleDependencyTreeNode("bar", "V", 1));
         assertTrue(acceptor.accept(r));
     }
 
     @Test public void testNormalLink() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "N"), "SUBJ",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "N", 1), "SUBJ",
+            new SimpleDependencyTreeNode("bar", "V", 1));
         assertTrue(acceptor.accept(r));
     }
 
     @Test public void testNormalLink2() {
         DependencyRelation r = new SimpleDependencyRelation(
-            new SimpleDependencyTreeNode("foo", "NMOD"), "GEN",
-            new SimpleDependencyTreeNode("bar", "V"));
+            new SimpleDependencyTreeNode("foo", "NMOD", 1), "GEN",
+            new SimpleDependencyTreeNode("bar", "V", 1));
         assertTrue(acceptor.accept(r));
     }
 }

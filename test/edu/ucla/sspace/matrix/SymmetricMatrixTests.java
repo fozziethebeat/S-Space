@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 public class SymmetricMatrixTests {
 
     @Test public void testSet() {
-        SymmetricMatrix ssm = new SymmetricMatrix(new SparseHashMatrix(10, 10));
+        SymmetricMatrix ssm = new SymmetricMatrix(10, 10);
         ssm.set(5,1,2);
         assertEquals(2, ssm.get(5,1), .001);
         assertEquals(2, ssm.get(1,5), .001);
@@ -42,7 +42,7 @@ public class SymmetricMatrixTests {
     }
 
     @Test public void testRowVector() {
-        SymmetricMatrix ssm = new SymmetricMatrix(new SparseHashMatrix(10, 10));
+        SymmetricMatrix ssm = new SymmetricMatrix(10, 10);
         ssm.set(5,1,2);
         DoubleVector v = ssm.getRowVector(5);
         assertEquals(2, v.get(1), .001);
@@ -52,7 +52,7 @@ public class SymmetricMatrixTests {
     }
 
     @Test public void testColVector() {
-        SymmetricMatrix ssm = new SymmetricMatrix(new SparseHashMatrix(10, 10));
+        SymmetricMatrix ssm = new SymmetricMatrix(10, 10);
         ssm.set(5,1,2);
         DoubleVector v = ssm.getColumnVector(5);
         assertEquals(2, v.get(1), .001);

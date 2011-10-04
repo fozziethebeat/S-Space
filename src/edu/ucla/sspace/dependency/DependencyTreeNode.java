@@ -50,4 +50,9 @@ public interface DependencyTreeNode {
      * Returns the part of speech tag for this node.
      */
     String pos();
+
+    /**
+     * Returns the index used by this {@link DependencyTreeNode} in an array.
+     */
+    int index();
 }

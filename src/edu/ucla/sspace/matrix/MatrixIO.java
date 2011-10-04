@@ -905,7 +905,8 @@ public class MatrixIO {
             else {
                 if (cols != vals) {
                     throw new MatrixIOException("line " + (rows + 1) + 
-                        " contains an inconsistent number of columns");
+                        " contains an inconsistent number of columns. " +
+                        cols + " columns expected versus " + vals + " found.");
                 }
             }
         }

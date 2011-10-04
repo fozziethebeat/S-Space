@@ -26,7 +26,6 @@ import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.SparseMatrix;
 
 import edu.ucla.sspace.util.Generator;
-import edu.ucla.sspace.util.WorkQueue;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.ScaledDoubleVector;
@@ -104,8 +103,6 @@ public class SpectralClustering {
      */
     private final Generator<EigenCut> cutterGenerator;
 
-    private final WorkQueue workQueue;
-
     /**
      * Creates a new {@link SpectralClustering} instance.
      *
@@ -119,7 +116,6 @@ public class SpectralClustering {
         this.alpha = alpha;
         this.beta = 1 - alpha;
         this.cutterGenerator = cutterGenerator;
-        this.workQueue = WorkQueue.getWorkQueue();
     }
 
     /**
@@ -242,16 +238,8 @@ public class SpectralClustering {
         // safe, since each call to fullCluster uses a new instance of a
         // EigenCutter which has all of the state for a particular partition.
         final ClusterResult[] results = new ClusterResult[2];
-        Object key = workQueue.registerTaskGroup(2);
-        workQueue.add(key, new Runnable() {
-            public void run() {
-                results[0] = fullCluster(leftMatrix, depth+1);
-            }});
-        workQueue.add(key, new Runnable() {
-            public void run() {
-                results[1] = fullCluster(rightMatrix, depth+1);
-            }});
-        workQueue.await(key);
+        results[0] = fullCluster(leftMatrix, depth+1);
+        results[1] = fullCluster(rightMatrix, depth+1);
 
         ClusterResult leftResult = results[0];
         ClusterResult rightResult = results[1];
@@ -376,18 +364,8 @@ public class SpectralClustering {
         // safe, since each call to fullCluster uses a new instance of a
         // EigenCutter which has all of the state for a particular partition.
         final LimitedResult[][] subResults = new LimitedResult[2][];
-        Object key = workQueue.registerTaskGroup(2);
-        workQueue.add(key, new Runnable() {
-            public void run() {
-                subResults[0] = limitedCluster(
-                    leftMatrix, maxClusters-1, useKMeans);
-            }});
-        workQueue.add(key, new Runnable() {
-            public void run() {
-                subResults[1] = limitedCluster(
-                    rightMatrix, maxClusters-1, useKMeans);
-            }});
-        workQueue.await(key);
+        subResults[0] = limitedCluster(leftMatrix, maxClusters-1, useKMeans);
+        subResults[1] = limitedCluster(rightMatrix, maxClusters-1, useKMeans);
 
         LimitedResult[] leftResults = subResults[0];
         LimitedResult[] rightResults = subResults[1];

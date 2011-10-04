@@ -83,7 +83,7 @@ public class SemEvalDependencyContextExtractorTest {
         SemEvalDependencyContextExtractor extractor = 
             new SemEvalDependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         MockWordsi wordsi = new MockWordsi(null, extractor);
         assertTrue(extractor.acceptWord(node, "c", wordsi));
         assertFalse(extractor.acceptWord(node, "cat", wordsi));
@@ -94,7 +94,7 @@ public class SemEvalDependencyContextExtractorTest {
         SemEvalDependencyContextExtractor extractor = 
             new SemEvalDependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         assertEquals("c", extractor.getSecondaryKey(node, "header"));
     }
 
