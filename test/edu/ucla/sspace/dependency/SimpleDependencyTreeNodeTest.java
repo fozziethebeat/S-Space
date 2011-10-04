@@ -37,25 +37,27 @@ import static org.junit.Assert.*;
 public class SimpleDependencyTreeNodeTest {
 
     @Test public void testGettersNoLemma() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
 
         assertEquals("cat", node1.word());
         assertEquals("n", node1.pos());
         assertEquals("cat", node1.lemma());
+        assertEquals(0, node1.index());
     }
 
     @Test public void testGetters() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c", 0);
 
         assertEquals("cat", node1.word());
         assertEquals("n", node1.pos());
         assertEquals("c", node1.lemma());
+        assertEquals(0, node1.index());
     }
 
     @Test public void testAddNeighbor() {
         SimpleDependencyTreeNode node1 = new SimpleDependencyTreeNode(
-                "cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("dog","n","c");
+                "cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("dog","n","c", 0);
         DependencyRelation rel =
             new SimpleDependencyRelation(node1, "c", node2);
         node1.addNeighbor(rel);
@@ -66,33 +68,33 @@ public class SimpleDependencyTreeNodeTest {
     }
 
     @Test public void testNotEqualsWord() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("dog","n","c");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("dog","n","c", 0);
         assertFalse(node1.equals(node2));
     }
 
     @Test public void testNotEqualsPos() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","v","c");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","v","c", 0);
         assertFalse(node1.equals(node2));
     }
 
     @Test public void testNotEqualsLemma() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","t");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","t", 0);
         assertFalse(node1.equals(node2));
     }
 
     @Test public void testEquals() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","c");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","c", 0);
         assertEquals(node1, node2);
     }
 
     @Test public void testEqualsWithRelation() {
         SimpleDependencyTreeNode node1 = new SimpleDependencyTreeNode(
-                "cat","n","c");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","c");
+                "cat","n","c", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("cat","n","c", 0);
         DependencyRelation rel =
             new SimpleDependencyRelation(node1, "c", node2);
         node1.addNeighbor(rel);

@@ -88,14 +88,14 @@ public class PseudoWordDependencyContextExtractorTest {
             new PseudoWordDependencyContextExtractor(null, null, termMap);
 
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", null);
+                "cat", "n", "c", 0, null);
         assertTrue(extractor.acceptWord(node, "cat", null));
         assertFalse(extractor.acceptWord(node, "cat.n.1", null));
 
-        node = new SimpleDependencyTreeNode("c", "n", "c", null);
+        node = new SimpleDependencyTreeNode("c", "n", "c", 0, null);
         assertFalse(extractor.acceptWord(node, "cat", null));
 
-        node = new SimpleDependencyTreeNode("", "n", "c", null);
+        node = new SimpleDependencyTreeNode("", "n", "c", 0, null);
         assertFalse(extractor.acceptWord(node, "", null));
     }
 

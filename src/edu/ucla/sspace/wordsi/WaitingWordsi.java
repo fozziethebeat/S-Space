@@ -28,7 +28,7 @@ import edu.ucla.sspace.clustering.Clustering;
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.Matrices;
 
-import edu.ucla.sspace.util.WorkerThread;
+import edu.ucla.sspace.util.WorkQueue;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.DoubleVector;
@@ -42,10 +42,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
 
 import java.util.logging.Logger;
 
@@ -198,19 +195,9 @@ public class WaitingWordsi extends BaseWordsi {
      * {@inheritDoc}
      */
     public void processSpace(final Properties props) {
-        // Set up the concurrent data structures so we can process the documents
-        // concurrently
-        final BlockingQueue<Runnable> workQueue = 
-            new LinkedBlockingQueue<Runnable>();
-        int numThreads = Runtime.getRuntime().availableProcessors();
-        for (int i = 0; i < numThreads; ++i) {
-            Thread t = new WorkerThread(workQueue);
-            t.start();
-        }
+        WorkQueue workQueue = new WorkQueue();
 
-        final Semaphore termsProcessed = new Semaphore(0); 
-        final int numTerms = dataVectors.size();
-
+        Object key = workQueue.registerTaskGroup(dataVectors.size());
         // Process each word's context set in a worker thread.
         for (Map.Entry<String, List<SparseDoubleVector>> entry :
                 dataVectors.entrySet()) {
@@ -224,25 +211,13 @@ public class WaitingWordsi extends BaseWordsi {
             for (SparseDoubleVector v : contextsWithNoLength)
                 contextSet.add(Vectors.subview(v, 0, getVectorLength()));
             
-            workQueue.offer(new Runnable() {
+            workQueue.add(key, new Runnable() {
                 public void run() {
-                    try {
-                        clusterTerm(senseName, contextSet, props);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        termsProcessed.release();
-                    }
+                    clusterTerm(senseName, contextSet, props);
                 }
             });
         }
-        try {
-            termsProcessed.acquire(numTerms);
-            if (reporter != null)
-                reporter.finalizeReport();
-        } catch (InterruptedException ie) {
-            throw new Error(ie);
-        }
+        workQueue.await(key);
         LOG.info("Finished processing all terms");
     }
 
@@ -273,6 +248,9 @@ public class WaitingWordsi extends BaseWordsi {
         }
 
         LOG.info("Finished creating centroids for term: " + senseName);
+
+        // Empty out the stored contexts to free up memory for later processes.
+        contextSet.clear();
 
         // If the reporter is null, avoid making any report.
         if (reporter == null)

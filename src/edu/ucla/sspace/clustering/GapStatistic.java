@@ -207,7 +207,7 @@ public class GapStatistic implements Clustering {
                                   double[] gapResults, double[] gapStds,
                                   Assignments[] gapAssignments) {
         int k = i+startSize;
-        int numGaps = gapMatrices.length;
+        double numGaps = gapMatrices.length;
         CriterionFunction function = 
             ReflectionUtil.getObjectInstance(methodName);
         verbose("Clustering reference data for %d clusters\n", k);
@@ -215,7 +215,7 @@ public class GapStatistic implements Clustering {
         // Compute the score for the reference data sets with k
         // clusters.
         double referenceScore = 0;
-        double[] referenceScores = new double[numGaps];
+        double[] referenceScores = new double[gapMatrices.length];
         for (int j = 0; j < gapMatrices.length; ++j) {
             verbose("Clustering reference data %d \n", j);
             Assignments result = DirectClustering.cluster(
@@ -230,7 +230,7 @@ public class GapStatistic implements Clustering {
         for (double score : referenceScores)
             referenceStdev += Math.pow(score - referenceScore, 2);
         referenceStdev /= numGaps;
-        referenceStdev = Math.sqrt(referenceStdev);
+        referenceStdev = Math.sqrt(referenceStdev) * Math.sqrt(1 + 1/numGaps);
 
         verbose("Clustering original data for %d clusters\n", k);
         // Compute the score for the original data set with k

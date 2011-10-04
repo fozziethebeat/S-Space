@@ -38,12 +38,13 @@ import edu.ucla.sspace.util.WorkQueue;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -109,7 +110,7 @@ public class StreamingWordsi extends BaseWordsi {
         this.reporter = reporter;
         this.numClusters = numClusters;
 
-        this.wordSpace = new HashMap<String, SparseDoubleVector>();
+        this.wordSpace = new ConcurrentHashMap<String, SparseDoubleVector>();
     }
  
     /**

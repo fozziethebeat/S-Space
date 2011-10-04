@@ -46,6 +46,11 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     private String lemma;
 
     /**
+     * The index at which this node resides in an array of nodes.
+     */
+    private int index;
+
+    /**
      * The list of neighbors of this node.
      */
     private List<DependencyRelation> neighbors;
@@ -55,12 +60,13 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
      * word, with the provided part of speech.  Initially the neighbor list is
      * empty.
      */
-    public SimpleDependencyTreeNode(String word, String pos) {
-        this(word, pos, word);
+    public SimpleDependencyTreeNode(String word, String pos, int index) {
+        this(word, pos, word, index);
     }
 
-    public SimpleDependencyTreeNode(String word, String pos, String lemma) {
-        this(word, pos, lemma, new LinkedList<DependencyRelation>());
+    public SimpleDependencyTreeNode(String word, String pos,
+                                    String lemma, int index) {
+        this(word, pos, lemma, index, new LinkedList<DependencyRelation>());
     }
 
     /**
@@ -69,8 +75,9 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
      */
     public SimpleDependencyTreeNode(String word,
                                     String pos, 
+                                    int index,
                                     List<DependencyRelation> neighbors) {
-        this(word, pos, "", neighbors);
+        this(word, pos, word, index, neighbors);
     }
 
     /**
@@ -80,11 +87,13 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     public SimpleDependencyTreeNode(String word,
                                     String pos, 
                                     String lemma,
+                                    int index,
                                     List<DependencyRelation> neighbors) {
       this.word = word;
       this.pos = pos;
-      this.neighbors = neighbors;
       this.lemma = lemma;
+      this.index = index;
+      this.neighbors = neighbors;
     }
 
     /**
@@ -163,5 +172,12 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
      */
     public String lemma() {
         return lemma;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int index() {
+        return index;
     }
 }

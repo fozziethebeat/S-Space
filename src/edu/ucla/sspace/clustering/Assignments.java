@@ -63,6 +63,8 @@ public class Assignments implements Iterable<Assignment> {
      */
     private Matrix matrix;
 
+    private int[] counts;
+
     /**
      * Creates a new {@link Assignments} instance that can hold up to {@code
      * numAssignments} {@link Assignment}s.  This assumes that the data matrix
@@ -174,7 +176,7 @@ public class Assignments implements Iterable<Assignment> {
 
         // Initialzie the centroid vectors and the cluster sizes.
         DoubleVector[] centroids = new DoubleVector[numClusters];
-        int[] counts = new int[numClusters];
+        counts = new int[numClusters];
         for (int c = 0; c < numClusters; ++c)
             centroids[c] = new DenseVector(matrix.columns());
 
@@ -220,7 +222,7 @@ public class Assignments implements Iterable<Assignment> {
         if (numClusters == 0)
             return centroids;
 
-        int[] counts = new int[numClusters];
+        counts = new int[numClusters];
         for (int c = 0; c < numClusters; ++c)
             centroids[c] = new CompactSparseVector(matrix.columns());
 
@@ -243,5 +245,9 @@ public class Assignments implements Iterable<Assignment> {
                         centroids[c],1d/counts[c]);
 
         return centroids;
+    }
+
+    public int[] clusterSizes() {
+        return counts;
     }
 }

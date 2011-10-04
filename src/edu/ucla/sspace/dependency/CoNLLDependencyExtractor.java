@@ -323,7 +323,7 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
 
             // Create the new relation.
             SimpleDependencyTreeNode curNode = 
-                new SimpleDependencyTreeNode(word, pos, lemma);
+                new SimpleDependencyTreeNode(word, pos, lemma, id);
 
             // Set the dependency link between this node and it's parent node.
             // If the parent's real index  is negative then the node itself is a

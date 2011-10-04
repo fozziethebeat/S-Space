@@ -37,7 +37,7 @@ public class PathIteratorTestBase {
             new SimpleDependencyTreeNode[treeData.length];
         for (int i = 0; i < tree.length; ++i)
             tree[i] = new SimpleDependencyTreeNode(
-                    treeData[i][0], treeData[i][1]);
+                    treeData[i][0], treeData[i][1], 0);
 
         for (int i = 0; i < tree.length; ++i)
             for (int n : treeLinks[i])

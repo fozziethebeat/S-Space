@@ -35,8 +35,8 @@ import static org.junit.Assert.*;
 public class SimpleDependencyRelationTest {
 
     @Test public void testGetters() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n", 0);
         DependencyRelation rel =
             new SimpleDependencyRelation(node1, "c", node2);
 
@@ -46,8 +46,8 @@ public class SimpleDependencyRelationTest {
     }
 
     @Test public void testEquals() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n", 0);
         DependencyRelation rel1 =
             new SimpleDependencyRelation(node1, "c", node2);
         DependencyRelation rel2 =
@@ -56,8 +56,8 @@ public class SimpleDependencyRelationTest {
     }
 
     @Test public void testNotEqualsRelation() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n", 0);
         DependencyRelation rel1 =
             new SimpleDependencyRelation(node1, "c", node2);
         DependencyRelation rel2 =
@@ -66,9 +66,9 @@ public class SimpleDependencyRelationTest {
     }
 
     @Test public void testNotEqualsNode2() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n");
-        DependencyTreeNode node3 = new SimpleDependencyTreeNode("dog", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n", 0);
+        DependencyTreeNode node3 = new SimpleDependencyTreeNode("dog", "n", 0);
         DependencyRelation rel1 =
             new SimpleDependencyRelation(node1, "c", node2);
         DependencyRelation rel2 =
@@ -78,9 +78,9 @@ public class SimpleDependencyRelationTest {
     }
 
     @Test public void testNotEqualsNode1() {
-        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n");
-        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n");
-        DependencyTreeNode node3 = new SimpleDependencyTreeNode("dog", "n");
+        DependencyTreeNode node1 = new SimpleDependencyTreeNode("cat", "n", 0);
+        DependencyTreeNode node2 = new SimpleDependencyTreeNode("doc", "n", 0);
+        DependencyTreeNode node3 = new SimpleDependencyTreeNode("dog", "n", 0);
         DependencyRelation rel1 =
             new SimpleDependencyRelation(node1, "c", node2);
         DependencyRelation rel2 =

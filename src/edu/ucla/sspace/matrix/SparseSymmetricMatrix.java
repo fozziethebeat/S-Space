@@ -42,19 +42,40 @@ import edu.ucla.sspace.vector.Vectors;
  * matrices in half of the memory.
  *
  * @author David Jurgens
- *
- * @see SymmetricMatrix
  */
-public class SparseSymmetricMatrix extends SymmetricMatrix 
+public class SparseSymmetricMatrix extends AbstractMatrix 
         implements SparseMatrix, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private final SparseMatrix backing;
 
     /**
      * Constructs a sparse matrix with the specified dimensions.
      */
     public SparseSymmetricMatrix(SparseMatrix backing) {
-        super(backing);
+        this.backing = backing;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int columns() {
+        return backing.columns();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double get(int row, int column) {
+        // Swap the ordering so only the upper triangular is accessed.
+        if (row > column) {
+            int tmp = column;
+            column = row;
+            row = tmp;
+        }
+        return backing.get(row, column);
     }
 
     /**
@@ -79,4 +100,23 @@ public class SparseSymmetricMatrix extends SymmetricMatrix
         return rowVec;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public int rows() {
+        return backing.rows();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public void set(int row, int column, double val) {
+        // Swap the ordering so only the upper triangular is written to
+        if (row > column) {
+            int tmp = column;
+            column = row;
+            row = tmp;
+        }
+        backing.set(row, column, val);
+    }
 }
