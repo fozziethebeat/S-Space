@@ -118,9 +118,10 @@ public class DVWordsiMain extends GenericWordsiMain {
         // Load the basis map from disk if one is specified.  Otherwise try to
         // load one from the command line.  If neither option is provided,
         // default to a WordBasedBasisMapping.
-        if (argOptions.hasOption('L'))
+        if (argOptions.hasOption('L')) {
             basis = loadObject(openLoadFile());
-        else if (argOptions.hasOption('B'))
+            basis.setReadOnly(true);
+        } else if (argOptions.hasOption('B'))
             basis = ReflectionUtil.getObjectInstance(
                     argOptions.getStringOption('B'));
         else
