@@ -334,8 +334,8 @@ public class StreamingKMeans<T extends DoubleVector>
                 // data points to the new cluster.
                 for (Cluster<T> cluster : clusters) {
                     int assignment = addDataPoint(cluster.centroid(), 0);
-                Cluster<T> newCluster = facilities.get(assignment);
-                newCluster.dataPointIds().or(cluster.dataPointIds());
+                    Cluster<T> newCluster = facilities.get(assignment);
+                    newCluster.dataPointIds().or(cluster.dataPointIds());
                 }
             }
             return id;
@@ -380,7 +380,7 @@ public class StreamingKMeans<T extends DoubleVector>
               
             if (makeFacility) {
                 Cluster<T> newCluster = new CentroidCluster<T>(
-                  Vectors.instanceOf(value));
+                        Vectors.instanceOf(value));
                 newCluster.addVector(value, (id > 0) ? id : -1);
                 facilities.add(newCluster);
                 bestClusterId = facilities.size() - 1;
