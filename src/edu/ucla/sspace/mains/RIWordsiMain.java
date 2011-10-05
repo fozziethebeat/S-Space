@@ -128,8 +128,10 @@ public class RIWordsiMain extends GenericWordsiMain {
           argOptions.getStringOption('p'));
 
     // Create an index map.
-    if (argOptions.hasOption('L'))
+    if (argOptions.hasOption('L')) {
       indexMap = loadObject(openLoadFile());
+      indexMap.setReadOnly(true);
+    }
     else 
       indexMap = new GeneratorMap<TernaryVector>(new RandomIndexVectorGenerator(
         indexVectorLength));
