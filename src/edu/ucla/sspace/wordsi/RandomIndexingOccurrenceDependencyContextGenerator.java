@@ -86,7 +86,7 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
 
             // Skip words that are not stored in the map if we are in read only
             // mode.
-            if (readOnly && !indexMap.get(term))
+            if (readOnly && !indexMap.containsKey(term))
                 continue;
 
             // Get the index vector for the word.
