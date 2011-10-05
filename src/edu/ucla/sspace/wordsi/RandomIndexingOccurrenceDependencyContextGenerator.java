@@ -36,6 +36,12 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
     private final int indexVectorLength;
 
     /**
+     * Set to true when the index map should be treated as a read only
+     * structure.
+     */
+    private boolean readOnly;
+
+    /**
      * Creates a new {@link RandomIndexingContextGenerator}.
      *
      * @param indexMap The map responsible for mapping co-occurring terms to
@@ -47,10 +53,14 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
     public RandomIndexingOccurrenceDependencyContextGenerator(
             Map<String, TernaryVector> indexMap,
             PermutationFunction<TernaryVector> perm,
-            int indexVectorLength) {
+            int indexVectorLength,
+            int windowSize) {
+        super(null, windowSize);
+
         this.indexMap = indexMap;
         this.permFunc = perm;
         this.indexVectorLength = indexVectorLength;
+        this.readOnly = false;
     }
 
     /**
@@ -72,6 +82,11 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
         for (String term : words) {
             ++distance;
             if (term.equals(IteratorFactory.EMPTY_TOKEN))
+                continue;
+
+            // Skip words that are not stored in the map if we are in read only
+            // mode.
+            if (readOnly && !indexMap.get(term))
                 continue;
 
             // Get the index vector for the word.
@@ -98,6 +113,17 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
             dest.add(n, -1);
     }
     
+    /**
+     * {@inheritDoc}
+     */
+    public int getVectorLength() {
+        return indexVectorLength;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void setReadOnly(boolean readOnly) {
+        readOnly = true;
     }
 }
