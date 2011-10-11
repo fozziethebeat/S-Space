@@ -1,0 +1,24 @@
+#!/bin/bash
+HDFSJAR="/home/stevens35/topic/sspace-lib.jar"
+HDFSBASIS="/home/stevens35/topic/lsa_nyt_2003.basis"
+
+if [ "$1" == "nmf" ]; then
+    HDFSMAT="/home/stevens35/topic/nyt_2003_log_entropy-matlab.dat"
+elif [ "$1" == "svd" ]; then
+    HDFSMAT="/home/stevens35/topic/nyt_2003_log_entropy.dat"
+fi
+
+hadoop dfs -rmr /home/stevens35/reduction-output
+# Do the runs
+$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-0.20.2+737.jar \
+    -input /home/stevens35/reduction-input \
+    -output /home/stevens35/reduction-output \
+    -mapper reductionEval \
+    -reducer NONE \
+    -verbose \
+    -file reductionEval \
+    -jobconf mapred.job.name="MatrixReduction" \
+    -jobconf mapred.task.timeout="60000000" \
+    -cacheFile hdfs://thormaster:54310$HDFSMAT#termDocMatrix.mat \
+    -cacheFile hdfs://thormaster:54310$HDFSBASIS#termDocMatrix.basis \
+    -cacheFile hdfs://thormaster:54310$HDFSJAR#sspace-lib.jar
