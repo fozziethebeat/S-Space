@@ -212,7 +212,7 @@ public class TransformStatistics {
                 throw new IllegalArgumentException(
                         "Array size is too small for values in the " +
                         "given map");
-            values[entry.getKey()] = (double) entry.getKey();
+            values[entry.getKey()] = entry.getValue().doubleValue();
         }
         return values;
     }
