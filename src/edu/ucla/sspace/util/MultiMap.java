@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * An object that maps a key to one or more values.  A map cannot contain
  * duplicate keys and each key cannot map to duplicate values.
@@ -45,6 +46,12 @@ public interface MultiMap<K,V> {
     public boolean containsKey(Object key);
 
     /**
+     * Returns {@code true} if this multi-map contains a mapping from specified
+     * key to the specified value.
+     */
+    public boolean containsMapping(Object key, Object value);
+
+    /**
      * Returns {@code true} if this multi-map contains from any key to the
      * specified value.
      */
@@ -57,8 +64,8 @@ public interface MultiMap<K,V> {
     public Set<Map.Entry<K,V>> entrySet();
 
     /**
-     * Returns {@code true} if this multi-map maps one or more keys to the specified
-     * value.
+     * Returns the set of values mapped to this key or {@code null} of the key
+     * is not mapped to any values
      */
     public Set<V> get(Object key);
 
@@ -105,7 +112,7 @@ public interface MultiMap<K,V> {
      * @return {@code true} if at least one of the provided value was not
      *         already in the set of value mapped to the specified key
      */
-    public boolean putMulti(K key, Collection<V> values);
+    public boolean putMany(K key, Collection<V> values);
 
     /**
      * Removes the mapping for a key from this multi-map if it is present
@@ -120,7 +127,7 @@ public interface MultiMap<K,V> {
      *
      * @return {@code true} if the specified mapping was removed
      */
-    public boolean remove(K key, V value);
+    public boolean remove(Object key, Object value);
 
     /**
      * Returns the number of values maped to keys.  Note that in the
@@ -146,4 +153,9 @@ public interface MultiMap<K,V> {
      */
     public Collection<V> values();
 
+    /**
+     * Returns a {@link Collection} view of the sets of values mapped to each
+     * key in this map.
+     */
+    public Collection<Set<V>> valueSets();
 }

@@ -131,7 +131,8 @@ public class DVRIWordsiMain extends DVWordsiMain {
 
         // Set to read only if in evaluation mode.
         if (argOptions.hasOption('e'))
-            indexMap.setReadOnly(true);
+            throw new Error("fix me");
+            //indexMap.setReadOnly(true);
 
        return new RandomIndexingDependencyContextGenerator(
                permFunc, getAcceptor(), indexMap, vectorLength, pathLength);

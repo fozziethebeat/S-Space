@@ -43,7 +43,8 @@ public class LexSubWordsiMain {
         Wordsi wordsi = new LexSubWordsi(args[3], args[0]);
 
         System.err.println("Loading basis mapping and extractor.");
-        BasisMapping<String, String> basis = SerializableUtil.load(args[2]);
+        BasisMapping<String, String> basis = 
+            SerializableUtil.load(new File(args[2]));
         basis.setReadOnly(true);
         ContextGenerator generator =
             new WordOccrrenceContextGenerator(basis, new LinearWeighting(), 25);

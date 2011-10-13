@@ -21,6 +21,10 @@
 
 package edu.ucla.sspace.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +38,9 @@ import java.util.Set;
  *
  * @author Keith Stevens
  */
-public class HashBiMap<K, V> implements BiMap<K, V> {
+public class HashBiMap<K, V> implements BiMap<K, V>, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The original mapping.
@@ -44,27 +50,29 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     /**
      * An inverse mapping from values to keys.
      */
-    private HashBiMap<V, K> reverseMap;
+    private Map<V, K> reverseMap;
 
     /**
-     * Creates an empty {@link HashBiMap}.
+     * Creates an empty {@code HashBiMap}
      */
     public HashBiMap() {
-        originalMap = new HashMap<K, V>();
-        reverseMap = new HashBiMap<V, K>(new HashMap<V, K>(), this);
+        this(new HashMap<K,V>(), new HashMap<V,K>());
     }
 
     /**
      * Creates a new {@link HashBiMap} from an existing {@link Map}
+     *
+     * @throws IllegalArgumentException if the mapping is not bijective
      */
     public HashBiMap(Map<K, V> map) {
         originalMap = map;
-
         // Iterate through the original map and create the inverse mappings.
-        Map<V, K> otherMap = new HashMap<V, K>();
-        for (Map.Entry<K, V> entry : map.entrySet())
-            otherMap.put(entry.getValue(), entry.getKey());
-        reverseMap = new HashBiMap<V, K>(otherMap, this);
+        reverseMap = new HashMap<V, K>();
+        for (Map.Entry<K, V> entry : map.entrySet()) 
+            reverseMap.put(entry.getValue(), entry.getKey());
+        if (reverseMap.size() != originalMap.size())
+            throw new IllegalArgumentException(
+                "map is not bijective; some mappings have been lost");
     }
 
     /**
@@ -72,7 +80,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * existing {@link BiMap}.  The original mapping is not recomputed for the
      * {@link BiMap} created in public  above constructor.
      */
-    private HashBiMap(Map<K, V> map, HashBiMap<V, K> reverse) {
+    private HashBiMap(Map<K, V> map, Map<V, K> reverse) {
         this.originalMap = map;
         this.reverseMap = reverse;
     }
@@ -96,7 +104,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * {@inheritDoc}
      */
     public boolean containsValue(Object key) {
-        return originalMap.containsValue(key);
+        return reverseMap.containsKey(key);
     }
 
     /**
@@ -131,7 +139,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * {@inheritDoc}
      */
     public BiMap<V, K> inverse() {
-        return reverseMap;
+        return new HashBiMap<V, K>(reverseMap, originalMap);
     }
 
     /**
@@ -152,7 +160,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
      * {@inheritDoc}
      */
     public V put(K key, V value) {
-        reverseMap.originalMap.put(value, key);
+        reverseMap.put(value, key);
         return originalMap.put(key, value);
     }
 
@@ -162,7 +170,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     public void putAll(Map<? extends K, ? extends V> m) {
         originalMap.putAll(m);
         for (Map.Entry<? extends K,? extends V> e : m.entrySet())
-            reverseMap.originalMap.put(e.getValue(), e.getKey());
+            reverseMap.put(e.getValue(), e.getKey());
     }
 
     /**
@@ -171,7 +179,7 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     public V remove(Object key) {
         V removed = originalMap.remove(key);
         if (removed != null)
-            reverseMap.originalMap.remove(removed);
+            reverseMap.remove(removed);
         return removed;
     }
 
@@ -183,9 +191,38 @@ public class HashBiMap<K, V> implements BiMap<K, V> {
     }
 
     /**
+     * Returns a string description of the mappings.
+     */
+    public String toString() {
+        return originalMap.toString();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public Collection<V> values() {
         return originalMap.values();
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeInt(originalMap.size());
+        for (Map.Entry<K,V> e : originalMap.entrySet()) {
+            out.writeObject(e.getKey());
+            out.writeObject(e.getValue());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream in) 
+            throws IOException, ClassNotFoundException {
+        int size = in.readInt();
+        originalMap = new HashMap<K, V>(size);
+        reverseMap = new HashMap<V, K>(size);
+        for (int i = 0; i < size ; ++i) {
+            K k = (K)(in.readObject());
+            V v = (V)(in.readObject());
+            originalMap.put(k, v);
+            reverseMap.put(v, k);
+        }            
     }
 }

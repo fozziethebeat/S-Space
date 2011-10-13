@@ -192,35 +192,6 @@ public class TimeSpan {
     }
 
     /**
-     * Adds the duration of this time span to the provided {@code Calendar}
-     * instance, moving it forward in time.
-     *
-     * @param c the calendar whose date will be moved forward by the duration of
-     *        this time span
-     */
-    public void addTo(Calendar c) {
-        c.add(Calendar.YEAR, years);
-        c.add(Calendar.MONTH, months);
-        c.add(Calendar.WEEK_OF_YEAR, weeks);
-        c.add(Calendar.DAY_OF_YEAR, days);
-        c.add(Calendar.HOUR_OF_DAY, hours);
-    }
-
-    /**
-     * Adds the duration of this time span to the provided {@code Date}
-     * instance, moving it forward in time.
-     *
-     * @param d the date whose value will be moved forward by the duration of
-     *        this time span
-     */
-    public void addTo(Date d) {
-	Calendar c = Calendar.getInstance();
-	c.setTime(d);
-        addTo(c);
-        d.setTime(c.getTime().getTime());
-    }
-
-    /**
      * Checks whether the index is already set in the bit flags and throws an
      * exception if so.
      *
