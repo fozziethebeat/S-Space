@@ -115,7 +115,7 @@ public class WorkQueue {
      * Creates a new work queue with the number of threads executing tasks the
      * same as the number as processors on the system.
      */
-    private WorkQueue() {
+    public WorkQueue() {
         this(Runtime.getRuntime().availableProcessors());
     }
 
@@ -123,7 +123,7 @@ public class WorkQueue {
      * Creates a new work queue with the specified number of threads executing
      * tasks.
      */
-    private WorkQueue(int numThreads) {
+    public WorkQueue(int numThreads) {
         workQueue = new LinkedBlockingQueue<Runnable>();
         threads = new ArrayList<Thread>();
         taskKeyToLatch = new ConcurrentHashMap<Object,CountDownLatch>();
