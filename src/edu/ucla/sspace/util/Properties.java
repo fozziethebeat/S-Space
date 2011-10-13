@@ -93,6 +93,6 @@ public class Properties {
     String propValue = props.getProperty(propName);
     if (propValue == null)
       return defaultValue;
-    return (T) ReflectionUtil.getObjectInstance(propValue);
+    return ReflectionUtil.<T>getObjectInstance(propValue);
   }
 }

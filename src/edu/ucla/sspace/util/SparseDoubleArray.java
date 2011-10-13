@@ -384,6 +384,17 @@ public class SparseDoubleArray
         return array;
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder(indices.length * 6);
+        sb.append('[');
+        for (int i = 0; i < indices.length; ++i) {
+            sb.append(indices[i]).append(':').append(values[i]);
+            if (i + 1 < indices.length)
+                sb.append(", ");
+        }
+        return sb.append(']').toString();
+    }
+
     /**
      * A private iterator over the non-zero values of the array.  Note that this
      * iterator is <i>not</i> thread safe.

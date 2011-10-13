@@ -51,8 +51,6 @@ public class GeneratorMap<T> implements Map<String, T>, Serializable {
      */
     private final Map<String, T> termToItem;
 
-    private boolean readOnly;
-
     /**
      * Creates a new {@link GeneratorMap} using a {@code ConcurrentHashMap}.
      * Items will be using the provided {@link Generator}.
@@ -68,7 +66,6 @@ public class GeneratorMap<T> implements Map<String, T>, Serializable {
     public GeneratorMap(Generator<T> generator, Map<String, T> map) {
         termToItem = map;
         this.generator = generator;
-        readOnly = false;
     }
 
     /**
@@ -117,7 +114,7 @@ public class GeneratorMap<T> implements Map<String, T>, Serializable {
     public T get(Object term) {
         // Check that an index vector does not already exist.
         T v = termToItem.get(term);
-        if (v == null && !readOnly) {
+        if (v == null) {
             synchronized (this) {
                 // Confirm that some other thread has not created an index
                 // vector for this term.
@@ -188,9 +185,5 @@ public class GeneratorMap<T> implements Map<String, T>, Serializable {
      */
     public T remove(Object key) {
         return termToItem.remove(key);
-    }
-
-    public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
     }
 }

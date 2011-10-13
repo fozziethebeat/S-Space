@@ -32,39 +32,7 @@ import static org.junit.Assert.*;
 /**
  * Tests for the {@link TimeSpan} class.
  */
-@SuppressWarnings("deprecation")
 public class TimeSpanTests {
-
-    @Test public void testAddCalendar() {
-        TimeSpan ts = new TimeSpan("1y");
-        Calendar c = Calendar.getInstance();
-        int year = c.get(Calendar.YEAR);
-        ts.addTo(c);
-        assertEquals(year + 1, c.get(Calendar.YEAR));
-
-        ts = new TimeSpan("1m");
-        for (int i = 0; i < 12; ++i) {
-            int month = c.get(Calendar.MONTH);
-            ts.addTo(c);
-            assertEquals((month + 1) % 12, c.get(Calendar.MONTH));
-        }
-    }
-
-    @SuppressWarnings("deprecated")
-    @Test public void testAddDate() {
-        TimeSpan ts = new TimeSpan("1y");
-        Date d = new Date();
-        int year = d.getYear();
-        ts.addTo(d);
-        assertEquals(year + 1, d.getYear());
-
-        ts = new TimeSpan("1m");
-        for (int i = 0; i < 12; ++i) {
-            int month = d.getMonth();
-            ts.addTo(d);
-            assertEquals((month + 1) % 12, d.getMonth());
-        }
-    }
    
     @Test public void testStringConstructor() {
 	TimeSpan ts = new TimeSpan("1y");

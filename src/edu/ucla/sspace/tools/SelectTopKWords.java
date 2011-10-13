@@ -22,7 +22,8 @@ import java.util.List;
 public class SelectTopKWords {
     public static void main(String[] args) throws Exception {
         // Load the basis mapping.
-        BasisMapping<String, String> basis = SerializableUtil.load(args[0]);
+        BasisMapping<String, String> basis = 
+            SerializableUtil.load(new File(args[0]));
 
         // Create the top 10 lists for each topic in the word space.
         List<MultiMap<Double, String>> topTerms = new ArrayList<MultiMap<Double, String>>();

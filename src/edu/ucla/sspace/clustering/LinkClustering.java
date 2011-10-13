@@ -421,7 +421,7 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             clusterToElements.put(i, i);
 
         for (Merge m : merges) {
-            clusterToElements.putMulti(m.remainingCluster(), 
+            clusterToElements.putMany(m.remainingCluster(), 
                 clusterToElements.remove(m.mergedCluster()));
         }           
 
