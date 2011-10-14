@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>About</title>
+    <title>Team list</title>
     <style type="text/css" media="all">
       @import url("./css/maven-base.css");
       @import url("./css/maven-theme.css");
@@ -60,14 +60,14 @@
                           <a href="license.html" title="Project License">Project License</a>
             </li>
                       <li class="none">
-                          <a href="team-list.html" title="Project Team">Project Team</a>
-            </li>
+            <strong>Project Team</strong>
+          </li>
                       <li class="none">
                           <a href="source-repository.html" title="Source Repository">Source Repository</a>
             </li>
                       <li class="none">
-            <strong>About</strong>
-          </li>
+                          <a href="index.html" title="About">About</a>
+            </li>
                       <li class="none">
                           <a href="issue-tracking.html" title="Issue Tracking">Issue Tracking</a>
             </li>
@@ -92,15 +92,22 @@
     </div>
     <div id="bodyColumn">
       <div id="contentBox">
-        <div class="section"><h2>About S-Space Package<a name="About_S-Space_Package"></a></h2><p>The S-Space Package is a collection of algorithms for building
-    Semantic Spaces as well as a highly-scalable library for designing new
-    distributional semantics algorithms. Distributional algorithms process text
-    corpora and represent the semantic for words as high dimensional feature
-    vectors. This package also includes matrices, vectors, and numerous
-    clustering algorithms. These approaches are known by many names, such as
-    word spaces, semantic spaces, or distributed semantics and rest upon the
-    Distributional Hypothesis: words that appear in similar contexts have
-    similar meanings.</p></div>
+        <div class="section"><h2>The Team<a name="The_Team"></a></h2><p>A successful project requires many people to play many roles. Some members write code or documentation, while others are valuable as testers, submitting patches and suggestions.</p><p>The team is comprised of Members and Contributors. Members have direct access to the source of a project and actively evolve the code-base. Contributors improve the project through submission of patches and suggestions to the Members. The number of Contributors to the project is unbounded. Get involved today. All contributions to the project are greatly appreciated.</p><div class="section"><h3>Members<a name="Members"></a></h3><p>The following is a list of developers with commit privileges that have directly contributed to the project in one way or another.</p><table border="0" class="bodyTable"><tr class="a"><th>Id</th><th>Name</th><th>Email</th><th>URL</th><th>Organization</th><th>Organization URL</th><th>Roles</th></tr><tr class="b"><td><a name="fozziethebeat"></a>fozziethebeat</td><td>Keith Stevens</td><td><a class="externalLink" href="mailto:fozziethebeat@gmail.com">fozziethebeat@gmail.com</a></td><td><a class="externalLink" href="http://kracken.cs.ucla.edu">http://kracken.cs.ucla.edu</a></td><td>Lawrence Livermore National Lab</td><td><a class="externalLink" href="http://www.llnl.gov">http://www.llnl.gov</a></td><td>developer</td></tr><tr class="a"><td><a name="davidjurgens"></a>davidjurgens</td><td>David Jurgens</td><td><a class="externalLink" href="mailto:jurgens@gmail.com">jurgens@gmail.com</a></td><td><a class="externalLink" href="http://cs.ucla.edu/~jurgens">http://cs.ucla.edu/~jurgens</a></td><td>University of California, Los Angeles</td><td><a class="externalLink" href="http://cs.ucla.edu">http://cs.ucla.edu</a></td><td>developer</td></tr></table></div><div class="section"><h3>Contributors<a name="Contributors"></a></h3><p>There are no contributors listed for this project. Please check back again later.</p></div></div><script type="text/javascript">
+function offsetDate(id, offset) {
+    var now = new Date();
+    var nowTime = now.getTime();
+    var localOffset = now.getTimezoneOffset();
+    var developerTime = nowTime + ( offset * 60 * 60 * 1000 )+ ( localOffset * 60 * 1000 );
+    var developerDate = new Date(developerTime);
+
+    document.getElementById(id).innerHTML = developerDate;
+}
+
+function init(){
+}
+
+window.onLoad = init();
+</script>
       </div>
     </div>
     <div class="clear">
