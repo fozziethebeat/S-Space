@@ -1,0 +1,27 @@
+-classpath
+'/home/keith/devel/S-Space/target/classes:/home/keith/devel/S-Space/target/test-classes:/home/keith/.m2/repository/jama/jama/1.0/jama-1.0.jar:/home/keith/.m2/repository/org/apache/lucene/lucene-core/2.4.1/lucene-core-2.4.1.jar:/home/keith/.m2/repository/net/sf/trove4j/trove4j/3.0.1/trove4j-3.0.1.jar:/home/keith/.m2/repository/jaws/jaws/1.2/jaws-1.2.jar:/home/keith/.m2/repository/junit/junit/4.8/junit-4.8.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/home/keith/devel/S-Space/src/test/java'
+-author
+-bottom
+'Copyright &#169; 2011. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'/home/keith/devel/S-Space/target/site/testapidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'S-Space Package 2.0 Test API'
+-link
+'../apidocs'
+-linkoffline
+'http://download.oracle.com/javase/6/docs/api' '/home/keith/devel/S-Space/target/javadoc-bundle-options'
+-splitindex
+-use
+-version
+-windowtitle
+'S-Space Package 2.0 Test API'

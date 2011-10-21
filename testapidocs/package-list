@@ -1,0 +1,16 @@
+edu.ucla.sspace.basis
+edu.ucla.sspace.clustering
+edu.ucla.sspace.common
+edu.ucla.sspace.dependency
+edu.ucla.sspace.evaluation
+edu.ucla.sspace.hal
+edu.ucla.sspace.index
+edu.ucla.sspace.matrix
+edu.ucla.sspace.matrix.factorization
+edu.ucla.sspace.ri
+edu.ucla.sspace.text
+edu.ucla.sspace.util
+edu.ucla.sspace.vector
+edu.ucla.sspace.wordsi
+edu.ucla.sspace.wordsi.psd
+edu.ucla.sspace.wordsi.semeval
