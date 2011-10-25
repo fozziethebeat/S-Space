@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.util;
 
+import java.lang.reflect.Array;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +34,6 @@ import gnu.trove.TDecorators;
 import gnu.trove.iterator.TObjectIntIterator;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-
 
 /** 
  * A utility class for mapping a set of objects to unique indices based on
@@ -49,6 +50,13 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
      * A mapping from each item to its index.
      */
     private final TObjectIntHashMap<T> indices;
+
+    /**
+     * The inverse mapping from indices to the object to which they are mapped.
+     * This lookup is computed as-needed and cached so long as the index mapping
+     * remains valid.
+     */
+    private transient T[] indexLookup;
 
     /**
      * Creates an empty {@code HashIndexer} with no mappings.
@@ -141,7 +149,23 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
      * {@inheritDoc}
      */
     public T lookup(int index) {
-        throw new Error();
+        if (index < 0 || index >= indices.size())
+            return null;
+        assert indices.size() > 0;
+        // If the current lookup table is invalid or has yet to be computed,
+        // recalcuate it
+        if (indexLookup == null || indexLookup.length != indices.size()) {
+            T t = indices.keySet().iterator().next();
+            @SuppressWarnings("unchecked")
+            T[] tmp = (T[])(Array.newInstance(t.getClass(), indices.size()));
+            indexLookup = tmp;
+            TObjectIntIterator<T> iter = indices.iterator();
+            while (iter.hasNext()) {
+                iter.advance();
+                indexLookup[iter.value()] = iter.key();
+            }
+        }
+        return indexLookup[index];
     }
 
     /**

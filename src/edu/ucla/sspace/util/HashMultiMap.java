@@ -79,6 +79,15 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
     /**
      * {@inheritDoc}
      */
+    public Map<K,Set<V>> asMap() {
+        // REMINDER: map should be wrapped with a class to prevent mapping keys
+        // to null
+        return map;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void clear() {
         map.clear();
         range = 0;

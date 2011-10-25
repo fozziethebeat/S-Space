@@ -23,7 +23,7 @@ package edu.ucla.sspace.graph;
 
 import java.util.Set;
 
-import edu.ucla.sspace.util.IntSet;
+import edu.ucla.sspace.util.primitive.IntSet;
 
 
 /**

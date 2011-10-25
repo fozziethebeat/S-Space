@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -19,70 +19,54 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.util;
+package edu.ucla.sspace.util.primitive;
+
+import java.io.Serializable;
+
+import edu.ucla.sspace.util.MultiMap;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import gnu.trove.TIntCollection;
+import gnu.trove.set.TIntSet;
+import gnu.trove.map.TIntIntMap;
+
 
 /**
- * An object that maps a key to one or more values.  A map cannot contain
- * duplicate keys and each key cannot map to duplicate values.
  *
- * @see Map
  */
-public interface MultiMap<K,V> {
-
-    /**
-     * Returns a {@link Map}-based view of this {@code MultiMap}
-     */
-    Map<K,Set<V>> asMap();
-
-    /**
-     * Removes all of the mappings from this multi-map.
-     */
-    void clear();
+public interface IntIntMultiMap extends MultiMap<Integer,Integer> {
 
     /**
      * Returns {@code true} if this multi-map contains a mapping for the
      * specified key.
      */
-    boolean containsKey(Object key);
+    boolean containsKey(int key);
 
     /**
      * Returns {@code true} if this multi-map contains a mapping from specified
      * key to the specified value.
      */
-    boolean containsMapping(Object key, Object value);
+    boolean containsMapping(int key, int value);
 
     /**
      * Returns {@code true} if this multi-map contains from any key to the
      * specified value.
      */
-    boolean containsValue(Object key);
-
-    /**
-     * Returns a {@link Set} view of all the key-value mappings contained in
-     * this multi-map.
-     */
-    Set<Map.Entry<K,V>> entrySet();
+    boolean containsValue(int key);
 
     /**
      * Returns the set of values mapped to this key or {@code null} of the key
      * is not mapped to any values
      */
-    Set<V> get(Object key);
-
-    /**
-     * Returns {@code true} if this multi-map contains no mappings.
-     */
-    boolean isEmpty();
+    IntSet get(int key);
 
     /**
      * Returns a {@link Set} view of the mappings contained in this multi-map.
      */
-    Set<K> keySet();
+    IntSet keySet();
 
     /**
      * Adds the specified value to the set of values associated with the
@@ -94,17 +78,12 @@ public interface MultiMap<K,V> {
      * @return {@code true} if the provided value was not already in the set of
      *         value mapped to the specified key
      */
-    boolean put(K key, V value);
+    boolean put(int key, int value);
 
     /**
      * Copies all of the mappings from the specified map to this mutli-map
      */
-    void putAll(Map<? extends K,? extends V> m);
-
-    /**
-     * Copies all of the mappings from the specified mulit-map to this mutli-map
-     */
-    void putAll(MultiMap<? extends K,? extends V> m);
+     void putAll(IntIntMultiMap m);
 
     /**
      * Adds all of the specified values to the set of values associated with the
@@ -117,12 +96,25 @@ public interface MultiMap<K,V> {
      * @return {@code true} if at least one of the provided value was not
      *         already in the set of value mapped to the specified key
      */
-    boolean putMany(K key, Collection<V> values);
+    boolean putMany(int key, IntCollection values);
+
+    /**
+     * Adds all of the specified values to the set of values associated with the
+     * specified key in this map.
+     *
+     * @param key key with which the specified value is to be associated
+     * @param values a collection of values to be associated with the specified
+     *        key
+     *
+     * @return {@code true} if at least one of the provided value was not
+     *         already in the set of value mapped to the specified key
+     */
+    boolean putMany(int key, Collection<Integer> values);
 
     /**
      * Removes the mapping for a key from this multi-map if it is present
      */
-    Set<V> remove(K key);
+    IntSet remove(int key);
 
     /**
      * Removes the specified mapping for a key if it is present.  If the key is
@@ -132,35 +124,11 @@ public interface MultiMap<K,V> {
      *
      * @return {@code true} if the specified mapping was removed
      */
-    boolean remove(Object key, Object value);
-
-    /**
-     * Returns the number of values maped to keys.  Note that in the
-     * bijective case, this will equal the value returned by {@link
-     * #size()}.  However, in the case where a key is mapped to more
-     * than one value, this method will always return a value strictly
-     * larger than {@code size()}.
-     *
-     * @return the number of values maped to keys
-     */
-    int range();
-
-    /**
-     * Returns the number of keys that are mapped to one or more values in this
-     * multi-map.
-     *
-     * @see #range()
-     */
-    int size();
+    boolean remove(int key, int value);
 
     /**
      * Returns a {@link Collection} view of the values contained in this map.
      */
-    Collection<V> values();
+    IntCollection values();
 
-    /**
-     * Returns a {@link Collection} view of the sets of values mapped to each
-     * key in this map.
-     */
-    Collection<Set<V>> valueSets();
 }

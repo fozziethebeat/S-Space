@@ -31,8 +31,10 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import edu.ucla.sspace.util.CombinedIterator;
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.TroveIntSet;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 
 /**
@@ -109,6 +111,41 @@ public class SparseDirectedEdgeSet extends AbstractSet<DirectedEdge>
                 return outEdges.contains(e.to());
         }
         return false;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDirectedEdgeSet copy(IntSet vertices) {        
+        SparseDirectedEdgeSet copy = new SparseDirectedEdgeSet(rootVertex);
+        if (vertices.size() < inEdges.size()
+                && vertices.size() < outEdges.size()) {
+
+            IntIterator iter = vertices.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (inEdges.contains(v)) 
+                    copy.inEdges.add(v);
+                if (outEdges.contains(v)) 
+                    copy.inEdges.add(v);
+            }            
+        }
+        else {
+            IntIterator iter = inEdges.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (vertices.contains(v))
+                    copy.inEdges.add(v);
+            }
+            iter = outEdges.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (vertices.contains(v))
+                    copy.outEdges.add(v);
+            }
+        }
+        return copy;
     }
 
     /**

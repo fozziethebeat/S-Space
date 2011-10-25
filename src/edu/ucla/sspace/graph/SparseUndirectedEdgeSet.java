@@ -27,8 +27,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.TroveIntSet;
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntIterator;
@@ -105,6 +106,30 @@ public class SparseUndirectedEdgeSet extends AbstractSet<Edge>
             return b;
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseUndirectedEdgeSet copy(IntSet vertices) {        
+        SparseUndirectedEdgeSet copy = new SparseUndirectedEdgeSet(rootVertex);
+        if (edges.size() < vertices.size()) {
+            TIntIterator iter = edges.iterator();
+            while (iter.hasNext()) {
+                int v = iter.next();
+                if (vertices.contains(v))
+                    copy.edges.add(v);
+            }            
+        }
+        else {
+            IntIterator iter = vertices.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (edges.contains(v)) 
+                    copy.edges.add(v);
+            }
+        }
+        return copy;
     }
 
     /**

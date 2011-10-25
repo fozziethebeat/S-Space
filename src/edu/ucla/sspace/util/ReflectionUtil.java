@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.util;
 
+import java.lang.reflect.Array;
+
 /**
  * A collection of miscellaneous, but useful, functions for working with
  * reflection
@@ -46,4 +48,8 @@ public class ReflectionUtil {
             throw new Error(e);
         }
     }
+
+//     public static <T> T[] newArrayInstance(Class<T> c, int length) {
+//         return Arrays.newInstance(c, length)
+//     }
 }

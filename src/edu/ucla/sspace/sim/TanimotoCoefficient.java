@@ -29,33 +29,32 @@ import edu.ucla.sspace.vector.Vector;
 
 
 /**
- * A functional class for computing <a
- * href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's tau</a> of the
- * values in the two vectors.  This method uses tau-b, which is suitable for
- * vectors with duplicate values.
+ * Returns the <a
+ * href="http://en.wikipedia.org/wiki/Tanimoto_coefficient#Tanimoto_coefficient_.28extended_Jaccard_coefficient.29">Tanimoto
+ * Coefficient</a> between any two {@link Vector}s.
  *
  * @author Keith Stevens
  */
-public class KendallsTau extends AbstractSymmetricSimilarityFunction {
+public class TanimotoCoefficient extends AbstractSymmetricSimilarityFunction {
 
     /**
      * {@inheritDoc}
      */
     public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.kendallsTau(v1, v2);
+        return Similarity.tanimotoCoefficient(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.kendallsTau(v1, v2);
+        return Similarity.tanimotoCoefficient(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(Vector v1, Vector v2) {
-        return Similarity.kendallsTau(v1, v2);
+        return Similarity.tanimotoCoefficient(v1, v2);
     }
 }

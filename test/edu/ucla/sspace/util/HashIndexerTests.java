@@ -70,4 +70,41 @@ public class HashIndexerTests {
         assertEquals(10, h.size());        
     }
 
+    @Test public void testLookup() {
+        HashIndexer<Integer> h = new HashIndexer<Integer>();
+        assertEquals(0, h.size());
+        for (int i = 0; i < 10; ++i) {
+            h.index(i);
+            assertEquals(i + 1, h.size());
+            assertEquals(i, h.index(i));
+        }
+        
+        for (int i = 0; i < 10; ++i) {
+            assertEquals(i, h.lookup(i).intValue());
+        }
+    }
+
+    @Test public void testLookupRecomputed() {
+        HashIndexer<Integer> h = new HashIndexer<Integer>();
+        assertEquals(0, h.size());
+        for (int i = 0; i < 5; ++i) {
+            h.index(i);
+            assertEquals(i + 1, h.size());
+            assertEquals(i, h.index(i));
+        }
+        
+        for (int i = 0; i < 5; ++i) {
+            assertEquals(i, h.lookup(i).intValue());
+        }
+
+        for (int i = 5; i < 10; ++i) {
+            h.index(i);
+            assertEquals(i + 1, h.size());
+            assertEquals(i, h.index(i));
+        }
+        
+        for (int i = 0; i < 5; ++i) {
+            assertEquals(i, h.lookup(i).intValue());
+        }
+    }
 }

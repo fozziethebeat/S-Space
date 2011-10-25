@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.util;
+package edu.ucla.sspace.util.primitive;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -213,10 +213,4 @@ public class CompactIntSetTests {
         it.remove();
         it.remove();
     }
-
-
-    public static void main(String args[]) {
-        org.junit.runner.JUnitCore.main(IntegerMapTests.class.getName());
-    }
-
 }

@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.util;
+package edu.ucla.sspace.util.primitive;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -29,7 +29,11 @@ import java.util.Set;
 
 
 /**
- *
+ * A refinement of the {@link Set} interface for implementations that store
+ * {@code int} values.  Implementations are expected to provide increased
+ * performance through primitive {@code int} methods and storage rather than
+ * using {@link Integer}-based operations that the exiting Collections libraries
+ * use.
  *
  * @author David Jurgens
  */

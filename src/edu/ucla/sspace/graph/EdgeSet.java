@@ -22,7 +22,8 @@
 package edu.ucla.sspace.graph;
 
 import java.util.Set;
-import edu.ucla.sspace.util.IntSet;
+
+import edu.ucla.sspace.util.primitive.IntSet;
 
 
 /**
@@ -55,6 +56,12 @@ public interface EdgeSet<T extends Edge> extends Set<T> {
      * Returns true if the root vertex is connected to the provided vertex.
      */
     boolean connects(int vertex);
+
+    /**
+     * Copies the edges in this set that are connected to any of the vertices in
+     * the provided set.
+     */
+    EdgeSet copy(IntSet vertices);       
 
     /**
      * Removes all edges instances that connect to the specified vertex.

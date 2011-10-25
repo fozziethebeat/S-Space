@@ -224,11 +224,17 @@ public class WorkQueue {
      * number of threads are available.
      */
     public static WorkQueue getWorkQueue(int numThreads) {
-        WorkQueue q = getWorkQueue();
-        while (q.availableThreads() < numThreads) {
-            q.addThread();
+        if (singleton == null) {
+            synchronized (WorkQueue.class) {
+                if (singleton == null)
+                    singleton = new WorkQueue(numThreads); 
+            }
         }
-        return q;
+
+        while (singleton.availableThreads() < numThreads) {
+            singleton.addThread();
+        }
+        return singleton;
     }
 
     /**

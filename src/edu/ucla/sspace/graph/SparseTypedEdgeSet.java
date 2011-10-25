@@ -32,9 +32,10 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import edu.ucla.sspace.util.CombinedSet;
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.TroveIntSet;
-import edu.ucla.sspace.util.OpenIntSet;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 
 /**
@@ -50,11 +51,11 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     private final int rootVertex;
 
-    private final Map<T,OpenIntSet> typeToEdges;
+    private final Map<T,IntSet> typeToEdges;
         
     public SparseTypedEdgeSet(int rootVertex) {
         this.rootVertex = rootVertex;
-        typeToEdges = new HashMap<T,OpenIntSet>();
+        typeToEdges = new HashMap<T,IntSet>();
     }
     
     /**
@@ -63,11 +64,11 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     public boolean add(TypedEdge<T> e) {
         if (e.from() == rootVertex) {
-            OpenIntSet edges = getEdgesForType(e.edgeType());
+            IntSet edges = getEdgesForType(e.edgeType());
             return edges.add(e.to());
         }
         else if (e.to() == rootVertex) {
-            OpenIntSet edges = getEdgesForType(e.edgeType());
+            IntSet edges = getEdgesForType(e.edgeType());
             return edges.add(e.from());
         }
         return false;
@@ -78,7 +79,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     public IntSet connected() {
         IntSet connected = new TroveIntSet();        
-        for (OpenIntSet s : typeToEdges.values())
+        for (IntSet s : typeToEdges.values())
             connected.addAll(s);
         return connected;
     }
@@ -87,7 +88,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * {@inheritDoc}
      */
     public boolean connects(int vertex) {
-        for (OpenIntSet edges : typeToEdges.values()) {
+        for (IntSet edges : typeToEdges.values()) {
             if (edges.contains(vertex))
                 return true;
         }
@@ -105,14 +106,39 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         TypedEdge<T> e = (TypedEdge<T>)o;
            
         if (e.from() == rootVertex) {
-            OpenIntSet edges = typeToEdges.get(e.edgeType());
+            IntSet edges = typeToEdges.get(e.edgeType());
             return edges != null && edges.contains(e.to());
         }
         else if (e.to() == rootVertex) {
-            OpenIntSet edges = typeToEdges.get(e.edgeType());
+            IntSet edges = typeToEdges.get(e.edgeType());
             return edges != null && edges.contains(e.from());
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseTypedEdgeSet copy(IntSet vertices) {        
+        throw new Error();
+//         SparseTypedEdgeSet copy = new SparseTypedEdgeSet(rootVertex);
+//         if (edges.size() < vertices.size()) {
+//             TIntIterator iter = edges.iterator();
+//             while (iter.hasNext()) {
+//                 int v = iter.next();
+//                 if (vertices.contains(v))
+//                     copy.edges.add(v);
+//             }            
+//         }
+//         else {
+//             IntIterator iter = vertices.iterator();
+//             while (iter.hasNext()) {
+//                 int v = iter.nextInt();
+//                 if (edges.contains(v)) 
+//                     copy.edges.add(v);
+//             }
+//         }
+//         return copy;
     }
 
     /**
@@ -127,8 +153,8 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     public Set<TypedEdge<T>> getEdges(int vertex) {
         Set<TypedEdge<T>> output = new HashSet<TypedEdge<T>>();
-        for (Map.Entry<T,OpenIntSet> e : typeToEdges.entrySet()) {
-            OpenIntSet edges = e.getValue();
+        for (Map.Entry<T,IntSet> e : typeToEdges.entrySet()) {
+            IntSet edges = e.getValue();
             if (edges.contains(vertex)) {
                 output.add(new SimpleTypedEdge<T>(
                     e.getKey(), vertex, rootVertex));
@@ -140,10 +166,10 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     /**
      * Returns the set of edges that have the specified type.
      */
-    private OpenIntSet getEdgesForType(T type) {
-        OpenIntSet edges = typeToEdges.get(type);
+    private IntSet getEdgesForType(T type) {
+        IntSet edges = typeToEdges.get(type);
         if (edges == null) {
-            edges = new OpenIntSet();
+            edges = new TroveIntSet();
             typeToEdges.put(type, edges);
         }
         return edges;
@@ -174,11 +200,11 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         TypedEdge<T> e = (TypedEdge<T>)o;
            
         if (e.from() == rootVertex) {
-            OpenIntSet edges = typeToEdges.get(e.edgeType());
+            IntSet edges = typeToEdges.get(e.edgeType());
             return edges != null && edges.remove(e.to());
         }
         else if (e.to() == rootVertex) {
-            OpenIntSet edges = typeToEdges.get(e.edgeType());
+            IntSet edges = typeToEdges.get(e.edgeType());
             return edges != null && edges.remove(e.from());
         }
         return false;
@@ -189,7 +215,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */    
     public int size() {
         int sz = 0;
-        for (OpenIntSet edges : typeToEdges.values())
+        for (IntSet edges : typeToEdges.values())
             sz += edges.size();
         return sz;
     }
@@ -197,7 +223,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     public String toString() {
         StringBuilder sb = new StringBuilder(typeToEdges.size() * 16);
         sb.append("{ from: " ).append(rootVertex).append(' ');
-        for (Map.Entry<T,OpenIntSet> e : typeToEdges.entrySet()) {
+        for (Map.Entry<T,IntSet> e : typeToEdges.entrySet()) {
             sb.append("{type: ").append(e.getKey()).
                 append(" to: ").append(e.getValue()).append('}');            
         }
@@ -212,7 +238,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     private class TypedEdgeIterator implements Iterator<TypedEdge<T>> {
         
-        private Iterator<Map.Entry<T,OpenIntSet>> edgeIter;
+        private Iterator<Map.Entry<T,IntSet>> edgeIter;
         
         private Iterator<Integer> curIter;
 
@@ -230,7 +256,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         private void advance() {
             next = null;
             if ((curIter == null || !curIter.hasNext()) && edgeIter.hasNext()) {
-                Map.Entry<T,OpenIntSet> e = edgeIter.next();
+                Map.Entry<T,IntSet> e = edgeIter.next();
                 curIter = e.getValue().iterator();
                 curType = e.getKey();                
             }

@@ -31,6 +31,7 @@ import edu.ucla.sspace.sim.LinSimilarity;
 import edu.ucla.sspace.sim.PearsonCorrelation;
 import edu.ucla.sspace.sim.SimilarityFunction;
 import edu.ucla.sspace.sim.SpearmanRankCorrelation;
+import edu.ucla.sspace.sim.TanimotoCoefficient;
 
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.IntegerEntry;
@@ -72,15 +73,40 @@ public class Similarity {
      * A type of similarity function to use when generating a {@link Method}
      */
     public enum SimType {
+        /**
+         * <a href="http://en.wikipedia.org/wiki/Cosine_similarity">Cosine similarity</a>
+         */
         COSINE,
+
+        /**
+         * <a
+         * href="http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">Pearson
+         * product moment correlation coefficient</a>
+         */
         PEARSON_CORRELATION,
+
         EUCLIDEAN,
+
         SPEARMAN_RANK_CORRELATION,
+
+        /**
+         * <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard Index</a>
+         */
         JACCARD_INDEX,
         LIN,
         KL_DIVERGENCE,
         AVERAGE_COMMON_FEATURE_RANK,
-        KENDALLS_TAU
+
+        /**
+         * <a href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's
+         * tau</a>
+         */
+        KENDALLS_TAU,
+
+        /**
+         * <a href="http://en.wikipedia.org/wiki/Tanimoto_coefficient#Tanimoto_coefficient_.28extended_Jaccard_coefficient.29">Tanimoto Coefficient</a>
+         */
+        TANIMOTO_COEFFICIENT    
     }
 
     /**
@@ -128,6 +154,10 @@ public class Similarity {
         case KENDALLS_TAU:
             methodName = "kendallsTau";
             break;
+        case TANIMOTO_COEFFICIENT:
+            methodName = "tanimotoCoefficient";
+            break;
+
         default:
             assert false : similarityType;
         }
@@ -164,8 +194,11 @@ public class Similarity {
                 return new KLDivergence();
             case KENDALLS_TAU:
                 return new KendallsTau();
+            case TANIMOTO_COEFFICIENT:
+                return new TanimotoCoefficient();
         }
-        return null;
+        throw new IllegalArgumentException("Unhandled SimType: " +
+                                           similarityType);
     }
 
     /**
@@ -200,8 +233,11 @@ public class Similarity {
                 return klDivergence(a, b);
             case KENDALLS_TAU:
                 return kendallsTau(a, b);
+            case TANIMOTO_COEFFICIENT:
+                return tanimotoCoefficient(a, b);
         }
-        return 0;
+        throw new IllegalArgumentException("Unhandled SimType: " +
+                                           similarityType);
     }
 
     /**
@@ -236,6 +272,8 @@ public class Similarity {
                 return klDivergence(a, b);
             case KENDALLS_TAU:
                 return kendallsTau(a, b);
+            case TANIMOTO_COEFFICIENT:
+                return tanimotoCoefficient(a, b);
         }
         return 0;
     }
@@ -2092,5 +2130,236 @@ public class Similarity {
         }
         else 
             return n / d;
+    }
+
+    /**
+     * Returns the Tanimoto coefficient of the two {@code double} array instances.
+     *
+     * @throws IllegalArgumentException when the length of the two arrays are
+     *                                  not the same.
+     */
+    public static double tanimotoCoefficient(double[] a, double[] b) {
+        return tanimotoCoefficient(Vectors.asVector(a), Vectors.asVector(b));
+    }
+
+    /**
+     * Returns the Tanimoto coefficient of the two {@code int} array instances.
+     *
+     * @throws IllegalArgumentException when the length of the two arrays are
+     *                                  not the same.
+     */
+    public static double tanimotoCoefficient(int[] a, int[] b) {
+        return tanimotoCoefficient(Vectors.asVector(a), Vectors.asVector(b));
+    }
+
+    /**
+     * Returns the Tanimoto coefficient of the two {@link Vector} instances.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                  not the same.
+     */
+    public static double tanimotoCoefficient(Vector a, Vector b) {
+        return tanimotoCoefficient(Vectors.asDouble(a), Vectors.asDouble(b));
+    }
+
+    /**
+     * Returns the Tanimoto coefficient of the two {@link DoubleVector} instances.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                  not the same.
+     */
+    @SuppressWarnings("unchecked")
+    public static double tanimotoCoefficient(DoubleVector a, DoubleVector b) {
+        check(a,b);
+
+        // IMPLEMENTATION NOTE: The Tanimoto coefficient uses the squart of the
+        // vector magnitudes, which we could compute by just summing the square
+        // of the vector values.  This would save a .sqrt() call from the
+        // .magnitude() call.  However, we expect that this method might be
+        // called multiple times.  Therefore, we square the .magnitude() which
+        // should only be two multiplications instaned of |nz| multiplications
+        // on the second call (assuming the vector instances cache their
+        // magnitude, which almost all do).
+        double dotProduct = 0.0;
+        double aMagnitude = a.magnitude();
+        double bMagnitude = b.magnitude();
+
+        // Check whether both vectors support fast iteration over their non-zero
+        // values.  If so, use only the non-zero indices to speed up the
+        // computation by avoiding zero multiplications
+        if (a instanceof Iterable && b instanceof Iterable) {
+            // Check whether we can easily determine how many non-zero values
+            // are in each vector.  This value is used to select the iteration
+            // order, which affects the number of get(value) calls.
+            boolean useA =
+                (a instanceof SparseVector && b instanceof SparseVector)
+                && ((SparseVector)a).getNonZeroIndices().length <
+                   ((SparseVector)b).getNonZeroIndices().length;
+            
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (useA) {
+                for (DoubleEntry e : ((Iterable<DoubleEntry>)a)) {
+                    int index = e.index();                    
+                    double aValue = e.value();
+                    double bValue = b.get(index);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (DoubleEntry e : ((Iterable<DoubleEntry>)b)) {
+                    int index = e.index();                    
+                    double aValue = a.get(index);
+                    double bValue = e.value();
+                    dotProduct += aValue * bValue;
+                }
+            }            
+        }
+
+        // Check whether both vectors are sparse.  If so, use only the non-zero
+        // indices to speed up the computation by avoiding zero multiplications
+        else if (a instanceof SparseVector && b instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            SparseVector svB = (SparseVector)b;
+            int[] nzA = svA.getNonZeroIndices();
+            int[] nzB = svB.getNonZeroIndices();
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (nzA.length < nzB.length) {
+                for (int nz : nzA) {
+                    double aValue = a.get(nz);
+                    double bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (int nz : nzB) {
+                    double aValue = a.get(nz);
+                    double bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+        }
+
+        // Otherwise, just assume both are dense and compute the full amount
+        else {
+            for (int i = 0; i < b.length(); i++) {
+                double aValue = a.get(i);
+                double bValue = b.get(i);
+                dotProduct += aValue * bValue;
+            }
+        }
+        
+        if (aMagnitude == 0 || bMagnitude == 0)
+            return 0;
+        
+        double aMagSq = aMagnitude * aMagnitude;
+        double bMagSq = bMagnitude * bMagnitude;
+
+        return dotProduct / (aMagSq + bMagSq - dotProduct);
+    }
+
+    /**
+     * Returns the cosine similarity of the two {@code IntegerVector} instances
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                  not the same.
+     */
+    @SuppressWarnings("unchecked")
+    public static double tanimotoCoefficient(IntegerVector a, IntegerVector b) {
+        check(a,b);
+
+        // IMPLEMENTATION NOTE: The Tanimoto coefficient uses the squart of the
+        // vector magnitudes, which we could compute by just summing the square
+        // of the vector values.  This would save a .sqrt() call from the
+        // .magnitude() call.  However, we expect that this method might be
+        // called multiple times.  Therefore, we square the .magnitude() which
+        // should only be two multiplications instaned of |nz| multiplications
+        // on the second call (assuming the vector instances cache their
+        // magnitude, which almost all do).
+        int dotProduct = 0;
+        double aMagnitude = a.magnitude();
+        double bMagnitude = b.magnitude();
+
+        // Check whether both vectors support fast iteration over their non-zero
+        // values.  If so, use only the non-zero indices to speed up the
+        // computation by avoiding zero multiplications
+        if (a instanceof Iterable && b instanceof Iterable) {
+            // Check whether we can easily determine how many non-zero values
+            // are in each vector.  This value is used to select the iteration
+            // order, which affects the number of get(value) calls.
+            boolean useA =
+                (a instanceof SparseVector && b instanceof SparseVector)
+                && ((SparseVector)a).getNonZeroIndices().length <
+                   ((SparseVector)b).getNonZeroIndices().length;
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (useA) {
+                for (IntegerEntry e : ((Iterable<IntegerEntry>)a)) {
+                    int index = e.index();                    
+                    int aValue = e.value();
+                    int bValue = b.get(index);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (IntegerEntry e : ((Iterable<IntegerEntry>)b)) {
+                    int index = e.index();                    
+                    int aValue = a.get(index);
+                    int bValue = e.value();
+                    dotProduct += aValue * bValue;
+                }
+            }            
+        }
+
+        // Check whether both vectors are sparse.  If so, use only the non-zero
+        // indices to speed up the computation by avoiding zero multiplications
+        else if (a instanceof SparseVector && b instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            SparseVector svB = (SparseVector)b;
+            int[] nzA = svA.getNonZeroIndices();
+            int[] nzB = svB.getNonZeroIndices();
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (nzA.length < nzB.length) {
+                for (int nz : nzA) {
+                    int aValue = a.get(nz);
+                    int bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (int nz : nzB) {
+                    int aValue = a.get(nz);
+                    int bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+        }
+
+        // Otherwise, just assume both are dense and compute the full amount
+        else {
+            for (int i = 0; i < b.length(); i++) {
+                int aValue = a.get(i);
+                int bValue = b.get(i);
+                dotProduct += aValue * bValue;
+            }
+        }
+
+        if (aMagnitude == 0 || bMagnitude == 0)
+            return 0;
+        
+        double aMagSq = aMagnitude * aMagnitude;
+        double bMagSq = bMagnitude * bMagnitude;
+
+        return dotProduct / (aMagSq + bMagSq - dotProduct);
     }
 }

@@ -41,9 +41,10 @@ import java.util.Set;
 import edu.ucla.sspace.util.CombinedIterator;
 import edu.ucla.sspace.util.CombinedSet;
 import edu.ucla.sspace.util.DisjointSets;
-import edu.ucla.sspace.util.IntSet;
 import edu.ucla.sspace.util.SetDecorator;
-import edu.ucla.sspace.util.TroveIntSet;
+
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntIterator;

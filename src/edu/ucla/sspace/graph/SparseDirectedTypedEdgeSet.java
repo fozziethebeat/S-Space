@@ -39,9 +39,11 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import edu.ucla.sspace.util.HashMultiMap;
-import edu.ucla.sspace.util.IntSet;
 import edu.ucla.sspace.util.MultiMap;
-import edu.ucla.sspace.util.TroveIntSet;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
 import gnu.trove.map.TIntIntMap;
@@ -259,6 +261,43 @@ public class SparseDirectedTypedEdgeSet<T>
             return false;
         int index = index(type);
         return types.get(index);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDirectedTypedEdgeSet<T> copy(IntSet vertices) {        
+        SparseDirectedTypedEdgeSet<T> copy = 
+            new SparseDirectedTypedEdgeSet<T>(rootVertex);
+        if (vertices.size() < inEdges.size()
+                && vertices.size() < outEdges.size()) {
+
+            IntIterator iter = vertices.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (inEdges.containsKey(v)) 
+                    copy.inEdges.put(v, outEdges.get(v));
+                if (outEdges.containsKey(v)) 
+                    copy.inEdges.put(v, outEdges.get(v));
+            }            
+        }
+        else {
+            TIntObjectIterator<BitSet> iter = inEdges.iterator();
+            while (iter.hasNext()) {
+                iter.advance();
+                int v = iter.key();
+                if (vertices.contains(v))
+                    copy.inEdges.put(v, iter.value());
+            }
+            iter = outEdges.iterator();
+            while (iter.hasNext()) {
+                iter.advance();
+                int v = iter.key();
+                if (vertices.contains(v))
+                    copy.outEdges.put(v, iter.value());
+            }
+        }
+        return copy;
     }
 
     /*

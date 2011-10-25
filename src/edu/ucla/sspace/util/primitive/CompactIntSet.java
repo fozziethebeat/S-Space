@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.util;
+package edu.ucla.sspace.util.primitive;
 
 import java.util.AbstractSet;
 import java.util.BitSet;

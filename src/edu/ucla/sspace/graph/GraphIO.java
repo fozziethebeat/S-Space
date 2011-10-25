@@ -109,6 +109,39 @@ public class GraphIO {
         return g;
     }
 
+    public static WeightedGraph<WeightedEdge> readWeighted(File f) throws IOException {
+        return readWeighted(f, new ObjectIndexer<String>());
+    }
+
+    public static WeightedGraph<WeightedEdge> readWeighted(File f, 
+                                                           Indexer<String> vertexIndexer)
+            throws IOException {        
+
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        WeightedGraph<WeightedEdge> g = new SparseWeightedGraph();
+        int lineNo = 0;
+        for (String line = null; (line = br.readLine()) != null; ) {
+            ++lineNo;
+            line = line.trim();
+            if (line.startsWith("#"))
+                continue;
+            else if (line.length() == 0)
+                continue;
+            String[] arr = line.split("\\s+");
+            if (arr.length < 2) 
+                throw new IOException("Missing vertex on line " + lineNo);
+            if (arr.length < 3) 
+                throw new IOException("Missing edge weight on line " + lineNo);
+            int v1 = vertexIndexer.index(arr[0]);
+            int v2 = vertexIndexer.index(arr[1]);
+            double weight = Double.parseDouble(arr[2]);
+            g.add(new SimpleWeightedEdge(v1, v2, weight));
+        }
+        verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
+                g.order(), g.size());
+        return g;
+    }
+
     public static DirectedGraph<DirectedEdge> readDirected(File f) throws IOException {
         return readDirected(f, new ObjectIndexer<String>());
     }

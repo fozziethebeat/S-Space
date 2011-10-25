@@ -26,11 +26,13 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucla.sspace.util.HashMultiMap;
-import edu.ucla.sspace.util.IntSet;
 import edu.ucla.sspace.util.MultiMap;
+
+import edu.ucla.sspace.util.primitive.IntSet;
 
 
 /**
@@ -115,6 +117,19 @@ public class GenericEdgeSet<T extends Edge> extends AbstractSet<T>
                 || (e.to() == rootVertex && vertexToEdges.containsMapping(e.from(), e));            
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public GenericEdgeSet<T> copy(IntSet vertices) {        
+        GenericEdgeSet<T> copy = new GenericEdgeSet<T>(rootVertex);
+        for (Map.Entry<Integer,Set<T>> e : vertexToEdges.asMap().entrySet()) {
+            if (vertices.contains(e.getKey())) {
+                copy.vertexToEdges.putMany(e.getKey(), e.getValue());
+            }
+        }
+        return copy;
     }
 
     /**

@@ -136,6 +136,15 @@ public class TreeMultiMap<K,V>
     /**
      * {@inheritDoc}
      */
+    public Map<K,Set<V>> asMap() {
+        // REMINDER: map should be wrapped with a class to prevent mapping keys
+        // to null
+        return map;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void clear() {
 	map.clear();
 	if (parent != null) {

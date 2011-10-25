@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens 
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,17 +21,34 @@
 
 package edu.ucla.sspace.util;
 
-import java.util.Iterator;
+import java.util.*;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 /**
- *
+ * A collection of unit tests for {@link ObjectCounter} 
  */
-public interface IntIterator extends Iterator<Integer> {
+public class ObjectCounterTests {
+   
+    @Test public void testCount() {
+        Counter<Integer> c = new ObjectCounter<Integer>();
+        c.count(1);
+        assertEquals(1, c.sum());
+        assertEquals(1, c.items().size());
+        assertEquals(1, c.getCount(1));
 
-    /**
-     *
-     */
-    int nextInt();
+        c.count(1);
+        assertEquals(2, c.sum());
+        assertEquals(1, c.items().size());
+        assertEquals(2, c.getCount(1));
 
+        c.count(2);
+        assertEquals(3, c.sum());
+        assertEquals(2, c.items().size());
+        assertEquals(1, c.getCount(2));
+    }
 }

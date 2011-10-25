@@ -45,6 +45,11 @@ public class Pair<T> {
 	this.y = y;
     }
 
+    /**
+     * Returns {@code true} if {@code o} is a {@link Pair} and its {@code x} and
+     * {@code y} elements are equal to those of this pair.  Note that equality
+     * is specific to the ordering of {@code x} and {@code y}.
+     */
     public boolean equals(Object o) {
 	if (o == null || !(o instanceof Pair))
 	    return false;

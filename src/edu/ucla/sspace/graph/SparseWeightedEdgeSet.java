@@ -31,8 +31,10 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import edu.ucla.sspace.util.CombinedIterator;
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.TroveIntSet;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntDoubleIterator;
@@ -54,7 +56,9 @@ import gnu.trove.set.TIntSet;
  * but not on the weight of the edge itself.
  */
 public class SparseWeightedEdgeSet extends AbstractSet<WeightedEdge> 
-        implements EdgeSet<WeightedEdge> {
+        implements EdgeSet<WeightedEdge>, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     // IMPLEMENTATION NOTE: the TIntDoubleMap operations will return 0 for
     // methods that would normally return null if the key was not present.  For
@@ -145,6 +149,32 @@ public class SparseWeightedEdgeSet extends AbstractSet<WeightedEdge>
     /**
      * {@inheritDoc}
      */
+    public SparseWeightedEdgeSet copy(IntSet vertices) {        
+        SparseWeightedEdgeSet copy = new SparseWeightedEdgeSet(rootVertex);
+        if (edges.size() < vertices.size()) {
+            TIntDoubleIterator iter = edges.iterator();
+            while (iter.hasNext()) {
+                iter.advance();
+                int v = iter.key();
+                if (vertices.contains(v))
+                    copy.edges.put(v, iter.value());
+            }
+            
+        }
+        else {
+            IntIterator iter = vertices.iterator();
+            while (iter.hasNext()) {
+                int v = iter.nextInt();
+                if (edges.containsKey(v)) 
+                    copy.edges.put(v, edges.get(v));
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public boolean disconnect(int vertex) {
         if (edges.containsKey(vertex)) {
             edges.remove(vertex);
@@ -211,8 +241,10 @@ public class SparseWeightedEdgeSet extends AbstractSet<WeightedEdge>
     public double sum() {
         double sum = 0;
         TIntDoubleIterator iter = edges.iterator();
-        for (; iter.hasNext(); iter.advance())
+        while (iter.hasNext()) {
+            iter.advance();
             sum += iter.value();
+        }
         return sum;
     }
 

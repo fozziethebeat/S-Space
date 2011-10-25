@@ -19,43 +19,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.util.primitive;
 
-import edu.ucla.sspace.common.Similarity;
-
-import edu.ucla.sspace.vector.DoubleVector;
-import edu.ucla.sspace.vector.IntegerVector;
-import edu.ucla.sspace.vector.Vector;
+import java.util.Iterator;
 
 
 /**
- * A functional class for computing <a
- * href="http://en.wikipedia.org/wiki/Kendall%27s_tau">Kendall's tau</a> of the
- * values in the two vectors.  This method uses tau-b, which is suitable for
- * vectors with duplicate values.
- *
- * @author Keith Stevens
+ * A refinement of the {@link Iterator} interface for iterating over primitive
+ * {@code int} values.
  */
-public class KendallsTau extends AbstractSymmetricSimilarityFunction {
+public interface IntIterator extends Iterator<Integer> {
 
     /**
-     * {@inheritDoc}
+     * Returns the next {@code int} in the sequence.
+     *
+     * @throws NoSuchElementException if no further {@code int} values remain
      */
-    public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.kendallsTau(v1, v2);
-    }
+    int nextInt();
 
-    /**
-     * {@inheritDoc}
-     */
-    public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.kendallsTau(v1, v2);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double sim(Vector v1, Vector v2) {
-        return Similarity.kendallsTau(v1, v2);
-    }
 }

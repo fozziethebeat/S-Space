@@ -23,10 +23,14 @@ package edu.ucla.sspace.util;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import gnu.trove.TDecorators;
+import gnu.trove.iterator.TObjectIntIterator;
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 
 /** 
@@ -48,7 +52,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     /**
      * A mapping from an object to the number of times it has been seen
      */
-    private final Map<T,Integer> counts;
+    private final TObjectIntMap<T> counts;
 
     /**
      * The total number of objects that have been counted
@@ -59,7 +63,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Creates an empty {@code Counter}.
      */
     public ObjectCounter() {
-        counts = new HashMap<T,Integer>();
+        counts = new TObjectIntHashMap<T>();
         sum = 0;
     }
 
@@ -89,11 +93,11 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Counts the object, increasing its total count by 1.
      */
     public int count(T obj) {
-        Integer count = counts.get(obj);
-        int newCount = (count == null) ? 1 : count + 1;
-        counts.put(obj, newCount);
+        int count = counts.get(obj);
+        count++;
+        counts.put(obj, count);
         sum++;
-        return newCount;
+        return count;
     }
 
     /**
@@ -106,8 +110,8 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     public int count(T obj, int count) {
         if (count < 1)
             throw new IllegalArgumentException("Count must be positive: " + count);
-        Integer oldCount = counts.get(obj);
-        int newCount = (oldCount == null) ? count : count + oldCount;
+        int oldCount = counts.get(obj);
+        int newCount = count + oldCount;
         counts.put(obj, newCount);
         sum += count;
         return newCount;
@@ -124,11 +128,11 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     public boolean equals(Object o) {
         if (o instanceof Counter) {
             Counter<?> c = (Counter<?>)o;
-            if (counts.size() != c.size())
+            if (counts.size() != c.size() || sum != c.sum())
                 return false;
             for (Map.Entry<?,Integer> e : c) {
-                Integer i = counts.get(e.getKey());
-                if (i == null || i != e.getValue())
+                int i = counts.get(e.getKey());
+                if (i != e.getValue())
                     return false;
             }
             return true;
@@ -141,8 +145,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * counter.
      */
     public int getCount(T obj) {
-        Integer count = counts.get(obj);
-        return (count == null) ? 0 : count;
+        return counts.get(obj);
     }
 
     /**
@@ -173,7 +176,8 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * their respective counts.
      */
     public Iterator<Map.Entry<T,Integer>> iterator() {
-        return Collections.unmodifiableSet(counts.entrySet()).iterator();
+        return Collections.unmodifiableSet(
+            TDecorators.wrap(counts).entrySet()).iterator();
     }
     
     /**
@@ -182,15 +186,16 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * arbitrarily broken.
      */
     public T max() {
-        int maxCount = -1;
-        T max = null;
-        for (Map.Entry<T,Integer> e : counts.entrySet()) {
-            if (e.getValue() > maxCount) {
-                maxCount = e.getValue();
-                max = e.getKey();
-            }
-        }
-        return max;
+        throw new Error();
+//         int maxCount = -1;
+//         T max = null;
+//         for (Map.Entry<T,Integer> e : counts.entrySet()) {
+//             if (e.getValue() > maxCount) {
+//                 maxCount = e.getValue();
+//                 max = e.getKey();
+//             }
+//         }
+//         return max;
     }
 
     /**
@@ -199,15 +204,16 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * arbitrarily broken.
      */
     public T min() {
-        int minCount = Integer.MAX_VALUE;
-        T min = null;
-        for (Map.Entry<T,Integer> e : counts.entrySet()) {
-            if (e.getValue() < minCount) {
-                minCount = e.getValue();
-                min = e.getKey();
-            }
-        }
-        return min;
+        throw new Error();
+//         int minCount = Integer.MAX_VALUE;
+//         T min = null;
+//         for (Map.Entry<T,Integer> e : counts.entrySet()) {
+//             if (e.getValue() < minCount) {
+//                 minCount = e.getValue();
+//                 min = e.getKey();
+//             }
+//         }
+//         return min;
     }
 
     /**

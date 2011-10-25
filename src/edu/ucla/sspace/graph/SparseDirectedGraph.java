@@ -28,8 +28,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.TroveIntSet;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 
 /**

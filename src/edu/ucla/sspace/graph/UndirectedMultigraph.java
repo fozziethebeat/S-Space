@@ -39,10 +39,11 @@ import java.util.Set;
 
 import edu.ucla.sspace.util.CombinedIterator;
 import edu.ucla.sspace.util.CombinedSet;
-import edu.ucla.sspace.util.IntIterator;
-import edu.ucla.sspace.util.IntSet;
-import edu.ucla.sspace.util.PrimitiveCollections;
-import edu.ucla.sspace.util.TroveIntSet;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.PrimitiveCollections;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 
 /**
