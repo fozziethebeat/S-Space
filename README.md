@@ -10,10 +10,9 @@ The research and development is being done by the Natural Language Processing
 group at UCLA led by David Jurgens and Keith Stevens, under the advisory of Dr.
 Michael Dyer.
 
-See the Getting Started page
-(http://code.google.com/p/airhead-research/wiki/GettingStarted) for a quick
-introduction on how to use the S-Space package, see the Package Overview
-(http://code.google.com/p/airhead-research/wiki/PackageStructure)for information
-on the code and available features, or dive right into the Javadoc
-(http://airhead-research.googlecode.com/svn/trunk/javadoc/1.7/index.html) to see
-what's available now.
+See the [Getting Started](/fozziethebeat/S-Space/wiki/GettingStarted/) page for
+a quick introduction on how to use the S-Space package, see the [Package
+Overview] (/fozziethebeat/S-Space/wiki/PackageStructure) for information on the
+code and available features, or dive right into the
+[Javadoc](http://fozziethebeat.github.com/S-Space/javadoc/) to see what's
+available now.
