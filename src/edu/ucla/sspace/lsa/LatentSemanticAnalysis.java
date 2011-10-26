@@ -22,31 +22,28 @@
 package edu.ucla.sspace.lsa;
 
 import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
 
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
 import edu.ucla.sspace.matrix.LogEntropyTransform;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
-import edu.ucla.sspace.matrix.MatrixBuilder;
+import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.MatrixFile;
-import edu.ucla.sspace.matrix.MatrixIO;
-import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
 
 import edu.ucla.sspace.util.LoggerUtil;
-import edu.ucla.sspace.util.ReflectionUtil;
 
 import edu.ucla.sspace.vector.DoubleVector;
 
-import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
 
 import java.util.Properties;
 
-import java.util.concurrent.ConcurrentMap;;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -217,35 +214,71 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     private Matrix documentSpace;
     
     /**
-     * Creates a new {@link LatentSemanticAnalysis} instance.
+     * The {@link MatrixFactorization} algorithm that will decompose the word by
+     * document feature space into two smaller feature spaces: a word by class
+     * feature space and a class by feature space.
+     */
+    private final MatrixFactorization reducer;
+
+    /**
+     * The {@link Transform} applied to the term document matrix prior to being
+     * reduced.
+     */
+    private final Transform transform;
+
+    /**
+     * The final number of latent classes that will be used to represent the
+     * word space.
+     */
+    private final int dimensions;
+
+    /**
+     * Set the true if the reduced document space will be made accessible.
+     */
+    private final boolean retainDocumentSpace;
+
+    /**
+     * Creates a new {@link LatentSemanticAnalysis} instance.  This intializes
+     * {@Link LatentSemanticAnalysis} with the default parameters set in the
+     * original paper.
      */
     public LatentSemanticAnalysis() throws IOException {
-        super();
-
-        documentSpace = null;
+        this(false, 300, new LogEntropyTransform(),
+             SVD.getFastestAvailableFactorization(), 
+             false, new StringBasisMapping());
     }
 
     /**
      * Constructs a new {@code LatentSemanticAnalysis} using the provided
      * objects for processing.
      *
+     * @param retainDocumentSpace If true, the document space will be made
+     *        accessible
+     * @param dimensions The number of dimensions to retain in the reduced space
+     * @param transform The {@link Transform} to apply before reduction
+     * @param MatrixFactorization The {@link MatrixFactorization} algorithm to
+     *        apply to reduce the transformed term document matrix
      * @param readHeaderToken If true, the first token of each document will be
      *        read and passed to {@link #handleDocumentHeader(int, String)
-     *        handleDocumentHeader}, which discards the header.
-     * @param termToIndex The {@link BasisMapping} used to map strings to
-     *        indices.
-     * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
-     *        document vectors to disk which later get processed in {@link
-     *        #processSpace(Properties) processSpace}.
+     *        handleDocumentHeader}, which discards the header
+     * @param termToIndex The {@link ConcurrentMap} used to map strings to
+     *        indices
      *
      * @throws IOException if this instance encounters any errors when creatng
      *         the backing array files required for processing
      */
-    public LatentSemanticAnalysis(
-            boolean readHeaderToken,
-            BasisMapping<String, String> termToIndex,
-            MatrixBuilder termDocumentMatrixBuilder) throws IOException {
-        super(readHeaderToken, termToIndex, termDocumentMatrixBuilder);
+    public LatentSemanticAnalysis(boolean retainDocumentSpace,
+                                  int dimensions,
+                                  Transform transform,
+                                  MatrixFactorization reducer,
+                                  boolean readHeaderToken,
+                                  BasisMapping<String, String> termToIndex)
+            throws IOException {
+        super(readHeaderToken, termToIndex, reducer.getBuilder());
+        this.reducer = reducer;
+        this.transform = transform;
+        this.dimensions = dimensions;
+        this.retainDocumentSpace = retainDocumentSpace;
     }
 
     /**
@@ -298,6 +331,21 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     }
 
     /**
+     * Returns the number of documents processed by {@link
+     * LatentSemanticAnalysis} if the document space has been retained.
+     *
+     * @throws IllegalArgumentException If the document space has not been
+     *         retained.
+     */
+    public int documentSpaceSize() {
+        if (documentSpace == null)
+            throw new IllegalArgumentException(
+                    "The document space has not been retained or generated.");
+
+        return documentSpace.rows();
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @param properties {@inheritDoc} See this class's {@link
@@ -305,87 +353,22 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
      *        properties.
      */
     public void processSpace(Properties properties) {
-        Transform transform = new LogEntropyTransform();
+        MatrixFile processedSpace = processSpace(transform);
 
-        String transformClass = properties.getProperty(
-                MATRIX_TRANSFORM_PROPERTY);
-        if (transformClass != null) {
-            transform = ReflectionUtil.getObjectInstance(
-                    transformClass);
-        }
+        LoggerUtil.info(LOG, "reducing to %d dimensions", dimensions);
 
-        int dimensions = 300; // default
-        String userSpecfiedDims = 
-            properties.getProperty(LSA_DIMENSIONS_PROPERTY);
-        if (userSpecfiedDims != null) {
-            try {
-                dimensions = Integer.parseInt(userSpecfiedDims);
-            } catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException(
-                        LSA_DIMENSIONS_PROPERTY + " is not an integer: " +
-                        userSpecfiedDims);
-            }
-        }
+        reducer.factorize(processedSpace, dimensions);
 
-        // Check whether the user has indicated that the document space
-        // should be retained.
-        boolean retainDocumentSpace = false;
-        String retDocSpaceProp = 
-            properties.getProperty(RETAIN_DOCUMENT_SPACE_PROPERTY);
-        if (retDocSpaceProp != null)
-            retainDocumentSpace = Boolean.parseBoolean(retDocSpaceProp);
+        wordSpace = reducer.dataClasses();
 
-        String svdProp = properties.getProperty(LSA_SVD_ALGORITHM_PROPERTY);
-        SVD.Algorithm alg = (svdProp == null)
-            ? SVD.Algorithm.ANY
-            : SVD.Algorithm.valueOf(svdProp);
+        // Save the reduced document space if requested.
+        if (retainDocumentSpace) {
+            LoggerUtil.verbose(LOG, "loading in document space");
 
-
-        try {
-            MatrixFile processedSpace = processSpace(transform);
-
-            LoggerUtil.info(LOG, "reducing to %d dimensions", dimensions);
-
-            // Compute SVD on the pre-processed matrix.
-            Matrix[] usv = SVD.svd(
-                    processedSpace.getFile(), alg,
-                    processedSpace.getFormat(), dimensions);
-            
-            // Load the left factor matrix, which is the word semantic space
-            wordSpace = usv[0];
-
-            // Weight the values in the word space by the singular values.
-            Matrix singularValues = usv[1];
-            for (int r = 0; r < wordSpace.rows(); ++r) {
-                for (int c = 0; c < wordSpace.columns(); ++c) {
-                    wordSpace.set(r, c, wordSpace.get(r, c) * 
-                                        singularValues.get(c, c));
-                }
-            }
-
-            // Save the reduced document space if requested.
-            if (retainDocumentSpace) {
-                LoggerUtil.verbose(LOG, "loading in document space");
-                // We transpose the document space to provide easier access to
-                // the document vectors, which in the un-transposed version are
-                // the columns.
-                //
-                documentSpace = Matrices.transpose(usv[2]);
-                // Weight the values in the document space by the singular
-                // values.
-                //
-                // REMINDER: when the RowScaledMatrix class is merged in with
-                // the trunk, this code should be replaced.
-                for (int r = 0; r < documentSpace.rows(); ++r) {
-                    for (int c = 0; c < documentSpace.columns(); ++c) {
-                        documentSpace.set(r, c, documentSpace.get(r, c) * 
-                                                singularValues.get(c, c));
-                    }
-                }
-            }
-        } catch (IOException ioe) {
-            //rethrow as Error
-            throw new IOError(ioe);
+            // We transpose the document space to provide easier access to
+            // the document vectors, which in the un-transposed version are
+            // the columns.
+            documentSpace = Matrices.transpose(reducer.classFeatures());
         }
     }
 }

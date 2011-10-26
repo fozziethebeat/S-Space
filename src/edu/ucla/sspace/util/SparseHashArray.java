@@ -74,16 +74,16 @@ public class SparseHashArray<T>
      * Integer#MAX_VALUE}.
      */
     public SparseHashArray() {
-	this(Integer.MAX_VALUE);
+        this(Integer.MAX_VALUE);
     }
 
     /**
      * Creates a sparse array with a fixed length
      */
     public SparseHashArray(int length) {
-	if (length < 0)
-	    throw new IllegalArgumentException("length must be non-negative");
-	maxLength = length;
+        if (length < 0)
+            throw new IllegalArgumentException("length must be non-negative");
+        maxLength = length;
         indices = null;
         indexToValue = new HashMap<Integer,T>();
     }
@@ -94,28 +94,28 @@ public class SparseHashArray<T>
      * maximum size of this sparse array.
      */
     public SparseHashArray(T[] array) {
-	maxLength = array.length;
+        maxLength = array.length;
         indices = null;
-	// Find how many non-zero elements there are
-	int nonZero = 0;
-	for (int i = 0; i < array.length; ++i) {
-	    if (array[i] != null)
-		indexToValue.put(i, array[i]);
-	}
+        // Find how many non-zero elements there are
+        int nonZero = 0;
+        for (int i = 0; i < array.length; ++i) {
+            if (array[i] != null)
+                indexToValue.put(i, array[i]);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public int cardinality() {
-	return indexToValue.size();
+        return indexToValue.size();
     }
 
     /**
      * {@inheritDoc}
      */ 
     public T get(int index) {
-	return indexToValue.get(index);
+        return indexToValue.get(index);
     }
 
     /**
@@ -148,7 +148,7 @@ public class SparseHashArray<T>
      * Returns the maximum length of this array.
      */
     public int length() {
-	return maxLength;
+        return maxLength;
     }
 
     /**
@@ -176,12 +176,12 @@ public class SparseHashArray<T>
      */
     @SuppressWarnings("unchecked")
     public <E> E[] toArray(E[] array) {
-	for (int i = 0; i < array.length; ++i) {
+        for (int i = 0; i < array.length; ++i) {
             T j = indexToValue.get(i);
             if (j != null)
                 array[i] = (E)j;
-	}
-	return array;
+        }
+        return array;
     }
 
     /**
