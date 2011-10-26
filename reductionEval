@@ -42,6 +42,7 @@ function copyToLocal() {
 
 # A helper method to copy files from local disk to hdfs.
 function copyFromLocal() {
+    [ -f $1 ] || return
     hadoop dfs -rm $2/$1
     hadoop dfs -copyFromLocal $1 $2/$1
     while [ "`localSize $1`" != "`hdfsSize $2/$1`" ]; do sleep 1; done
