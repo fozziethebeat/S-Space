@@ -49,6 +49,11 @@ public class MaskedDoubleVectorView extends VectorView<Double>
     private final int[] columnMask;
 
     /**
+     * Set to true whenever the vector's values have been modified.
+     */
+    protected boolean updated;
+
+    /**
      * Creates a new {@link DoubleVector} view of the data in the provided
      * {@link DoubleVector}.
      *
@@ -60,6 +65,7 @@ public class MaskedDoubleVectorView extends VectorView<Double>
         super(v, 0, columnMask.length, false);
         this.doubleVector = v;
         this.columnMask = columnMask;
+        this.updated = false;
     }
 
     /**
@@ -77,6 +83,7 @@ public class MaskedDoubleVectorView extends VectorView<Double>
      * {@inheritDoc}
      */
     public double add(int index, double delta) {
+        updated = true;
         int newIndex = getIndex(index);
         return (newIndex == -1) ? 0 : doubleVector.add(newIndex, delta);
     }
@@ -85,6 +92,7 @@ public class MaskedDoubleVectorView extends VectorView<Double>
      * {@inheritDoc}
      */
     public void set(int index, double value) {
+        updated = true;
         int newIndex = getIndex(index);
         if (newIndex == -1)
             return;
