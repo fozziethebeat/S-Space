@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DFS_HOME=/data/semEval2010/train/wordsi25Context/
+RESULT_HOME=/home/stevens35/sem07_cc_result
+DATA_HOME=/data/senseEval2007/wordsi25
 CLUST=edu.ucla.sspace.clustering
 
 # Remove "s from the environment variable to work around a stupid bug in hadoop.
@@ -21,30 +22,33 @@ function copyToLocal() {
 }
 
 function copyFromLocal() {
+    [ -f $1 ] || return
     hadoop dfs -rm $2/$1
     hadoop dfs -copyFromLocal $1 $2/$1
     while [ "`localSize $1`" != "`hdfsSize $2/$1`" ]; do sleep 1; done
 }
 
 function run() {
+    echo "Starting $2"
     scala -J-Xmx4g -cp sspace-wordsi.jar ConsensusCluster.scala  \
-          $CLUST.$1 $inputMat 20 40 .80 $inputMat.$2 >&2
-    # If any of the dat files are missing, exit pre-emptively
-    [ -f $inputMat.$2.delta.dat ] || return
-    [ -f $inputMat.$2.cdf.dat ] || return
-    [ -f $inputMat.$2.gap.dat ] || return
-    copyFromLocal $inputMat.$2.delta.dat $DFS_HOME
-    copyFromLocal $inputMat.$2.cdf.dat $DFS_HOME
-    copyFromLocal $inputMat.$2.gap.dat $DFS_HOME
+          $CLUST.$1 $inputMat 20 250 .80 $inputMat.$2 
+    copyFromLocal $inputMat.$2.delta.dat $RESULT_HOME
+    copyFromLocal $inputMat.$2.cdf.dat $RESULT_HOME
+    copyFromLocal $inputMat.$2.gap.dat $RESULT_HOME
+    for i in $(seq -w 2 20); do
+        copyFromLocal $inputMat.$2.cm$i $RESULT_HOME
+        copyFromLocal $inputMat.$2.rca$i $RESULT_HOME
+    done
 }
 
 while read inputMat
 do
-    copyToLocal $inputMat $DFS_HOME
+    copyToLocal $inputMat $DATA_HOME
+    echo clustering $inputMat
 
     #run CKVWSpectralClustering03 sc03
     run CKVWSpectralClustering06 sc06
     run DirectClustering kmeans
     #run BisectingKMeans bi-kmeans
-    #run HierarchicalAgglomerativeClustering hac
-done
+    run HierarchicalAgglomerativeClustering hac
+done >&2

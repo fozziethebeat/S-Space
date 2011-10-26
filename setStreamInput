@@ -3,7 +3,7 @@
 BASE=/home/stevens35
 
 cat streamInput/$1 | perl -MList::Util -e 'print List::Util::shuffle <>' > .shuffled.$1
-split -l 2 .shuffled.$1 $1.part
+split -l 1 .shuffled.$1 $1.part
 hadoop dfs -rmr $BASE/$1/
 hadoop dfs -mkdir $BASE/$1/
 hadoop dfs -copyFromLocal $1.part* $BASE/$1/
