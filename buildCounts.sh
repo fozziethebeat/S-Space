@@ -16,8 +16,8 @@ hadoop dfs -cat /stats/wackypedia/woc_nyt03_list/part-* \
       /hdfs/tmp/factor_eval/${1}/*.top10
 }
 
-wikiWords nmf
-nytWords nmf
+#wikiWords nmf
+#nytWords nmf
 
 wikiWords svd
 nytWords svd

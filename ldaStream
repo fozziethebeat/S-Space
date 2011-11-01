@@ -46,10 +46,12 @@ do
     MODEL=`echo $input | cut -d " " -f 2`
     numTopics=`echo $input | cut -d " " -f 3`
     optInterval=`echo $input | cut -d " " -f 4`
+    fraction=`echo $input | cut -d " " -f 5`
+    skip=`echo $input | cut -d " " -f 6`
 
-    outBase=nyt03_${MODEL}_$numTopics
+    outBase=nyt03-${fraction}_${MODEL}_$numTopics
     scala -J-Xmx4g -cp mallet.jar:trove.jar:sspace-lib.jar RunLDA.scala \
-        docs.txt $outBase $numTopics $optInterval
+        docs.txt $outBase $numTopics $optInterval $skip
     copyFromLocal $outBase-ws.dat $BASE/${model}_topic/
     copyFromLocal $outBase-ws.dat.top10 $BASE/${model}_topic/
     copyFromLocal $outBase-ds.dat.transpose $BASE/${model}_topic/

@@ -58,7 +58,6 @@ do
     csv=$ds.csv
 
     copyToLocal $tsp $BASE/${model}_topic
-
     python convertToCSV.py nyt03DocSections.txt nyt03OneLinePerDoc.txt $tsp > $csv
     copyFromLocal $csv $BASE/${model}_topic
 done >&2

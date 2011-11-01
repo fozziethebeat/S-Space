@@ -36,16 +36,21 @@ object RunLDA {
      * and added to the {@link InstanceList}.  Tokens in each document will be
      * tokenized based on whitespace.
      */
-    def buildInstanceList(path: String) = {
+    def buildInstanceList(path: String, skip: Int) = {
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
                                          new TokenSequence2FeatureSequence()))
         val instanceList = new InstanceList(pipes)
+        var count = 0
         for (line <- Source.fromFile(path).getLines)
             // Try to create the instance object from the line.  If no instance
             // was returned, just ignore it and don't add it to the instance
             // list.
             makeInstance(line) match {
-                case inst:Instance => instanceList.addThruPipe(inst)
+                case inst:Instance => {
+                    count += 1
+                    if (count >= skip)
+                        instanceList.addThruPipe(inst)
+                }
                 case _ =>
             }
         instanceList
@@ -135,7 +140,7 @@ object RunLDA {
     }
 
     def main(args:Array[String]) {
-        val instances = buildInstanceList(args(0))
+        val instances = buildInstanceList(args(0), args(4).toInt)
         val numTopics = args(2).toInt
         val numDocuments = instances.size
         System.err.println("Training model")

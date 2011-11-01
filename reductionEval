@@ -53,13 +53,15 @@ do
     model=`echo $line | cut -d " " -f 1`
     MODEL=`echo $line | cut -d " " -f 2`
     numTopics=`echo $line | cut -d " " -f 3`
+    fraction=`echo $line | cut -d " " -f 4`
+    skip=`echo $line | cut -d " " -f 5`
 
     echo running $line
-    ws=nyt03_${MODEL}_$numTopics-ws.dat
-    ds=nyt03_${MODEL}_$numTopics-ds.dat
+    ws=nyt03-${fraction}_${MODEL}_$numTopics-ws.dat
+    ds=nyt03-${fraction}_${MODEL}_$numTopics-ds.dat
     tsp=$ds.transpose
     java -cp sspace-lib.jar:trove.jar edu.ucla.sspace.tools.ReductionEval \
-         -r $numTopics -a $MODEL -w $ws -d $ds termDocMatrix.mat
+         -f $skip -r $numTopics -a $MODEL -w $ws -d $ds termDocMatrix.mat
     java -Xmx2g -cp sspace-lib.jar edu.ucla.sspace.tools.SelectTopKWords \
          termDocMatrix.basis $ws > $ws.top10
     java -Xmx2g -cp sspace-lib.jar edu.ucla.sspace.tools.MatrixTranspose \
