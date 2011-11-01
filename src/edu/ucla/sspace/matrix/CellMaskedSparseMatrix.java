@@ -45,12 +45,28 @@ public class CellMaskedSparseMatrix extends CellMaskedMatrix
      */
     private final SparseMatrix matrix;
 
+    /**
+     * An internal mapping from known row indices in this {@link
+     * CellMaskedSparseMatrix} to rows in the backing {@link SparseMatrix}.
+     */
     private final int[] rowMaskMap;
 
+    /**
+     * An internal mapping from row indices in the backing {@link SparseMatrix}
+     * to known rows in this {@link CellMaskedSparseMatrix}.
+     */
     private final Map<Integer, Integer> reverseRowMaskMap;
 
+    /**
+     * An internal mapping from known column indices in this {@link
+     * CellMaskedSparseMatrix} to columns in the backing {@link SparseMatrix}.
+     */
     private final int[] colMaskMap;
 
+    /**
+     * An internal mapping from column indices in the backing {@link
+     * SparseMatrix} to known columns in this {@link CellMaskedSparseMatrix}.
+     */
     private final Map<Integer, Integer> reverseColMaskMap;
 
     /**
