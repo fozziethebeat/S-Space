@@ -21,45 +21,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.matrix.factorization;
 
-import edu.ucla.sspace.common.Similarity;
+import edu.ucla.sspace.matrix.SVD;
 
-import edu.ucla.sspace.vector.DoubleVector;
-import edu.ucla.sspace.vector.IntegerVector;
-import edu.ucla.sspace.vector.Vector;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 /**
- * Returns the Lin Similarity between any two {@link Vector}s. 
- *
- * </p>
- *
- * This metric is symmetric.
- *
  * @author Keith Stevens
  */
-public class LinSimilarity extends AbstractSymmetricSimilarityFunction {
+public class SingularValueDecompositionMatlabTest {
 
-    /**
-     * {@inheritDoc}
-     */
-    public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.linSimilarity(v1, v2);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.linSimilarity(v1, v2);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double sim(Vector v1, Vector v2) {
-        return Similarity.linSimilarity(v1, v2);
+    @Test public void testMatrixReduction() {
+        if (SVD.isMatlabAvailable())
+            SingularValueDecompositionTestUtil.testReductionMatrix(
+                    new SingularValueDecompositionMatlab());
     }
 }
 

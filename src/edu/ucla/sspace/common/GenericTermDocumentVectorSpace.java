@@ -283,36 +283,39 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      * @param transform A matrix transform used to rescale the original raw
      *        document counts.  If {@code null} no transform is done.
      */
-    protected MatrixFile processSpace(Transform transform)
-            throws IOException {
-        // first ensure that we are no longer writing to the matrix
-        termDocumentMatrixBuilder.finish();
+    protected MatrixFile processSpace(Transform transform) {
+        try {
+            // first ensure that we are no longer writing to the matrix
+            termDocumentMatrixBuilder.finish();
 
-        // Get the finished matrix file from the builder
-        File termDocumentMatrix = termDocumentMatrixBuilder.getFile();
+            // Get the finished matrix file from the builder
+            File termDocumentMatrix = termDocumentMatrixBuilder.getFile();
 
-        // If a transform was specified, perform the matrix transform.
-        if (transform != null) {
-            LoggerUtil.info(LOG, "performing %s transform", transform);
+            // If a transform was specified, perform the matrix transform.
+            if (transform != null) {
+                LoggerUtil.info(LOG, "performing %s transform", transform);
 
-            LoggerUtil.verbose(
-                    LOG,"stored term-document matrix in format %s at %s",
-                    termDocumentMatrixBuilder.getMatrixFormat(),
-                    termDocumentMatrix.getAbsolutePath());
+                LoggerUtil.verbose(
+                        LOG,"stored term-document matrix in format %s at %s",
+                        termDocumentMatrixBuilder.getMatrixFormat(),
+                        termDocumentMatrix.getAbsolutePath());
 
-            // Convert the raw term counts using the specified transform
-            termDocumentMatrix = transform.transform(
+                // Convert the raw term counts using the specified transform
+                termDocumentMatrix = transform.transform(
+                        termDocumentMatrix, 
+                        termDocumentMatrixBuilder.getMatrixFormat());
+
+                LoggerUtil.verbose(
+                        LOG, "transformed matrix to %s",
+                        termDocumentMatrix.getAbsolutePath());
+            }
+
+            return new MatrixFile(
                     termDocumentMatrix, 
                     termDocumentMatrixBuilder.getMatrixFormat());
-
-            LoggerUtil.verbose(
-                    LOG, "transformed matrix to %s",
-                    termDocumentMatrix.getAbsolutePath());
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
         }
-
-        return new MatrixFile(
-                termDocumentMatrix, 
-                termDocumentMatrixBuilder.getMatrixFormat());
     }
 
     /**

@@ -53,6 +53,13 @@ public class MaskedSparseDoubleVectorView extends MaskedDoubleVectorView
     private final Map<Integer, Integer> reverseColumnMask;
 
     /**
+     * A cache of the non zero indices for this masked sparse vector.  This will
+     * be updated anytime {@link #getNonZeroIndices} is called and some value
+     * has been modified in the base vector.
+     */
+    private int[] nonZeroIndices;
+
+    /**
      * Creates a new {@link SparseDoubleVector} view of the data in the provided
      * {@link SparseDoubleVector}.
      *
@@ -72,15 +79,18 @@ public class MaskedSparseDoubleVectorView extends MaskedDoubleVectorView
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        int[] indices = sparseVector.getNonZeroIndices();
-        int[] newIndices = new int[indices.length];
-        int i = 0;
-        for (int index = 0; index < indices.length; ++index) {
-            Integer newIndex = reverseColumnMask.get(indices[index]);
-            if (newIndex == null)
-                continue;
-            newIndices[i++] = newIndex;
+        if (updated || nonZeroIndices == null) {
+            int[] indices = sparseVector.getNonZeroIndices();
+            int[] newIndices = new int[indices.length];
+            int i = 0;
+            for (int index = 0; index < indices.length; ++index) {
+                Integer newIndex = reverseColumnMask.get(indices[index]);
+                if (newIndex == null)
+                    continue;
+                newIndices[i++] = newIndex;
+            }
+            nonZeroIndices = Arrays.copyOf(newIndices, i);
         }
-        return Arrays.copyOf(newIndices, i);
+        return nonZeroIndices;
     }
 }

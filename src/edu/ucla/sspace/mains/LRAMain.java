@@ -27,6 +27,7 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixIO;
+import edu.ucla.sspace.matrix.SVD;
 
 import edu.ucla.sspace.util.CombinedIterator;
 
@@ -270,8 +271,9 @@ public class LRAMain extends GenericMain {
             if (skipIndexProp.equals("true")) {
                 doIndex = false; //set as option later
             }
-            LatentRelationalAnalysis lra =
-                new LatentRelationalAnalysis(corpusDir, indexDir, doIndex);
+            LatentRelationalAnalysis lra = new LatentRelationalAnalysis(
+                    corpusDir, indexDir, doIndex,
+                    SVD.getFastestAvailableFactorization());
 
             //Steps 1-2. Load analogy input
             lra.loadAnalogiesFromFile(analogyFile);
@@ -323,10 +325,10 @@ public class LRAMain extends GenericMain {
                             " is not an integer: " + userSpecfiedDims);
                     }
                 }
-                Matrix[] usv = lra.computeSVD(sparse_matrix, dimensions);
+                projection = lra.computeSVD(sparse_matrix, dimensions);
 
-                //Step 10. Compute projection matrix from U and S.
-                projection = Matrices.multiply(usv[0],usv[1]);
+                //Step 10. Compute projection matrix from U and S.  This is
+                //already returned by the matrix factorization.
             }
 
             String writeProjectionFile = props.getProperty(

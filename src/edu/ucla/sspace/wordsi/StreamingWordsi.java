@@ -154,12 +154,12 @@ public class StreamingWordsi extends BaseWordsi {
         // cluster assignments are reported.
         for (Map.Entry<String, OnlineClustering<SparseDoubleVector>> entry :
                  clusterMap.entrySet()) {
-            final OnlineClustering<SparseDoubleVector> clusters =
+            final String primaryKey = entry.getKey();
+            final OnlineClustering<SparseDoubleVector> contexts =
                 entry.getValue();
-            final String term = entry.getKey();
             workQueue.add(key, new Runnable() {
                 public void run() {
-                    clusterTerm(term, clusters, mergeThreshold);
+                    clusterAndAssignSenses(contexts,primaryKey,mergeThreshold);
                 }
             });
         }
@@ -173,30 +173,34 @@ public class StreamingWordsi extends BaseWordsi {
             reporter.finalizeReport();
     }
 
-    private void clusterTerm(String primaryKey,
-                             OnlineClustering<SparseDoubleVector> clusters,
-                             double mergeThreshold) {
-        // First forcefully condense everything down to the required number
-        // of clusters.
+
+    private void clusterAndAssignSenses(
+            OnlineClustering<SparseDoubleVector> contexts,
+            String primaryKey,
+            double mergeThreshold) {
+        // First forcefully condense everything down to the required
+        // number of clusters.
         List<Cluster<SparseDoubleVector>> newClusters = clusterStream(
-            clusters.getClusters(), numClusters, 0.0);
+                contexts.getClusters(), numClusters, 0.0);
 
         // Then try to merge these new centroids based on the similarity
         // threshold.
-        newClusters = clusterStream(clusters.getClusters(), 0, mergeThreshold);
+        newClusters = clusterStream(contexts.getClusters(), 0, mergeThreshold);
 
-        // Store a mapping for each word sense to it's induced word sense,
-        // i.e., the centroid.
-        wordSpace.put(primaryKey, newClusters.get(0).centroid());
-        for (int i = 1; i < newClusters.size(); ++i)
+        // Store a mapping for each word sense to it's induced word
+        // sense, i.e., the centroid.
+        synchronized(wordSpace) {
+            wordSpace.put(primaryKey, newClusters.get(0).centroid());
+            for (int i = 1; i < newClusters.size(); ++i)
                 wordSpace.put(primaryKey+"-"+i, newClusters.get(i).centroid());
+        }
 
         // If there is no reporter, skip any post processing.
         if (reporter == null)
-            return ;
+            return;
 
-        // Get the set of context labels for each data point for the given
-        // word.
+        // Get the set of context labels for each data point for the
+        // given word.
         String[] contextLabels = reporter.contextLabels(primaryKey);
         if (contextLabels.length == 0)
             return;

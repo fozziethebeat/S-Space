@@ -244,6 +244,7 @@ public class Matrices {
      * @return a matrix builder to be used in creating a matrix for use with the
      *         {@link SVD} class
      */    
+    @Deprecated
     public static MatrixBuilder getMatrixBuilderForSVD(boolean transpose) {
         Algorithm fastest = SVD.getFastestAvailableAlgorithm();
         // In the unlikely case that this is called when no SVD support is
