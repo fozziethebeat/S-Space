@@ -24,8 +24,6 @@ package edu.ucla.sspace.graph;
 import edu.ucla.sspace.common.Similarity;
 
 import edu.ucla.sspace.clustering.Assignment;
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering;
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering.ClusterLinkage;
 import edu.ucla.sspace.clustering.Merge;
 import edu.ucla.sspace.clustering.SoftAssignment;
 
@@ -55,6 +53,7 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -151,14 +150,25 @@ public class LinkClustering implements java.io.Serializable {
     public LinkClustering() {  }
 
     /**
-     * <i>Ignores the specified number of clusters</i> and returns the
-     * clustering solution according to the partition density.
+     * Computes the similarity of the graph's edges and merges them until the
+     * specified number of clusters has been reached.
      *
-     * @param numClusters this parameter is ignored.
+     * @param numClusters the number of clusters to return
+     */
+    public <E extends Edge> MultiMap<Integer,Integer> cluster(
+                      final Graph<E> graph, int numClusters, Properties props) {
+        return singleLink(graph, numClusters);
+        // throw new Error();
+    }
+
+    /**
+     * Computes the similarity of the graph's edges and merges them to select
+     * the final partitioning that maximizes the overall cluster density.
      */
     public <E extends Edge> MultiMap<Integer,Integer> cluster(
                       final Graph<E> graph, Properties props) {
-
+        return singleLink(graph);
+        /*
         double minSimilarity = 0d;
         String minSimProp = 
             props.getProperty(LinkClustering.MINIMUM_EDGE_SIMILARITY_PROPERTY);
@@ -173,12 +183,16 @@ public class LinkClustering implements java.io.Serializable {
         
         LOGGER.info("Clustering edges");
         return singleLink(pq, graph);
+        */
     }
 
     /**
-     *
+     * Performs agglomerative clustering (other than single-linkage) using a
+     * priority queue (a min-heap) to decide which edges should be clustered
+     * next
      */
-    private MultiMap<Integer,Integer> singleLink(PriorityQueue<EdgePair> pq, 
+    /*
+    private MultiMap<Integer,Integer> aggloCluster(PriorityQueue<EdgePair> pq, 
                                                  Graph<? extends Edge> g) {
         int numEdges = g.size();
         // Index the edges so that we can quickly look up which cluster an edge
@@ -190,10 +204,7 @@ public class LinkClustering implements java.io.Serializable {
         int[] edgeToCluster = new int[numEdges];
 
         // Keep track of the vertices in each cluster
-//         MultiMap<Integer,Integer> clusterToVertices = 
-//             new HashMultiMap<Integer,Integer>();
         IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
-
         IntIntMultiMap densestSolution = new IntIntHashMultiMap();
 
         // Loop over each edge in the graph and add the vertices for that edge
@@ -213,10 +224,6 @@ public class LinkClustering implements java.io.Serializable {
         // Keep track of how many cluster merges we've performed so that we can
         // terminate early when all of the clusters have been merged
         int numMerges = 0;
-
-        // Create a list to hold all the merge operations
-        // List<Merge> merges = new ArrayList<Merge>(numEdges - 1);
-        List<EdgePair> merges = new ArrayList<EdgePair>(numEdges - 1);
         
         // As we cluster the edges, keep track of the density so that once
         // finished, we can recompute the final clustering solution.
@@ -264,9 +271,8 @@ public class LinkClustering implements java.io.Serializable {
             clusterToNumEdges[larger] += clusterToNumEdges[smaller];
 
             Set<Integer> verticesInSmaller = clusterToVertices.get(smaller);
-            // System.out.printf("Merged %s into %s%n", verticesInSmaller, clusterToVertices.get(larger));
+            System.out.printf("Merged %s into %s%n", verticesInSmaller, clusterToVertices.get(larger));
             clusterToVertices.putMany(larger, verticesInSmaller);
-
 
             // Sum the densitites for each partition in this solution.
             double partitionDensitySum = 0d;
@@ -285,8 +291,8 @@ public class LinkClustering implements java.io.Serializable {
             double partitionDensity = 
                 (2d / numEdges) * partitionDensitySum;
 
-//             System.out.printf("Merge %d/%d had density %f%n", 
-//                               numMerges, numEdges-1, partitionDensity);
+            System.out.printf("Merge %d/%d had density %f", 
+                              numMerges, numEdges-1, partitionDensity);
 
             veryVerbose(LOGGER, "Merge %d/%d had density %f", 
                         numMerges, numEdges-1, partitionDensity);
@@ -300,8 +306,6 @@ public class LinkClustering implements java.io.Serializable {
                 densestSolution.clear();
                 densestSolution.putAll(clusterToVertices);
             }
-
-            merges.add(ep);
         }
 
         verbose(LOGGER, "Merge %d had the highest density: %f", 
@@ -312,56 +316,474 @@ public class LinkClustering implements java.io.Serializable {
         }
 
         return densestSolution;
-        /*
-        // Compute the clusters from the final set of merges.  First reset the
-        // merge statistics and then recompute.
-        Arrays.fill(clusterToNumEdges, 1);
-        clusterToVertices.clear();
+    }
+    */
+
+    /**
+     * Performs single-linkage agglomerative clustering on the Graph's edges
+     * using a next-best-merge array.  This implementation achieves
+     * O(n<sup>2</sup>) run-time complexity and O(n) space, which is a
+     * significant savings over running single-linkage with a max-heap.
+     */
+    private <E extends Edge> MultiMap<Integer,Integer> singleLink(Graph<E> g) {
+
+        final int numEdges = g.size();
+
+        // Index the edges so that we can quickly look up which cluster an edge
+        // is in
+        Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
+
+        // Keep a simple int->int mapping from each edge's index to (1) the
+        // cluster its in, (2) the most similar edge to that edge, (3) the
+        // similarity of the most similar edge.  
+        int[] edgeToCluster = new int[numEdges];
+        int[] edgeToMostSim = new int[numEdges];
+        double[] edgeToSimOfMostSim = new double[numEdges];
+
+        // Keep track of the vertices in each cluster
+        IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
+        IntIntMultiMap densestSolution = new IntIntHashMultiMap();
+
+        // Loop over each edge in the graph and add the vertices for that edge
+        // to the initial cluster assignment
         for (Edge e : g.edges()) {
             int initialCluster = edgeIndexer.index(e);
             edgeToCluster[initialCluster] = initialCluster;
             clusterToVertices.put(initialCluster, e.to());
             clusterToVertices.put(initialCluster, e.from());
         }
-        
-        for (EdgePair ep : merges.subList(0, mergeStepsWithHighestDensity)) {
-            int cluster1 = edgeToCluster[edgeIndexer.index(ep.edge1())];
-            int cluster2 = edgeToCluster[edgeIndexer.index(ep.edge2())];
 
-            // Figure out which of the clusters is smaller so that we can merge
-            // appropriately.
-            int smaller = -1, larger = -1;
-            if (clusterToNumEdges[cluster1] < clusterToNumEdges[cluster2]) {
-                smaller = cluster1;
-                larger  = cluster2;
+        // For each edge, find the most similar cluster updating the relative
+        // indices of the rowToMostSimilar arrays with the results.
+        IntIterator iter1 = g.vertices().iterator();
+        while (iter1.hasNext()) {
+            final int v1 = iter1.nextInt();
+//             System.out.printf("Computing similarities for " + 
+//                               "vertex %d%n", v1);
+            
+            veryVerbose(LOGGER, "Computing similarities for " + 
+                        "vertex %d", v1);
+            IntSet neighbors = g.getNeighbors(v1);
+            IntIterator it1 = neighbors.iterator();
+            while (it1.hasNext()) {
+                int v2 = it1.nextInt();
+                IntIterator it2 = neighbors.iterator();
+                while (it2.hasNext()) {
+                    int v3 = it2.nextInt();
+                    if (v2 == v3)
+                        break;
+                    double sim = getConnectionSimilarity(g, v1, v2, v3);
+                    int e1index = edgeIndexer.index(new SimpleEdge(v1, v2));
+                    int e2index = edgeIndexer.index(new SimpleEdge(v1, v3));
+                    if (sim > edgeToSimOfMostSim[e1index]) {
+                        edgeToSimOfMostSim[e1index] = sim;
+                        edgeToMostSim[e1index] = e2index;
+                    }
+                    if (sim > edgeToSimOfMostSim[e2index]) {
+                        edgeToSimOfMostSim[e2index] = sim;
+                        edgeToMostSim[e2index] = e1index;
+                    }
+                }
+            }
+        }
+
+        // Keep track of the size of each cluster so that we can merge the
+        // smaller into the larger.  Each cluster has an initial size of 1
+        int[] clusterToNumEdges = new int[numEdges];
+        Arrays.fill(clusterToNumEdges, 1);
+
+        // As we cluster the edges, keep track of the density so that once
+        // finished, we can recompute the final clustering solution.
+        double highestDensity = 0d;
+        int mergeStepsWithHighestDensity = 0;
+
+        verbose(LOGGER, "Clustering edges");
+
+        // Perform rows-1 merges to merge all elements
+        int mergeIter = 0;
+        while (clusterToVertices.size() > 1) {
+            if (mergeIter % 1000 == 0) 
+                verbose(LOGGER, "Computing dendrogram merge %d/%d",
+                        mergeIter+1, numEdges-1);
+
+            //System.out.printf("%n%nStart of merge %d%n", mergeIter);
+
+            // Find the edge that has the highest similarity to another edge
+            int edge1index = -1;
+            int edge2index = -1; // set during iteration
+            double highestSim = -1;
+            for (int i = 0; i < edgeToSimOfMostSim.length; ++i) {
+//                 System.out.printf("%d is most sim to %d with %f%n", i, 
+//                                   edgeToMostSim[i], edgeToSimOfMostSim[i]);
+                if (edgeToSimOfMostSim[i] > highestSim) {
+                    int c1 = edgeToCluster[i];
+                    int mostSim = edgeToMostSim[i];
+                    // dj: I don't quite understand how this case happens, but
+                    // it will for the last two cluster merges...
+                    if (mostSim == -1)
+                        continue;
+                    int c2 = edgeToCluster[mostSim];
+                    if (c1 != c2) {
+                        highestSim = edgeToSimOfMostSim[i];
+                        edge1index = i;
+                        edge2index = edgeToMostSim[i];
+                    }
+                }
+            }
+            
+            int cluster1index = -1;
+            int cluster2index = -1;
+
+            // No more similar pairs (disconnected graph?) so merge two
+            // arbitrary clusters and continue
+            if (edge1index == -1) {
+                Iterator<Integer> it = clusterToVertices.keySet().iterator();
+                cluster1index = it.next();
+                cluster2index = it.next(); // by contract, we have > 2 clusters
+                
             }
             else {
-                smaller = cluster2;
-                larger  = cluster1;
+                cluster1index = edgeToCluster[edge1index];
+                cluster2index = edgeToCluster[edge2index];
+            }
+            
+            // When merging clusters each of size > 2, it could be that
+            // additional pairs of the two clusters also had higher similarity
+            // and were next in the next-best-merge.  However, because these two
+            // edges are already in the cluster, we can discard their merge (by
+            // setting the similarity to the minimum value) and continue on.
+            // Note that we do not need to update the next-most similar to these
+            // edges, as that similarity will alread be recorded by the other
+            // edges that are not these two.
+            if (cluster1index == cluster2index) {
+                edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
+                // Note that since we are skipping this round, we do not
+                // increment the mergeIter counter
+                continue;
+            }
+            // We will merge this iteration
+            ++mergeIter; 
+
+            Set<Integer> verticesInSmaller = clusterToVertices.get(cluster2index);
+//             System.out.printf("Merged %d:%s into %d:%s with simiarity %f%n", 
+//                               cluster2index, verticesInSmaller, 
+//                               cluster1index, clusterToVertices.get(cluster1index),
+//                               highestSim);
+            clusterToVertices.putMany(cluster1index, verticesInSmaller);
+            clusterToVertices.remove(cluster2index);
+            clusterToNumEdges[cluster1index] +=clusterToNumEdges[cluster2index];
+
+            // Short circuit on the last iteration since we don't need to scan
+            // through the list of edges again to update their most-similar-edge
+            if (clusterToVertices.size() == 1)
+                break;
+
+            // Update the similarity for the second edge so that it is no longer
+            // merged with another edge.  Even if it is more similar, we maintain
+            // the invariant that only the cluster1index is valid after a merge
+            // operation
+            edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
+            edgeToSimOfMostSim[edge2index] = Double.MIN_VALUE;
+            
+            // For all the edges not in the current cluster, find the most
+            // similar data point to the now-merged cluster.  Note that this
+            // process doesn't need to update the nearest neighbors of these
+            // nodes, as they should still be valid post-merge.
+            int mostSimEdgeToCurCluster = -1;
+            highestSim = Double.MIN_VALUE;
+            Edge e1 = edgeIndexer.lookup(edge1index);
+            Edge e2 = edgeIndexer.lookup(edge2index);
+//             System.out.printf("Cluster assignments halfway into merge %d: %s%n", 
+//                               mergeIter, Arrays.toString(edgeToCluster));
+            for (int i = 0; i < numEdges; i++) {                
+                int cId = edgeToCluster[i];
+                if (cId == cluster1index) {
+                    // See if the most similar edge is also an edge in cluster1,
+                    // in which case we should invalidate its similarity since
+                    // the clusters are already merged
+//                     int mostSimEdge = edgeToMostSim[i];
+//                     if (edgeToCluster[mostSimEdge] == cluster2index)
+//                         edgeToSimOfMostSim[i] = Double.MIN_VALUE;
+                    continue;
+                }
+                else if (cId == cluster2index) {
+                    edgeToCluster[i] = cluster1index;                   
+                    // See if the most similar edge is also an edge in cluster1,
+                    // in which case we should invalidate its similarity since
+                    // the clusters are already merged
+//                     int mostSimEdge = edgeToMostSim[i];
+//                     if (edgeToCluster[mostSimEdge] == cluster1index)
+//                         edgeToSimOfMostSim[i] = Double.MIN_VALUE;
+                    continue;
+                }
+                                
+                Edge e3 = edgeIndexer.lookup(i);
+                double simToE1 = getConnectionSimilarity(g, e1, e3);
+                double simToE2 = getConnectionSimilarity(g, e2, e3);
+                
+//                 System.out.printf("Comparing %s with %s: %f%n", e1, e3, simToE1);
+//                 System.out.printf("Comparing %s with %s: %f%n", e2, e3, simToE2);
+
+                double sim = Math.max(simToE1, simToE2);
+                if (sim > highestSim) {
+                    highestSim = sim;
+                    mostSimEdgeToCurCluster = i;
+                }
+            }
+//             System.out.printf("Most similar edge to edge %d is %d%n",
+//                               edge1index, mostSimEdgeToCurCluster);
+            edgeToMostSim[edge1index] = mostSimEdgeToCurCluster;
+            edgeToSimOfMostSim[edge1index] = highestSim;
+
+            // Sum the densitites for each partition in this solution.
+            double partitionDensitySum = 0d;
+            int edgeSum = 0, nodeSum = 0;
+            for (Map.Entry<Integer,Set<Integer>> cluster : 
+                     clusterToVertices.asMap().entrySet()) {                           
+                int numNodesInCluster = cluster.getValue().size();
+                int numEdgesInCluster = clusterToNumEdges[cluster.getKey()];
+                edgeSum += numEdgesInCluster;
+//                 System.out.printf("Cluster %d: %d nodes, %d edges -> %f%n",
+//                                   cluster.getKey(), numNodesInCluster,
+//                                   numEdgesInCluster,
+//                                   computeDensity(numNodesInCluster, numEdgesInCluster));
+                // Compute this partition's density, adding it to the sum of all
+                // partition densities for the current solution
+                partitionDensitySum +=
+                    computeDensity(numNodesInCluster, numEdgesInCluster);
+                // System.out.printf("  %d: %s%n", cluster.getKey(), cluster.getValue());
+            }
+            assert edgeSum == numEdges : "Adding edges somewhere";
+
+            
+            // Compute the total partition density by averaging the density
+            // across all partitions, weighted by the number of edges
+            double partitionDensity = 
+                (2d / numEdges) * partitionDensitySum;
+
+
+//             System.out.printf("Merge %d/%d had density %f%n", 
+//                               mergeIter, numEdges-1, partitionDensity);
+
+            veryVerbose(LOGGER, "Merge %d/%d had density %f", 
+                        mergeIter, numEdges-1, partitionDensity);
+            if (mergeIter % 1000 == 0)
+                verbose(LOGGER, "Merge %d/%d had density %f", 
+                        mergeIter, numEdges-1, partitionDensity);
+            
+            if (partitionDensity > highestDensity) {
+                highestDensity = partitionDensity;
+                mergeStepsWithHighestDensity = mergeIter;
+                densestSolution.clear();
+                densestSolution.putAll(clusterToVertices);
+            }
+        }
+
+//         System.out.printf("Merge %d had the highest density: %f%n", 
+//                           mergeStepsWithHighestDensity, highestDensity);
+
+        verbose(LOGGER, "Merge %d had the highest density: %f", 
+                mergeStepsWithHighestDensity, highestDensity);
+
+        return densestSolution;
+    }
+
+    /**
+     * Performs single-linkage agglomerative clustering on the Graph's edges
+     * using a next-best-merge array until the specified number of clusters has
+     * been reached.  This implementation achieves O(n<sup>2</sup>) run-time
+     * complexity and O(n) space, which is a significant savings over running
+     * single-linkage with a max-heap.
+     *
+     * @param numClusters the number of clusters to produce
+     */
+    private <E extends Edge> MultiMap<Integer,Integer> singleLink(
+                       Graph<E> g, int numClusters) {
+
+        final int numEdges = g.size();
+        if (numClusters < 1 || numClusters > numEdges)
+            throw new IllegalArgumentException(
+                "Invalid range for number of clusters: " + numClusters);       
+
+        // Index the edges so that we can quickly look up which cluster an edge
+        // is in
+        Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
+
+        // Keep a simple int->int mapping from each edge's index to (1) the
+        // cluster its in, (2) the most similar edge to that edge, (3) the
+        // similarity of the most similar edge.  
+        int[] edgeToCluster = new int[numEdges];
+        int[] edgeToMostSim = new int[numEdges];
+        double[] edgeToSimOfMostSim = new double[numEdges];
+
+        // Keep track of the vertices in each cluster
+        IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
+
+        // Loop over each edge in the graph and add the vertices for that edge
+        // to the initial cluster assignment
+        for (Edge e : g.edges()) {
+            int initialCluster = edgeIndexer.index(e);
+            edgeToCluster[initialCluster] = initialCluster;
+            clusterToVertices.put(initialCluster, e.to());
+            clusterToVertices.put(initialCluster, e.from());
+        }
+
+        // For each edge, find the most similar cluster updating the relative
+        // indices of the rowToMostSimilar arrays with the results.
+        IntIterator iter1 = g.vertices().iterator();
+        while (iter1.hasNext()) {
+            final int v1 = iter1.nextInt();
+            veryVerbose(LOGGER, "Computing similarities for " + 
+                        "vertex %d", v1);
+            IntSet neighbors = g.getNeighbors(v1);
+            IntIterator it1 = neighbors.iterator();
+            while (it1.hasNext()) {
+                int v2 = it1.nextInt();
+                IntIterator it2 = neighbors.iterator();
+                while (it2.hasNext()) {
+                    int v3 = it2.nextInt();
+                    if (v2 == v3)
+                        break;
+                    double sim = getConnectionSimilarity(g, v1, v2, v3);
+                    int e1index = edgeIndexer.index(new SimpleEdge(v1, v2));                    
+                    if (sim > edgeToSimOfMostSim[e1index]) {
+                        edgeToSimOfMostSim[e1index] = sim;
+                        edgeToMostSim[e1index] = e2index;
+                    }
+
+                    int e2index = edgeIndexer.index(new SimpleEdge(v1, v3));
+                    if (sim > edgeToSimOfMostSim[e2index]) {
+                        edgeToSimOfMostSim[e2index] = sim;
+                        edgeToMostSim[e2index] = e1index;
+                    }
+                }
+            }
+        }
+
+        // Keep track of the size of each cluster so that we can merge the
+        // smaller into the larger.  Each cluster has an initial size of 1
+        int[] clusterToNumEdges = new int[numEdges];
+        Arrays.fill(clusterToNumEdges, 1);
+
+        verbose(LOGGER, "Clustering edges");
+
+        // Keep merging until we reach the desired number of clusters
+        int mergeIter = 0;
+        while (clusterToVertices.size() > numClusters) {
+            if (LOGGER.isLoggable(Level.FINE))
+                LOGGER.log(Level.FINE, "Computing dendrogram merge {0}/{1}",
+                           new Object[] { mergeIter+1, numEdges-1 });
+
+            // Find the edge that has the highest similarity to another edge
+            int edge1index = -1;
+            int edge2index = -1; // set during iteration
+            double highestSim = -1;
+            for (int i = 0; i < edgeToSimOfMostSim.length; ++i) {
+                if (edgeToSimOfMostSim[i] > highestSim) {
+                    int c1 = edgeToCluster[i];
+                    int mostSim = edgeToMostSim[i];
+                    // dj: I don't quite understand how this case happens, but
+                    // it will for the last two cluster merges...
+                    if (mostSim == -1)
+                        continue;
+                    int c2 = edgeToCluster[mostSim];
+                    if (c1 != c2) {
+                        highestSim = edgeToSimOfMostSim[i];
+                        edge1index = i;
+                        edge2index = edgeToMostSim[i];
+                    }
+                }
+            }
+            
+            int cluster1index = -1;
+            int cluster2index = -1;
+
+            // No more similar pairs (disconnected graph?) so merge two
+            // arbitrary clusters and continue
+            if (edge1index == -1) {
+                Iterator<Integer> it = clusterToVertices.keySet().iterator();
+                cluster1index = it.next();
+                cluster2index = it.next(); // by contract, we have > 2 clusters
+                
+            }
+            else {
+                cluster1index = edgeToCluster[edge1index];
+                cluster2index = edgeToCluster[edge2index];
             }
 
-            // Update the size of the larger cluster.  Note that the smaller
-            // cluster still "exists" in the array, but is never referenced
-            // again.
-            clusterToNumEdges[larger] += clusterToNumEdges[smaller];
+            Set<Integer> verticesInSmaller = clusterToVertices.get(cluster2index);
+            clusterToVertices.putMany(cluster1index, verticesInSmaller);
+            clusterToVertices.remove(cluster2index);
+            clusterToNumEdges[cluster1index] +=clusterToNumEdges[cluster2index];
 
-            // Put all of the vertices in the smaller cluster in the larger
-            // cluster
-            Set<Integer> verticesInSmaller = clusterToVertices.get(smaller);
-            clusterToVertices.putMany(larger, verticesInSmaller);
+            // Short circuit on the last iteration since we don't need to scan
+            // through the list of edges again to update their most-similar-edge
+            if (mergeIter == numEdges - 2)
+                break;
 
+            // Update the similarity for the second edge so that it is no longer
+            // merged with another edge.  Even if it is more similar, we maintain
+            // the invariant that only the cluster1index is valid after a merge
+            // operation
+            edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
+            edgeToSimOfMostSim[edge2index] = Double.MIN_VALUE;
+            
+            // For all the edges not in the current cluster, find the most
+            // similar data point to the now-merged cluster.  Note that this
+            // process doesn't need to update the nearest neighbors of these
+            // nodes, as they should still be valid post-merge.
+            int mostSimEdgeToCurCluster = -1;
+            highestSim = Double.MIN_VALUE;
+            Edge e1 = edgeIndexer.lookup(edge1index);
+            Edge e2 = edgeIndexer.lookup(edge2index);
+
+            for (int i = 0; i < numEdges; i++) {                
+                int cId = edgeToCluster[i];
+                if (cId == cluster1index) {
+                    // See if the most similar edge is also an edge in cluster1,
+                    // in which case we should invalidate its similarity since
+                    // the clusters are already merged
+//                     int mostSimEdge = edgeToMostSim[i];
+//                     if (edgeToCluster[mostSimEdge] == cluster2index)
+//                         edgeToSimOfMostSim[i] = Double.MIN_VALUE;
+                     continue;
+                }
+                else if (cId == cluster2index) {
+                    edgeToCluster[i] = cluster1index;                   
+                    // See if the most similar edge is also an edge in cluster1,
+                    // in which case we should invalidate its similarity since
+                    // the clusters are already merged
+//                     int mostSimEdge = edgeToMostSim[i];
+//                     if (edgeToCluster[mostSimEdge] == cluster1index)
+//                         edgeToSimOfMostSim[i] = Double.MIN_VALUE;
+                    continue;
+                }
+                                
+                Edge e3 = edgeIndexer.lookup(i);
+                double simToE1 = getConnectionSimilarity(g, e1, e3);
+                double simToE2 = getConnectionSimilarity(g, e2, e3);
+
+                double sim = Math.max(simToE1, simToE2);
+                if (sim > highestSim) {
+                    highestSim = sim;
+                    mostSimEdgeToCurCluster = i;
+                }
+            }
+
+            edgeToMostSim[edge1index] = mostSimEdgeToCurCluster;
+            edgeToSimOfMostSim[edge1index] = highestSim;
         }
 
         return clusterToVertices;
-        */
     }
+
 
     /**
      * Computes the density of the provided partition of edges
      */
     protected double computeDensity(int numNodes, int numEdges) {        
         // Special case when the number of nodes is 2, which has a density of 0    
-        if (numEdges == 1)
+        if (numNodes == 2)
             return 0;
 
         return numEdges * (numEdges - numNodes + 1d) 
@@ -370,13 +792,16 @@ public class LinkClustering implements java.io.Serializable {
 
     /**
      * Calculates the similarity between all pair-wise combinations of edges,
-     * returning a {@link PriorityQueue} sorted to have the most similar edges
-     * appear at the front of the queue.  This method assumes that the only
-     * similarities that matter are those that occur between two edges that
-     * share a vertex.
+     * returning a max-heap ({@link PriorityQueue}) which has the most similar
+     * edges appear at the top.  This method assumes that the only similarities
+     * that matter are those that occur between two edges that share a vertex.
      *
-     * @param edgeIndices the list of all edges known to the system
-     * @param sm a square matrix whose values denote edges between the rows.
+     * @param graph a graph whose edges are to be compared 
+     * @param minSimilarity an optional parameter for discarding edge pairs
+     *        whose similarity is below this value, which can save space held by
+     *        low-similairty pairs that are never used in the merging process.
+     *        However, setting this value too high results can result in
+     *        incomplete or incorrect merge sequences.
      *
      * @return the similarity matrix
      */
@@ -387,8 +812,8 @@ public class LinkClustering implements java.io.Serializable {
         final int numEdges = graph.size();
         double avgDegree = numEdges  / (double)numVertices;
         final int numComparisons = (int)(((avgDegree * (avgDegree+1)) / 2) * numVertices);
-        System.out.printf("size: %d, order: %d, avg. degree: %f, expected num comparisons: %d%n",
-                          numEdges, numVertices, avgDegree, numComparisons);
+//         System.out.printf("size: %d, order: %d, avg. degree: %f, expected num comparisons: %d%n",
+//                           numEdges, numVertices, avgDegree, numComparisons);
 
         final PriorityQueue<EdgePair> pq = 
             new PriorityQueue<EdgePair>(numComparisons);
@@ -449,6 +874,32 @@ public class LinkClustering implements java.io.Serializable {
         WORK_QUEUE.await(key);
         return pq;
     }
+
+    /**
+     * Computes the connection similarity for the two edges, first calculating
+     * the impost and keystones nodes.  If the edges are not connected, returns
+     * 0.
+     *
+     * @see #getConnectionSimilarity(Graph,int,int,int)
+     */
+    private <E extends Edge> double getConnectionSimilarity(
+            Graph<E> graph, Edge e1, Edge e2) {
+        int e1to = e1.to();
+        int e1from = e1.from();
+        int e2to = e2.to();
+        int e2from = e2.from();
+        if (e1to == e2to)
+            return getConnectionSimilarity(graph, e1to, e1from, e2from);
+        else if (e1to == e2from)
+            return getConnectionSimilarity(graph, e1to, e1from, e2to);
+        else if (e1from == e2to)
+            return getConnectionSimilarity(graph, e1from, e1to, e2from);
+        else if (e1from == e2from)
+            return getConnectionSimilarity(graph, e1from, e1to, e2to);
+        else
+            return 0;
+    }
+
 
     /**
      * Computes the similarity of the two edges as the Jaccard index of the
