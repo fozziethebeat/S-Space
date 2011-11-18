@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE=/home/stevens35
+BASE=/home/stevens35/input
 
 cat streamInput/$1 | perl -MList::Util -e 'print List::Util::shuffle <>' > .shuffled.$1
 split -l 1 .shuffled.$1 $1.part

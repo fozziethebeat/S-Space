@@ -83,13 +83,14 @@ class ClutoWrapper {
     static Assignments cluster(Matrix matrix, String clmethod,
                                 String crtFunction, int numClusters)
             throws IOException {
-        Assignment[] assignments = new Assignment[matrix.rows()];        
+        Assignments assignments = new Assignments(
+                numClusters, matrix.rows(), matrix);
         File outputFile = File.createTempFile("cluto-output", ".matrix");
         outputFile.deleteOnExit();
         cluster(assignments, matrix, clmethod, crtFunction,
                 numClusters, outputFile);
         extractAssignments(outputFile, assignments);
-        return new Assignments(numClusters, assignments, matrix);
+        return assignments;
     }
 
 
@@ -113,7 +114,7 @@ class ClutoWrapper {
      *
      * @return A string containing the standard output created by Cluto.
      */
-    static String cluster(Assignment[] clusterAssignment,
+    static String cluster(Assignments clusterAssignment,
                           Matrix matrix, 
                           String clmethod,
                           String crtFun,
@@ -162,7 +163,7 @@ class ClutoWrapper {
      *
      * @return A string containing the standard output created by Cluto.
      */
-    public static String cluster(Assignment[] clusterAssignment, 
+    public static String cluster(Assignments clusterAssignment, 
                                  File matrixFile,
                                  String clmethod,
                                  String crtFun,
@@ -231,18 +232,14 @@ class ClutoWrapper {
      *        set based on the contents of {@code outputFile}. 
      */
     static void extractAssignments(File outputFile,
-                                   Assignment[] clusterAssignment)
+                                   Assignments clusterAssignment)
             throws IOException {
         // The cluster assignmnet file is formatted as each row (data point)
         // having its cluster label specified on a separate line.  We can
         // read these in sequence to generate the output array.
         BufferedReader br = new BufferedReader(new FileReader(outputFile));
-        for (int i = 0; i < clusterAssignment.length; ++i) {
-            int j = Integer.parseInt(br.readLine());
-            clusterAssignment[i] = (j < 0)
-                ? new HardAssignment()   // no cluster assignment 
-                : new HardAssignment(j); // specific cluster
-        }
+        for (int i = 0; i < clusterAssignment.size(); ++i)
+            clusterAssignment.set(i, Integer.parseInt(br.readLine()));
         br.close();
     }
 }

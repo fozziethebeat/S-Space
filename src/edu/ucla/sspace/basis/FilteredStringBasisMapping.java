@@ -18,7 +18,9 @@ public class FilteredStringBasisMapping
     }
 
     public int getDimension(String key) {
-        return excludedWords.contains(key) ? -1 : getDimensionInternal(key);
+        String[] parts = key.split("-");
+        String base = (parts.length == 0) ? key : parts[0];
+        return excludedWords.contains(base) ? -1 : getDimensionInternal(key);
     }
 }
 

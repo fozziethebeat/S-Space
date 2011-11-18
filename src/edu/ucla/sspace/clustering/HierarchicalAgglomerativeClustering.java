@@ -290,8 +290,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * override the {@value #NUM_CLUSTERS_PROPERTY} if it was specified.
      */
     public Assignments cluster(Matrix m,
-                                int numClusters,
-                                Properties props) {
+                               int numClusters,
+                               Properties props) {
         double clusterSimilarityThreshold =
             Double.parseDouble(props.getProperty(
                         MIN_CLUSTER_SIMILARITY_PROPERTY,
@@ -378,14 +378,24 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      *         the cluster number to which that row was assigned.  Cluster
      *         numbers will start at 0 and increase.
      */
-    private static int[] cluster(Matrix m, double clusterSimilarityThreshold,
+    public static int[] cluster(Matrix m, double clusterSimilarityThreshold,
                                  ClusterLinkage linkage, 
                                  SimType similarityFunction,
                                  int maxNumberOfClusters) {
-        int rows = m.rows();
-        LOGGER.info("Generating similarity matrix for " + rows+ " data points");
+        LOGGER.info("Generating similarity matrix for " + m.rows() + " data points");
         Matrix similarityMatrix = 
             computeSimilarityMatrix(m, similarityFunction);
+        return clusterSimilarityMatrix(
+                similarityMatrix, clusterSimilarityThreshold,
+                linkage, maxNumberOfClusters);
+    }
+
+    public static int[] clusterSimilarityMatrix(
+            Matrix similarityMatrix, 
+            double clusterSimilarityThreshold,
+            ClusterLinkage linkage,
+            int maxNumberOfClusters) {
+        int rows = similarityMatrix.rows();
 
         // Create the initial set of clusters where each row is originally in
         // its own cluster
@@ -1028,7 +1038,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * For the current cluster, finds the most similar cluster using the
      * provided linkage method and returns the pairing for it.
      */
-    private static Pairing findMostSimilar(
+    public static Pairing findMostSimilar(
             Map<Integer,Set<Integer>> curAssignment, int curCluster, 
             ClusterLinkage linkage,  Matrix similarityMatrix) {
         // Start with with the most similar being set to the newly merged
@@ -1062,8 +1072,8 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      *
      * @return the cluster assignment
      */
-    private static int[] toAssignArray(Map<Integer,Set<Integer>> assignment, 
-                                       int numDataPoints) {
+    public static int[] toAssignArray(Map<Integer,Set<Integer>> assignment, 
+                                      int numDataPoints) {
         int[] clusters = new int[numDataPoints];
         for (int i = 0; i < numDataPoints; ++i)
             clusters[i] = -1;
@@ -1090,24 +1100,21 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * Coverts an array containing each row's clustering assignment into an
      * array of {@link HardAssignment} instances.
      */
-    private static Assignments toAssignments(int[] rowAssignments,
-                                             Matrix matrix,
-                                             int numClusters) {
+    public static Assignments toAssignments(int[] rowAssignments,
+                                            Matrix matrix,
+                                            int numClusters) {
         if (numClusters == -1) 
             for (int assignment : rowAssignments)
                 numClusters = Math.max(numClusters, assignment+1);
 
-        Assignment[] assignments = new Assignment[rowAssignments.length];
-        for (int i = 0; i < rowAssignments.length; ++i)
-            assignments[i] = new HardAssignment(rowAssignments[i]);
-        return new Assignments(numClusters, assignments, matrix);
+        return new Assignments(numClusters, rowAssignments, matrix);
     }
 
     /**
      *
      * @param numDataPoints the number of initial data points
      */
-    private static Map<Integer,Set<Integer>> generateInitialAssignment(
+    public static Map<Integer,Set<Integer>> generateInitialAssignment(
         int numDataPoints) {
         Map<Integer,Set<Integer>> clusterAssignment = 
             new HashMap<Integer,Set<Integer>>(numDataPoints);
@@ -1123,7 +1130,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * Computes and returns the similarity matrix for {@code m} using the
      * specified similarity function
      */
-    private static Matrix computeSimilarityMatrix(Matrix m, 
+    public static Matrix computeSimilarityMatrix(Matrix m, 
                                                   SimType similarityFunction) {
         Matrix similarityMatrix = 
             Matrices.create(m.rows(), m.rows(), Matrix.Type.DENSE_ON_DISK);
@@ -1153,7 +1160,7 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      *
      * @return the similarity of the two clusters
      */
-    private static double getSimilarity(Matrix similarityMatrix,
+    public static double getSimilarity(Matrix similarityMatrix,
                                         Set<Integer> cluster, 
                                         Set<Integer> toAdd,
                                         ClusterLinkage linkage) {

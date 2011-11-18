@@ -72,12 +72,8 @@ public class BisectingKMeans implements Clustering {
                                int numClusters,
                                Properties props) {
         // Handle a simple base case.
-        if (numClusters <= 1) {
-            Assignment[] assignments = new Assignment[dataPoints.rows()];
-            for (int i = 0; i < assignments.length; ++i)
-                assignments[i] = new HardAssignment(0);
-            return new Assignments(numClusters, assignments, dataPoints);
-        }
+        if (numClusters <= 1)
+            return new Assignments(numClusters, dataPoints.rows(), dataPoints);
 
         // Create a count of cluster assignments.
         int[] numAssignments = new int[numClusters];
@@ -92,21 +88,22 @@ public class BisectingKMeans implements Clustering {
 
         Clustering clustering = new DirectClustering();
         // Make the first bisection.
-        Assignment[] assignments =
-            clustering.cluster(dataPoints, 2, props).assignments();
+        Assignments subAssignments = clustering.cluster(dataPoints, 2, props);
 
         // Count the number of assignments made to each cluster and move the
         // vectors in to the corresponding list.
-        for (int i = 0; i < assignments.length; ++i) {
-            int assignment = assignments[i].assignments()[0];
-            numAssignments[assignment]++;
-            clusters.get(assignment).add(dataPoints.getRowVector(i));
+        for (int i = 0; i < subAssignments.size(); ++i) {
+            int id = subAssignments.get(i);
+            numAssignments[id]++;
+            clusters.get(id).add(dataPoints.getRowVector(i));
         }
 
         // Generate the numClusters - 2 clusters by finding the largest cluster
         // and bisecting it.  Of the 2 resulting clusters, one will maintain the
         // same cluster index and the other will be given a new cluster index,
         // namely k, the current cluster number.
+        Assignments assignments = new Assignments(
+                numClusters, dataPoints.rows(), dataPoints);
         for (int k = 2; k < numClusters; k++) {
             // Find the largest cluster.
             int largestSize = 0;
@@ -126,8 +123,8 @@ public class BisectingKMeans implements Clustering {
 
             // Split the largest cluster.
             Matrix clusterToSplit = Matrices.asMatrix(originalCluster);
-            Assignment[] newAssignments = 
-                clustering.cluster(dataPoints, 2, props).assignments();
+            Assignments newAssignments = 
+                clustering.cluster(dataPoints, 2, props);
 
             // Clear the lists for cluster being split and the new cluster.
             // Also clear the number of assignments.
@@ -141,10 +138,10 @@ public class BisectingKMeans implements Clustering {
             // real assignment list.  Data points assigned to cluster 1 get the
             // new cluster number, k.  
             for (int i = 0, j = 0; i < dataPoints.rows(); ++i) {
-                if (assignments[i].assignments()[0] == largestIndex) {
+                if (assignments.get(i) == largestIndex) {
                     // Make the assignment for vectors that keep their
                     // assignment.
-                    if (newAssignments[j].assignments()[0] == 0) {
+                    if (newAssignments.get(j) == 0) {
                         originalCluster.add(dataPoints.getRowVector(i));
                         numAssignments[largestIndex]++;
                     }
@@ -152,14 +149,14 @@ public class BisectingKMeans implements Clustering {
                     // assignment.
                     else {
                         newCluster.add(dataPoints.getRowVector(i));
-                        assignments[i] = new HardAssignment(k);
+                        assignments.set(i, k);
                         numAssignments[k]++;
                     }
                     j++;
                 }
             }
         }
-        return new Assignments(numClusters, assignments, dataPoints);
+        return assignments;
     }
 
     public String toString() {

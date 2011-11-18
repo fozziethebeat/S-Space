@@ -99,14 +99,14 @@ public class CondensedStreamingKMeans implements Clustering {
     public static <T extends DoubleVector> Assignments computeAssignments(
             List<Cluster<T>> clusters,
             int numDataPoints) {
-        Assignment[] assignments = new Assignment[numDataPoints];
+        Assignments assignments = new Assignments(clusters.size(), numDataPoints);
         int clusterId = 0;
         for (Cluster<T> cluster : clusters) {
             BitSet ids = cluster.dataPointIds();
             for (int id = ids.nextSetBit(0); id >= 0; id=ids.nextSetBit(id+1))
-                assignments[id] = new HardAssignment(clusterId);
+                assignments.set(id, clusterId);
             clusterId++;
         }
-        return new Assignments(clusters.size(), assignments);
+        return assignments;
     }
 }

@@ -4,7 +4,6 @@ import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.StaticSemanticSpace;
 
-import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.Clustering;
 
@@ -83,10 +82,9 @@ public class ClusterSSpace {
 
         int a = 0;
         for (String word : words) {
-            Assignment assignment = assignments.get(a++);
             System.out.printf("%s ", word);
-            for (int i : assignment.assignments())
-                System.out.printf("%d ", i);
+            for (int id : assignments.getAll(a++))
+                System.out.printf("%d ", id);
             System.out.println();
         }
     }

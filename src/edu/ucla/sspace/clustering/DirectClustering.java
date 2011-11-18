@@ -205,12 +205,7 @@ public class DirectClustering implements Clustering {
             }
         }
 
-        // Convert the array of assignments to an Assignments object.
-        Assignment[] assignments = new Assignment[matrix.rows()];
-        for (int i = 0; i < bestAssignment.length; ++i)
-            assignments[i] = new HardAssignment(bestAssignment[i]);
-
-        return new Assignments(numClusters, assignments, matrix);
+        return new Assignments(numClusters, bestAssignment, matrix);
     }
 
     /**

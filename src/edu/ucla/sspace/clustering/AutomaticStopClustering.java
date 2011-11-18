@@ -258,7 +258,7 @@ public class AutomaticStopClustering implements Clustering {
         }
 
         // Extract the cluster assignments based on the best found value of k.
-        Assignment[] assignments = new HardAssignment[m.rows()];
+        Assignments assignments = new Assignments(bestK, m.rows(), m);
         try {
             ClutoWrapper.extractAssignments(outFiles[bestK], assignments);
         } catch (IOException ioe) {
@@ -271,7 +271,7 @@ public class AutomaticStopClustering implements Clustering {
         for (File outFile : outFiles)
             outFile.delete();
 
-        return new Assignments(bestK, assignments, m);
+        return assignments;
     }
 
     /**
