@@ -49,39 +49,10 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibC implements MatrixFactorization {
+public class SingularValueDecompositionLibC extends AbstractSvd {
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionLibC.class.getName());
-
-    /**
-     * The class by feature type matrix.
-     */
-    private Matrix classFeatures;
-
-    /**
-     * Set to true when {@code classFeatures} has been accessed the first time
-     * to mark that the singular values have been applied to each value in the
-     * matrix.
-     */
-    private boolean scaledClassFeatures;
-
-    /**
-     * The data point by class matrix.
-     */
-    private Matrix dataClasses;
-
-    /**
-     * Set to true when {@code dataClasses} has been accessed the first time to
-     * mark that the singular values have been applied to each value in the
-     * matrix.
-     */
-    private boolean scaledDataClasses;
-
-    /**
-     * The singular values computed during factorization.
-     */
-    private double[] singularValues;
 
     /**
      * {@inheritDoc}
@@ -185,51 +156,6 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
         } catch (InterruptedException ie) {
             LOG.log(Level.SEVERE, "SVDLIBC", ie);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix dataClasses() {
-        if (!scaledDataClasses) {
-            scaledDataClasses = true;
-            // Weight the values in the data point space by the singular
-            // values.
-            for (int r = 0; r < dataClasses.rows(); ++r) {
-                for (int c = 0; c < dataClasses.columns(); ++c) {
-                    dataClasses.set(r, c, dataClasses.get(r, c) * 
-                                          singularValues[c]);
-                }
-            }
-        }
-
-        return dataClasses;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix classFeatures() {
-        if (!scaledClassFeatures) {
-            scaledClassFeatures = true;
-            // Weight the values in the document space by the singular
-            // values.
-            // REMINDER: when the RowScaledMatrix class is merged in with
-            // the trunk, this code should be replaced.
-            for (int r = 0; r < classFeatures.rows(); ++r)
-                for (int c = 0; c < classFeatures.columns(); ++c)
-                    classFeatures.set(r, c, classFeatures.get(r, c) * 
-                                            singularValues[r]);
-        }
-
-        return classFeatures;
-    }
-
-    /**
-     * Returns a double array of the singular values.
-     */
-    public double[] singularValues() {
-        return singularValues;
     }
 
     /**

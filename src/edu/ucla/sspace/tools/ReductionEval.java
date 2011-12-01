@@ -8,12 +8,18 @@ import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
-import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;;
+import edu.ucla.sspace.matrix.factorization.AbstractSvd;
+import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibJ;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionMatlab;
 
 import edu.ucla.sspace.util.LoggerUtil;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.logging.Level;
+
 
 /**
  * @author Keith Stevens
@@ -41,13 +47,16 @@ public class ReductionEval {
         LoggerUtil.setLevel(Level.FINE);
 
         int dimensions = options.getIntOption('r');
-        MatrixFactorization reducer = null;
+        //MatrixFactorization reducer = null;
+        AbstractSvd reducer = null;
         Format format = null;
         if (options.getStringOption('a').equals("NMF")) {
+            /*
             reducer = new NonNegativeMatrixFactorizationMultiplicative();
             format = Format.MATLAB_SPARSE;
+            */
         } else if (options.getStringOption('a').equals("SVD")) {
-            reducer = SVD.getFastestAvailableFactorization();
+            reducer = new SingularValueDecompositionMatlab();
             format = Format.SVDLIBC_SPARSE_BINARY;
         } else
             System.exit(1);
@@ -65,5 +74,10 @@ public class ReductionEval {
         File docSpaceFile = new File(options.getStringOption('d'));
         MatrixIO.writeMatrix(reducer.classFeatures(), docSpaceFile,
                              Format.DENSE_TEXT);
+
+        PrintWriter writer = new PrintWriter(options.getPositionalArg(1));
+        for (double singularValue : reducer.singularValues())
+            writer.printf("%f\n", singularValue);
+        writer.close();
     }
 }
