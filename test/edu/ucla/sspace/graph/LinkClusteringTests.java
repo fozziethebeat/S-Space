@@ -79,6 +79,18 @@ public class LinkClusteringTests {
 
         MultiMap<Integer,Integer> clusterToVertices = linkClustering.cluster(m, new java.util.Properties());
 
+        Collection<Set<Integer>> clusters = clusterToVertices.asMap().values();
+        assertEquals(4, clusters.size());
+        Set<Integer> c1 = new HashSet<Integer>(Arrays.asList(new Integer[] { 1, 2, 3, 4 }));
+        Set<Integer> c2 = new HashSet<Integer>(Arrays.asList(new Integer[] { 4, 5, 6 }));
+        Set<Integer> c3 = new HashSet<Integer>(Arrays.asList(new Integer[] { 4, 7 }));
+        Set<Integer> c4 = new HashSet<Integer>(Arrays.asList(new Integer[] { 7, 8, 9 }));
+
+        assertTrue(clusters.contains(c1));
+        assertTrue(clusters.contains(c2));
+        assertTrue(clusters.contains(c3));
+        assertTrue(clusters.contains(c4));
+
         /*
         for (int i = 0; i < assignments.length; ++i) 
             System.out.printf("Node %d is in clusters %s%n",

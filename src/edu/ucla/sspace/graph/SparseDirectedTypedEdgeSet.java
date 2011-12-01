@@ -439,20 +439,12 @@ public class SparseDirectedTypedEdgeSet<T>
          throw new Error();
      }
 
-    public Set<Integer> predecessors() {
-        return TDecorators.wrap(inEdges.keySet());
+    public IntSet predecessors() {
+        return TroveIntSet.wrap(inEdges.keySet());
     }
 
-    TIntSet predecessorsPrimitive() {
-        return inEdges.keySet();
-    }
-
-    public Set<Integer> successors() {
-        return TDecorators.wrap(outEdges.keySet());
-    }
-
-    TIntSet successorsPrimitive() {
-        return outEdges.keySet();
+    public IntSet successors() {
+        return TroveIntSet.wrap(outEdges.keySet());
     }
     
     /**

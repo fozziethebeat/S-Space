@@ -72,4 +72,35 @@ public final class PennTags {
         VERB_POS_TAGS.add("VVZ");        
     }
 
+    /**
+     * Returns {@code true} if this part of speech tag can be used to label an
+     * adjective in the Penn tag set.
+     */
+    public static boolean isAdjective(String posTag) {
+        return ADJ_POS_TAGS.contains(posTag);
+    }
+
+    /**
+     * Returns {@code true} if this part of speech tag can be used to label an
+     * adverb in the Penn tag set.
+     */
+    public static boolean isAdverb(String posTag) {
+        return ADV_POS_TAGS.contains(posTag);
+    }
+
+    /**
+     * Returns {@code true} if this part of speech tag can be used to label a
+     * noun in the Penn tag set.
+     */
+    public static boolean isNoun(String posTag) {
+        return NOUN_POS_TAGS.contains(posTag);
+    }
+
+    /**
+     * Returns {@code true} if this part of speech tag can be used to label a
+     * verb in the Penn tag set.
+     */
+    public static boolean isVerb(String posTag) {
+        return VERB_POS_TAGS.contains(posTag);
+    }
 }

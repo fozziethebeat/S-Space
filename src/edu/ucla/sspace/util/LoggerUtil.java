@@ -73,6 +73,25 @@ public final class LoggerUtil {
     }
 
     /**
+     * Sets the output level of the provided logging namespace according to the
+     * desired level.
+     *
+     * @param loggerNamespace the name space of the loggers whose output should
+     *        be changed to the specified level.  This is typically the
+     *        package (or super-package) of all classes reporting log messages.
+     * 
+     * @since 2.0
+     */
+    public static void setLevel(String loggerNamespace, Level outputLevel) {
+        Logger appRooLogger = Logger.getLogger(loggerNamespace);
+        Handler verboseHandler = new ConsoleHandler();
+        verboseHandler.setLevel(outputLevel);
+        appRooLogger.addHandler(verboseHandler);
+        appRooLogger.setLevel(outputLevel);
+        appRooLogger.setUseParentHandlers(false);
+    }
+
+    /**
      * Prints {@link Level#FINE} messages to the provided {@link Logger}.
      */
     public static void veryVerbose(Logger log, String format, Object... args) {

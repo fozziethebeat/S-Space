@@ -289,7 +289,7 @@ public class UndirectedMultigraphTests {
         assertEquals(99, g.size());
     }
 
-    @Test(expected=UnsupportedOperationException.class) public void testAdjacentEdgesAdd() {
+    @Test public void testAdjacentEdgesAdd() {
         UndirectedMultigraph<String> g = new UndirectedMultigraph<String>();
         Set<TypedEdge<String>> control = new HashSet<TypedEdge<String>>();
         for (int i = 1; i <= 100; ++i) {
@@ -659,7 +659,7 @@ public class UndirectedMultigraphTests {
         assertEquals( (10 * 9) / 2 - 1, g.size());
     }
 
-    @Test(expected=UnsupportedOperationException.class) public void testAdjacencyListAddEdge() {
+    @Test public void testAdjacencyListAddEdge() {
         UndirectedMultigraph<String> g = new UndirectedMultigraph<String>();
         for (int i = 0; i < 10; ++i)
             for (int j = i + 2; j < 10; ++j)
@@ -806,7 +806,7 @@ public class UndirectedMultigraphTests {
                 g.add(e);
             }
         }
-
+        
         Set<Integer> test = new HashSet<Integer>();
         Set<Integer> adjacent = g.getNeighbors(0);
         assertEquals(9, adjacent.size());
@@ -1701,7 +1701,11 @@ public class UndirectedMultigraphTests {
         assertTrue(g.add(new SimpleTypedEdge<String>("type-3", 3, 4)));
         assertTrue(g.contains(new SimpleTypedEdge<String>("type-3",3, 4)));
 
+        System.out.println("g: " + g);
+
+
         Multigraph<String,TypedEdge<String>> copy = g.copy(g.vertices());
+        System.out.println("copy: " + copy);
         assertEquals(g.order(), copy.order());
         assertEquals(g.size(), copy.size());
         assertEquals(g, copy);

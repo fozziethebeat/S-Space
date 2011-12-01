@@ -44,6 +44,7 @@ import edu.ucla.sspace.util.DisjointSets;
 import edu.ucla.sspace.util.SetDecorator;
 
 import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.PrimitiveCollections;
 import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
@@ -426,11 +427,10 @@ public class DirectedMultigraph<T>
      * {@inheritDoc}
      */
     public IntSet predecessors(int vertex) {
-        throw new Error();
-//         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
-//         return (edges == null) 
-//             ? Collections.<Integer>emptySet()
-//             : edges.predecessors();
+        SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+         return (edges == null) 
+             ? PrimitiveCollections.emptyIntSet()
+             : PrimitiveCollections.unmodifiableSet(edges.predecessors());
     }
 
     /**
@@ -537,11 +537,10 @@ public class DirectedMultigraph<T>
      * {@inheritDoc}
      */
     public IntSet successors(int vertex) {
-//         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
-//         return (edges == null) 
-//             ? Collections.<Integer>emptySet()
-//             : edges.successors();
-        throw new Error();
+         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+         return (edges == null) 
+             ? PrimitiveCollections.emptyIntSet()
+             : PrimitiveCollections.unmodifiableSet(edges.successors());
     }
 
     /**
@@ -932,10 +931,10 @@ public class DirectedMultigraph<T>
          * {@inheritDoc}
          */
         public IntSet getNeighbors(int vertex) {
-//             if (!vertexSubset.contains(vertex))
-//                 return Collections.<Integer>emptySet();
-//             return new SubgraphNeighborsView(vertex);
-            throw new Error();
+            SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+            return (edges == null) 
+                ? PrimitiveCollections.emptyIntSet()
+                : PrimitiveCollections.unmodifiableSet(edges.connected());
         }
 
         /**

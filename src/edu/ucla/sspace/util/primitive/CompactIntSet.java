@@ -57,7 +57,7 @@ import java.util.Set;
  *
  * @author David Jurgens
  */
-public class CompactIntSet extends AbstractSet<Integer> 
+public class CompactIntSet extends AbstractIntSet 
         implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -128,7 +128,7 @@ public class CompactIntSet extends AbstractSet<Integer>
         return bitSet.isEmpty();
     }
 
-    public Iterator<Integer> iterator() {
+    public IntIterator iterator() {
         return new BitSetIterator();
     }
 
@@ -173,14 +173,14 @@ public class CompactIntSet extends AbstractSet<Integer>
      * Wraps the provided {@code BitSet} as a {@link Set} returning the result.
      * Any changes to the set will be reflected in {@code b} and vice-versa.
      */
-    public static Set<Integer> wrap(BitSet b) {
+    public static IntSet wrap(BitSet b) {
         return new CompactIntSet(b);
     }
 
     /**
      * An iterator over the integers in the backing {@code BitSet}.
      */
-    private class BitSetIterator implements Iterator<Integer> {
+    private class BitSetIterator implements IntIterator {
 
         int next = -1;
         int cur = -1;
@@ -203,11 +203,15 @@ public class CompactIntSet extends AbstractSet<Integer>
         }
 
         public Integer next() {
+            return nextInt();
+        }
+
+        public int nextInt() {
             if (!hasNext())
                 throw new NoSuchElementException();
             cur = next;
             advance();
-            return cur;
+            return cur;            
         }
 
         public void remove() {            

@@ -32,6 +32,10 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+import edu.ucla.sspace.util.primitive.IntIterator;
+import edu.ucla.sspace.util.primitive.IntSet;
+import edu.ucla.sspace.util.primitive.TroveIntSet;
+
 import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
@@ -89,7 +93,7 @@ public class SubgraphIterator<E extends Edge,G extends Graph<E>>
      * An interator over the vertices of {@code g}, which are each used to a
      * seed to generate sequences of subgraphs
      */
-    private Iterator<Integer> vertexIter;
+    private IntIterator vertexIter;
 
     /**
      * The current pseudo-iterator for all the subgraphs that can be generated
@@ -146,7 +150,7 @@ public class SubgraphIterator<E extends Edge,G extends Graph<E>>
 
             // Otherwise the extension is null or there are no more remaining
             // subgraphs in it, so create a new 
-            Integer nextVertex = vertexIter.next();
+            int nextVertex = vertexIter.nextInt();
             veryVerbose(LOGGER, "Loading next round of subgraphs starting " +
                         "from vertex %d", nextVertex);
             ext = new Extension(nextVertex);
@@ -207,11 +211,14 @@ public class SubgraphIterator<E extends Edge,G extends Graph<E>>
             vertsInSubgraph = new ArrayDeque<Integer>();
             extensionStack = new ArrayDeque<TIntHashSet>();
 
-            Set<Integer> neighbors = g.getNeighbors(v);
+            IntSet neighbors = g.getNeighbors(v);
             TIntHashSet extension = new TIntHashSet();
-            for (Integer u : neighbors)
+            IntIterator iter = neighbors.iterator();
+            while (iter.hasNext()) {
+                int u = iter.nextInt();
                 if (u > v)
                     extension.add(u);
+            }
 
             vertsInSubgraph.push(v);
             extensionStack.push(extension);
@@ -243,7 +250,7 @@ public class SubgraphIterator<E extends Edge,G extends Graph<E>>
                 return null;
 
             TIntIterator iter = curExtension.iterator();
-            Integer w = iter.next();
+            int w = iter.next();
             iter.remove();
             
             vertsInSubgraph.push(w);
@@ -252,6 +259,7 @@ public class SubgraphIterator<E extends Edge,G extends Graph<E>>
             // confirm to the convention that the type is refined (narrowed,
             // really), so we perform the cast here to give the user back the
             // more specific type.
+
             @SuppressWarnings("unchecked")
                 G next = (G)g.copy(new HashSet<Integer>(vertsInSubgraph));
 

@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
-import edu.ucla.sspace.util.Pair;
+import edu.ucla.sspace.util.primitive.IntPair;
 
 
 /**
@@ -76,7 +76,7 @@ public class SimpleGraphIterator<T, E extends TypedEdge<T>>
      * @throws NullPointerException if {@code g} is {@code null}
      */
     public SimpleGraphIterator(Multigraph<T,E> g, int subgraphSize) {
-        subgraphIterator = //null;
+        subgraphIterator = 
             new SubgraphIterator<E,Multigraph<T,E>>(g, subgraphSize);
         next = new ArrayDeque<Multigraph<T,E>>();
         advance();
@@ -94,7 +94,7 @@ public class SimpleGraphIterator<T, E extends TypedEdge<T>>
             // Find all pairs of edges, checking whether the graph is a simple
             // graph already
             boolean isSimpleAlready = true;
-            List<Pair<Integer>> connected = new ArrayList<Pair<Integer>>();
+            List<IntPair> connected = new ArrayList<IntPair>();
             for (int i : g.vertices()) {
                 for (int j : g.vertices()) {
                     if (i == j)
@@ -108,7 +108,7 @@ public class SimpleGraphIterator<T, E extends TypedEdge<T>>
                     }
                     int size = edges.size();
                     if (size > 0)
-                        connected.add(new Pair<Integer>(i, j));
+                        connected.add(new IntPair(i, j));
                     if (size > 1)
                         isSimpleAlready = false;
                 }
@@ -144,11 +144,11 @@ public class SimpleGraphIterator<T, E extends TypedEdge<T>>
      *        be added.  This graph will be copied prior to modifying it.
      */
     private Collection<Multigraph<T,E>> enumerateSimpleGraphs(
-            Multigraph<T,E> input, List<Pair<Integer>> connected,
+            Multigraph<T,E> input, List<IntPair> connected,
             int curPair, Multigraph<T,E> toCopy) {
         
         List<Multigraph<T,E>> simpleGraphs = new LinkedList<Multigraph<T,E>>();
-        Pair<Integer> p = connected.get(curPair);
+        IntPair p = connected.get(curPair);
         // Get the set of edges between the current vertex pair
         Set<E> edges = input.getEdges(p.x, p.y);
         // Pick one of the edges and generate a graph from the remaining pairs

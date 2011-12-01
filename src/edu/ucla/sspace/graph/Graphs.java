@@ -31,8 +31,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import java.util.logging.Logger;
+
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
+
+import static edu.ucla.sspace.util.LoggerUtil.verbose;
 
 
 /**
@@ -43,6 +47,9 @@ import gnu.trove.map.hash.TIntIntHashMap;
  * NullPointerException} if passed a {@code null} graph.
  */
 public final class Graphs {
+
+    private static final Logger LOGGER = 
+        Logger.getLogger(Graphs.class.getName());
 
     private Graphs() { }
 
@@ -126,7 +133,36 @@ public final class Graphs {
                                                        int shufflesPerEdge) {
         if (shufflesPerEdge < 1)
             throw new IllegalArgumentException("must shuffle at least once");
-        return shuffleInternal(g, g.edges(), shufflesPerEdge);
+        return shuffleInternal(g, g.edges(), shufflesPerEdge, new Random());
+    }
+
+    /**
+     * Shuffles the edges of {@code g} while still preserving the <a
+     * href="http://en.wikipedia.org/wiki/Degree_sequence#Degree_sequence">degree
+     * sequence</a> of the graph.  Each edge in the graph will attempted to be
+     * conflated with another edge in the graph the specified number of times.
+     * If the edge cannot be swapped (possible due to the new version of the
+     * edge already existing), the attempt fails.
+     *
+     * @param g the graph whose elemets will be shuffled
+     * @param shufflesPerEdge the number of swaps to attempt per edge.
+     * @param rnd the source of randomness used to shuffle the graph's edges
+     *
+     * @return the total number of times an edge's endpoint was swapped with
+     *         another edge's endpoint.  At its maximum value, this will be
+     *         {@code shufflesPerEdge * g.size()} assuming that each swap was
+     *         successful.  For dense graphs, this return value will be much
+     *         less.
+     *
+     * @throws IllegalArgumentException if {@code shufflesPerEdge} is
+     *         non-positive
+     */
+    public static <E extends Edge> int shufflePreserve(Graph<E> g, 
+                                                       int shufflesPerEdge,
+                                                       Random rnd) {
+        if (shufflesPerEdge < 1)
+            throw new IllegalArgumentException("must shuffle at least once");
+        return shuffleInternal(g, g.edges(), shufflesPerEdge, rnd);
     }
 
     /**
@@ -135,7 +171,8 @@ public final class Graphs {
      * exist.
      */
     private static <E extends Edge> int shuffleInternal(
-                              Graph<E> g, Set<E> edges, int shufflesPerEdge) {
+                              Graph<E> g, Set<E> edges, int shufflesPerEdge,
+                              Random rand) {
         int totalShuffles = 0;
         int origSize = g.size();
         int numEdges = edges.size();
@@ -148,10 +185,9 @@ public final class Graphs {
         // have to reflectively create an array for its type.
         E tmp = edges.iterator().next();
         @SuppressWarnings("unchecked")
-        E[] edgeArray = (E[])Array.newInstance(tmp.getClass(), 0);
+        E[] edgeArray = (E[])Array.newInstance(tmp.getClass(), 1);
         edgeArray = edges.toArray(edgeArray);
-        Random rand = new Random();
-
+        
         for (int i = 0; i < numEdges; ++i) {
             
             for (int swap = 0; swap < shufflesPerEdge; ++swap) {
@@ -232,6 +268,39 @@ public final class Graphs {
     public static <T,E extends TypedEdge<T>> int
               shufflePreserveType(Multigraph<T,E> g, int shufflesPerEdge) {
 
+        return shufflePreserveType(g, shufflesPerEdge, new Random());
+    }
+
+    /**
+     * Shuffles the edges of {@code g} while still preserving the <a
+     * href="http://en.wikipedia.org/wiki/Degree_sequence#Degree_sequence">degree
+     * sequence</a> of the graph and that edges are only swapped with those of
+     * the same type.  Each edge in the graph will attempted to be conflated
+     * with another edge in the graph the specified number of times.  If the
+     * edge cannot be swapped (possible due to the new version of the edge
+     * already existing), the attempt fails.
+     *
+     * <p> Note that the {@link Multigraph#subview(Set,Set)} method makes it
+     * possilble to shuffle the edges for only a subset of the types in the
+     * multigraph.
+     *
+     * @param g the graph whose elemets will be shuffled
+     * @param shufflesPerEdge the number of swaps to attempt per edge.
+     * @param rnd the source of randomness used to shuffle the graph's edges
+     *
+     * @return the total number of times an edge's endpoint was swapped with
+     *         another edge's endpoint.  At its maximum value, this will be
+     *         {@code shufflesPerEdge * g.size()} assuming that each swap was
+     *         successful.  For dense graphs, this return value will be much
+     *         less.
+     *
+     * @throws IllegalArgumentException if {@code shufflesPerEdge} is
+     *         non-positive
+     */
+    public static <T,E extends TypedEdge<T>> int
+            shufflePreserveType(Multigraph<T,E> g, int shufflesPerEdge,
+                                Random rnd) {
+
         if (shufflesPerEdge < 1)
             throw new IllegalArgumentException("must shuffle at least once");
 
@@ -246,14 +315,19 @@ public final class Graphs {
         // ConcurrentModificationException
         Set<T> types = new HashSet<T>(g.edgeTypes());
         for (T type : types) {
+            Set<E> edges = g.edges(type);
             // Shuffle the edges of the current type only 
-            totalShuffles += shuffleInternal(g, g.edges(type), shufflesPerEdge);
+            int shuffles = shuffleInternal(g, edges, shufflesPerEdge, rnd);
+            totalShuffles += shuffles;
+            verbose(LOGGER, "Made %d shuffles for %d edges of type %s",
+                    shuffles, edges.size(), type);
         }
 
         assert order == g.order() : "Changed the number of vertices";
         assert size == g.size() : "Changed the number of edges";
         return totalShuffles;
     }
+
 
     /**
      * To-do

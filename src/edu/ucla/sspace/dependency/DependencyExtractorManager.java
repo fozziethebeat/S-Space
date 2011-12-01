@@ -123,7 +123,8 @@ public class DependencyExtractorManager {
      */
     public static synchronized DependencyExtractor getDefaultExtractor() {
         if (defaultExtractor == null)
-            throw new IllegalStateException("No extractors available");
+            throw new IllegalStateException(
+                "No DependencyExtractors available.");
         return defaultExtractor;
     }
 }

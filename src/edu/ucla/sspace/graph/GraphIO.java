@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.graph;
 
+import java.awt.Color;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -32,6 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import edu.ucla.sspace.util.ColorGenerator;
 import edu.ucla.sspace.util.Indexer;
 import edu.ucla.sspace.util.LineReader;
 import edu.ucla.sspace.util.ObjectIndexer;

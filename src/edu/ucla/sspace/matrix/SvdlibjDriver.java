@@ -95,6 +95,7 @@ public class SvdlibjDriver {
         File formatted = MatrixIO.convertFormat(
             matrix, format, Format.SVDLIBC_SPARSE_BINARY);
         SMat input = readToSMat(formatted);
+        formatted.delete();
         return svd(input, dimensions);
     }
 

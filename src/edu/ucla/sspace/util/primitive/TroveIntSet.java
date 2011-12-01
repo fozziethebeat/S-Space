@@ -122,7 +122,7 @@ public class TroveIntSet extends AbstractIntSet
 
         public TroveIterator() {
             iter = set.iterator();
-            removed = false;
+            removed = true;
         }
         
         public boolean hasNext() {

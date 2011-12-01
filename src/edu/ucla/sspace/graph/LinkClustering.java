@@ -325,20 +325,21 @@ public class LinkClustering implements java.io.Serializable {
      * O(n<sup>2</sup>) run-time complexity and O(n) space, which is a
      * significant savings over running single-linkage with a max-heap.
      */
-    private <E extends Edge> MultiMap<Integer,Integer> singleLink(Graph<E> g) {
+    private <E extends Edge> MultiMap<Integer,Integer> 
+                       singleLink(final Graph<E> g) {
 
         final int numEdges = g.size();
 
         // Index the edges so that we can quickly look up which cluster an edge
         // is in
-        Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
+        final Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
 
         // Keep a simple int->int mapping from each edge's index to (1) the
         // cluster its in, (2) the most similar edge to that edge, (3) the
         // similarity of the most similar edge.  
         int[] edgeToCluster = new int[numEdges];
-        int[] edgeToMostSim = new int[numEdges];
-        double[] edgeToSimOfMostSim = new double[numEdges];
+        final int[] edgeToMostSim = new int[numEdges];
+        final double[] edgeToSimOfMostSim = new double[numEdges];
 
         // Keep track of the vertices in each cluster
         IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
@@ -355,37 +356,55 @@ public class LinkClustering implements java.io.Serializable {
 
         // For each edge, find the most similar cluster updating the relative
         // indices of the rowToMostSimilar arrays with the results.
+        Object taskKey = WORK_QUEUE.registerTaskGroup(g.order());
         IntIterator iter1 = g.vertices().iterator();
         while (iter1.hasNext()) {
             final int v1 = iter1.nextInt();
-//             System.out.printf("Computing similarities for " + 
-//                               "vertex %d%n", v1);
-            
-            veryVerbose(LOGGER, "Computing similarities for " + 
-                        "vertex %d", v1);
-            IntSet neighbors = g.getNeighbors(v1);
-            IntIterator it1 = neighbors.iterator();
-            while (it1.hasNext()) {
-                int v2 = it1.nextInt();
-                IntIterator it2 = neighbors.iterator();
-                while (it2.hasNext()) {
-                    int v3 = it2.nextInt();
-                    if (v2 == v3)
-                        break;
-                    double sim = getConnectionSimilarity(g, v1, v2, v3);
-                    int e1index = edgeIndexer.index(new SimpleEdge(v1, v2));
-                    int e2index = edgeIndexer.index(new SimpleEdge(v1, v3));
-                    if (sim > edgeToSimOfMostSim[e1index]) {
-                        edgeToSimOfMostSim[e1index] = sim;
-                        edgeToMostSim[e1index] = e2index;
+            WORK_QUEUE.add(taskKey, new Runnable() { 
+                    public void run() {
+                        veryVerbose(LOGGER, "Computing similarities for " + 
+                                    "vertex %d", v1);
+                        IntSet neighbors = g.getNeighbors(v1);
+                        IntIterator it1 = neighbors.iterator();
+                        while (it1.hasNext()) {
+                            int v2 = it1.nextInt();
+                            IntIterator it2 = neighbors.iterator();
+                            while (it2.hasNext()) {
+                                int v3 = it2.nextInt();
+                                if (v2 == v3)
+                                    break;
+                                double sim = getConnectionSimilarity(
+                                    g, v1, v2, v3);
+
+                                int e1index = edgeIndexer
+                                    .index(new SimpleEdge(v1, v2));
+                                int e2index = edgeIndexer
+                                    .index(new SimpleEdge(v1, v3));
+
+                                // Lock on the canonical instance of e1 before
+                                // updating its similarity values
+                                synchronized(edgeIndexer.lookup(e1index)) {
+                                    if (sim > edgeToSimOfMostSim[e1index]) {
+                                        edgeToSimOfMostSim[e1index] = sim;
+                                        edgeToMostSim[e1index] = e2index;
+                                    }
+                                }
+
+                                // Lock on the canonical instance of e2 before
+                                // updating its similarity values
+                                synchronized(edgeIndexer.lookup(e2index)) {
+                                    if (sim > edgeToSimOfMostSim[e2index]) {
+                                        edgeToSimOfMostSim[e2index] = sim;
+                                        edgeToMostSim[e2index] = e1index;
+                                    }
+                                }
+                            }
+                        }
                     }
-                    if (sim > edgeToSimOfMostSim[e2index]) {
-                        edgeToSimOfMostSim[e2index] = sim;
-                        edgeToMostSim[e2index] = e1index;
-                    }
-                }
-            }
+                });
         }
+        WORK_QUEUE.await(taskKey);
+
 
         // Keep track of the size of each cluster so that we can merge the
         // smaller into the larger.  Each cluster has an initial size of 1
@@ -598,7 +617,7 @@ public class LinkClustering implements java.io.Serializable {
      * @param numClusters the number of clusters to produce
      */
     private <E extends Edge> MultiMap<Integer,Integer> singleLink(
-                       Graph<E> g, int numClusters) {
+                       final Graph<E> g, int numClusters) {
 
         final int numEdges = g.size();
         if (numClusters < 1 || numClusters > numEdges)
@@ -607,14 +626,14 @@ public class LinkClustering implements java.io.Serializable {
 
         // Index the edges so that we can quickly look up which cluster an edge
         // is in
-        Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
+        final Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
 
         // Keep a simple int->int mapping from each edge's index to (1) the
         // cluster its in, (2) the most similar edge to that edge, (3) the
         // similarity of the most similar edge.  
         int[] edgeToCluster = new int[numEdges];
-        int[] edgeToMostSim = new int[numEdges];
-        double[] edgeToSimOfMostSim = new double[numEdges];
+        final int[] edgeToMostSim = new int[numEdges];
+        final double[] edgeToSimOfMostSim = new double[numEdges];
 
         // Keep track of the vertices in each cluster
         IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
@@ -630,35 +649,54 @@ public class LinkClustering implements java.io.Serializable {
 
         // For each edge, find the most similar cluster updating the relative
         // indices of the rowToMostSimilar arrays with the results.
+        Object taskKey = WORK_QUEUE.registerTaskGroup(g.order());
         IntIterator iter1 = g.vertices().iterator();
         while (iter1.hasNext()) {
             final int v1 = iter1.nextInt();
-            veryVerbose(LOGGER, "Computing similarities for " + 
-                        "vertex %d", v1);
-            IntSet neighbors = g.getNeighbors(v1);
-            IntIterator it1 = neighbors.iterator();
-            while (it1.hasNext()) {
-                int v2 = it1.nextInt();
-                IntIterator it2 = neighbors.iterator();
-                while (it2.hasNext()) {
-                    int v3 = it2.nextInt();
-                    if (v2 == v3)
-                        break;
-                    double sim = getConnectionSimilarity(g, v1, v2, v3);
-                    int e1index = edgeIndexer.index(new SimpleEdge(v1, v2));                    
-                    if (sim > edgeToSimOfMostSim[e1index]) {
-                        edgeToSimOfMostSim[e1index] = sim;
-                        edgeToMostSim[e1index] = e2index;
-                    }
+            WORK_QUEUE.add(taskKey, new Runnable() { 
+                    public void run() {
+                        veryVerbose(LOGGER, "Computing similarities for " + 
+                                    "vertex %d", v1);
+                        IntSet neighbors = g.getNeighbors(v1);
+                        IntIterator it1 = neighbors.iterator();
+                        while (it1.hasNext()) {
+                            int v2 = it1.nextInt();
+                            IntIterator it2 = neighbors.iterator();
+                            while (it2.hasNext()) {
+                                int v3 = it2.nextInt();
+                                if (v2 == v3)
+                                    break;
+                                double sim = getConnectionSimilarity(
+                                    g, v1, v2, v3);
 
-                    int e2index = edgeIndexer.index(new SimpleEdge(v1, v3));
-                    if (sim > edgeToSimOfMostSim[e2index]) {
-                        edgeToSimOfMostSim[e2index] = sim;
-                        edgeToMostSim[e2index] = e1index;
+                                int e1index = edgeIndexer
+                                    .index(new SimpleEdge(v1, v2));
+                                int e2index = edgeIndexer
+                                    .index(new SimpleEdge(v1, v3));
+
+                                // Lock on the canonical instance of e1 before
+                                // updating its similarity values
+                                synchronized(edgeIndexer.lookup(e1index)) {
+                                    if (sim > edgeToSimOfMostSim[e1index]) {
+                                        edgeToSimOfMostSim[e1index] = sim;
+                                        edgeToMostSim[e1index] = e2index;
+                                    }
+                                }
+
+                                // Lock on the canonical instance of e2 before
+                                // updating its similarity values
+                                synchronized(edgeIndexer.lookup(e2index)) {
+                                    if (sim > edgeToSimOfMostSim[e2index]) {
+                                        edgeToSimOfMostSim[e2index] = sim;
+                                        edgeToMostSim[e2index] = e1index;
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-            }
+                });
         }
+        WORK_QUEUE.await(taskKey);
 
         // Keep track of the size of each cluster so that we can merge the
         // smaller into the larger.  Each cluster has an initial size of 1

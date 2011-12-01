@@ -55,7 +55,8 @@ public interface Counter<T> extends Iterable<Map.Entry<T,Integer>> {
     int count(T obj);
 
     /**
-     * Counts the object, increasing its total count by the specified positive amount.
+     * Counts the object, increasing its total count by the specified positive
+     * amount.
      *
      * @param count a positive value for the number of times the object occurred
      *

@@ -58,10 +58,24 @@ public class WeightedLinkClustering extends LinkClustering
     }
 
     /**
-     * <i>Ignores the specified number of clusters</i> and returns the
-     * clustering solution according to the partition density.
+     * Computes the similarity of the graph's edges and merges them until the
+     * specified number of clusters has been reached.
      *
-     * @param numClusters this parameter is ignored.
+     * @param numClusters the number of clusters to return
+     */
+    public <E extends WeightedEdge> MultiMap<Integer,Integer> cluster(
+              final WeightedGraph<E> graph, int numClusters, Properties props) {
+        if (props.getProperty(KEEP_WEIGHT_VECTORS_PROPERTY) != null)
+            keepWeightVectors = Boolean.parseBoolean(
+                props.getProperty(KEEP_WEIGHT_VECTORS_PROPERTY));
+        vertexToWeightVector.clear();
+        return super.cluster(graph, numClusters, props);
+    }
+
+    /**
+     * Computes the similarity of the graph's edges using their weights and
+     * merges them to select the final partitioning that maximizes the overall
+     * cluster density.
      */
     public <E extends WeightedEdge> MultiMap<Integer,Integer> cluster(
                       final WeightedGraph<E> graph, Properties props) {
@@ -133,5 +147,4 @@ public class WeightedLinkClustering extends LinkClustering
         weightVec.set(vertex, normalizer);
         return weightVec;
     }
-
 }

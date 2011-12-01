@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -19,49 +19,49 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.text;
+package edu.ucla.sspace.util.primitive;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
 
 /**
- * A {@code Document} implementation backed by a {@code String} whose contents
- * are used for the document text.
+ * A utility class for holding two {@code int}s.
  */
-public class StringDocument implements Document {
+public class IntPair {
 
     /**
-     * A reader to the text of the document
+     * The first {@code int} in the pair
      */
-    private final BufferedReader reader;
+    public final int x;
+    
+    /**
+     * The second {@code int} in the pair
+     */
+    public final int y;
 
     /**
-     * The text of the document
+     * Creates a pair out of {@code x} and {@code y}
      */
-    private final String text;
-    
-    /**
-     * Constructs a {@code Document} using the provided string as the document
-     * text
-     *
-     * @param docText the document text
-     */
-    public StringDocument(String docText) {
-        this.text = docText;
-        reader = new BufferedReader(new StringReader(docText));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public BufferedReader reader() {
-        return reader;
+    public IntPair(int x, int y) {
+	this.x = x;
+	this.y = y;
     }
 
     /**
-     * Returns the entire document
+     * Returns {@code true} if {@code o} is a {@link Pair} and its {@code x} and
+     * {@code y} elements are equal to those of this pair.  Note that equality
+     * is specific to the ordering of {@code x} and {@code y}.
      */
+    public boolean equals(Object o) {
+	if (!(o instanceof IntPair))
+	    return false;
+	IntPair p = (IntPair)o;
+	return x == p.x && y == p.y;
+    }
+    
+    public int hashCode() {
+	return x ^ y;
+    }
+
     public String toString() {
-        return text;
+	return "{" + x + ", " + y + "}";
     }
 }

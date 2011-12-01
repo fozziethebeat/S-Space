@@ -878,6 +878,21 @@ public class Similarity {
 
     /**
      * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
+     * index</a> of the two sets of elements.
+     */
+    public static double jaccardIndex(Set<?> a, Set<?> b) {        
+        int intersection = 0;
+        for (Object o : a) {
+            if (b.contains(o))
+                intersection++;
+        }
+
+        double union = a.size() + b.size() - intersection;
+        return intersection / union;
+    }
+
+    /**
+     * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
      * index</a> comparing the similarity both arrays when viewed as sets of
      * samples.
      */
@@ -2264,7 +2279,8 @@ public class Similarity {
     }
 
     /**
-     * Returns the cosine similarity of the two {@code IntegerVector} instances
+     * Returns the Tanimoto Coefficient of the two {@code IntegerVector}
+     * instances
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                  not the same.
