@@ -154,6 +154,11 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
         // Add this edge for the vertex to which the edge is pointing.  This
         // double-add behavior is necessary to ensure that the EdgeSet for each
         // vertices contains all the edges that connect to that vertex.
+        //
+        // NOTE: having the double add outside of the isNew check is also
+        // necessary to support changing the weights on a WeightedGraph, where
+        // adding a duplicate edge with a different weight will change the
+        // weight but not add a new edge (i.e., increase the size).
         boolean isNew = from.add(e);
         to.add(e);
         if (isNew) 

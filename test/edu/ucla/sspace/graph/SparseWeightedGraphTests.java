@@ -83,6 +83,12 @@ public class SparseWeightedGraphTests {
         }
     }
 
+    @Test public void testAddEdgeDifferentWeights() {
+        Graph<WeightedEdge> g = new SparseWeightedGraph();
+        assertTrue(g.add(new SimpleWeightedEdge(0, 1, .5)));
+        assertFalse(g.add(new SimpleWeightedEdge(0, 1, .7)));
+    }
+
     @Test public void testAddEdge() {
         Graph<WeightedEdge> g = new SparseWeightedGraph();
         g.add(new SimpleWeightedEdge(0, 1, .5));

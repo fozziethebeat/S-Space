@@ -106,7 +106,8 @@ public class SparseWeightedEdgeSet extends AbstractSet<WeightedEdge>
         double w = e.weight();
         if (edges.containsKey(toAdd)) {
             double w2 = edges.put(toAdd, w);
-            return w == w2;
+            // The weight was changed but a new edge was not added
+            return false;
         }
         else {
             edges.put(toAdd, w);
