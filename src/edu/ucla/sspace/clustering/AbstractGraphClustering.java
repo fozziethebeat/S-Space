@@ -62,7 +62,7 @@ public abstract class AbstractGraphClustering implements Clustering {
 
         // Build the new adjacency matrix.
         Matrix newAdjacency = new ArrayMatrix(
-                adjacency.rows(), adjacency.rows());
+                baseAssignments.numClusters(), baseAssignments.numClusters());
         for (int row = 0; row < adjacency.rows(); ++row) {
             int newRow = baseAssignments.get(row);
             for (int col = 0; col < adjacency.rows(); ++col) {
