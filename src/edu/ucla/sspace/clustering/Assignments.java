@@ -103,7 +103,7 @@ public class Assignments implements Iterable<int[]> {
                        Matrix matrix) {
         this.numClusters = numClusters;
         this.matrix = matrix;
-        assignments = new int[matrix.rows()][1];
+        assignments = new int[initialAssignments.length][1];
         for (int i = 0; i < initialAssignments.length; ++i)
             set(i, initialAssignments[i]);
     }

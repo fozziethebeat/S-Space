@@ -2,6 +2,7 @@ package edu.ucla.sspace.wordsi;
 
 import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.basis.FilteredStringBasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyExtractor;
@@ -124,6 +125,7 @@ public class GraphWordsi implements SemanticSpace {
     public void processSpace(Properties props) {
         try {
             for (Map.Entry<String, SparseMatrix> entry : termGraphs.entrySet()) {
+                StringBasisMapping finalBasis = new StringBasisMapping();
                 SparseMatrix termGraph = entry.getValue();
                 String term = entry.getKey();
 
@@ -138,12 +140,14 @@ public class GraphWordsi implements SemanticSpace {
                 int savedRows = 0;
                 List<Integer> rowMapList = new ArrayList<Integer>();
                 for (int r = 0; r < termGraph.rows(); ++r) {
-                    Double l = referenceLikilhood.get(
-                            basis.getDimensionDescription(r));
+                    String word = basis.getDimensionDescription(r);
+                    Double l = referenceLikilhood.get(word);
                     double reference = (l == null) ? .0000000001 : l;
                     double logLikelihood = -2 * Math.log(reference/(termFrequency[r] / total));
-                    if (termFrequency[r] >= 10 && logLikelihood >= 0)
+                    if (termFrequency[r] >= 10 && logLikelihood >= 0) {
                         rowMapList.add(r);
+                        finalBasis.getDimension(word);
+                    }
                 }
 
                 int[] rowMap = new int[rowMapList.size()];
@@ -155,7 +159,7 @@ public class GraphWordsi implements SemanticSpace {
                 MatrixIO.writeMatrix(maskedMatrix,
                                      new File(matrixFileName),
                                      Format.SVDLIBC_SPARSE_TEXT);
-                SerializableUtil.save(basis, basisFileName);
+                SerializableUtil.save(finalBasis, basisFileName);
             }
         } catch (IOException ioe) {
             ioe.printStackTrace();
