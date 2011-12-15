@@ -81,6 +81,15 @@ class ListMatrix<T extends DoubleVector> implements Matrix {
     /**
      * {@inheritDoc}
      */
+    public double add(int row, int column, double delta) {
+        double old = get(row, column);
+        set(row, column, delta+old);
+        return old;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double get(int row, int column) {
         return vectors.get(row).get(column);
     }

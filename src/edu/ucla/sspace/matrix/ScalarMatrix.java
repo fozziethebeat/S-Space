@@ -21,6 +21,11 @@ public class ScalarMatrix implements Matrix {
         this.scalar = scalar;
     }
 
+    public double add(int row, int col, double delta) {
+        throw new UnsupportedOperationException(
+                "Cannot modify values in a ScalarMatrix");
+    }
+
     public double get(int row, int col) {
         return scalar;
     }

@@ -102,6 +102,15 @@ public class AtomicGrowingMatrix implements AtomicMatrix {
     /**
      * {@inheritDoc}
      */
+    public double add(int row, int col, double delta) {
+        checkIndices(row, col);
+        AtomicVector rowEntry = getRow(row, col, true);
+        return rowEntry.getAndAdd(col, delta);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double addAndGet(int row, int col, double delta) {
         checkIndices(row, col);
         AtomicVector rowEntry = getRow(row, col, true);
@@ -135,16 +144,6 @@ public class AtomicGrowingMatrix implements AtomicMatrix {
         AtomicVector rowEntry = getRow(row, col, false);
         return (rowEntry == null) ? 0d : rowEntry.get(col);
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double getAndAdd(int row, int col, double delta) {
-        checkIndices(row, col);
-        AtomicVector rowEntry = getRow(row, col, true);
-        return rowEntry.getAndAdd(col, delta);
-    }
-
 
     /**
      * {@inheritDoc} The length of the returned column reflects the size of

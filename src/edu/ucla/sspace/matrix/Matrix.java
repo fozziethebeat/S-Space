@@ -72,6 +72,19 @@ public interface Matrix {
     }
 
     /**
+     * Adds {@code delta} to the current value stored at {@code row,col} in the
+     * matrix and returns the old value.
+     *
+     * @param row The row values of the cell to increment
+     * @param col The column value of the cell to increment.
+     * @param delta The delta to apply to the cell.
+     *
+     * @return The value at the cell specified by {@code row} and {@code col}
+     *         before adding {@code delta}.
+     */
+    double add(int row, int col, double delta);
+
+    /**
      * Returns the value of the {@code Matrix} at the provided row and column.
      *
      * @param row The row values of the cell to return.

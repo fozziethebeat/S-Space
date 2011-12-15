@@ -47,18 +47,18 @@ public class SynchronizedSparseMatrix implements SparseMatrix, AtomicMatrix {
     /**
      * {@inheritDoc}
      */
-    public synchronized double addAndGet(int row, int col, double delta) {
-        double value = m.get(row, col) + delta;
-        m.set(row, col, value);
+    public synchronized double add(int row, int col, double delta) {
+        double value = m.get(row, col);
+        m.set(row, col, value + delta);
         return value;
     }
 
     /**
      * {@inheritDoc}
      */
-    public synchronized double getAndAdd(int row, int col, double delta) {
-        double value = m.get(row, col);
-        m.set(row, col, value + delta);
+    public synchronized double addAndGet(int row, int col, double delta) {
+        double value = m.get(row, col) + delta;
+        m.set(row, col, value);
         return value;
     }
 

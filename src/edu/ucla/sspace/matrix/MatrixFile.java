@@ -47,6 +47,13 @@ public class MatrixFile implements Iterable<MatrixEntry> {
     private final MatrixIO.Format format;
 
     /**
+     * Constucts a {@code MatrixFile} from the provided path and format.
+     */
+    public MatrixFile(String matrixFile, MatrixIO.Format format) {
+        this(new File(matrixFile), format);
+    }
+
+    /**
      * Constucts a {@code MatrixFile} from the provided {@code File} and format.
      */
     public MatrixFile(File matrixFile, MatrixIO.Format format) {
