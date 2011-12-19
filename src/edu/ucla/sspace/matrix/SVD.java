@@ -991,7 +991,7 @@ public class SVD {
             SVD_LOGGER.fine("creating SVDLIBC factor matrices at: " + 
                               outputMatrixPrefix);
             String commandLine = "svd -o " + outputMatrixPrefix + formatString +
-                " -w db " + // output is dense binary
+                " -w dt " + // output is dense binary
                 " -d " + dimensions + " " + matrix.getAbsolutePath();
             SVD_LOGGER.fine(commandLine);
             Process svdlibc = Runtime.getRuntime().exec(commandLine);
@@ -1024,7 +1024,7 @@ public class SVD {
                     // be using (i.e. it is the word space).  SVDLIBC returns
                     // this as U transpose, so correct it by indicating that the
                     // read operation should transpose the matrix as it is built
-                    MatrixIO.readMatrix(Ut, Format.SVDLIBC_DENSE_BINARY, 
+                    MatrixIO.readMatrix(Ut, Format.SVDLIBC_DENSE_TEXT, 
                                         Type.DENSE_IN_MEMORY, true),
                     // Sigma only has n values for an n^2 matrix, so make it
                     // sparse.  Note that even if we specify the output to be in
@@ -1032,7 +1032,7 @@ public class SVD {
                     // text
                     readSVDLIBCsingularVector(S),
                     // V could be large, so just keep it on disk.  
-                    MatrixIO.readMatrix(Vt, Format.SVDLIBC_DENSE_BINARY, 
+                    MatrixIO.readMatrix(Vt, Format.SVDLIBC_DENSE_TEXT, 
                                         Type.DENSE_ON_DISK)
                 };
             }

@@ -110,12 +110,8 @@ public class WCWordsiMain extends GenericWordsiMain {
         if (argOptions.hasOption('L')) {
             basis = loadObject(openLoadFile());
             basis.setReadOnly(true);
-<<<<<<< HEAD
-        } else 
-=======
         }
         else 
->>>>>>> 5a8daaca27250c8f792e508f3d9cc8b855fbfcd7
             basis = new StringBasisMapping();
     }
 

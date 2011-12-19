@@ -128,7 +128,7 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
             LOG.fine("creating SVDLIBC factor matrices at: " + 
                               outputMatrixPrefix);
             String commandLine = "svd -o " + outputMatrixPrefix + formatString +
-                " -w db " + // output is dense binary
+                " -w dt " + // output is dense binary
                 " -d " + dimensions + " " + mFile.getFile().getAbsolutePath();
             LOG.fine(commandLine);
             Process svdlibc = Runtime.getRuntime().exec(commandLine);
@@ -158,13 +158,13 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
                 // this as U transpose, so correct it by indicating that the
                 // read operation should transpose the matrix as it is built
                 dataClasses = MatrixIO.readMatrix(
-                        Ut, Format.SVDLIBC_DENSE_BINARY, 
+                        Ut, Format.SVDLIBC_DENSE_TEXT, 
                         Type.DENSE_IN_MEMORY, true);
                 scaledDataClasses = false;
 
                 // V could be large, so just keep it on disk.  
                 classFeatures = MatrixIO.readMatrix(
-                        Vt, Format.SVDLIBC_DENSE_BINARY,
+                        Vt, Format.SVDLIBC_DENSE_TEXT,
                         Type.DENSE_IN_MEMORY);
                 scaledClassFeatures = false;
 
