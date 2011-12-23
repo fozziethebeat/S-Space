@@ -96,12 +96,12 @@ public class SingularValueDecompositionLibC extends AbstractSvd {
             outputMatrixFile.deleteOnExit();
             String outputMatrixPrefix = outputMatrixFile.getAbsolutePath();
 
-            LOG.fine("creating SVDLIBC factor matrices at: " + 
-                              outputMatrixPrefix);
+            LOG.info("creating SVDLIBC factor matrices at: " + 
+                     outputMatrixPrefix);
             String commandLine = "svd -o " + outputMatrixPrefix + formatString +
-                " -w db " + // output is dense binary
+                " -w dt " + // output is dense binary
                 " -d " + dimensions + " " + mFile.getFile().getAbsolutePath();
-            LOG.fine(commandLine);
+            LOG.info(commandLine);
             Process svdlibc = Runtime.getRuntime().exec(commandLine);
 
             BufferedReader stdout = new BufferedReader(
@@ -110,10 +110,10 @@ public class SingularValueDecompositionLibC extends AbstractSvd {
                 new InputStreamReader(svdlibc.getErrorStream()));
 
             StringBuilder output = new StringBuilder("SVDLIBC output:\n");
-            for (String line = null; (line = stderr.readLine()) != null; ) {
+            for (String line = null; (line = stdout.readLine()) != null; ) {
                 output.append(line).append("\n");
             }
-            LOG.fine(output.toString());
+            LOG.info(output.toString());
             
             int exitStatus = svdlibc.waitFor();
             LOG.fine("svdlibc exit status: " + exitStatus);
@@ -129,13 +129,13 @@ public class SingularValueDecompositionLibC extends AbstractSvd {
                 // this as U transpose, so correct it by indicating that the
                 // read operation should transpose the matrix as it is built
                 dataClasses = MatrixIO.readMatrix(
-                        Ut, Format.SVDLIBC_DENSE_BINARY, 
+                        Ut, Format.SVDLIBC_DENSE_TEXT, 
                         Type.DENSE_IN_MEMORY, true);
                 scaledDataClasses = false;
 
                 // V could be large, so just keep it on disk.  
                 classFeatures = MatrixIO.readMatrix(
-                        Vt, Format.SVDLIBC_DENSE_BINARY,
+                        Vt, Format.SVDLIBC_DENSE_TEXT,
                         Type.DENSE_IN_MEMORY);
                 scaledClassFeatures = false;
 

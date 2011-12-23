@@ -193,12 +193,12 @@ public class DirectClustering implements Clustering {
         for (int i = 0; i < numRepetitions; ++i) {
             clusterIteration(matrix, numClusters, seedType, criterion);
             if (criterion.isMaximize()) {
-                if (criterion.score() > bestScore) {
+                if (criterion.score() >= bestScore) {
                     bestScore = criterion.score();
                     bestAssignment = criterion.assignments();
                 }
             } else {
-                if (criterion.score() < bestScore) {
+                if (criterion.score() <= bestScore) {
                     bestScore = criterion.score();
                     bestAssignment = criterion.assignments();
                 }

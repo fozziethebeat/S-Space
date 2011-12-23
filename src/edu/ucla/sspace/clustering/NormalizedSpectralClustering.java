@@ -63,7 +63,7 @@ public class NormalizedSpectralClustering implements Clustering {
 
         // Now cluster the data points with K-Means clustering and return the
         // assignments.
-        return DirectClustering.cluster(spectral, k, 10);
+        return DirectClustering.cluster(spectral, k, 20);
     }
 
     public Assignments cluster(Matrix m, Properties props) {

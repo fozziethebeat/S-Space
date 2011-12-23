@@ -25,6 +25,8 @@ import edu.ucla.sspace.basis.AbstractBasisMapping;
 
 import edu.ucla.sspace.dependency.DependencyPath;
 
+import java.util.Set;
+
 
 /**
  * A {@link BasisMapping} implementation where each word and relation
@@ -40,6 +42,12 @@ public class RelationBasedBasisMapping
 
     private static final long serialVersionUID = 1L;
 
+    private final Set<String> excludedWords;
+
+    public RelationBasedBasisMapping(Set<String> excludedWords) {
+        this.excludedWords = excludedWords;
+    }
+
     /**
      * Returns the dimension number corresponding to the term at the end of the
      * provided path.
@@ -50,6 +58,8 @@ public class RelationBasedBasisMapping
      */
     public int getDimension(DependencyPath path) {
         String endToken = path.last().word();
+        if (excludedWords.contains(endToken))
+            return -1;
 
         // Extract out how the current word is related to the last word in the
         // path.  
