@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -24,16 +24,18 @@ package edu.ucla.sspace.text;
 import java.io.BufferedReader;
 import java.io.StringReader;
 
+
 /**
- * A {@code Document} implementation backed by a {@code String} whose contents
- * are used for the document text.
+ * A {@code LabeledDocument} implementation backed by a {@code String} whose
+ * contents are used for the document text.
  */
-public class StringDocument implements Document {
+public class LabeledStringDocument extends StringDocument
+        implements LabeledDocument {
 
     /**
-     * The text of the document
+     * The label of the document
      */
-    private final String text;
+    private final String label;
     
     /**
      * Constructs a {@code Document} using the provided string as the document
@@ -41,22 +43,15 @@ public class StringDocument implements Document {
      *
      * @param docText the document text
      */
-    public StringDocument(String docText) {
-        this.text = docText;        
-    }
-    
-    /**
-     * {@inheritDoc} This method may be repeatedly called to re-read the
-     * contents of the document.
-     */
-    public BufferedReader reader() {
-        return new BufferedReader(new StringReader(text));
+    public LabeledStringDocument(String label, String docText) {
+        super(docText);
+        this.label = label;
     }
 
     /**
-     * Returns the entire document
+     * {@inheritDoc}
      */
-    public String toString() {
-        return text;
-    }
+    public String label() {
+        return label;
+    }   
 }

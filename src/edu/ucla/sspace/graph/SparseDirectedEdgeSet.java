@@ -30,8 +30,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import edu.ucla.sspace.util.CombinedIterator;
-
+import edu.ucla.sspace.util.primitive.AbstractIntSet;
 import edu.ucla.sspace.util.primitive.IntIterator;
 import edu.ucla.sspace.util.primitive.IntSet;
 import edu.ucla.sspace.util.primitive.TroveIntSet;
@@ -88,8 +87,7 @@ public class SparseDirectedEdgeSet extends AbstractSet<DirectedEdge>
      * {@inheritDoc}  The set of vertices returned by this set is immutable.
      */
     public IntSet connected() {
-        // return new CombinedSet();
-        throw new Error();
+        return new CombinedSet();
     }
 
     /**
@@ -475,24 +473,103 @@ public class SparseDirectedEdgeSet extends AbstractSet<DirectedEdge>
         }
     }
 
-//     private class CombinedSet extends AbstractSet<Integer> {
+     private class CombinedSet extends AbstractIntSet {
 
-//         @Override public boolean contains(Object o) {
-//             if (!(o instanceof Integer))
-//                 return false;
-//             Integer i = (Integer)o;
-//             return inEdges.contains(i) || outEdges.contains(i);
-//         }
+        @Override public boolean contains(int i) {
+            return inEdges.contains(i) || outEdges.contains(i);
+        }
 
-//         @Override public Iterator<Integer> iterator() {
-//             OpenIntSet combined = new OpenIntSet();
-//             combined.addAll(inEdges);
-//             combined.addAll(outEdges);
-//             return Collections.unmodifiableSet(combined).iterator();
-//         }
+        @Override public boolean contains(Object o) {
+            if (!(o instanceof Integer))
+                return false;
+            int i = ((Integer)o).intValue();
+            return inEdges.contains(i) || outEdges.contains(i);
+        }
 
-//         @Override public int size() {
-//             return inEdges.size() + outEdges.size();
-//         }
-//     }
+        @Override public IntIterator iterator() {
+            return new CombinedIterator();
+        }
+
+         @Override public int size() {
+             IntSet smaller, larger;
+             if (inEdges.size() < outEdges.size()) {
+                 smaller = inEdges;
+                 larger = outEdges;
+             }
+             else {
+                 smaller = outEdges;
+                 larger = inEdges;
+             }
+             int size = larger.size();
+             IntIterator iter = smaller.iterator();
+             while (iter.hasNext()) {
+                 int i = iter.nextInt();
+                 if (!larger.contains(i))
+                     size++;
+             }
+             return size;
+         }
+     }
+
+     private class CombinedIterator implements IntIterator {
+
+         private IntIterator largerIter;
+         private IntIterator smallerIter;
+         private IntSet larger;
+
+         int next;
+         boolean hasNext;
+
+         public CombinedIterator() {
+             if (inEdges.size() < outEdges.size()) {
+                 smallerIter = inEdges.iterator();
+                 largerIter = outEdges.iterator();
+                 larger = outEdges;
+             }
+             else {
+                 smallerIter = outEdges.iterator();
+                 largerIter = inEdges.iterator();
+                 larger = inEdges;
+             }
+             advance();
+         }
+
+         private void advance() {
+             hasNext = false;
+             if (largerIter.hasNext()) {
+                 next = largerIter.nextInt();
+                 hasNext = true;
+             }
+             else {
+                 while (smallerIter.hasNext()) {
+                     int i = smallerIter.nextInt();
+                     if (!larger.contains(i)) {
+                         next = i;
+                         hasNext = true;
+                         break;
+                     }
+                 }
+             }
+         }
+             
+         public boolean hasNext() {
+             return hasNext;
+         }
+
+         public int nextInt() {
+             if (!hasNext())
+                 throw new NoSuchElementException();
+             int n = next;
+             advance();
+             return n;
+         }
+
+         public Integer next() {
+             return nextInt();
+         }
+
+         public void remove() {
+             throw new UnsupportedOperationException();
+         }
+     }
 }

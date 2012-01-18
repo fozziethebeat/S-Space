@@ -36,6 +36,7 @@ import edu.ucla.sspace.graph.WeightedEdge;
 import edu.ucla.sspace.graph.WeightedGraph;
 
 import edu.ucla.sspace.util.ColorGenerator;
+import edu.ucla.sspace.util.Indexer;
 
 import edu.ucla.sspace.util.primitive.IntIterator;
 
@@ -76,7 +77,7 @@ public class GexfIO {
          */
     public <T,E extends TypedEdge<T>> void write(
                         Multigraph<T,E> g, File f) throws IOException {
-        write(g, f, null, false);
+        write(g, f, null, false, null, false);
     }
 
     /**
@@ -93,7 +94,43 @@ public class GexfIO {
     public <T,E extends TypedEdge<T>> void write(
                         Multigraph<T,E> g, File f, Map<T,Color> edgeColors) 
                         throws IOException {
-        write(g, f, edgeColors, true);
+        write(g, f, edgeColors, true, null, false);
+    }
+
+    /**
+     * Writes the provided multigraph to the specified {@code gexf} file, using
+     * {@code vertexLabels} to name the vertices.
+     *
+     * @param f the file where the {@code gexf} graph will be written.  Any
+     *        existing file contents will be overwritten
+     * @param vertexLabels a mapping from vertex value to a string name for the
+     *        vertex
+     */
+    public <T,E extends TypedEdge<T>> void write(
+                        Multigraph<T,E> g, File f, 
+                        Indexer<String> vertexLabels) 
+                        throws IOException {
+        write(g, f, null, false, vertexLabels, true);
+    }
+
+    /**
+     * Writes the provided multigraph to the specified {@code gexf} file, using
+     * {@code edgeColors} as a guide for how to display parallel edges of
+     * different types, and {@code vertexLabels} to name the vertices.
+     *
+     * @param f the file where the {@code gexf} graph will be written.  Any
+     *        existing file contents will be overwritten
+     * @param edgeColor a mapping from an edge type to a color.  Types that do
+     *        not have colors will be randomly assigned one and the {@code
+     *        edgeColors} map will be updated appropriately.
+     * @param vertexLabels a mapping from vertex value to a string name for the
+     *        vertex
+     */
+    public <T,E extends TypedEdge<T>> void write(
+                        Multigraph<T,E> g, File f, Map<T,Color> edgeColors, 
+                        Indexer<String> vertexLabels) 
+                        throws IOException {
+        write(g, f, edgeColors, true, vertexLabels, true);
     }
 
     /**
@@ -102,7 +139,8 @@ public class GexfIO {
      */
     private <T,E extends TypedEdge<T>> void write(
                          Multigraph<T,E> g, File f, Map<T,Color> edgeColors, 
-                         boolean useColors) throws IOException {
+                         boolean useColors, Indexer<String> vertexLabels,
+                         boolean useLabels) throws IOException {
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = null;
@@ -135,7 +173,10 @@ public class GexfIO {
             int vertex = vIter.next();
             Element node = doc.createElement("node");
             node.setAttribute("id", String.valueOf(vertex));
-            node.setAttribute("label", String.valueOf(vertex));
+            if (useLabels) 
+                node.setAttribute("label", vertexLabels.lookup(vertex));
+            else
+                node.setAttribute("label", String.valueOf(vertex));
             nodes.appendChild(node);
         }
 

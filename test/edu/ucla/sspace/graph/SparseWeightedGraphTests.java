@@ -126,7 +126,7 @@ public class SparseWeightedGraphTests {
         assertTrue(edges.contains(new SimpleWeightedEdge(0, 1, .5)));
 
         assertEquals(0, g.getEdges(0, 4).size());
-        assertTrue(g.add(new SimpleWeightedEdge(1, 0, .5)));
+        assertFalse(g.add(new SimpleWeightedEdge(1, 0, .5)));
         edges = g.getEdges(0, 1);
         assertEquals(1, edges.size());
         assertTrue(edges.contains(new SimpleWeightedEdge(0, 1, .5)));

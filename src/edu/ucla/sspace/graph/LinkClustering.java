@@ -167,6 +167,33 @@ public class LinkClustering implements java.io.Serializable {
      */
     public <E extends Edge> MultiMap<Integer,Integer> cluster(
                       final Graph<E> graph, Properties props) {
+        
+        Indexer<E> edges = new ObjectIndexer<E>();
+        for (E e : graph.edges())
+            edges.index(e);
+        for (Map.Entry<E,Integer> e : edges)
+            System.out.println(e.getValue() + " " + e.getKey());
+        System.out.print(",");
+        for (int i = 0; i < graph.size(); ++i) {
+            E e = edges.lookup(i);
+            System.out.print(e.from() + "--" + e.to() + ",");
+        }
+        System.out.println();
+        for (int i = 0; i < graph.size(); ++i) {
+            E e = edges.lookup(i);
+            System.out.print(e.from() + "--" + e.to() + ",");
+            for (int j = 0; j < graph.size(); ++j) {
+                if (i == j)
+                    System.out.print("0");
+                else
+                    System.out.print(getConnectionSimilarity(graph, edges.lookup(i), edges.lookup(j)));
+                if (j + 1 < graph.size())
+                    System.out.print(",");
+            }
+            System.out.println();
+        }
+
+
         return singleLink(graph);
         /*
         double minSimilarity = 0d;
@@ -328,11 +355,18 @@ public class LinkClustering implements java.io.Serializable {
     private <E extends Edge> MultiMap<Integer,Integer> 
                        singleLink(final Graph<E> g) {
 
-        final int numEdges = g.size();
 
         // Index the edges so that we can quickly look up which cluster an edge
         // is in
         final Indexer<Edge> edgeIndexer = new HashIndexer<Edge>();
+
+        for (Edge e : g.edges()) {
+            // Ignore any information on the edges, such as weights or types, by
+            // creating our own edges and indexing them
+            edgeIndexer.index(new SimpleEdge(e.from(), e.to()));
+        }
+
+        final int numEdges = edgeIndexer.size();
 
         // Keep a simple int->int mapping from each edge's index to (1) the
         // cluster its in, (2) the most similar edge to that edge, (3) the
@@ -342,17 +376,25 @@ public class LinkClustering implements java.io.Serializable {
         final double[] edgeToSimOfMostSim = new double[numEdges];
 
         // Keep track of the vertices in each cluster
-        IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
-        IntIntMultiMap densestSolution = new IntIntHashMultiMap();
+        // IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
+        MultiMap<Integer,Integer> clusterToVertices = new HashMultiMap<Integer,Integer>();
+        MultiMap<Integer,Integer> densestSolution = new HashMultiMap<Integer,Integer>();
 
         // Loop over each edge in the graph and add the vertices for that edge
         // to the initial cluster assignment
         for (Edge e : g.edges()) {
-            int initialCluster = edgeIndexer.index(e);
+            // Ignore any information on the edges, such as weights or types, by
+            // creating our own edges.
+            int initialCluster = edgeIndexer.index(
+                new SimpleEdge(e.from(), e.to()));
             edgeToCluster[initialCluster] = initialCluster;
             clusterToVertices.put(initialCluster, e.to());
             clusterToVertices.put(initialCluster, e.from());
         }
+
+        // Ensure that the reverse lookup table is created in the Indexer ahead
+        // of time, since threads will be accessing it concurrently
+        edgeIndexer.lookup(0);
 
         // For each edge, find the most similar cluster updating the relative
         // indices of the rowToMostSimilar arrays with the results.
@@ -377,9 +419,13 @@ public class LinkClustering implements java.io.Serializable {
                                     g, v1, v2, v3);
 
                                 int e1index = edgeIndexer
-                                    .index(new SimpleEdge(v1, v2));
+                                    .find(new SimpleEdge(v1, v2));
                                 int e2index = edgeIndexer
-                                    .index(new SimpleEdge(v1, v3));
+                                    .find(new SimpleEdge(v1, v3));
+                                assert e1index >= 0 : "missing e1";
+                                assert e2index >= 0 : "missing e2";
+                                assert edgeIndexer.lookup(e1index) != null : "e1 is null";
+                                assert edgeIndexer.lookup(e2index) != null : "e2 is null";
 
                                 // Lock on the canonical instance of e1 before
                                 // updating its similarity values
@@ -437,10 +483,6 @@ public class LinkClustering implements java.io.Serializable {
                 if (edgeToSimOfMostSim[i] > highestSim) {
                     int c1 = edgeToCluster[i];
                     int mostSim = edgeToMostSim[i];
-                    // dj: I don't quite understand how this case happens, but
-                    // it will for the last two cluster merges...
-                    if (mostSim == -1)
-                        continue;
                     int c2 = edgeToCluster[mostSim];
                     if (c1 != c2) {
                         highestSim = edgeToSimOfMostSim[i];
@@ -475,13 +517,18 @@ public class LinkClustering implements java.io.Serializable {
             // edges, as that similarity will alread be recorded by the other
             // edges that are not these two.
             if (cluster1index == cluster2index) {
-                edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
+                edgeToSimOfMostSim[edge1index] = -2d;
                 // Note that since we are skipping this round, we do not
                 // increment the mergeIter counter
                 continue;
             }
             // We will merge this iteration
             ++mergeIter; 
+
+//             System.out.printf("Merging c%d (size: %d) with c%d (size: %d)%n",
+//                               cluster2index, clusterToVertices.get(cluster2index).size(),
+//                               cluster1index, clusterToVertices.get(cluster1index).size());
+
 
             Set<Integer> verticesInSmaller = clusterToVertices.get(cluster2index);
 //             System.out.printf("Merged %d:%s into %d:%s with simiarity %f%n", 
@@ -501,15 +548,15 @@ public class LinkClustering implements java.io.Serializable {
             // merged with another edge.  Even if it is more similar, we maintain
             // the invariant that only the cluster1index is valid after a merge
             // operation
-            edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
-            edgeToSimOfMostSim[edge2index] = Double.MIN_VALUE;
+            edgeToSimOfMostSim[edge1index] = -3d;
+            edgeToSimOfMostSim[edge2index] = -4d;
             
             // For all the edges not in the current cluster, find the most
             // similar data point to the now-merged cluster.  Note that this
             // process doesn't need to update the nearest neighbors of these
             // nodes, as they should still be valid post-merge.
             int mostSimEdgeToCurCluster = -1;
-            highestSim = Double.MIN_VALUE;
+            highestSim = -5d;
             Edge e1 = edgeIndexer.lookup(edge1index);
             Edge e2 = edgeIndexer.lookup(edge2index);
 //             System.out.printf("Cluster assignments halfway into merge %d: %s%n", 
@@ -537,6 +584,10 @@ public class LinkClustering implements java.io.Serializable {
                 }
                                 
                 Edge e3 = edgeIndexer.lookup(i);
+                assert e1 != null : "e1 is null, edge1index: " + edge1index;
+                assert e2 != null : "e2 is null, edge2index: " + edge2index;
+                assert e3 != null : "e3 is null, edge3index: " + i + ", debug:" + debug(edgeIndexer, numEdges);
+
                 double simToE1 = getConnectionSimilarity(g, e1, e3);
                 double simToE2 = getConnectionSimilarity(g, e2, e3);
                 
@@ -607,6 +658,12 @@ public class LinkClustering implements java.io.Serializable {
         return densestSolution;
     }
 
+    private static String debug(Indexer<Edge> indexer, int numEdges) {
+        for (int i = 0; i < numEdges; ++i)
+            System.out.println(i + ": " + indexer.lookup(i));
+        return "";
+    }
+
     /**
      * Performs single-linkage agglomerative clustering on the Graph's edges
      * using a next-best-merge array until the specified number of clusters has
@@ -636,16 +693,21 @@ public class LinkClustering implements java.io.Serializable {
         final double[] edgeToSimOfMostSim = new double[numEdges];
 
         // Keep track of the vertices in each cluster
-        IntIntMultiMap clusterToVertices = new IntIntHashMultiMap();
+        MultiMap<Integer,Integer> clusterToVertices = new HashMultiMap<Integer,Integer>();
 
         // Loop over each edge in the graph and add the vertices for that edge
         // to the initial cluster assignment
         for (Edge e : g.edges()) {
-            int initialCluster = edgeIndexer.index(e);
+            int initialCluster = edgeIndexer.index(
+                new SimpleEdge(e.from(), e.to()));
             edgeToCluster[initialCluster] = initialCluster;
             clusterToVertices.put(initialCluster, e.to());
             clusterToVertices.put(initialCluster, e.from());
         }
+
+        // Ensure that the reverse lookup table is created in the Indexer ahead
+        // of time, since threads will be accessing it concurrently
+        edgeIndexer.lookup(0);
 
         // For each edge, find the most similar cluster updating the relative
         // indices of the rowToMostSimilar arrays with the results.
@@ -668,7 +730,7 @@ public class LinkClustering implements java.io.Serializable {
                                     break;
                                 double sim = getConnectionSimilarity(
                                     g, v1, v2, v3);
-
+                                
                                 int e1index = edgeIndexer
                                     .index(new SimpleEdge(v1, v2));
                                 int e2index = edgeIndexer
@@ -720,10 +782,6 @@ public class LinkClustering implements java.io.Serializable {
                 if (edgeToSimOfMostSim[i] > highestSim) {
                     int c1 = edgeToCluster[i];
                     int mostSim = edgeToMostSim[i];
-                    // dj: I don't quite understand how this case happens, but
-                    // it will for the last two cluster merges...
-                    if (mostSim == -1)
-                        continue;
                     int c2 = edgeToCluster[mostSim];
                     if (c1 != c2) {
                         highestSim = edgeToSimOfMostSim[i];
@@ -748,7 +806,11 @@ public class LinkClustering implements java.io.Serializable {
                 cluster1index = edgeToCluster[edge1index];
                 cluster2index = edgeToCluster[edge2index];
             }
+            assert cluster1index != cluster2index : "merging same cluster";
 
+//             System.out.printf("Merging c%d (size: %d) with c%d (size: %d)%n",
+//                               cluster2index, clusterToVertices.get(cluster2index).size(),
+//                               cluster1index, clusterToVertices.get(cluster1index).size());
             Set<Integer> verticesInSmaller = clusterToVertices.get(cluster2index);
             clusterToVertices.putMany(cluster1index, verticesInSmaller);
             clusterToVertices.remove(cluster2index);
@@ -763,15 +825,15 @@ public class LinkClustering implements java.io.Serializable {
             // merged with another edge.  Even if it is more similar, we maintain
             // the invariant that only the cluster1index is valid after a merge
             // operation
-            edgeToSimOfMostSim[edge1index] = Double.MIN_VALUE;
-            edgeToSimOfMostSim[edge2index] = Double.MIN_VALUE;
+            edgeToSimOfMostSim[edge1index] = -2d;
+            edgeToSimOfMostSim[edge2index] = -3d;
             
             // For all the edges not in the current cluster, find the most
             // similar data point to the now-merged cluster.  Note that this
             // process doesn't need to update the nearest neighbors of these
             // nodes, as they should still be valid post-merge.
             int mostSimEdgeToCurCluster = -1;
-            highestSim = Double.MIN_VALUE;
+            highestSim = -4d;
             Edge e1 = edgeIndexer.lookup(edge1index);
             Edge e2 = edgeIndexer.lookup(edge2index);
 
@@ -797,6 +859,8 @@ public class LinkClustering implements java.io.Serializable {
                     continue;
                 }
                                 
+                
+                
                 Edge e3 = edgeIndexer.lookup(i);
                 double simToE1 = getConnectionSimilarity(g, e1, e3);
                 double simToE2 = getConnectionSimilarity(g, e2, e3);

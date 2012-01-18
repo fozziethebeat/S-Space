@@ -43,6 +43,12 @@ public interface Indexer<T> extends Iterable<Map.Entry<T,Integer>> {
     int index(T item);
 
     /**
+     * Adds an index for each item in the collection if it did not already
+     * exist, returning {@code true} if at least one new index was added.
+     */
+    boolean indexAll(Collection<T> items);
+
+    /**
      * Removes all of the item-index mappings.
      */
     void clear();

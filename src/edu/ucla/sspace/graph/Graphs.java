@@ -21,6 +21,11 @@
 
 package edu.ucla.sspace.graph;
 
+import edu.ucla.sspace.util.Indexer;
+import edu.ucla.sspace.util.HashIndexer;
+
+import edu.ucla.sspace.util.primitive.IntIterator;
+
 import java.lang.reflect.Array;
 
 import java.util.ArrayList;
@@ -334,6 +339,53 @@ public final class Graphs {
      */
     public static <T extends Edge> Graph<T> synchronizedGraph(Graph<T> g) {
         throw new Error();
+    }
+
+    /**
+     * Converts the provided graph into a <a
+     * href="http://en.wikipedia.org/wiki/Line_graph">line graph</a>, where each
+     * edge is mapped to a vertex and edges that share vertices are connected by
+     * an edge in the line graph.
+     *
+     * @return the line graph for the input graph
+     */
+    public static <E extends Edge, G extends Graph<E>> Graph<Edge> 
+                                          toLineGraph(G graph) {
+        return toLineGraph(graph, new HashIndexer<E>());
+    }
+
+    /**
+     * Converts the provided graph into a <a
+     * href="http://en.wikipedia.org/wiki/Line_graph">line graph</a>, where each
+     * edge is mapped to a vertex and edges that share vertices are connected by
+     * an edge in the line graph, using {@code edgeIndices} to specify the
+     * mapping between edges in the input graph and their corresponding vertices
+     * in the line graph.  If an edge is not mapped to a vertex in {@code
+     * edgeIndices}, a new mapping will be added for it.
+     *
+     * @return the line graph for the input graph
+     */
+    public static <E extends Edge, G extends Graph<E>> Graph<Edge> 
+            toLineGraph(G graph, Indexer<E> edgeIndices) {
+        Graph<Edge> lineGraph = new SparseUndirectedGraph();
+        IntIterator verts = graph.vertices().iterator();
+        while (verts.hasNext()) {
+            int v = verts.nextInt();
+            Set<E> adjacent = graph.getAdjacencyList(v);
+            // For each pair of edges connected to the same vertex, add them as
+            // vertices in the line graph and connect them by an edge
+            for (E e1 : adjacent) {
+                int e1vertex = edgeIndices.index(e1);
+                for (E e2 : adjacent) {
+                    if (e1.equals(e2))
+                        break;
+                    lineGraph.add(
+                        new SimpleEdge(e1vertex, edgeIndices.index(e2)));
+                }
+                
+            }
+        }
+        return lineGraph;
     }
 
     /**

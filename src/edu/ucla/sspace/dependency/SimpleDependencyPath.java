@@ -71,8 +71,9 @@ public class SimpleDependencyPath implements DependencyPath {
             if (next.equals(cur)) 
                 next = r.dependentNode();
             nodes.add(next);
-            next = cur;
+            cur = next;
         }
+        System.out.printf("path: %s,%nnodes: %s%n", path, nodes);
     }
 
     /**
@@ -104,7 +105,7 @@ public class SimpleDependencyPath implements DependencyPath {
      * starting at the head node of the relation.
      */
     public SimpleDependencyPath(DependencyRelation relation, 
-                              boolean startFromHead) {
+                                boolean startFromHead) {
         this();
         if (relation == null)
             throw new IllegalArgumentException("Cannot provide empty path");

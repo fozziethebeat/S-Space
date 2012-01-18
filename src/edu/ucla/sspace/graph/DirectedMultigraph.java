@@ -355,11 +355,10 @@ public class DirectedMultigraph<T>
      * {@inheritDoc}
      */
     public IntSet getNeighbors(int vertex) {
-        throw new Error();
-//         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
-//         return (edges == null) 
-//             ? Collections.<Integer>emptySet()
-//             : Collections.<Integer>unmodifiableSet(edges.connected());
+         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+         return (edges == null) 
+             ? PrimitiveCollections.emptyIntSet()
+             : PrimitiveCollections.unmodifiableSet(edges.connected());
     }
 
     /**
@@ -732,7 +731,7 @@ public class DirectedMultigraph<T>
         /**
          * The set of vertices in this subgraph
          */
-        private final Set<Integer> vertexSubset;
+        private final IntSet vertexSubset;
 
         public Subgraph(Set<T> validTypes, Set<Integer> vertexSubset) {
             this.validTypes = validTypes;
@@ -1036,11 +1035,10 @@ public class DirectedMultigraph<T>
          * {@inheritDoc}
          */
         public IntSet predecessors(int vertex) {
-            throw new Error();
-//             Set<Integer> preds = new HashSet<Integer>();
-//             for (DirectedTypedEdge<T> e : inEdges(vertex))
-//                 preds.add(e.from());
-//             return preds;
+         SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+         return (edges == null) 
+             ? PrimitiveCollections.emptyIntSet()
+             : PrimitiveCollections.unmodifiableSet(edges.predecessors());
         }
 
         /**
@@ -1087,11 +1085,10 @@ public class DirectedMultigraph<T>
          * {@inheritDoc}
          */
         public IntSet successors(int vertex) {
-//             Set<Integer> succs = new HashSet<Integer>();
-//             for (DirectedTypedEdge<T> e : outEdges(vertex))
-//                 succs.add(e.to());
-//             return succs;
-            throw new Error();
+            SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
+            return (edges == null) 
+                ? PrimitiveCollections.emptyIntSet()
+                : PrimitiveCollections.unmodifiableSet(edges.successors());
         }
 
         /**
@@ -1122,8 +1119,7 @@ public class DirectedMultigraph<T>
          */
         public IntSet vertices() {
             // Check that the vertices are up to date with the backing graph
-            throw new Error();
-            // return Collections.unmodifiableSet(vertexSubset);
+            return PrimitiveCollections.unmodifiableSet(vertexSubset);
         }
 
 

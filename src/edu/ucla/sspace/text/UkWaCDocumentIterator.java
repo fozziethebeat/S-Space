@@ -22,6 +22,7 @@
 package edu.ucla.sspace.text;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
@@ -38,77 +39,78 @@ import java.util.Iterator;
  *
  * This class is thread-safe.
  */
-public class UkWacDependencyFileIterator implements Iterator<Document> {
+public class UkWaCDocumentIterator implements Iterator<LabeledDocument> {
 
     /**
      * The reader for accessing the file containing the documents
      */
-    private final BufferedReader documentsReader;
+    private final BufferedReader lineReader;
     
     /**
-     * The next line in the file
+     * The next document in the file
      */
-    private String nextLine;
+    private LabeledDocument nextDoc;
 
     /**
      * Creates an {@code Iterator} over the file where each document returned
-     * contains the sequence of dependency parsed words composing a sentence..
+     * is labeled by the source from which it was extracted
      *
-     * @param documentsFile the file specifying a dependency parsed file in the
-     * <a href="http://nextens.uvt.nl/depparse-wiki/DataFormat">CoNLL Format</a>
+     * @param documentsFile the UkWaC file 
      *
      * @throws IOException if any error occurs when reading
      *                     {@code documentsFile}
      */
-    public UkWacDependencyFileIterator(String documentsFile)
-            throws IOException {
-        documentsReader = new BufferedReader(new FileReader(documentsFile));
-        nextLine = advance();
+    public UkWaCDocumentIterator(File documentsFile) throws IOException {
+        lineReader = new BufferedReader(new FileReader(documentsFile));
+        nextDoc = null;
+        advance();
     }
 
+    /**
+     * Creates an {@code Iterator} over the file where each document returned
+     * is labeled by the source from which it was extracted
+     *
+     * @param documentsFile the name of the UkWaC file 
+     *
+     * @throws IOException if any error occurs when reading
+     *                     {@code documentsFile}
+     */
+    public UkWaCDocumentIterator(String documentsFile) throws IOException {
+        this(new File(documentsFile));
+    }
+    
     /**
      * Returns {@code true} if there are more documents to return.
      */
     public boolean hasNext() {
-        return nextLine != null;
+        return nextDoc != null;
     }
     
-    private String advance() throws IOException {
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-
-        // Read the <text line.  Or read the end of the file and finish the
-        // iteration.
-        if (documentsReader.readLine() == null)
-            return null;
-
-        while ((line = documentsReader.readLine()) != null
-               && !line.equals("</text>")) {
-            // Skip sentence delimitors.
-            if (line.startsWith("<s>") || line.startsWith("</s>"))
-                continue;
-
-            // Append the token line, while avoiding blank lines that seemingly
-            // creep into the corpus.
-            if (line.length() > 0)
-                sb.append(line).append("\n");
-       }
-
-        return sb.toString();
+    private void advance() throws IOException {
+        String header = lineReader.readLine();
+        if (header == null) {
+            lineReader.close();
+        }
+        else {
+            String doc = lineReader.readLine();
+            assert doc != null;
+            nextDoc = new LabeledStringDocument(header, doc);
+        }
     }
-
+    
     /**
      * Returns the next document from the file.
      */
-    public synchronized Document next() {
-        Document next = new StringDocument(nextLine);
+    public LabeledDocument next() {
+        LabeledDocument next = nextDoc;
         try {
-            nextLine = advance();
+            advance();
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
         return next;
     }        
+
     
     /**
      * Throws an {@link UnsupportedOperationException} if called.

@@ -40,7 +40,14 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  * object equality.  The indices returned by this class will always being at
  * {@code 0}.
  *
- * @see Counter
+ * <p> This implementation provides faster {@link #index(Object)} performance
+ * than {@link ObjectIndexer} but at the expensive of having amortized constant
+ * time {@link #lookup(int)} and {@link #find(int)} performance.  This class
+ * will have superior performance in use cases where all objects are indexed and
+ * then {@code lookup} or {@code find} is called repeatedly whithout having
+ * indexed any new objects.
+ *
+ * @see ObjectIndexer
  */
 public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
 
@@ -136,6 +143,28 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
         }
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean indexAll(Collection<T> items) {
+        boolean changed = false;
+        for (T item : items) {
+            if (!indices.containsKey(item)) {
+                synchronized(indices) {
+                    // Double check that the item we are currently trying to
+                    // index wasn't added while we were blocking
+                    if (indices.containsKey(item)) 
+                        continue;
+                    int index = indices.size();
+                    indices.put(item, index);
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
     /**
      * {@inheritDoc} The returned iterator does not support {@code remove}.
      */
@@ -154,16 +183,22 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
         assert indices.size() > 0;
         // If the current lookup table is invalid or has yet to be computed,
         // recalcuate it
-        if (indexLookup == null || indexLookup.length != indices.size()) {
+        while (indexLookup == null || indexLookup.length != indices.size()) {
             T t = indices.keySet().iterator().next();
             @SuppressWarnings("unchecked")
             T[] tmp = (T[])(Array.newInstance(t.getClass(), indices.size()));
-            indexLookup = tmp;
             TObjectIntIterator<T> iter = indices.iterator();
             while (iter.hasNext()) {
                 iter.advance();
-                indexLookup[iter.value()] = iter.key();
+                tmp[iter.value()] = iter.key();
             }
+            // Make the assignment at the end so that the lookup table
+            // construction is atomic in the sense that the table is either
+            // null, or is complete for some length k.  Assigning indexLookup
+            // earlier creates the race condition where the null and length
+            // checks pass, but another thread is concurrently filling the
+            // table.
+            indexLookup = tmp;
         }
         return indexLookup[index];
     }

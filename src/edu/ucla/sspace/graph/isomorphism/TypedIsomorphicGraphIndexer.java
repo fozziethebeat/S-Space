@@ -35,8 +35,11 @@ import edu.ucla.sspace.graph.TypedEdge;
 
 import edu.ucla.sspace.util.Indexer;
 
+
 /**
- *
+ * An indexer that records only indices for non-isomorphic {@link Multigraph}
+ * instances.  That is, if two multigraphs are isomorphic, they are mapped to
+ * the same index.
  */
 public class TypedIsomorphicGraphIndexer<T,G extends Multigraph<T,? extends TypedEdge<T>>>
         implements Indexer<G>, java.io.Serializable {
@@ -109,6 +112,25 @@ public class TypedIsomorphicGraphIndexer<T,G extends Multigraph<T,? extends Type
         int index = graphIndices.size();
         graphIndices.put(g, index);
         return index;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean indexAll(Collection<G> graphs) {
+        boolean modified = false;
+        next_graph_to_add:
+        for (G g : graphs) {
+            for (Map.Entry<G,Integer> e : graphIndices.entrySet()) {
+                if (isoTest.areIsomorphic(g, e.getKey())) 
+                    continue next_graph_to_add;
+            }
+            // No index assigned, so create a new one
+            int index = graphIndices.size();
+            graphIndices.put(g, index);
+            modified = true;
+        }
+        return modified;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -22,41 +22,17 @@
 package edu.ucla.sspace.text;
 
 import java.io.BufferedReader;
-import java.io.StringReader;
 
 /**
- * A {@code Document} implementation backed by a {@code String} whose contents
- * are used for the document text.
+ * An abstraction for a document that has an accompanying label or name.
  */
-public class StringDocument implements Document {
+public interface LabeledDocument extends Document {
 
     /**
-     * The text of the document
+     * Returns a label associated with this particular document.  The label is
+     * intended to provide information on the source of the document or the
+     * contents therein.
      */
-    private final String text;
+    String label();
     
-    /**
-     * Constructs a {@code Document} using the provided string as the document
-     * text
-     *
-     * @param docText the document text
-     */
-    public StringDocument(String docText) {
-        this.text = docText;        
-    }
-    
-    /**
-     * {@inheritDoc} This method may be repeatedly called to re-read the
-     * contents of the document.
-     */
-    public BufferedReader reader() {
-        return new BufferedReader(new StringReader(text));
-    }
-
-    /**
-     * Returns the entire document
-     */
-    public String toString() {
-        return text;
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,42 +21,26 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+
 import java.io.BufferedReader;
-import java.io.StringReader;
+
 
 /**
- * A {@code Document} implementation backed by a {@code String} whose contents
- * are used for the document text.
+ * An abstraction for a document that has been (or will be) dependency parsed to
+ * generate an accompanying parse tree of its contents.
  */
-public class StringDocument implements Document {
+public interface ParsedDocument extends Document {
 
     /**
-     * The text of the document
+     * Returns the dependency tree of the next document as a sequence of {@link
+     * DependencyTreeNode} instances.
      */
-    private final String text;
-    
-    /**
-     * Constructs a {@code Document} using the provided string as the document
-     * text
-     *
-     * @param docText the document text
-     */
-    public StringDocument(String docText) {
-        this.text = docText;        
-    }
-    
-    /**
-     * {@inheritDoc} This method may be repeatedly called to re-read the
-     * contents of the document.
-     */
-    public BufferedReader reader() {
-        return new BufferedReader(new StringReader(text));
-    }
+    DependencyTreeNode[] parsedDocument();
 
     /**
-     * Returns the entire document
+     * Returns the text of the parsed document without any of the
+     * parsing-related annotation.
      */
-    public String toString() {
-        return text;
-    }
+    String text();
 }

@@ -34,7 +34,7 @@ import java.util.Set;
  * object equality.  The indices returned by this class will always being at
  * {@code 0}.
  *
- * @see Counter
+ * @see HashIndexer
  */
 public class ObjectIndexer<T> implements Indexer<T>, java.io.Serializable {
 
@@ -121,6 +121,27 @@ public class ObjectIndexer<T> implements Indexer<T>, java.io.Serializable {
             }
         }
         return i;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean indexAll(Collection<T> items) {
+        boolean modified = false;
+        for (T item : items) {
+            Integer i = indices.get(item);
+            if (i == null) {
+                synchronized(indices) {                
+                    i = indices.get(item);
+                    if (i == null) {
+                        i = indices.size();
+                        indices.put(item, i);
+                        modified = true;
+                    }
+                }
+            }
+        }
+        return modified;
     }
 
     /**

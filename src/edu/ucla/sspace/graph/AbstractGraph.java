@@ -41,6 +41,7 @@ import java.util.Set;
 
 import edu.ucla.sspace.util.CombinedIterator; 
 
+import edu.ucla.sspace.util.primitive.AbstractIntSet; 
 import edu.ucla.sspace.util.primitive.IntIterator; 
 import edu.ucla.sspace.util.primitive.IntSet; 
 import edu.ucla.sspace.util.primitive.PrimitiveCollections; 
@@ -436,9 +437,10 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
      * {@inheritDoc}
      */
     public IntSet vertices() {
-        // REMINDER: possibly make this mutable with the VertexView class
-        return PrimitiveCollections.unmodifiableSet(
-            TroveIntSet.wrap(vertexToEdges.keySet()));
+        return new VertexView();
+//         // REMINDER: possibly make this mutable with the VertexView class
+//         return PrimitiveCollections.unmodifiableSet(
+//             TroveIntSet.wrap(vertexToEdges.keySet()));
     }
 
     /**
@@ -446,21 +448,32 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
      * removing, and iterating.  This class implements all optional methods for
      * {@link Set} and {@link Iterator}.
      */
-    private class VertexView extends AbstractSet<Integer> {
+    private class VertexView extends AbstractIntSet {
         
         public VertexView() { }
 
+        public boolean add(int vertex) {
+            return AbstractGraph.this.add(vertex);
+        }
+
         public boolean add(Integer vertex) {
             return AbstractGraph.this.add(vertex);
+        }
+
+        public boolean contains(int vertex) {
+            return AbstractGraph.this.contains(vertex);
         }
 
         public boolean contains(Integer vertex) {
             return AbstractGraph.this.contains(vertex);
         }
 
-        public Iterator<Integer> iterator() {
-            // return new VertexIterator();
-            throw new Error();
+        public IntIterator iterator() {
+            return new VertexIterator();
+        }
+
+        public boolean remove(int i) {
+            return AbstractGraph.this.remove(i);
         }
 
         public boolean remove(Integer i) {
@@ -471,51 +484,38 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
             return order();
         }
 
-//         private class VertexIterator implements Iterator<Integer> {
+        public class VertexIterator implements IntIterator {
 
-//             /**
-//              * The Iterator over the current vertex set
-//              */
-//             private Iterator<Map.Entry<Integer,S>> vertices;
+            boolean alreadyRemoved = true;
+            IntIterator iter;
+            int cur;
 
-//             /**
-//              * The next vertex to return
-//              */
-//             private Map.Entry<Integer,S> lastReturned;
+            public VertexIterator() {
+                iter = TroveIntSet.wrap(vertexToEdges.keySet()).iterator();
+                cur = -1;
+            }
 
-//             public VertexIterator() {
-//                 vertices = vertexToEdges.entrySet().iterator();
-//                 lastReturned = null;
-//             }
+            public boolean hasNext() {
+                return iter.hasNext();
+            }
 
-//             public boolean hasNext() {
-//                 return vertices.hasNext();
-//             }
+            public int nextInt() {
+                alreadyRemoved = false;
+                cur = iter.nextInt();
+                return cur;
+            }
 
-//             public Integer next() {
-//                 if (!hasNext())
-//                     throw new NoSuchElementException();
-//                 return (lastReturned = vertices.next()).getKey();
-//             }
+            public Integer next() {
+                return nextInt();
+            }
 
-//             public void remove() {
-//                 if (lastReturned == null)
-//                     throw new IllegalStateException("no element to remove");
-//                 // Note that because we need to remove edges from the vertex,
-//                 // ideally, we would want to call remove().  However, this
-//                 // would modify the state of the vertexToEdge Map, which would
-//                 // break the iterator (concurrent modification).  Therefore, we
-//                 // remove the vertex from the iterator and then perform the rest
-//                 // of the logic using removeInternal()
-//                 vertices.remove();
-//                 Integer removed = lastReturned.getKey();
-//                 EdgeSet<T> edges = lastReturned.getValue();
-//                 removeInternal(removed, edges);
-//                 // Finally, null out the last removed value to prevent a double
-//                 // removal
-//                 lastReturned = null;
-//             }                
-//         }
+            public void remove() {
+                if (alreadyRemoved)
+                    throw new IllegalStateException();
+                alreadyRemoved = true;
+                AbstractGraph.this.remove(cur);
+            }
+        }
     }
 
     /**
