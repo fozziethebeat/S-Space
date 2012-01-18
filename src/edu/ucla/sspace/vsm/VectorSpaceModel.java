@@ -117,6 +117,11 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
         "vector-space-model";
 
     /**
+     * The matrix {@link Transform} to be applied to the term document matrix.
+     */
+    private Transform transform;
+
+    /**
      * Constructs the {@code VectorSpaceModel} using the system properties
      * for configuration.
      *
@@ -125,6 +130,11 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      */
     public VectorSpaceModel() throws IOException {
         super();
+    }
+
+    public VectorSpaceModel(Transform transform) throws IOException {
+        super();
+        this.transform = transform;
     }
 
     /**
@@ -146,8 +156,10 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
     public VectorSpaceModel(
             boolean readHeaderToken,
             BasisMapping<String, String> termToIndex,
-            MatrixBuilder termDocumentMatrixBuilder) throws IOException {
+            MatrixBuilder termDocumentMatrixBuilder,
+            Transform transform) throws IOException {
         super(readHeaderToken, termToIndex, termDocumentMatrixBuilder);
+        this.transform = transform;
     }
 
     /**
@@ -164,20 +176,12 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      *        javadoc} for the full list of supported properties.
      */
     public void processSpace(Properties properties) {
-        try {
-            Transform transform = null;
-
-            // Load any optionally specifie transform class
-            String transformClass = 
-                properties.getProperty(MATRIX_TRANSFORM_PROPERTY);
-            if (transformClass != null)
-                transform = ReflectionUtil.getObjectInstance(
-                        transformClass);
-            MatrixFile processedSpace = processSpace(transform);
-            wordSpace = MatrixIO.readMatrix(processedSpace.getFile(),
-                                            processedSpace.getFormat());
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+        // Load any optionally specific transform class
+        String transformClass = 
+            properties.getProperty(MATRIX_TRANSFORM_PROPERTY);
+        if (transformClass != null)
+            transform = ReflectionUtil.getObjectInstance(
+                    transformClass);
+        wordSpace = processSpace(transform).load();
     }
 }
