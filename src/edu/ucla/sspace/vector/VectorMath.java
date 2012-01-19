@@ -324,23 +324,76 @@ public class VectorMath {
                 "cannot compute dot product of vectors with different lengths");
 
         double dotProduct = 0;
-        // Special case if either of the vectors is a sparse vectors to save on
-        // computation costs.
-        if (x instanceof SparseDoubleVector) {
-            SparseDoubleVector sdv = (SparseDoubleVector)x;
-            for (int i  : sdv.getNonZeroIndices()) 
-                dotProduct += x.get(i) * y.get(i);
+        // Check whether both vectors support fast iteration over their non-zero
+        // values.  If so, use only the non-zero indices to speed up the
+        // computation by avoiding zero multiplications
+        if (a instanceof Iterable && b instanceof Iterable) {
+            // Check whether we can easily determine how many non-zero values
+            // are in each vector.  This value is used to select the iteration
+            // order, which affects the number of get(value) calls.
+            boolean useA =
+                (a instanceof SparseVector && b instanceof SparseVector)
+                && ((SparseVector)a).getNonZeroIndices().length <
+                   ((SparseVector)b).getNonZeroIndices().length;
+            
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (useA) {
+                for (DoubleEntry e : ((Iterable<DoubleEntry>)a)) {
+                    int index = e.index();                    
+                    double aValue = e.value();
+                    double bValue = b.get(index);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (DoubleEntry e : ((Iterable<DoubleEntry>)b)) {
+                    int index = e.index();                    
+                    double aValue = a.get(index);
+                    double bValue = e.value();
+                    dotProduct += aValue * bValue;
+                }
+            }            
         }
-        else if (y instanceof SparseDoubleVector) {
-            SparseDoubleVector sdv = (SparseDoubleVector)y;
-            for (int i  : sdv.getNonZeroIndices()) 
-                dotProduct += x.get(i) * y.get(i);
+
+        // Check whether both vectors are sparse.  If so, use only the non-zero
+        // indices to speed up the computation by avoiding zero multiplications
+        else if (a instanceof SparseVector && b instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            SparseVector svB = (SparseVector)b;
+            int[] nzA = svA.getNonZeroIndices();
+            int[] nzB = svB.getNonZeroIndices();
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (nzA.length < nzB.length) {
+                for (int nz : nzA) {
+                    double aValue = a.get(nz);
+                    double bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (int nz : nzB) {
+                    double aValue = a.get(nz);
+                    double bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
         }
+
+        // Otherwise, just assume both are dense and compute the full amount
         else {
-            int length = x.length();
-            for (int i = 0; i < length; ++i)
-                dotProduct += x.get(i) * y.get(i);
+            for (int i = 0; i < b.length(); i++) {
+                double aValue = a.get(i);
+                double bValue = b.get(i);
+                dotProduct += aValue * bValue;
+            }
         }
+
         return dotProduct;
     }
 
@@ -362,22 +415,73 @@ public class VectorMath {
                 "cannot compute dot product of vectors with different lengths");
         
         int dotProduct = 0;
-        // Special case if either of the vectors is a sparse vectors to save on
-        // computation costs.
-        if (x instanceof SparseIntegerVector) {
-            SparseIntegerVector sdv = (SparseIntegerVector)x;
-            for (int i  : sdv.getNonZeroIndices()) 
-                dotProduct += x.get(i) * y.get(i);
+        // Check whether both vectors support fast iteration over their non-zero
+        // values.  If so, use only the non-zero indices to speed up the
+        // computation by avoiding zero multiplications
+        if (a instanceof Iterable && b instanceof Iterable) {
+            // Check whether we can easily determine how many non-zero values
+            // are in each vector.  This value is used to select the iteration
+            // order, which affects the number of get(value) calls.
+            boolean useA =
+                (a instanceof SparseVector && b instanceof SparseVector)
+                && ((SparseVector)a).getNonZeroIndices().length <
+                   ((SparseVector)b).getNonZeroIndices().length;
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (useA) {
+                for (IntegerEntry e : ((Iterable<IntegerEntry>)a)) {
+                    int index = e.index();                    
+                    int aValue = e.value();
+                    int bValue = b.get(index);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (IntegerEntry e : ((Iterable<IntegerEntry>)b)) {
+                    int index = e.index();                    
+                    int aValue = a.get(index);
+                    int bValue = e.value();
+                    dotProduct += aValue * bValue;
+                }
+            }            
         }
-        else if (y instanceof SparseIntegerVector) {
-            SparseIntegerVector sdv = (SparseIntegerVector)y;
-            for (int i  : sdv.getNonZeroIndices()) 
-                dotProduct += x.get(i) * y.get(i);
+
+        // Check whether both vectors are sparse.  If so, use only the non-zero
+        // indices to speed up the computation by avoiding zero multiplications
+        else if (a instanceof SparseVector && b instanceof SparseVector) {
+            SparseVector svA = (SparseVector)a;
+            SparseVector svB = (SparseVector)b;
+            int[] nzA = svA.getNonZeroIndices();
+            int[] nzB = svB.getNonZeroIndices();
+            // Choose the smaller of the two to use in computing the dot
+            // product.  Because it would be more expensive to compute the
+            // intersection of the two sets, we assume that any potential
+            // misses would be less of a performance hit.
+            if (nzA.length < nzB.length) {
+                for (int nz : nzA) {
+                    int aValue = a.get(nz);
+                    int bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
+            else {
+                for (int nz : nzB) {
+                    int aValue = a.get(nz);
+                    int bValue = b.get(nz);
+                    dotProduct += aValue * bValue;
+                }
+            }
         }
+
+        // Otherwise, just assume both are dense and compute the full amount
         else {
-            int length = x.length();
-            for (int i = 0; i < length; ++i)
-                dotProduct += x.get(i) * y.get(i);
+            for (int i = 0; i < b.length(); i++) {
+                int aValue = a.get(i);
+                int bValue = b.get(i);
+                dotProduct += aValue * bValue;
+            }
         }
         return dotProduct;
     }
