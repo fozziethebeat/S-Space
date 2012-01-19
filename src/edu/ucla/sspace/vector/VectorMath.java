@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.vector;
 
+import edu.ucla.sspace.util.DoubleEntry;
+import edu.ucla.sspace.util.IntegerEntry;
+
 
 /**
  * A collection of static arithmetic operations on {@code Vector} instances. <p>
@@ -307,19 +310,20 @@ public class VectorMath {
     }
     
     /**
-     * Computes the dot product, {@code x}<sup>T</sup>{@code y} of the two
+     * Computes the dot product, {@code a}<sup>T</sup>{@code b} of the two
      * vectors.
      *
-     * @param x the left vector that will be transposed
-     * @param y the right vector
+     * @param a the left vector that will be transposed
+     * @param b the right vector
      *
      * @return the dot product of the two vectors.
      *
      * @throws IllegalArgumentException if the two vectors are not of equal
      *         length
      */
-    public static double dotProduct(DoubleVector x, DoubleVector y) {
-        if (x.length() != y.length())
+    @SuppressWarnings("unchecked")
+    public static double dotProduct(DoubleVector a, DoubleVector b) {
+        if (a.length() != b.length())
             throw new IllegalArgumentException(
                 "cannot compute dot product of vectors with different lengths");
 
@@ -398,19 +402,20 @@ public class VectorMath {
     }
 
     /**
-     * Computes the dot product, {@code x}<sup>T</sup>{@code y} of the two
+     * Computes the dot product, {@code a}<sup>T</sup>{@code b} of the two
      * vectors.
      *
-     * @param x the left vector that will be transposed
-     * @param y the right vector
+     * @param a the left vector that will be transposed
+     * @param b the right vector
      *
      * @return the dot product of the two vectors.
      *
      * @throws IllegalArgumentException if the two vectors are not of equal
      *         length
      */
-    public static int dotProduct(IntegerVector x, IntegerVector y) {
-        if (x.length() != y.length())
+    @SuppressWarnings("unchecked")
+    public static int dotProduct(IntegerVector a, IntegerVector b) {
+        if (a.length() != b.length())
             throw new IllegalArgumentException(
                 "cannot compute dot product of vectors with different lengths");
         
