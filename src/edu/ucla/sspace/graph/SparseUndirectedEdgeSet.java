@@ -41,7 +41,9 @@ import gnu.trove.set.hash.TIntHashSet;
  * A {@link EdgeSet} implementation for holding {@link Edge} instances.
  */
 public class SparseUndirectedEdgeSet extends AbstractSet<Edge> 
-        implements EdgeSet<Edge> {
+        implements EdgeSet<Edge>, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
         
     /**
      * The vertex that is connected to all the edges in this set
@@ -135,8 +137,8 @@ public class SparseUndirectedEdgeSet extends AbstractSet<Edge>
     /**
      * {@inheritDoc}
      */
-    public boolean disconnect(int vertex) {
-        return edges.remove(vertex);
+    public int disconnect(int vertex) {
+        return (edges.remove(vertex)) ? 1 : 0;
     }
 
     /**

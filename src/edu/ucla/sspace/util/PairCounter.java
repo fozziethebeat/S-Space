@@ -253,7 +253,7 @@ public class PairCounter<T> implements Counter<Pair<T>>, java.io.Serializable {
     }
 
     /**
-     * Returns an interator over the pairs that have been counted thusfar and
+     * Returns an iterator over the pairs that have been counted thusfar and
      * their respective counts.
      */
     public Iterator<Map.Entry<Pair<T>,Integer>> iterator() {

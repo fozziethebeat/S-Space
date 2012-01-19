@@ -26,9 +26,11 @@ import edu.ucla.sspace.common.DimensionallyInterpretableSemanticSpace;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO;
 import edu.ucla.sspace.common.Similarity;
-import edu.ucla.sspace.common.WordComparator;
 
 import edu.ucla.sspace.text.WordIterator;
+
+import edu.ucla.sspace.util.NearestNeighborFinder;
+import edu.ucla.sspace.util.PartitioningNearestNeighborFinder;
 
 import edu.ucla.sspace.vector.SparseVector;
 import edu.ucla.sspace.vector.Vector;
@@ -103,12 +105,6 @@ public class SemanticSpaceExplorer {
     }
     
     /**
-     * The comparator to be used when identifying the nearest neighbors to words
-     * in a semantic space.
-     */
-    private final WordComparator wordComparator;
-
-    /**
      * The mapping from file name to the {@code SemanticSpace} that was loaded
      * from that file.
      */
@@ -125,11 +121,16 @@ public class SemanticSpaceExplorer {
      */
     private SemanticSpace current;
 
+    /** 
+     * The {@code NearestNeighborFinder} for the current {@code SemanticSpace}
+     * or {@code null} if the nearest terms have yet to be searched for.
+     */
+    private NearestNeighborFinder currentNnf;
+
     /**
      * Constructs an instance of {@code SemanticSpaceExplorer}.
      */
-    private SemanticSpaceExplorer() { 
-        this.wordComparator = new WordComparator();
+    private SemanticSpaceExplorer() {        
         fileNameToSSpace = new LinkedHashMap<String,SemanticSpace>();
         aliasToFileName = new HashMap<String,String>();
         current = null;
@@ -240,6 +241,7 @@ public class SemanticSpaceExplorer {
             }
             fileNameToSSpace.put(sspaceFileName, sspace);
             current = sspace;
+            currentNnf = null;
             break;
         }
 
@@ -319,31 +321,16 @@ public class SemanticSpaceExplorer {
                     return false;
                 }
             }
-            Similarity.SimType simType = Similarity.SimType.COSINE;
-            if (commandTokens.hasNext()) {
-                // Upper case since it's an enum
-                String simTypeStr = commandTokens.next().toUpperCase();
-                try {
-                    simType = Similarity.SimType.valueOf(simTypeStr);
-                } catch (IllegalArgumentException iae) {
-                    // See if the user provided a prefix of the similarity
-                    // measure's name
-                    for (Similarity.SimType t : Similarity.SimType.values())
-                        if (t.name().startsWith(simTypeStr)) 
-                            simType = t;
-                    // If no prefix was found, report an error
-                    if (simType == null) {
-                        out.println("invalid similarity measure: " +simTypeStr);
-                        return false;
-                    }
-                }
-            }
             
+            // If this is the first time the nearest neighbors have been
+            // searched for, construct a new NNF
+            if (currentNnf == null) 
+                currentNnf = new PartitioningNearestNeighborFinder(current);
+
             // Using the provided or default arguments find the closest
             // neighbors to the target word in the current semantic space
             SortedMultiMap<Double,String> mostSimilar =
-                wordComparator.getMostSimilar(focusWord, current, neighbors,
-                                              simType);
+                currentNnf.getMostSimilar(focusWord, neighbors);
 
             if (mostSimilar == null) {
                 out.println(focusWord + 
@@ -375,7 +362,7 @@ public class SemanticSpaceExplorer {
                 out.println("missing word argument");
                 return false;
             }
-            String word2 = commandTokens.next();
+            String word2 = commandTokens.next();                      
 
             Similarity.SimType simType = Similarity.SimType.COSINE;
             if (commandTokens.hasNext()) {

@@ -31,13 +31,11 @@ import java.util.Iterator;
 
 
 /**
- * An iterator implementation that returns {@link Document} containg a single
- * dependency parsed sentence given a file in the <a
- * href="http://nextens.uvt.nl/depparse-wiki/DataFormat">CoNLL Format</a>
- *
- * <p>
- *
- * This class is thread-safe.
+ * An iterator implementation that returns {@link Document} instances labled
+ * with the source URL from which its text was obtained, as specified in the
+ * ukWaC.  See the <a
+ * href="http://wacky.sslmit.unibo.it/doku.php?id=corpora">WaCky</a> group's
+ * website for more information on the ukWaC.
  */
 public class UkWaCDocumentIterator implements Iterator<LabeledDocument> {
 

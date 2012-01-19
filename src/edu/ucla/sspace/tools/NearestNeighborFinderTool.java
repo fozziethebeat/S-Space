@@ -28,6 +28,7 @@ import edu.ucla.sspace.common.SemanticSpaceIO;
 import edu.ucla.sspace.util.LoggerUtil;
 import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.NearestNeighborFinder;
+import edu.ucla.sspace.util.PartitioningNearestNeighborFinder;
 import edu.ucla.sspace.util.SerializableUtil;
 
 import java.io.File;
@@ -93,27 +94,29 @@ public class NearestNeighborFinderTool {
                     SemanticSpaceIO.load(options.getStringOption('C'));
                 int numWords = sspace.getWords().size();
                 // See how many principle vectors to create
-                int principleVectors = -1;
+                int numPrincipleVectors = -1;
                 if  (options.hasOption('p')) {
-                    principleVectors = options.getIntOption('p');
-                    if (principleVectors > numWords) {
+                    numPrincipleVectors = options.getIntOption('p');
+                    if (numPrincipleVectors > numWords) {
                         throw new IllegalArgumentException(
                             "Cannot have more principle vectors than " +
-                            "word vectors: " + principleVectors);
+                            "word vectors: " + numPrincipleVectors);
                     }
-                    else if (principleVectors < 1) {
+                    else if (numPrincipleVectors < 1) {
                         throw new IllegalArgumentException(
                             "Must have at least one principle vector");
                     }
 
                 }
                 else {
-                    principleVectors = 
+                    numPrincipleVectors = 
                         Math.min((int)(Math.ceil(Math.log(numWords))), 1000);
                     System.err.printf("Choosing a heuristically selected %d " +
-                                      "principle vectors%n", principleVectors);
+                                      "principle vectors%n", 
+                                      numPrincipleVectors);
                 }
-                nnf = new NearestNeighborFinder(sspace, principleVectors);
+                nnf = new PartitioningNearestNeighborFinder(
+                    sspace, numPrincipleVectors);
             } catch (IOException ioe) {
                 throw new IOError(ioe);
             }

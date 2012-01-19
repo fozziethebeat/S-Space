@@ -49,7 +49,7 @@ import gnu.trove.set.TIntSet;
  * two vertices will only have at most one edge between them.  If an edge exists
  * for vertices {@code i} and {@code j} with weight {@code w}<sub>1</sub>, then
  * adding a new edge to the same vertices with weight {@code w}<sub>2</sub> will
- * not add a parallel edge and increase the set of this set, even though the
+ * not add a parallel edge and increase the size of this set, even though the
  * edges are not equal.  Rather, the weight on the edge between the two vertices
  * is changed to {@code w}<sub>2</sub>.  Similarly, any contains or removal
  * operation will return its value based on the {@code WeightedEdge}'s vertices
@@ -176,12 +176,12 @@ public class SparseWeightedEdgeSet extends AbstractSet<WeightedEdge>
     /**
      * {@inheritDoc}
      */
-    public boolean disconnect(int vertex) {
+    public int disconnect(int vertex) {
         if (edges.containsKey(vertex)) {
             edges.remove(vertex);
-            return true;
+            return 1;
         }
-        return false;
+        return 0;
     }
 
     /**

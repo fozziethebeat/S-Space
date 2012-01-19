@@ -42,7 +42,11 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntProcedure;
 
 /**
- *
+ * A {@link MultiMap} implementation for mapping {@code int} primitives as both
+ * keys and values using a hashing strategy.  This class offers a noticeable
+ * performance improvement over the equivalent {@code
+ * HashMultiMap&lt;Integer,Integer&gt;} by operating and representing the keys
+ * and values only in their primitive state.
  */
 public class IntIntHashMultiMap implements IntIntMultiMap {
 

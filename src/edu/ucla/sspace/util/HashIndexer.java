@@ -37,7 +37,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 
 /** 
  * A utility class for mapping a set of objects to unique indices based on
- * object equality.  The indices returned by this class will always being at
+ * object equality.  The indices returned by this class will always begin at
  * {@code 0}.
  *
  * <p> This implementation provides faster {@link #index(Object)} performance

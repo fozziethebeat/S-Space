@@ -278,15 +278,16 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     }
 
     /**
-     * Removes all edges to {@code v}.
+     * {@inheritDoc}
      */
-    public boolean disconnect(int v) {
+    public int disconnect(int v) {
         BitSet b = edges.remove(v);
         if (b != null) {
-            size -= b.cardinality();
-            return true;
+            int edges = b.cardinality();
+            size -= edges;
+            return edges;
         }
-        return false;
+        return 0;
     }
 
     /**
@@ -518,7 +519,10 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         }
     }
 
-
+    /**
+     * A utility class for exposing the objects for types of the edges in this
+     * set, which are otherwise represented as bits.
+     */
     private class Types extends AbstractSet<T> {
         
         public boolean contains(Object o) {

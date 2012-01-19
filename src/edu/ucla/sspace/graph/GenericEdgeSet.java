@@ -40,46 +40,34 @@ import edu.ucla.sspace.util.primitive.IntSet;
  * edges that may be contained within.  This class keeps track of which vertices
  * are in the set as well, allowing for efficient vertex-based operations.
  *
- * <p> Due not knowing the {@link Edge} type, this class prevents modification via
- * adding or removing vertices.
- *
  * @author David Jurgens
  *
  * @param T the type of edge to be stored in the set
  */
 public class GenericEdgeSet<T extends Edge> extends AbstractSet<T> 
-        implements EdgeSet<T> {
+        implements EdgeSet<T>, java.io.Serializable {
         
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * The vertex to which all edges in the set are connected
+     */
     private final int rootVertex;
     
-//     private final BitSet vertices;
-    
-//     private final Set<T> edges;
-
+    /**
+     * A mapping from connected vertices to the edges that connect to them
+     */
     private final MultiMap<Integer,T> vertexToEdges ;
    
     public GenericEdgeSet(int rootVertex) {
         this.rootVertex = rootVertex;
-//         edges = new HashSet<T>();
-//         vertices = new BitSet();
         vertexToEdges = new HashMultiMap<Integer,T>();
     }
     
     /**
-     * Adds the edge to this set if one of the vertices is the root vertex and
-     * if the non-root vertex has a greater index that this vertex.
+     * {@inheritDoc}
      */
     public boolean add(T e) {
-//         if (e.from() == rootVertex && edges.add(e)) {
-//             connected.set(e.to());
-//             return true;
-//         }
-//         else if (e.to() == rootVertex && edges.add(e)) {
-//             connected.add(e.from());
-//             return true;
-//         }
-//         return false;
-
         return (e.from() == rootVertex && vertexToEdges.put(e.to(), e))
             || (e.to() == rootVertex && vertexToEdges.put(e.from(), e));
     }
@@ -96,15 +84,16 @@ public class GenericEdgeSet<T extends Edge> extends AbstractSet<T>
      * {@inheritDoc}
      */
     public boolean connects(int vertex) {
-        return vertexToEdges.containsKey(vertex); //vertices.get(vertex);
+        return vertexToEdges.containsKey(vertex);
     }
 
 
     /**
      * {@inheritDoc}
      */
-    public boolean disconnect(int vertex) {
-        return vertexToEdges.remove(vertex) != null;
+    public int disconnect(int vertex) {
+        Set<T> edges = vertexToEdges.remove(vertex);
+        return (edges == null) ? 0 : edges.size();
     }
 
     /**

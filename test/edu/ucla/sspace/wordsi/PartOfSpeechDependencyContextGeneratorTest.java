@@ -49,18 +49,18 @@ import static org.junit.Assert.*;
 public class PartOfSpeechDependencyContextGeneratorTest {
 
     public static final String SINGLE_PARSE = 
-        "1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
-        "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
-        "3   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
-        "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
-        "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
-        "6   for _   IN  IN  _   5   NMOD    _   _\n" +
-        "7   the _   DT  DT  _   9   NMOD    _   _\n" +
-        "8   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
-        "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
-        "10  in  _   IN  IN  _   9   ADV _   _\n" +
-        "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
-        "12  .   _   .   .   _   3   P   _   _";
+        toTabs("1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
+               "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+               "3   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
+               "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
+               "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
+               "6   for _   IN  IN  _   5   NMOD    _   _\n" +
+               "7   the _   DT  DT  _   9   NMOD    _   _\n" +
+               "8   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
+               "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+               "10  in  _   IN  IN  _   9   ADV _   _\n" +
+               "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
+               "12  .   _   .   .   _   3   P   _   _");
 
     @Test public void testGenerate() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
@@ -85,22 +85,37 @@ public class PartOfSpeechDependencyContextGeneratorTest {
                 return 0;
             if (key.equals("is-VBZ"))
                 return 1;
-            if (key.equals("holt-NNP"))
+            if (key.equals("Holt-NNP"))
                 return 2;
-            if (key.equals("mr.-NNP"))
+            if (key.equals("Mr.-NNP"))
                 return 3;
 
             if (key.equals("for-IN"))
                 return 4;
             if (key.equals("the-DT"))
                 return 5;
-            if (key.equals("literary-NNP"))
+            if (key.equals("Literary-NNP"))
                 return 6;
-            if (key.equals("review-NNP"))
+            if (key.equals("Review-NNP"))
                 return 7;
             if (key.equals("in-IN"))
                 return 8;
             return -1;
         }
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

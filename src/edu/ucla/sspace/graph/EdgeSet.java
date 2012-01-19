@@ -64,9 +64,10 @@ public interface EdgeSet<T extends Edge> extends Set<T> {
     EdgeSet copy(IntSet vertices);       
 
     /**
-     * Removes all edges instances that connect to the specified vertex.
+     * Removes all edges instances that connect to the specified vertex,
+     * returning the number of edges that were removed, if any.
      */
-    boolean disconnect(int vertex);
+    int disconnect(int vertex);
 
     /**
      * Returns the set of {@link Edge} instances that connect the root vertex

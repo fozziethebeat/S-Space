@@ -43,6 +43,8 @@ import edu.ucla.sspace.util.CombinedSet;
 import edu.ucla.sspace.util.DisjointSets;
 import edu.ucla.sspace.util.SetDecorator;
 
+import edu.ucla.sspace.util.primitive.AbstractIntSet;
+import edu.ucla.sspace.util.primitive.IntIterator;
 import edu.ucla.sspace.util.primitive.IntSet;
 import edu.ucla.sspace.util.primitive.PrimitiveCollections;
 import edu.ucla.sspace.util.primitive.TroveIntSet;
@@ -51,8 +53,9 @@ import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TObjectProcedure;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -72,9 +75,9 @@ public class DirectedMultigraph<T>
     private static final long serialVersionUID = 1L;
    
     /**
-     * The set of types contained in this graph.
+     * The count of the type distribution for all edges in the graph.
      */
-    private final Set<T> types;
+    private final TObjectIntMap<T> typeCounts;
     
     /**
      * The set of vertices in this mutligraph.  This set is maintained
@@ -104,7 +107,7 @@ public class DirectedMultigraph<T>
      * Creates an empty graph with node edges
      */
     public DirectedMultigraph() { 
-        types = new HashSet<T>();
+        typeCounts = new TObjectIntHashMap<T>();
         vertexToEdges = new TIntObjectHashMap<SparseDirectedTypedEdgeSet<T>>();
         subgraphs = new ArrayList<WeakReference<Subgraph>>();
         size = 0;
@@ -143,7 +146,7 @@ public class DirectedMultigraph<T>
             vertexToEdges.put(e.from(), from);
         }
         if (from.add(e)) {
-            types.add(e.edgeType());
+            updateTypeCounts(e.edgeType(), 1);
             SparseDirectedTypedEdgeSet<T> to = vertexToEdges.get(e.to());
             if (to == null) {
                 to = new SparseDirectedTypedEdgeSet<T>(e.to());
@@ -161,7 +164,7 @@ public class DirectedMultigraph<T>
      */
     public void clear() {
         vertexToEdges.clear();
-        types.clear();
+        typeCounts.clear();
         size = 0;
     }
 
@@ -225,14 +228,10 @@ public class DirectedMultigraph<T>
             return new DirectedMultigraph<T>(this);
 
         DirectedMultigraph<T> g = new DirectedMultigraph<T>();
-        //long s = System.currentTimeMillis();
         for (int v : toCopy) {
             if (!vertexToEdges.containsKey(v))
                 throw new IllegalArgumentException(
                     "Request copy of non-present vertex: " + v);
-//              SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(v);
-//              g.vertexToEdges.put(v, edges.copy(toCopy));
-
             g.add(v);
             SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(v);
             if (edges == null)
@@ -245,8 +244,6 @@ public class DirectedMultigraph<T>
                         g.add(e);
             }
         }
-//         if (toCopy.size() > 0)
-//             System.out.printf("Copy %d vertices (%d), %d edges%n", g.order(), toCopy.size(), g.size());
         return g;
     }
 
@@ -284,7 +281,7 @@ public class DirectedMultigraph<T>
      * Returns the set of edge types currently present in this graph.
      */
     public Set<T> edgeTypes() {
-        return Collections.unmodifiableSet(types);
+        return Collections.unmodifiableSet(typeCounts.keySet());
     }
 
     /**
@@ -293,7 +290,7 @@ public class DirectedMultigraph<T>
     @Override public boolean equals(Object o) {
         if (o instanceof DirectedMultigraph) {
             DirectedMultigraph<?> dm = (DirectedMultigraph<?>)(o);
-            if (dm.types.equals(types)) {
+            if (dm.typeCounts.equals(typeCounts)) {
                 return vertexToEdges.equals(dm.vertexToEdges);
             }
             return false;
@@ -301,7 +298,7 @@ public class DirectedMultigraph<T>
         else if (o instanceof Multigraph) {
             @SuppressWarnings("unchecked")
             Multigraph<?,TypedEdge<?>> m = (Multigraph<?,TypedEdge<?>>)o;
-            if (m.edgeTypes().equals(types)) {
+            if (m.edgeTypes().equals(typeCounts.keySet())) {
                 return m.order() == order()
                     && m.size() == size()
                     && m.vertices().equals(vertices())
@@ -372,7 +369,7 @@ public class DirectedMultigraph<T>
      * {@inheritDoc}
      */
     public int hashCode() {
-        return vertexToEdges.keySet().hashCode() ^ (types.hashCode() * size);
+        return vertexToEdges.keySet().hashCode() ^ (typeCounts.hashCode() * size);
     }
 
     /**
@@ -448,6 +445,8 @@ public class DirectedMultigraph<T>
             // Check whether removing this vertex has caused us to remove
             // the last edge for this type in the graph.  If so, the graph
             // no longer has this type and we need to update the state.
+            for (DirectedTypedEdge<T> e : edges)
+                updateTypeCounts(e.edgeType(), -1);
 
             // Update any of the subgraphs that had this vertex to notify them
             // that it was removed
@@ -467,7 +466,7 @@ public class DirectedMultigraph<T>
                 if (s.vertexSubset.remove(vertex)) {
                     Iterator<T> subgraphTypesIter = s.validTypes.iterator();
                     while (subgraphTypesIter.hasNext()) {
-                        if (!types.contains(subgraphTypesIter.next()))
+                        if (!typeCounts.containsKey(subgraphTypesIter.next()))
                             subgraphTypesIter.remove();
                     }
                 }
@@ -488,25 +487,24 @@ public class DirectedMultigraph<T>
             // Check whether we've just removed the last edge for this type
             // in the graph.  If so, the graph no longer has this type and
             // we need to update the state.
+            updateTypeCounts(edge.edgeType(), -1);
 
-            // TODO !!
-
-
-            // Remove this edge type from all the subgraphs as well
-            Iterator<WeakReference<Subgraph>> sIt = subgraphs.iterator();
-            while (sIt.hasNext()) {
-                WeakReference<Subgraph> ref = sIt.next();
-                Subgraph s = ref.get();
-                // Check whether this subgraph was already gc'd (the
-                // subgraph was no longer in use) and if so, remove the
-                // ref from the list to avoid iterating over it again
-                if (s == null) {
-                    sIt.remove();
-                    continue;
+            if (!typeCounts.containsKey(edge.edgeType())) {
+                // Remove this edge type from all the subgraphs as well
+                Iterator<WeakReference<Subgraph>> sIt = subgraphs.iterator();
+                while (sIt.hasNext()) {
+                    WeakReference<Subgraph> ref = sIt.next();
+                    Subgraph s = ref.get();
+                    // Check whether this subgraph was already gc'd (the
+                    // subgraph was no longer in use) and if so, remove the
+                    // ref from the list to avoid iterating over it again
+                    if (s == null) {
+                        sIt.remove();
+                        continue;
+                    }
+                    s.validTypes.remove(edge.edgeType());
                 }
-                // FILL IN...
             }
-
             return true;
         }
         return false;
@@ -517,19 +515,6 @@ public class DirectedMultigraph<T>
      */
     public int size() {
         return size;
-//         CountingProcedure count = new CountingProcedure();
-//         vertexToEdges.forEachValue(count);
-//         return count.count / 2;
-    }
-
-    private class CountingProcedure 
-            implements TObjectProcedure<SparseDirectedTypedEdgeSet<T>> {
-
-        int count = 0;
-        public boolean execute(SparseDirectedTypedEdgeSet<T> edges) {
-            count += edges.size();
-            return true;
-        }
     }
 
     /**
@@ -546,7 +531,7 @@ public class DirectedMultigraph<T>
      * {@inheritDoc}
      */
     public DirectedMultigraph<T> subgraph(Set<Integer> subset) {
-        Subgraph sub = new Subgraph(types, subset);
+        Subgraph sub = new Subgraph(typeCounts.keySet(), subset);
         subgraphs.add(new WeakReference<Subgraph>(sub));
         return sub;
     }
@@ -557,7 +542,7 @@ public class DirectedMultigraph<T>
     public DirectedMultigraph<T> subgraph(Set<Integer> subset, Set<T> edgeTypes) {
         if (edgeTypes.isEmpty()) 
             throw new IllegalArgumentException("Must specify at least one type");
-        if (!types.containsAll(edgeTypes)) {
+        if (!typeCounts.keySet().containsAll(edgeTypes)) {
             throw new IllegalArgumentException(
                 "Cannot create subgraph with more types than exist");
         }
@@ -575,11 +560,32 @@ public class DirectedMultigraph<T>
     }
 
     /**
+     * Updates how many edges have this type in the graph
+     */
+    private void updateTypeCounts(T type, int delta) {
+        if (!typeCounts.containsKey(type)) {
+            assert delta > 0 
+                : "removing edge type that was not originally present";
+            typeCounts.put(type, delta);
+        }
+        else {
+            int curCount = typeCounts.get(type);
+            int newCount = curCount + delta;
+            assert newCount >= 0 
+                : "removing edge type that was not originally present";
+            if (newCount == 0)
+                typeCounts.remove(type);
+            else
+                typeCounts.put(type, newCount);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     public IntSet vertices() {
-        // TODO: make this unmodifiable
-        return TroveIntSet.wrap(vertexToEdges.keySet());
+        return PrimitiveCollections.unmodifiableSet(
+            TroveIntSet.wrap(vertexToEdges.keySet()));
     }
 
     /**
@@ -611,8 +617,8 @@ public class DirectedMultigraph<T>
         public boolean remove(Object o) {
             if (o instanceof DirectedTypedEdge) {
                 DirectedTypedEdge<?> e = (DirectedTypedEdge<?>)o;
-                return DirectedMultigraph.this.types.
-                           contains(e.edgeType())
+                return DirectedMultigraph.this.typeCounts.
+                           containsKey(e.edgeType())
                     && DirectedMultigraph.this.remove((DirectedTypedEdge<T>)o);
             }
             return false;
@@ -933,7 +939,7 @@ public class DirectedMultigraph<T>
             SparseDirectedTypedEdgeSet<T> edges = vertexToEdges.get(vertex);
             return (edges == null) 
                 ? PrimitiveCollections.emptyIntSet()
-                : PrimitiveCollections.unmodifiableSet(edges.connected());
+                : new SubgraphNeighborsView(vertex);
         }
 
         /**
@@ -947,7 +953,7 @@ public class DirectedMultigraph<T>
          * {@inheritDoc}
          */
         public int hashCode() {
-            return vertices().hashCode() ^ (types.hashCode() * size());
+            return vertices().hashCode() ^ (validTypes.hashCode() * size());
         }
 
         /**
@@ -1118,7 +1124,6 @@ public class DirectedMultigraph<T>
          * {@inheritDoc}
          */
         public IntSet vertices() {
-            // Check that the vertices are up to date with the backing graph
             return PrimitiveCollections.unmodifiableSet(vertexSubset);
         }
 
@@ -1323,7 +1328,7 @@ public class DirectedMultigraph<T>
          * subview.  This view monitors for additions and removals to the set in
          * order to update the state of this {@code Subgraph}.
          */
-        private class SubgraphNeighborsView extends AbstractSet<Integer> {
+        private class SubgraphNeighborsView extends AbstractIntSet {
 
             private int root;
             
@@ -1333,14 +1338,20 @@ public class DirectedMultigraph<T>
             public SubgraphNeighborsView(int root) {
                 this.root = root;
             }
+
+            public boolean add(int vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot add vertices to subgraph");
+            }
             
-            /**
-             * Adds an edge to this vertex and adds the vertex to the graph if it
-             * was not present before.
-             */
             public boolean add(Integer vertex) {
                 throw new UnsupportedOperationException(
                     "Cannot add vertices to subgraph");
+            }
+
+            public boolean contains(int vertex) {
+                return vertexSubset.contains(vertex) 
+                    && isNeighboringVertex(vertex);
             }
             
             public boolean contains(Object o) {
@@ -1354,12 +1365,18 @@ public class DirectedMultigraph<T>
                 return Subgraph.this.contains(root, i);
             }
 
-            public Iterator<Integer> iterator() {
+            public IntIterator iterator() {
                 return new SubgraphNeighborsIterator();
             }
             
-            public boolean remove(Object o) {
-                throw new UnsupportedOperationException();
+            public boolean remove(int vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot remove vertices from subgraph");
+            }
+            
+            public boolean remove(Object vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot remove vertices from subgraph");
             }
             
             public int size() {
@@ -1376,7 +1393,7 @@ public class DirectedMultigraph<T>
              * vertices set, which keeps track of which neighboring vertices are
              * actually in this subview.
              */
-            private class SubgraphNeighborsIterator implements Iterator<Integer> {
+            private class SubgraphNeighborsIterator implements IntIterator {
 
                 private final Iterator<Integer> iter;
 
@@ -1409,6 +1426,10 @@ public class DirectedMultigraph<T>
                     Integer cur = next;
                     advance();
                     return cur;
+                }
+
+                public int nextInt() {
+                    return next();
                 }
 
                 /**

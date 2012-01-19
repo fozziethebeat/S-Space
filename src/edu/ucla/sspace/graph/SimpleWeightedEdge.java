@@ -70,8 +70,7 @@ public class SimpleWeightedEdge implements WeightedEdge, java.io.Serializable {
      * {@inheritDoc}
      */
     public int hashCode() {
-        long bits = Double.doubleToLongBits(weight);
-        return from ^ to ^ (int)(bits ^ (bits >>> 32));
+        return from ^ to;
     }
 
     /**

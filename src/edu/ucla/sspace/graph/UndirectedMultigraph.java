@@ -53,8 +53,9 @@ import gnu.trove.TDecorators;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TObjectProcedure;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -73,9 +74,9 @@ public class UndirectedMultigraph<T>
     private static final long serialVersionUID = 1L;
    
     /**
-     * The set of types contained in this graph.
+     * The count of the type distribution for all edges in the graph.
      */
-    private final Set<T> types;
+    private final TObjectIntMap<T> typeCounts;
     
     /**
      * The set of vertices in this mutligraph.  This set is maintained
@@ -105,7 +106,7 @@ public class UndirectedMultigraph<T>
      * Creates an empty graph with node edges
      */
     public UndirectedMultigraph() { 
-        types = new HashSet<T>();
+        typeCounts = new TObjectIntHashMap<T>();
         vertexToEdges = new TIntObjectHashMap<SparseTypedEdgeSet<T>>();
         subgraphs = new ArrayList<WeakReference<Subgraph>>();
         size = 0;
@@ -144,7 +145,7 @@ public class UndirectedMultigraph<T>
             vertexToEdges.put(e.from(), from);
         }
         if (from.add(e)) {
-            types.add(e.edgeType());
+            updateTypeCounts(e.edgeType(), 1);
             SparseTypedEdgeSet<T> to = vertexToEdges.get(e.to());
             if (to == null) {
                 to = new SparseTypedEdgeSet<T>(e.to());
@@ -162,7 +163,7 @@ public class UndirectedMultigraph<T>
      */
     public void clear() {
         vertexToEdges.clear();
-        types.clear();
+        typeCounts.clear();
         size = 0;
     }
 
@@ -231,8 +232,6 @@ public class UndirectedMultigraph<T>
             if (!vertexToEdges.containsKey(v))
                 throw new IllegalArgumentException(
                     "Request copy of non-present vertex: " + v);
-//              SparseTypedEdgeSet<T> edges = vertexToEdges.get(v);
-//              g.vertexToEdges.put(v, edges.copy(toCopy));
 
             g.add(v);
             SparseTypedEdgeSet<T> edges = vertexToEdges.get(v);
@@ -246,8 +245,6 @@ public class UndirectedMultigraph<T>
                         g.add(e);
             }
         }
-//         if (toCopy.size() > 0)
-//             System.out.printf("Copy %d vertices (%d), %d edges%n", g.order(), toCopy.size(), g.size());
         return g;
     }
 
@@ -283,7 +280,7 @@ public class UndirectedMultigraph<T>
      * Returns the set of edge types currently present in this graph.
      */
     public Set<T> edgeTypes() {
-        return Collections.unmodifiableSet(types);
+        return Collections.unmodifiableSet(typeCounts.keySet());
     }
 
     /**
@@ -292,7 +289,7 @@ public class UndirectedMultigraph<T>
     @Override public boolean equals(Object o) {
         if (o instanceof UndirectedMultigraph) {
             UndirectedMultigraph<?> dm = (UndirectedMultigraph<?>)(o);
-            if (dm.types.equals(types)) {
+            if (dm.typeCounts.equals(typeCounts)) {
                 return vertexToEdges.equals(dm.vertexToEdges);
             }
             return false;
@@ -300,7 +297,7 @@ public class UndirectedMultigraph<T>
         else if (o instanceof Multigraph) {
             @SuppressWarnings("unchecked")
             Multigraph<?,TypedEdge<?>> m = (Multigraph<?,TypedEdge<?>>)o;
-            if (m.edgeTypes().equals(types)) {
+            if (m.edgeTypes().equals(typeCounts.keySet())) {
                 return m.order() == order()
                     && m.size() == size()
                     && m.vertices().equals(vertices())
@@ -371,7 +368,8 @@ public class UndirectedMultigraph<T>
      * {@inheritDoc}
      */
     public int hashCode() {
-        return vertexToEdges.keySet().hashCode() ^ (types.hashCode() * size);
+        return vertexToEdges.keySet().hashCode() ^ 
+            (typeCounts.keySet().hashCode() * size);
     }
 
     /**
@@ -397,6 +395,8 @@ public class UndirectedMultigraph<T>
             // Check whether removing this vertex has caused us to remove
             // the last edge for this type in the graph.  If so, the graph
             // no longer has this type and we need to update the state.
+            for (TypedEdge<T> e : edges)
+                updateTypeCounts(e.edgeType(), -1);
 
             // Update any of the subgraphs that had this vertex to notify them
             // that it was removed
@@ -416,7 +416,7 @@ public class UndirectedMultigraph<T>
                 if (s.vertexSubset.remove(vertex)) {
                     Iterator<T> subgraphTypesIter = s.validTypes.iterator();
                     while (subgraphTypesIter.hasNext()) {
-                        if (!types.contains(subgraphTypesIter.next()))
+                        if (!typeCounts.containsKey(subgraphTypesIter.next()))
                             subgraphTypesIter.remove();
                     }
                 }
@@ -434,26 +434,27 @@ public class UndirectedMultigraph<T>
         if (edges != null && edges.remove(edge)) {
             vertexToEdges.get(edge.from()).remove(edge);
             size--;
+
             // Check whether we've just removed the last edge for this type
             // in the graph.  If so, the graph no longer has this type and
             // we need to update the state.
+            updateTypeCounts(edge.edgeType(), -1);
 
-            // TODO !!
-
-
-            // Remove this edge type from all the subgraphs as well
-            Iterator<WeakReference<Subgraph>> sIt = subgraphs.iterator();
-            while (sIt.hasNext()) {
-                WeakReference<Subgraph> ref = sIt.next();
-                Subgraph s = ref.get();
-                // Check whether this subgraph was already gc'd (the
-                // subgraph was no longer in use) and if so, remove the
-                // ref from the list to avoid iterating over it again
-                if (s == null) {
-                    sIt.remove();
-                    continue;
+            if (!typeCounts.containsKey(edge.edgeType())) {
+                // Remove this edge type from all the subgraphs as well
+                Iterator<WeakReference<Subgraph>> sIt = subgraphs.iterator();
+                while (sIt.hasNext()) {
+                    WeakReference<Subgraph> ref = sIt.next();
+                    Subgraph s = ref.get();
+                    // Check whether this subgraph was already gc'd (the
+                    // subgraph was no longer in use) and if so, remove the
+                    // ref from the list to avoid iterating over it again
+                    if (s == null) {
+                        sIt.remove();
+                        continue;
+                    }
+                    s.validTypes.remove(edge.edgeType());
                 }
-                // FILL IN...
             }
 
             return true;
@@ -466,26 +467,13 @@ public class UndirectedMultigraph<T>
      */
     public int size() {
         return size;
-//         CountingProcedure count = new CountingProcedure();
-//         vertexToEdges.forEachValue(count);
-//         return count.count / 2;
-    }
-
-    private class CountingProcedure 
-            implements TObjectProcedure<SparseTypedEdgeSet<T>> {
-
-        int count = 0;
-        public boolean execute(SparseTypedEdgeSet<T> edges) {
-            count += edges.size();
-            return true;
-        }
     }
 
     /**
      * {@inheritDoc}
      */
     public UndirectedMultigraph<T> subgraph(Set<Integer> subset) {
-        Subgraph sub = new Subgraph(types, subset);
+        Subgraph sub = new Subgraph(typeCounts.keySet(), subset);
         subgraphs.add(new WeakReference<Subgraph>(sub));
         return sub;
     }
@@ -496,7 +484,7 @@ public class UndirectedMultigraph<T>
     public UndirectedMultigraph<T> subgraph(Set<Integer> subset, Set<T> edgeTypes) {
         if (edgeTypes.isEmpty()) 
             throw new IllegalArgumentException("Must specify at least one type");
-        if (!types.containsAll(edgeTypes)) {
+        if (!typeCounts.keySet().containsAll(edgeTypes)) {
             throw new IllegalArgumentException(
                 "Cannot create subgraph with more types than exist");
         }
@@ -514,10 +502,30 @@ public class UndirectedMultigraph<T>
     }
 
     /**
+     * Updates how many edges have this type in the graph
+     */
+    private void updateTypeCounts(T type, int delta) {
+        if (!typeCounts.containsKey(type)) {
+            assert delta > 0 
+                : "removing edge type that was not originally present";
+            typeCounts.put(type, delta);
+        }
+        else {
+            int curCount = typeCounts.get(type);
+            int newCount = curCount + delta;
+            assert newCount >= 0 
+                : "removing edge type that was not originally present";
+            if (newCount == 0)
+                typeCounts.remove(type);
+            else
+                typeCounts.put(type, newCount);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     public IntSet vertices() {
-        // TODO: make this unmodifiable
         return PrimitiveCollections.unmodifiableSet(
             TroveIntSet.wrap(vertexToEdges.keySet()));
     }
@@ -551,8 +559,8 @@ public class UndirectedMultigraph<T>
         public boolean remove(Object o) {
             if (o instanceof TypedEdge) {
                 TypedEdge<?> e = (TypedEdge<?>)o;
-                return UndirectedMultigraph.this.types.
-                           contains(e.edgeType())
+                return UndirectedMultigraph.this.typeCounts.
+                           containsKey(e.edgeType())
                     && UndirectedMultigraph.this.remove((TypedEdge<T>)o);
             }
             return false;
@@ -886,7 +894,8 @@ public class UndirectedMultigraph<T>
          * {@inheritDoc}
          */
         public int hashCode() {
-            return vertices().hashCode() ^ (types.hashCode() * size());
+            return vertices().hashCode() ^ 
+                (validTypes.hashCode() * size());
         }
 
         /**

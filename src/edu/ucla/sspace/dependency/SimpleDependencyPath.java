@@ -73,7 +73,6 @@ public class SimpleDependencyPath implements DependencyPath {
             nodes.add(next);
             cur = next;
         }
-        System.out.printf("path: %s,%nnodes: %s%n", path, nodes);
     }
 
     /**

@@ -65,10 +65,12 @@ import static edu.ucla.sspace.util.LoggerUtil.info;
  * A class for finding the <i>k</i>-nearest neighbors of one or more words.  The
  * {@code NearestNeighborFinder} operates by generating a set of <b>principle
  * vectors</b> that reflect average words in a {@link SemanticSpace} and then
- * identifying mapping each principle vector to the set of words to which it is
- * closest.  Finding the nearest neighbor then entails finding the
- * <i>k</i>-closest principle vectors and comparing only their words, rather
- * than all the words in the space.  This dramatically reduces the search space.
+ * mapping each principle vector to the set of words to which it is closest.
+ * Finding the nearest neighbor then entails finding the <i>k</i>-closest
+ * principle vectors and comparing only their words, rather than all the words
+ * in the space.  This dramatically reduces the search space by partitioning the
+ * vectors of the {@code SemanticSpace} into smaller sets, not all of which need
+ * to be searched.
  *
  * <p> The number of principle vectors is typically far less than the total
  * number of vectors in the {@code SemanticSpace}, but should be more than the
@@ -77,8 +79,14 @@ import static edu.ucla.sspace.util.LoggerUtil.info;
  * (|Sspace| / p))}, where {@code p} is the number of principle components,
  * {@code k} is the number of nearest neighbors to be found, and {@code
  * |Sspace|} is the size of the semantic space.
+ *
+ * <p> Instances of this class are also serializable.  If the backing {@code
+ * SemanticSpace} is also serializable, the space will be saved.  However, if
+ * the space is not serializable, its contents will be converted to a static
+ * version and saved as a copy.
  */
-public class NearestNeighborFinder implements java.io.Serializable {
+public class PartitioningNearestNeighborFinder 
+    implements NearestNeighborFinder, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -86,7 +94,7 @@ public class NearestNeighborFinder implements java.io.Serializable {
      * The logger to which clustering status updates will be written.
      */
     private static final Logger LOGGER =
-        Logger.getLogger(NearestNeighborFinder.class.getName());
+        Logger.getLogger(PartitioningNearestNeighborFinder.class.getName());
 
     /**
      * The semantic space from which the principle vectors are derived
@@ -106,27 +114,39 @@ public class NearestNeighborFinder implements java.io.Serializable {
 
     /**
      * Creates a new {@code NearestNeighborFinder} for the {@link
+     * SemanticSpace}, using log<sub>10</log>(|words|) principle vectors to
+     * efficiently search for neighbors.
+     *
+     * @param sspace a semantic space to search
+     */
+    public PartitioningNearestNeighborFinder(SemanticSpace sspace) {
+        this(sspace, (int)(Math.ceil(Math.log10(sspace.getWords().size()))));
+    }
+
+    /**
+     * Creates a new {@code NearestNeighborFinder} for the {@link
      * SemanticSpace}, using the specified number of principle vectors to
      * efficiently search for neighbors.
      *
      * @param sspace a semantic space to search
-     * @param principleVectors the number of principle vectors to use in
+     * @param numPrincipleVectors the number of principle vectors to use in
      *        representing the content of the space.
      */
-    public NearestNeighborFinder(SemanticSpace sspace, int principleVectors) {
+    public PartitioningNearestNeighborFinder(SemanticSpace sspace, 
+                                             int numPrincipleVectors) {
         if (sspace == null)
             throw new NullPointerException();
-        if (principleVectors > sspace.getWords().size()) 
+        if (numPrincipleVectors > sspace.getWords().size()) 
             throw new IllegalArgumentException(
                 "Cannot have more principle vectors than " +
-                "word vectors: " + principleVectors);    
-        else if (principleVectors < 1) 
+                "word vectors: " + numPrincipleVectors);    
+        else if (numPrincipleVectors < 1) 
             throw new IllegalArgumentException(
                 "Must have at least one principle vector");
         this.sspace = sspace;
         principleVectorToNearestTerms = new HashMultiMap<DoubleVector,String>();
         workQueue = new WorkQueue();
-        computePrincipleVectors(principleVectors);
+        computePrincipleVectors(numPrincipleVectors);
     }
 
     /**
@@ -193,7 +213,7 @@ public class NearestNeighborFinder implements java.io.Serializable {
                             // which it is closest
                             for (int i = sta; i < end; ++i) {
                                 DoubleVector v = termVectors.get(i);
-                                double highestSim = Double.NEGATIVE_INFINITY;
+                                double highestSim = -Double.MAX_VALUE;
                                 int pVec = -1;
                                 for (int j = 0; j < principles.length; ++j) {
                                     DoubleVector principle = principles[j];
@@ -246,12 +266,7 @@ public class NearestNeighborFinder implements java.io.Serializable {
     }
 
     /**
-     * Finds the <i>k</i> most similar words in the semantic space according to
-     * the cosine similarity, returning a mapping from their similarity to the
-     * word itself.
-     *
-     * @return the most similar words, or {@code null} if the provided word was
-     *         not in the semantic space.
+     * {@inheritDoc}
      */
     public SortedMultiMap<Double,String> getMostSimilar(
             final String word, int numberOfSimilarWords) {
@@ -276,12 +291,7 @@ public class NearestNeighborFinder implements java.io.Serializable {
     }
 
     /**
-     * Finds the <i>k</i> most similar words in the semantic space according to
-     * the cosine similarity, returning a mapping from their similarity to the
-     * word itself.
-     *
-     * @return the most similar words, or {@code null} if none of the provided
-     *         word were not in the semantic space.
+     * {@inheritDoc}
      */
     public SortedMultiMap<Double,String> getMostSimilar(
              Set<String> terms, int numberOfSimilarWords) {
@@ -323,13 +333,8 @@ public class NearestNeighborFinder implements java.io.Serializable {
         return mostSim;
     }
 
-
     /**
-     * Finds the <i>k</i> most similar words in the semantic space according to
-     * the cosine similarity, returning a mapping from their similarity to the
-     * word itself.
-     *
-     * @return the most similar words to the vector
+     * {@inheritDoc}
      */
     public SortedMultiMap<Double,String> getMostSimilar(
             final Vector v, int numberOfSimilarWords) {
@@ -434,5 +439,4 @@ public class NearestNeighborFinder implements java.io.Serializable {
             out.writeObject(copy);
         }
     }
-
 }

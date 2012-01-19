@@ -64,6 +64,21 @@ public class LabeledParsedStringDocument extends LabeledStringDocument
      * {@inheritDoc}
      */
     public String text() {
+        DependencyTreeNode[] nodes = parsedDocument();
+        StringBuilder sb = new StringBuilder(nodes.length * 8);
+        for (int i = 0; i < nodes.length; ++i) {
+            String token = nodes[i].word();
+            sb.append(token);
+            if (i+1 < nodes.length)
+                sb.append(' ');
+        }
+        return sb.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String prettyPrintText() {
         Pattern punctuation = Pattern.compile("[!,-.:;?`]");
         DependencyTreeNode[] nodes = parsedDocument();
         StringBuilder sb = new StringBuilder(nodes.length * 8);

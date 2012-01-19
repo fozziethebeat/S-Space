@@ -967,8 +967,10 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
          * {@inheritDoc}
          */
         public IntSet getNeighbors(int vertex) {
-             if (!vertexSubset.contains(vertex))
-                 return PrimitiveCollections.emptyIntSet();
+            return (!vertexSubset.contains(vertex))
+                ? PrimitiveCollections.emptyIntSet()
+                : new SubgraphNeighborsView(vertex);
+                /*
              // REMINDER: make this a view, rather than a created set
              IntSet neighbors = new TroveIntSet();
              IntIterator it = 
@@ -979,6 +981,7 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
                      neighbors.add(v);
              }
              return neighbors;
+                */
         }
         
         /**
@@ -1084,7 +1087,7 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
          * subgraph.  This class monitors for changes to edge set to update the
          * state of this graph
          */
-        private class SubgraphAdjacencyListView  extends AbstractSet<T> {
+        private class SubgraphAdjacencyListView extends AbstractSet<T> {
 
             private final int root;
 
@@ -1275,7 +1278,7 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
          * subview.  This view monitors for additions and removals to the set in
          * order to update the state of this {@code Subgraph}.
          */
-        private class SubgraphNeighborsView extends AbstractSet<Integer> {
+        private class SubgraphNeighborsView extends AbstractIntSet {
 
             private int root;
             
@@ -1285,14 +1288,19 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
             public SubgraphNeighborsView(int root) {
                 this.root = root;
             }
+
+            public boolean add(int vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot add vertices to subgraph");
+            }
             
-            /**
-             * Adds an edge to this vertex and adds the vertex to the graph if it
-             * was not present before.
-             */
             public boolean add(Integer vertex) {
                 throw new UnsupportedOperationException(
                     "Cannot add vertices to subgraph");
+            }
+
+            public boolean contains(int vertex) {
+                return vertexSubset.contains(vertex) && checkVertex(vertex);
             }
             
             public boolean contains(Object o) {
@@ -1309,12 +1317,18 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
                 return AbstractGraph.this.contains(i, root);
             }
 
-            public Iterator<Integer> iterator() {
+            public IntIterator iterator() {
                 return new SubgraphNeighborsIterator();
             }
             
-            public boolean remove(Object o) {
-                throw new UnsupportedOperationException();
+            public boolean remove(int vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot remove vertices from subgraph");
+            }
+            
+            public boolean remove(Object vertex) {
+                throw new UnsupportedOperationException(
+                    "Cannot remove vertices from subgraph");
             }
             
             public int size() {
@@ -1333,7 +1347,7 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
              * vertices set, which keeps track of which neighboring vertices are
              * actually in this subview.
              */
-            private class SubgraphNeighborsIterator implements Iterator<Integer> {
+            private class SubgraphNeighborsIterator implements IntIterator {
 
                 private final IntIterator iter;
 
@@ -1366,6 +1380,10 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
                     Integer cur = next;
                     advance();
                     return cur;
+                }
+
+                public int nextInt() {
+                    return next();
                 }
 
                 /**

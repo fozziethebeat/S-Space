@@ -46,18 +46,18 @@ import static org.junit.Assert.*;
 public class OccurrenceDependencyContextGeneratorTest {
 
     public static final String SINGLE_PARSE = 
-        "1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
-        "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
-        "3   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
-        "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
-        "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
-        "6   for _   IN  IN  _   5   NMOD    _   _\n" +
-        "7   the _   DT  DT  _   9   NMOD    _   _\n" +
-        "8   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
-        "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
-        "10  in  _   IN  IN  _   9   ADV _   _\n" +
-        "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
-        "12  .   _   .   .   _   3   P   _   _";
+        toTabs("1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
+               "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+               "3   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
+               "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
+               "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
+               "6   for _   IN  IN  _   5   NMOD    _   _\n" +
+               "7   the _   DT  DT  _   9   NMOD    _   _\n" +
+               "8   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
+               "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+               "10  in  _   IN  IN  _   9   ADV _   _\n" +
+               "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
+               "12  .   _   .   .   _   3   P   _   _");
 
     @Test public void testOccurrence() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
@@ -82,22 +82,37 @@ public class OccurrenceDependencyContextGeneratorTest {
                 return 0;
             if (key.equals("is"))
                 return 1;
-            if (key.equals("holt"))
+            if (key.equals("Holt"))
                 return 2;
-            if (key.equals("mr."))
+            if (key.equals("Mr."))
                 return 3;
 
             if (key.equals("for"))
                 return 4;
             if (key.equals("the"))
                 return 5;
-            if (key.equals("literary"))
+            if (key.equals("Literary"))
                 return 6;
-            if (key.equals("review"))
+            if (key.equals("Review"))
                 return 7;
             if (key.equals("in"))
                 return 8;
             return -1;
         }
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

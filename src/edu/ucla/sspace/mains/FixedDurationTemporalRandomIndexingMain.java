@@ -27,7 +27,6 @@ import edu.ucla.sspace.common.SemanticSpaceIO;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.Similarity.SimType;
-import edu.ucla.sspace.common.WordComparator;
 
 import edu.ucla.sspace.ri.IndexVectorUtil;
 
@@ -43,6 +42,8 @@ import edu.ucla.sspace.tri.OrderedTemporalRandomIndexing;
 
 import edu.ucla.sspace.util.CombinedIterator;
 import edu.ucla.sspace.util.MultiMap;
+import edu.ucla.sspace.util.NearestNeighborFinder;
+import edu.ucla.sspace.util.SimpleNearestNeighborFinder;
 import edu.ucla.sspace.util.SortedMultiMap;
 import edu.ucla.sspace.util.TimeSpan;
 import edu.ucla.sspace.util.TreeMultiMap;
@@ -171,12 +172,6 @@ public class FixedDurationTemporalRandomIndexingMain {
      * each interesting word from the last partition.
      */
     private boolean printShiftRankings;
-
-    /**
-     * The word comparator used for computing similarity scores when calculating
-     * the semantic shift.
-     */
-    private WordComparator wordComparator;
 
     /**
      * A mapping from each word to the vectors that account for its temporal
@@ -367,9 +362,6 @@ public class FixedDurationTemporalRandomIndexingMain {
         if (argOptions.hasOption("threads")) {
             numThreads = argOptions.getIntOption("threads");
         }
-
-        // initialize the word comparator based on the number of threads
-        wordComparator = new WordComparator(numThreads);
 
         overwrite = true;
         if (argOptions.hasOption("overwrite")) {
@@ -680,12 +672,13 @@ public class FixedDurationTemporalRandomIndexingMain {
         LOGGER.info("printing the most similar words for the semantic partition" +
                     " starting at: " + dateString);
 
+        NearestNeighborFinder nnf = 
+            new SimpleNearestNeighborFinder(semanticPartition);
+
         // generate the similarity lists
         for (String toExamine : interestingWords) {
             SortedMultiMap<Double,String> mostSimilar = 
-                wordComparator.getMostSimilar(toExamine, semanticPartition,
-                                              interestingWordNeighbors,
-                                              Similarity.SimType.COSINE);
+                nnf.getMostSimilar(toExamine, interestingWordNeighbors);
 
             if (mostSimilar != null) {
                 File neighborFile = 

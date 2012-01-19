@@ -41,6 +41,7 @@ import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseVector;
 import edu.ucla.sspace.vector.Vector;
+import edu.ucla.sspace.vector.VectorMath;
 import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.SparseIntegerVector;
 
@@ -2187,7 +2188,7 @@ public class Similarity {
     public static double tanimotoCoefficient(DoubleVector a, DoubleVector b) {
         check(a,b);
 
-        // IMPLEMENTATION NOTE: The Tanimoto coefficient uses the squart of the
+        // IMPLEMENTATION NOTE: The Tanimoto coefficient uses the square of the
         // vector magnitudes, which we could compute by just summing the square
         // of the vector values.  This would save a .sqrt() call from the
         // .magnitude() call.  However, we expect that this method might be
@@ -2195,83 +2196,13 @@ public class Similarity {
         // should only be two multiplications instaned of |nz| multiplications
         // on the second call (assuming the vector instances cache their
         // magnitude, which almost all do).
-        double dotProduct = 0.0;
         double aMagnitude = a.magnitude();
         double bMagnitude = b.magnitude();
-
-        // Check whether both vectors support fast iteration over their non-zero
-        // values.  If so, use only the non-zero indices to speed up the
-        // computation by avoiding zero multiplications
-        if (a instanceof Iterable && b instanceof Iterable) {
-            // Check whether we can easily determine how many non-zero values
-            // are in each vector.  This value is used to select the iteration
-            // order, which affects the number of get(value) calls.
-            boolean useA =
-                (a instanceof SparseVector && b instanceof SparseVector)
-                && ((SparseVector)a).getNonZeroIndices().length <
-                   ((SparseVector)b).getNonZeroIndices().length;
-            
-            // Choose the smaller of the two to use in computing the dot
-            // product.  Because it would be more expensive to compute the
-            // intersection of the two sets, we assume that any potential
-            // misses would be less of a performance hit.
-            if (useA) {
-                for (DoubleEntry e : ((Iterable<DoubleEntry>)a)) {
-                    int index = e.index();                    
-                    double aValue = e.value();
-                    double bValue = b.get(index);
-                    dotProduct += aValue * bValue;
-                }
-            }
-            else {
-                for (DoubleEntry e : ((Iterable<DoubleEntry>)b)) {
-                    int index = e.index();                    
-                    double aValue = a.get(index);
-                    double bValue = e.value();
-                    dotProduct += aValue * bValue;
-                }
-            }            
-        }
-
-        // Check whether both vectors are sparse.  If so, use only the non-zero
-        // indices to speed up the computation by avoiding zero multiplications
-        else if (a instanceof SparseVector && b instanceof SparseVector) {
-            SparseVector svA = (SparseVector)a;
-            SparseVector svB = (SparseVector)b;
-            int[] nzA = svA.getNonZeroIndices();
-            int[] nzB = svB.getNonZeroIndices();
-            // Choose the smaller of the two to use in computing the dot
-            // product.  Because it would be more expensive to compute the
-            // intersection of the two sets, we assume that any potential
-            // misses would be less of a performance hit.
-            if (nzA.length < nzB.length) {
-                for (int nz : nzA) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
-            }
-            else {
-                for (int nz : nzB) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
-            }
-        }
-
-        // Otherwise, just assume both are dense and compute the full amount
-        else {
-            for (int i = 0; i < b.length(); i++) {
-                double aValue = a.get(i);
-                double bValue = b.get(i);
-                dotProduct += aValue * bValue;
-            }
-        }
-        
+       
         if (aMagnitude == 0 || bMagnitude == 0)
             return 0;
-        
+
+        double dotProduct = VectorMath.dotProduct(a, b);        
         double aMagSq = aMagnitude * aMagnitude;
         double bMagSq = bMagnitude * bMagnitude;
 
@@ -2297,82 +2228,13 @@ public class Similarity {
         // should only be two multiplications instaned of |nz| multiplications
         // on the second call (assuming the vector instances cache their
         // magnitude, which almost all do).
-        int dotProduct = 0;
         double aMagnitude = a.magnitude();
         double bMagnitude = b.magnitude();
 
-        // Check whether both vectors support fast iteration over their non-zero
-        // values.  If so, use only the non-zero indices to speed up the
-        // computation by avoiding zero multiplications
-        if (a instanceof Iterable && b instanceof Iterable) {
-            // Check whether we can easily determine how many non-zero values
-            // are in each vector.  This value is used to select the iteration
-            // order, which affects the number of get(value) calls.
-            boolean useA =
-                (a instanceof SparseVector && b instanceof SparseVector)
-                && ((SparseVector)a).getNonZeroIndices().length <
-                   ((SparseVector)b).getNonZeroIndices().length;
-            // Choose the smaller of the two to use in computing the dot
-            // product.  Because it would be more expensive to compute the
-            // intersection of the two sets, we assume that any potential
-            // misses would be less of a performance hit.
-            if (useA) {
-                for (IntegerEntry e : ((Iterable<IntegerEntry>)a)) {
-                    int index = e.index();                    
-                    int aValue = e.value();
-                    int bValue = b.get(index);
-                    dotProduct += aValue * bValue;
-                }
-            }
-            else {
-                for (IntegerEntry e : ((Iterable<IntegerEntry>)b)) {
-                    int index = e.index();                    
-                    int aValue = a.get(index);
-                    int bValue = e.value();
-                    dotProduct += aValue * bValue;
-                }
-            }            
-        }
-
-        // Check whether both vectors are sparse.  If so, use only the non-zero
-        // indices to speed up the computation by avoiding zero multiplications
-        else if (a instanceof SparseVector && b instanceof SparseVector) {
-            SparseVector svA = (SparseVector)a;
-            SparseVector svB = (SparseVector)b;
-            int[] nzA = svA.getNonZeroIndices();
-            int[] nzB = svB.getNonZeroIndices();
-            // Choose the smaller of the two to use in computing the dot
-            // product.  Because it would be more expensive to compute the
-            // intersection of the two sets, we assume that any potential
-            // misses would be less of a performance hit.
-            if (nzA.length < nzB.length) {
-                for (int nz : nzA) {
-                    int aValue = a.get(nz);
-                    int bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
-            }
-            else {
-                for (int nz : nzB) {
-                    int aValue = a.get(nz);
-                    int bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
-            }
-        }
-
-        // Otherwise, just assume both are dense and compute the full amount
-        else {
-            for (int i = 0; i < b.length(); i++) {
-                int aValue = a.get(i);
-                int bValue = b.get(i);
-                dotProduct += aValue * bValue;
-            }
-        }
-
         if (aMagnitude == 0 || bMagnitude == 0)
             return 0;
-        
+
+        int dotProduct = VectorMath.dotProduct(a, b);        
         double aMagSq = aMagnitude * aMagnitude;
         double bMagSq = bMagnitude * bMagnitude;
 

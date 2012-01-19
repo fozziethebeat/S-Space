@@ -35,7 +35,8 @@ import gnu.trove.map.TIntIntMap;
 
 
 /**
- *
+ * A {@link MultiMap} subinterface for mapping {@code int} primitives as both
+ * keys and values.
  */
 public interface IntIntMultiMap extends MultiMap<Integer,Integer> {
 

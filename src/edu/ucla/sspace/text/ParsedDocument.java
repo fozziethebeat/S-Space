@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens
+ * Copyright 2012 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -40,7 +40,18 @@ public interface ParsedDocument extends Document {
 
     /**
      * Returns the text of the parsed document without any of the
-     * parsing-related annotation.
+     * parsing-related annotation, with each parsed token separated by
+     * whitespace.
      */
     String text();
+
+    /**
+     * Returns a pretty-printed version of the document's text without any of
+     * the parsing-related annotation and using heuristics to appropriately
+     * space punctuation, quotes, and contractions.  This methods is intended as
+     * only a useful way to displaying the document's text in a more readable
+     * format than {@link #text()}, but makes no claims as to reproducing the
+     * original surface form of the document prior to parsing.
+     */
+    String prettyPrintText();
 }

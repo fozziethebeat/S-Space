@@ -43,7 +43,9 @@ import edu.ucla.sspace.util.primitive.TroveIntSet;
  * @author David Jurgens
  */
 public class SparseDirectedEdgeSet extends AbstractSet<DirectedEdge> 
-        implements EdgeSet<DirectedEdge> {
+        implements EdgeSet<DirectedEdge>, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
         
     /**
      * The vertex to which all edges in the set are connected
@@ -149,8 +151,13 @@ public class SparseDirectedEdgeSet extends AbstractSet<DirectedEdge>
     /**
      * {@inheritDoc}
      */
-    public boolean disconnect(int vertex) {
-        return inEdges.remove(vertex) | outEdges.remove(vertex);
+    public int disconnect(int vertex) {
+        int removed = 0;
+        if (inEdges.remove(vertex))
+            removed++;
+        if (outEdges.remove(vertex))
+            removed++;
+        return removed;
     }
 
     /**

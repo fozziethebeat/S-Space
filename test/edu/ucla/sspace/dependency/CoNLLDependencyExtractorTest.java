@@ -24,6 +24,8 @@ package edu.ucla.sspace.dependency;
 import edu.ucla.sspace.text.StringDocument;
 import edu.ucla.sspace.text.Document;
 
+import java.io.BufferedReader;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -99,6 +101,8 @@ public class CoNLLDependencyExtractorTest {
         // Check that all the neighbors are in the e
         for (DependencyRelation rel : node.neighbors()) {
             System.out.println("relation: " + rel);
+            if (!expectedRelations.contains(rel))
+                System.out.printf("FAIL: %s does not contain %s%n", expectedRelations, rel);
             assertTrue(expectedRelations.contains(rel));
             // Remove the relation from the list to double check that the
             // neighbors are a list of duplicate relations.
@@ -120,7 +124,7 @@ public class CoNLLDependencyExtractorTest {
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
                                          "SBJ",
-                                         new SimpleDependencyTreeNode("holt", "NNP")),
+                                         new SimpleDependencyTreeNode("Holt", "NNP")),
             new SimpleDependencyRelation(new SimpleDependencyTreeNode("is", "VBZ"),
                                          "PRD",
                                          new SimpleDependencyTreeNode("columnist", "NN")),
@@ -145,7 +149,7 @@ public class CoNLLDependencyExtractorTest {
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
                                          "AT",
-                                         new SimpleDependencyTreeNode("individuell", "AJ")),
+                                         new SimpleDependencyTreeNode("Individuell", "AJ")),
             new SimpleDependencyRelation(new SimpleDependencyTreeNode("beskattning", "N"),
                                          "ET",
                                          new SimpleDependencyTreeNode("av", "PR"))
@@ -157,29 +161,29 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testSingleExtraction() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] nodes = extractor.readNextTree(doc.reader());
 
         assertEquals(12, nodes.length);
 
         // Check the basics of the node.
-        assertEquals("review", nodes[8].word());
+        assertEquals("Review", nodes[8].word());
         assertEquals("NNP", nodes[8].pos());
 
         // Test expected relation for each of the links for "Review".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("Review", "NNP"),
                                          "NMOD",
                                          new SimpleDependencyTreeNode("the", "DT")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("Review", "NNP"),
                                          "NMOD",
-                                         new SimpleDependencyTreeNode("literary", "NNP")),
-            new SimpleDependencyRelation(new SimpleDependencyTreeNode("review", "NNP"),
+                                         new SimpleDependencyTreeNode("Literary", "NNP")),
+            new SimpleDependencyRelation(new SimpleDependencyTreeNode("Review", "NNP"),
                                          "ADV",
                                          new SimpleDependencyTreeNode("in", "IN")),
             new SimpleDependencyRelation(new SimpleDependencyTreeNode("for", "IN"),
                                          "PMOD",
-                                         new SimpleDependencyTreeNode("review", "NNP"))
+                                         new SimpleDependencyTreeNode("Review", "NNP"))
         };
 
         evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
@@ -187,14 +191,18 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testDoubleExtraction() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_PARSE);
-        DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
+        Document doc = new StringDocument("\n\n" +
+                                          toTabs(SINGLE_PARSE) +
+                                          "\n" +
+                                          toTabs(SECOND_PARSE));
+        BufferedReader reader = doc.reader();
+        DependencyTreeNode[] relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(12, relations.length);
 
         testFirstRoot(relations, 2);
 
-        relations = extractor.readNextTree(doc.reader());
+        relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
@@ -203,7 +211,7 @@ public class CoNLLDependencyExtractorTest {
     
     @Test public void testRootNode() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
 
         assertEquals(12, relations.length);
@@ -213,7 +221,7 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTrees() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(CONCATONATED_PARSE);
+        Document doc = new StringDocument(toTabs(CONCATONATED_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
@@ -223,11 +231,26 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTreesZeroOffset() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_ZERO_OFFSET_PARSE);
+        Document doc = new StringDocument(toTabs(DOUBLE_ZERO_OFFSET_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
         testSecondRoot(relations, 13);
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

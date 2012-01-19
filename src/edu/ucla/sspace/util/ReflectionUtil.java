@@ -48,8 +48,4 @@ public class ReflectionUtil {
             throw new Error(e);
         }
     }
-
-//     public static <T> T[] newArrayInstance(Class<T> c, int length) {
-//         return Arrays.newInstance(c, length)
-//     }
 }

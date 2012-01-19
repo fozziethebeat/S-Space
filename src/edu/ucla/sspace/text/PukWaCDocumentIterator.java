@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens
+ * Copyright 2012 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -36,12 +36,14 @@ import java.util.Iterator;
  * An iterator implementation that returns {@link Document} containg a single
  * dependency parsed sentence given a file in the <a
  * href="http://nextens.uvt.nl/depparse-wiki/DataFormat">CoNLL Format</a> which
- * is contained in the XML format provided in the WaCkypedia corpus.
+ * is contained in the XML format provided in the WaCkypedia corpus.  See the <a
+ * href="http://wacky.sslmit.unibo.it/doku.php?id=corpora">WaCky</a> group's
+ * website for more information on the PukWaC.
  */
 public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
 
     /**
-     * The extractor used to build trees from the pukWaC documents
+     * The extractor used to build trees from the PukWaC documents
      */
     private static final DependencyExtractor extractor = 
         new WaCKyDependencyExtractor();
@@ -65,7 +67,7 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
      * Creates an {@code Iterator} over the file where each document returned
      * contains the sequence of dependency parsed words composing a sentence..
      *
-     * @param documentsFile the name of the pukWaC file containing dependency
+     * @param documentsFile the name of the PukWaC file containing dependency
      *        parsed sentences in the <a
      *        href="http://nextens.uvt.nl/depparse-wiki/DataFormat">CoNLL
      *        Format</a> separated by XML tags for the sentences and articles
@@ -100,7 +102,7 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
                 while ((line = documentsReader.readLine()) != null
                        && !line.equals("</s>")) {
 
-                    // Unfortunately, the XML of the pukWaC is broken and some
+                    // Unfortunately, the XML of the PukWaC is broken and some
                     // <text> elements are inside the <s> elements, so this code
                     // is needed to avoid putting those inside the CONLL data
                     if (line.contains("<text")) {

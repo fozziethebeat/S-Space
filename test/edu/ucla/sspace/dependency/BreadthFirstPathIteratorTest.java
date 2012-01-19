@@ -38,29 +38,29 @@ import static org.junit.Assert.*;
 public class BreadthFirstPathIteratorTest extends PathIteratorTestBase {
     
     String conll =
-        "Anarchism       anarchism       NN      1       2       SBJ\n" +
-        "is      be      VBZ     2       0       ROOT\n" +
-        "a       a       DT      3      5       NMOD\n" +
-        "political       political       JJ      4       5       NMOD\n" +
-        "philosophy     philosophy      NN      5       2       PRD\n" +
-        "encompassing    encompass       VVG     6       5       NMOD\n" +
-        "theories        theory  NNS     7       6       OBJ\n" +
-        "and     and     CC      8      7       CC\n" +
-        "attitudes       attitude        NNS     9       7       COORD\n" +
-        "which   which  WDT     10      11      SBJ\n" +
-        "consider        consider        VVP     11      9       NMOD\n" +
-        "the    the     DT      12      13      NMOD\n" +
-        "state   state   NN      13      15      SBJ\n" +
-        "to      t      TO      14      15      VMOD\n" +
-        "be      be      VB      15      11      OBJ\n" +
-        "unnecessary    unnecessary     JJ      16      15      PRD\n" +
-        ",       ,       ,       17      16      P\n" +
-        "harmul harmful JJ      18      16      COORD\n" +
-        ",       ,       ,       19      16      P\n" +
-        "and/    ad/    JJ      20      16      COORD\n" +
-        "or      or      CC      21      16      CC\n" +
-        "undesirable    undesirable     JJ      22      16      COORD\n" +
-        ".       .       SENT    23      2       P\n";
+        "Anarchism\tanarchism\tNN\t1\t2\tSBJ\n" +
+        "is\tbe\tVBZ\t2\t0\tROOT\n" +
+        "a\ta\tDT\t3\t5\tNMOD\n" +
+        "political\tpolitical\tJJ\t4\t5\tNMOD\n" +
+        "philosophy\tphilosophy\tNN\t5\t2\tPRD\n" +
+        "encompassing\tencompass\tVVG\t6\t5\tNMOD\n" +
+        "theories\ttheory\tNNS\t7\t6\tOBJ\n" +
+        "and\tand\tCC\t8\t7\tCC\n"+
+        "attitudes\tattitude\tNNS\t9\t7\tCOORD\n"+
+        "which\twhich\tWDT\t10\t11\tSBJ\n"+
+        "consider\tconsider\tVVP\t11\t9\tNMOD\n"+
+        "the\tthe\tDT\t12\t13\tNMOD\n"+
+        "state\tstate\tNN\t13\t15\tSBJ\n"+
+        "to\tt\tTO\t14\t15\tVMOD\n"+
+        "be\tbe\tVB\t15\t11\tOBJ\n"+
+        "unnecessary\tunnecessary\tJJ\t16\t15\tPRD\n"+
+        ",\t,\t,\t17\t16\tP\n"+
+        "harmul\tharmful\tJJ\t18\t16\tCOORD\n"+
+        ",\t,\t,\t19\t16\tP\n"+
+        "and/\tad/\tJJ\t20\t16\tCOORD\n"+
+        "or\tor\tCC\t21\t16\tCC\n"+
+        "undesirable\tundesirable\tJJ\t22\t16\tCOORD\n"+
+        ".\t.\tSENT\t23\t2\tP\n";
 
     static final Map<String,Integer> PATH_START_COUNTS
         = new TreeMap<String,Integer>();

@@ -70,7 +70,7 @@ public class DependencyContextExtractorTest {
         MockWordsi wordsi = new MockWordsi(null, extractor);
 
         extractor.processDocument(
-                new BufferedReader(new StringReader(SINGLE_PARSE)), 
+            new BufferedReader(new StringReader(toTabs(SINGLE_PARSE))), 
                 wordsi);
         assertTrue(wordsi.called);
     }
@@ -177,5 +177,20 @@ public class DependencyContextExtractorTest {
         public boolean acceptWord(String word) {
             return word.equals("cat");
         }
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

@@ -26,6 +26,7 @@ package edu.ucla.sspace.text.corpora;
 import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
 
+import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.Iterator;
 
@@ -41,22 +42,22 @@ import static org.junit.Assert.*;
 public class PukWacDependencyCorpusReaderTest {
 
     public static final String FIRST_SENTENCE = 
-        "1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
-        "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
-        "3   is  _   VBZ VBZ _   0   ROOT    _   _\n";
+        toTabs("1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
+               "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+               "3   is  _   VBZ VBZ _   0   ROOT    _   _\n");
 
     public static final String SECOND_SENTENCE = 
-        "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
-        "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
-        "6   for _   IN  IN  _   5   NMOD    _   _\n" +
-        "7   the _   DT  DT  _   9   NMOD    _   _\n" +
-        "8   Literary    _   NNP NNP _   9   NMOD    _   _\n";
-
+        toTabs("4   a   _   DT  DT  _   5   NMOD    _   _\n" +
+               "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
+               "6   for _   IN  IN  _   5   NMOD    _   _\n" +
+               "7   the _   DT  DT  _   9   NMOD    _   _\n" +
+               "8   Literary    _   NNP NNP _   9   NMOD    _   _\n");
+               
     public static final String THIRD_SENTENCE = 
-        "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
-        "10  in  _   IN  IN  _   9   ADV _   _\n" +
-        "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
-        "12  .   _   .   .   _   3   P   _   _\n";
+        toTabs("9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+               "10  in  _   IN  IN  _   9   ADV _   _\n" +
+               "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
+               "12  .   _   .   .   _   3   P   _   _\n");
 
     public static final String TEST_TEXT =
         "<text>\n" +
@@ -87,8 +88,24 @@ public class PukWacDependencyCorpusReaderTest {
 
     private static String readAll(Document doc) throws Exception {
         StringBuilder sb = new StringBuilder();
-        for (String line = null; (line = doc.reader().readLine()) != null; )
+        BufferedReader reader = doc.reader();
+        for (String line = null; (line = reader.readLine()) != null; )
             sb.append(line).append("\n");
+        return sb.toString();
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
         return sb.toString();
     }
 }

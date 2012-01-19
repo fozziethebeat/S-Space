@@ -59,9 +59,10 @@ import gnu.trove.procedure.TIntObjectProcedure;
 
 
 /**
- * An {@link EdgeSet} implementation that stores {@link TypedEdge} instances for
- * a vertex.  This class provides additional methods beyond the {@code EdgeSet}
- * interface for interacting with edges on the basis of their type.
+ * An {@link EdgeSet} implementation that stores {@link DirectedTypedEdge}
+ * instances for a vertex.  This class provides additional methods beyond the
+ * {@code EdgeSet} interface for interacting with edges on the basis of their
+ * type and their orientation.
  */
 public class SparseDirectedTypedEdgeSet<T> 
         extends AbstractSet<DirectedTypedEdge<T>> 
@@ -305,6 +306,8 @@ public class SparseDirectedTypedEdgeSet<T>
      * reasons.  I was hoping the DirectedMultigraph.copy() could be sped up by
      * copying the raw data faster than the Edge-based data, but this
      * implementation actually slows down DirectedMultigraph.copy() by 100X.
+     * It's being left in as a future study on how to fix it to speed up the
+     * copy operation.
      */
 
 //     public SparseDirectedTypedEdgeSet<T> copy(Set<Integer> vertices) {
@@ -340,19 +343,28 @@ public class SparseDirectedTypedEdgeSet<T>
 //     }
 
     /**
-     * Removes all edges to {@code v}.
+     * {@inheritDoc}
      */
-    public boolean disconnect(int v) {
+    public int disconnect(int v) {
         if (connected.remove(v)) {
+            int removed = 0;
             BitSet b = inEdges.remove(v);
-            if (b != null)
-                size -= b.cardinality();
+            if (b != null) {
+                int edges = b.cardinality();
+                size -= edges;
+                removed += edges;
+            }
             b = outEdges.remove(v);
-            if (b != null)
-                size -= b.cardinality();
-            return true;
+            if (b != null) {
+                int edges = b.cardinality();
+                size -= edges;
+                removed += edges;
+            }
+            assert removed > 0 :
+                "connected removed an edge that wasn't listed elsewhere";
+            return removed;
         }
-        return false;
+        return 0;
     }
 
     /**
