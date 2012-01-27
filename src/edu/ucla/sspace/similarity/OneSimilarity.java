@@ -1,14 +1,13 @@
-package edu.ucla.sspace.sim;
-
-import edu.ucla.sspace.common.Similarity;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.Vector;
+import edu.ucla.sspace.vector.VectorMath;
 
 
 /**
- * Returns the Pearson Correlation between any two {@link Vector}s. 
+ * Returns {@code 1}, always.
  *
  * </p>
  *
@@ -16,26 +15,26 @@ import edu.ucla.sspace.vector.Vector;
  *
  * @author Keith Stevens
  */
-public class PearsonCorrelation extends AbstractSymmetricSimilarityFunction {
+public class OneSimilarity extends AbstractSymmetricSimilarityFunction {
 
     /**
      * {@inheritDoc}
      */
     public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.correlation(v1, v2);
+        return 1;
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.correlation(v1, v2);
+        return 1;
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(Vector v1, Vector v2) {
-        return Similarity.correlation(v1, v2);
+        return 1;
     }
 }

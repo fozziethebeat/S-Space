@@ -1,14 +1,13 @@
-package edu.ucla.sspace.sim;
-
-import edu.ucla.sspace.common.Similarity;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.Vector;
+import edu.ucla.sspace.vector.VectorMath;
 
 
 /**
- * Returns the Spearman Rank Correlation between any two {@link Vector}s. 
+ * Returns the dot product of the two vectors.
  *
  * </p>
  *
@@ -16,27 +15,26 @@ import edu.ucla.sspace.vector.Vector;
  *
  * @author Keith Stevens
  */
-public class SpearmanRankCorrelation 
-        extends AbstractSymmetricSimilarityFunction {
+public class DotProduct extends AbstractSymmetricSimilarityFunction {
 
     /**
      * {@inheritDoc}
      */
     public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.spearmanRankCorrelationCoefficient(v1, v2);
+        return VectorMath.dotProduct(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.spearmanRankCorrelationCoefficient(v1, v2);
+        return VectorMath.dotProduct(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(Vector v1, Vector v2) {
-        return Similarity.spearmanRankCorrelationCoefficient(v1, v2);
+        return VectorMath.dotProduct(v1, v2);
     }
 }

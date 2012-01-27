@@ -1,4 +1,4 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.common.Similarity;
 
@@ -8,7 +8,7 @@ import edu.ucla.sspace.vector.Vector;
 
 
 /**
- * Returns the Jaccard Index between any two {@link Vector}s. 
+ * Returns the Euclidean Similarity between any two {@link Vector}s. 
  *
  * </p>
  *
@@ -16,26 +16,26 @@ import edu.ucla.sspace.vector.Vector;
  *
  * @author Keith Stevens
  */
-public class JaccardIndex extends AbstractSymmetricSimilarityFunction {
+public class EuclideanSimilarity extends AbstractSymmetricSimilarityFunction {
 
     /**
      * {@inheritDoc}
      */
     public double sim(DoubleVector v1, DoubleVector v2) {
-        return Similarity.jaccardIndex(v1, v2);
+        return Similarity.euclideanSimilarity(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(IntegerVector v1, IntegerVector v2) {
-        return Similarity.jaccardIndex(v1, v2);
+        return Similarity.euclideanSimilarity(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(Vector v1, Vector v2) {
-        return Similarity.jaccardIndex(v1, v2);
+        return Similarity.euclideanSimilarity(v1, v2);
     }
 }

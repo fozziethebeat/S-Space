@@ -21,22 +21,23 @@
 
 package edu.ucla.sspace.common;
 
-import edu.ucla.sspace.sim.AverageCommonFeatureRank;
-import edu.ucla.sspace.sim.CosineSimilarity;
-import edu.ucla.sspace.sim.EuclideanSimilarity;
-import edu.ucla.sspace.sim.JaccardIndex;
-import edu.ucla.sspace.sim.KendallsTau;
-import edu.ucla.sspace.sim.KLDivergence;
-import edu.ucla.sspace.sim.LinSimilarity;
-import edu.ucla.sspace.sim.PearsonCorrelation;
-import edu.ucla.sspace.sim.SimilarityFunction;
-import edu.ucla.sspace.sim.SpearmanRankCorrelation;
-import edu.ucla.sspace.sim.TanimotoCoefficient;
+import edu.ucla.sspace.similarity.AverageCommonFeatureRank;
+import edu.ucla.sspace.similarity.CosineSimilarity;
+import edu.ucla.sspace.similarity.EuclideanSimilarity;
+import edu.ucla.sspace.similarity.JaccardIndex;
+import edu.ucla.sspace.similarity.KendallsTau;
+import edu.ucla.sspace.similarity.KLDivergence;
+import edu.ucla.sspace.similarity.LinSimilarity;
+import edu.ucla.sspace.similarity.PearsonCorrelation;
+import edu.ucla.sspace.similarity.SimilarityFunction;
+import edu.ucla.sspace.similarity.SpearmanRankCorrelation;
+import edu.ucla.sspace.similarity.TanimotoCoefficient;
 
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.IntegerEntry;
 
 import edu.ucla.sspace.vector.CompactSparseIntegerVector;
+import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseVector;

@@ -1,6 +1,6 @@
 package edu.ucla.sspace.matrix;
 
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;

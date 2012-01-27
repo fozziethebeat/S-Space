@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.common.Similarity;
 
@@ -34,7 +34,7 @@ import edu.ucla.sspace.vector.Vector;
  * values in the two vectors.  This method uses tau-b, which is suitable for
  * vectors with duplicate values.
  *
- * @author Keith Stevens
+ * @author David Jurgens
  */
 public class KendallsTau extends AbstractSymmetricSimilarityFunction {
 

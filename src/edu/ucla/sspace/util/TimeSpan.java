@@ -192,6 +192,24 @@ public class TimeSpan {
     }
 
     /**
+     * Creates a time span from the time between the two dates
+     *
+     * @throws IllegalArgumentException if {@code start} is not before {@code
+     *         end}
+     */
+    /* public TimeSpan(Date start, Date end) {
+        Calendar s = Calendar.getInstance();
+        s.setTime(start);
+        Calendar e = Calendar.getInstance();
+        e.setTime(start);
+        this.years = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.month = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.day = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.seconds = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.years = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+    } */
+
+    /**
      * Checks whether the index is already set in the bit flags and throws an
      * exception if so.
      *

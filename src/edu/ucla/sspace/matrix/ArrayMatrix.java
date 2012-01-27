@@ -21,6 +21,7 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.AbstractDoubleVector;
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 
@@ -281,7 +282,7 @@ public class ArrayMatrix implements Matrix {
      * A matrix-internal view of a row vector that exposes is contents as a
      * {@link DoubleVector} without duplicating the data
      */
-    class RowVector implements DoubleVector {
+    class RowVector extends AbstractDoubleVector {
 
         /**
          * The index into the {@linke ArrayMatrix#matrix} array where the data

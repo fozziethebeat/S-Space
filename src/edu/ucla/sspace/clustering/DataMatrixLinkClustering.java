@@ -5,8 +5,8 @@ import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.NearestNeighborAffinityMatrixCreator;
 
-import edu.ucla.sspace.sim.CosineSimilarity;
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.CosineSimilarity;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 import java.util.Properties;
 

@@ -28,7 +28,7 @@ import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.SortedMultiMap;
 import edu.ucla.sspace.util.WorkQueue;
 
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 import edu.ucla.sspace.vector.Vector;
 

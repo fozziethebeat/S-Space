@@ -1,13 +1,14 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
+
+import edu.ucla.sspace.common.Similarity;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.Vector;
-import edu.ucla.sspace.vector.VectorMath;
 
 
 /**
- * Returns the dot product of the two vectors.
+ * Returns the Average Common Feature Rank between any two {@link Vector}s. 
  *
  * </p>
  *
@@ -15,26 +16,27 @@ import edu.ucla.sspace.vector.VectorMath;
  *
  * @author Keith Stevens
  */
-public class DotProduct extends AbstractSymmetricSimilarityFunction {
+public class AverageCommonFeatureRank
+        extends AbstractSymmetricSimilarityFunction {
 
     /**
      * {@inheritDoc}
      */
     public double sim(DoubleVector v1, DoubleVector v2) {
-        return VectorMath.dotProduct(v1, v2);
+        return Similarity.averageCommonFeatureRank(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(IntegerVector v1, IntegerVector v2) {
-        return VectorMath.dotProduct(v1, v2);
+        return Similarity.averageCommonFeatureRank(v1, v2);
     }
 
     /**
      * {@inheritDoc}
      */
     public double sim(Vector v1, Vector v2) {
-        return VectorMath.dotProduct(v1, v2);
+        return Similarity.averageCommonFeatureRank(v1, v2);
     }
 }

@@ -36,7 +36,7 @@ public abstract class AbstractIntSet extends AbstractSet<Integer>
         throw new UnsupportedOperationException();
     }
 
-    public boolean addAll(IntSet ints) {
+    public boolean addAll(IntCollection ints) {
         IntIterator it = ints.iterator();
         boolean changed = false;
         while (it.hasNext())
@@ -45,7 +45,7 @@ public abstract class AbstractIntSet extends AbstractSet<Integer>
         return changed;
     }
 
-    public boolean containsAll(IntSet ints) {
+    public boolean containsAll(IntCollection ints) {
         IntIterator it = ints.iterator();
         while (it.hasNext())
             if (!contains(it.nextInt()))
@@ -59,7 +59,7 @@ public abstract class AbstractIntSet extends AbstractSet<Integer>
         throw new UnsupportedOperationException();
     }
     
-    public boolean removeAll(IntSet ints) {
+    public boolean removeAll(IntCollection ints) {
         IntIterator it = ints.iterator();
         boolean changed = false;
         while (it.hasNext())
@@ -72,7 +72,7 @@ public abstract class AbstractIntSet extends AbstractSet<Integer>
      * Retains only the elements in this set that are contained in the specified
      * {@code IntSet}.
      */
-    public boolean retainAll(IntSet ints) {
+    public boolean retainAll(IntCollection ints) {
         IntIterator it = iterator();
         boolean changed = false;
         while (it.hasNext()) {

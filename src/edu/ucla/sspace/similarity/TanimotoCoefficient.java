@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.common.Similarity;
 
@@ -33,7 +33,7 @@ import edu.ucla.sspace.vector.Vector;
  * href="http://en.wikipedia.org/wiki/Tanimoto_coefficient#Tanimoto_coefficient_.28extended_Jaccard_coefficient.29">Tanimoto
  * Coefficient</a> between any two {@link Vector}s.
  *
- * @author Keith Stevens
+ * @author David Jurgens
  */
 public class TanimotoCoefficient extends AbstractSymmetricSimilarityFunction {
 

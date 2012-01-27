@@ -1,4 +1,4 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.common.Similarity;
 
@@ -8,16 +8,31 @@ import edu.ucla.sspace.vector.Vector;
 
 
 /**
- * Returns the KL Divergence between any two {@link Vector}s. 
+ * Returns the KL Divergence between any two probability distributions
+ * represented as {@link Vector}s.
  *
  * </p>
  *
- * This metric is symmetric.
+ * This metric is <i>not</i> symmetric.  Use the Jensen-Shannon Divergence for a
+ * symmetric similarity measure between two probability distributions
  *
  * @author Keith Stevens
  */
-public class KLDivergence extends AbstractSymmetricSimilarityFunction {
+public class KLDivergence implements SimilarityFunction {
+    
 
+    /**
+     * Does nothing
+     */
+    public void setParams(double... arguments) { }
+
+    /**
+     * Returns {@code false} (is asymmetric).
+     */    
+    public boolean isSymmetric() {
+        return false;
+    }
+    
     /**
      * {@inheritDoc}
      */

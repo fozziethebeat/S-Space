@@ -21,35 +21,9 @@
 
 package edu.ucla.sspace.util;
 
-import edu.ucla.sspace.matrix.Matrices;
-import edu.ucla.sspace.matrix.Matrix;
-
-import edu.ucla.sspace.vector.DenseVector;
-import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vector;
-import edu.ucla.sspace.vector.Vectors;
-import edu.ucla.sspace.vector.VectorMath;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.Set;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static edu.ucla.sspace.util.LoggerUtil.verbose;
-import static edu.ucla.sspace.util.LoggerUtil.info;
 
 
 /**

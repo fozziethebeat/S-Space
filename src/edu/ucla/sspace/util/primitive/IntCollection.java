@@ -29,8 +29,8 @@ import java.util.Set;
 
 
 /**
- * A refinement of the {@link Set} interface for implementations that store
- * {@code int} values.  Implementations are expected to provide increased
+ * A refinement of the {@link Collection} interface for implementations that
+ * store {@code int} values.  Implementations are expected to provide increased
  * performance through primitive {@code int} methods and storage rather than
  * using {@link Integer}-based operations that the exiting Collections libraries
  * use.

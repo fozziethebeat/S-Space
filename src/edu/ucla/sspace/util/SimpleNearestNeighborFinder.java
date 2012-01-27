@@ -23,8 +23,8 @@ package edu.ucla.sspace.util;
 
 import edu.ucla.sspace.common.SemanticSpace;
 
-import edu.ucla.sspace.sim.CosineSimilarity;
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.CosineSimilarity;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;

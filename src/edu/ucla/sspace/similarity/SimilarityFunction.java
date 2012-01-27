@@ -1,4 +1,4 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;

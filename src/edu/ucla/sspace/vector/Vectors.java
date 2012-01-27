@@ -408,16 +408,39 @@ public class Vectors {
             DoubleVectorView view = (DoubleVectorView) source;
             return copyOf(view.getOriginalVector());
         } else {
-            // Create a copy of the given class using reflection.  This code
-            // assumes that the given implemenation of Vector has a constructor
-            // which accepts another Vector.
+            // Create a copy of the given class using reflection.  
+
+            // First check whether we can find a copy contructor that accepts an
+            // instance of Vector
+            Class<? extends DoubleVector> sourceClazz = source.getClass();
             try {
-                Class<? extends DoubleVector> sourceClazz = source.getClass();
                 Constructor<? extends DoubleVector> constructor =
                     sourceClazz.getConstructor(DoubleVector.class);
                 result = (DoubleVector) constructor.newInstance(source);
-            } catch (Exception e) {
-                throw new Error(e);
+            } 
+            // If there wasn't a copy constructor, see if there's one that
+            // accepts the length and then we'll copy the data over manually
+            catch (NoSuchMethodException nsme) {
+                try {
+                    Constructor<? extends DoubleVector> constructor =
+                        sourceClazz.getConstructor(Integer.TYPE);
+                    int length = source.length();
+                    result = (DoubleVector) constructor.newInstance(
+                        Integer.valueOf(length));
+                    // Copy the data over
+                    for (int i = 0; i < length; ++i) 
+                        result.set(i, source.get(i));                    
+                }
+                catch (Exception e) {
+                    throw new UnsupportedOperationException(
+                        "Could not find applicalble way to copy a vector " +
+                        "of type " + source.getClass(), e);
+                }
+            }
+            catch (Exception e) {
+                throw new UnsupportedOperationException(
+                    "Could not find applicalble way to copy a vector " +
+                    "of type " + source.getClass(), e);
             }
         }
         return result;

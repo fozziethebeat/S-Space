@@ -37,27 +37,27 @@ import java.util.Set;
  *
  * @author David Jurgens
  */
-public interface IntSet extends Set<Integer> {
+public interface IntSet extends Set<Integer>, IntCollection {
 
     boolean add(int i);
 
-    boolean addAll(IntSet ints);
+    boolean addAll(IntCollection ints);
 
     boolean contains(int i);
 
-    boolean containsAll(IntSet ints);
+    boolean containsAll(IntCollection ints);
 
     IntIterator iterator();
 
     boolean remove(int i);
 
-    boolean removeAll(IntSet ints);
+    boolean removeAll(IntCollection ints);
 
     /**
      * Retains only the elements in this set that are contained in the specified
-     * {@code IntSet}.
+     * {@code IntCollection}.
      */
-    boolean retainAll(IntSet ints);
+    boolean retainAll(IntCollection ints);
 
     int[] toPrimitiveArray();
 }

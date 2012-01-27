@@ -1,4 +1,4 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
@@ -20,7 +20,7 @@ public class PolynomialKernel extends AbstractSymmetricSimilarityFunction {
     private double degree;
 
     /**
-     * {@inheritDoc}
+     * Sets the first degree of the polynomial.
      */
     public void setParams(double... params) {
         this.degree = params[0];

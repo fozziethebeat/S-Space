@@ -1,4 +1,4 @@
-package edu.ucla.sspace.sim;
+package edu.ucla.sspace.similarity;
 
 
 /**
@@ -7,9 +7,15 @@ package edu.ucla.sspace.sim;
 public abstract class AbstractSymmetricSimilarityFunction
         implements SimilarityFunction {
 
+    /**
+     * Performs a no-op and sets no parameters
+     */
     public void setParams(double... arguments) {
     }
 
+    /**
+     * Returns {@code true}.
+     */
     public boolean isSymmetric() {
         return true;
     }

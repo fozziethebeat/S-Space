@@ -114,13 +114,13 @@ public class PartitioningNearestNeighborFinder
 
     /**
      * Creates a new {@code NearestNeighborFinder} for the {@link
-     * SemanticSpace}, using log<sub>10</log>(|words|) principle vectors to
+     * SemanticSpace}, using log<sub>e</log>(|words|) principle vectors to
      * efficiently search for neighbors.
      *
      * @param sspace a semantic space to search
      */
     public PartitioningNearestNeighborFinder(SemanticSpace sspace) {
-        this(sspace, (int)(Math.ceil(Math.log10(sspace.getWords().size()))));
+        this(sspace, (int)(Math.ceil(Math.log(sspace.getWords().size()))));
     }
 
     /**

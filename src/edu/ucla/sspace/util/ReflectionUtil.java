@@ -21,7 +21,6 @@
 
 package edu.ucla.sspace.util;
 
-import java.lang.reflect.Array;
 
 /**
  * A collection of miscellaneous, but useful, functions for working with
