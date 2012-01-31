@@ -18,6 +18,8 @@ import java.util.Properties;
 public class NormalizedSpectralClustering implements Clustering {
 
     public Assignments cluster(Matrix m, int k, Properties props) {
+        assert m.rows() == m.columns();
+
         // Assume that the matrix m is symmetric.  Now compute the degrees:
         double[] degrees = new double[m.rows()];
         for (int r = 0; r < m.rows(); ++r) {
@@ -57,8 +59,9 @@ public class NormalizedSpectralClustering implements Clustering {
         // Normalize each row by the squared root of the sum of squares.
         for (int r = 0; r < spectral.rows(); ++r) {
             double norm = Math.sqrt(rowNorms[r]);
-            for (int c = 0; c < spectral.columns(); ++c)
-                spectral.set(r,c, spectral.get(r,c) / norm);
+            if (norm != 0d)
+                for (int c = 0; c < spectral.columns(); ++c)
+                    spectral.set(r,c, spectral.get(r,c) / norm);
         }
 
         // Now cluster the data points with K-Means clustering and return the

@@ -189,7 +189,9 @@ public class DirectClustering implements Clustering {
                                       KMeansSeed seedType,
                                       CriterionFunction criterion) {
         int[] bestAssignment = null;
-        double bestScore = (criterion.isMaximize()) ? 0 : Double.MAX_VALUE;
+        double bestScore = (criterion.isMaximize()) 
+            ? -Double.MIN_VALUE
+            : Double.MAX_VALUE;
         for (int i = 0; i < numRepetitions; ++i) {
             clusterIteration(matrix, numClusters, seedType, criterion);
             if (criterion.isMaximize()) {

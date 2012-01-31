@@ -831,20 +831,25 @@ public class Similarity {
      * samples.
      */
     public static double jaccardIndex(double[] a, double[] b) {        
-        Set<Double> intersection = new HashSet<Double>();
-        Set<Double> union = new HashSet<Double>();
-        for (double d : a) {
-            intersection.add(d);
-            union.add(d);
+        BitSet c = new BitSet();
+        BitSet d = new BitSet();
+        BitSet union = new BitSet();
+        for (int i = 0; i < a.length; ++i) {
+            if (a[i] > 0) {
+                c.set(i);
+                union.set(i);
+            }
         }
-        Set<Double> tmp = new HashSet<Double>();
-        for (double d : b) {
-            tmp.add(d);
-            union.add(d);
+        for (int i = 0; i < b.length; ++i) {
+            if (b[i] > 0) {
+                d.set(i);
+                union.set(i);
+            }
         }
 
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
+        // get the intersection
+        c.and(d); 
+        return ((double)(c.cardinality())) / union.cardinality();
     }
 
     /**
@@ -862,13 +867,17 @@ public class Similarity {
         BitSet c = new BitSet();
         BitSet d = new BitSet();
         BitSet union = new BitSet();
-        for (int i : a) {
-            c.set(i);
-            union.set(i);
+        for (int i = 0; i < a.length; ++i) {
+            if (a[i] > 0) {
+                c.set(i);
+                union.set(i);
+            }
         }
-        for (int i : b) {
-            d.set(i);
-            union.set(i);
+        for (int i = 0; i < b.length; ++i) {
+            if (b[i] > 0) {
+                d.set(i);
+                union.set(i);
+            }
         }
         
         // get the intersection
@@ -878,59 +887,36 @@ public class Similarity {
 
     /**
      * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
-     * index</a> comparing the similarity both {@code DoubleVector}s when viewed
-     * as sets of samples.
-     */
-    public static double jaccardIndex(DoubleVector a, DoubleVector b) {
-        Set<Double> intersection = new HashSet<Double>();
-        Set<Double> union = new HashSet<Double>();
-        for (int i = 0; i < a.length(); ++i) {
-            double d = a.get(i);
-            intersection.add(d);
-            union.add(d);
-        }
-        Set<Double> tmp = new HashSet<Double>();
-        for (int i = 0; i < b.length(); ++i) {
-            double d = b.get(i);
-            tmp.add(d);
-            union.add(d);
-        }
-
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
-    }
-
-    /**
-     * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
-     * index</a> comparing the similarity both {@code IntegerVector}s when viewed
-     * as sets of samples.
-     */
-    public static double jaccardIndex(IntegerVector a, IntegerVector b) {
-        Set<Integer> intersection = new HashSet<Integer>();
-        Set<Integer> union = new HashSet<Integer>();
-        for (int i = 0; i < a.length(); ++i) {
-            int d = a.get(i);
-            intersection.add(d);
-            union.add(d);
-        }
-        Set<Integer> tmp = new HashSet<Integer>();
-        for (int i = 0; i < b.length(); ++i) {
-            int d = b.get(i);
-            tmp.add(d);
-            union.add(d);
-        }
-
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
-    }
-
-    /**
-     * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
      * index</a> comparing the similarity both {@code Vector}s when viewed as
      * sets of samples.
      */
     public static double jaccardIndex(Vector a, Vector b) {
-        return jaccardIndex(Vectors.asDouble(a), Vectors.asDouble(b));
+        BitSet intersection = new BitSet();
+        BitSet union = new BitSet();
+        addAttributesToSet(a, intersection, union);
+        BitSet tmp = new BitSet();
+        addAttributesToSet(b, tmp, union);
+        intersection.and(tmp);
+        return ((double)(intersection.cardinality())) / union.cardinality();
+    }
+
+    private static void addAttributesToSet(Vector a,
+                                           BitSet intersection,
+                                           BitSet union) {
+        if (a instanceof SparseVector) {
+            SparseVector sv = (SparseVector) a;
+            for (int i : sv.getNonZeroIndices()) {
+                intersection.set(i);
+                union.set(i);
+            }
+        } else {
+            for (int i = 0; i < a.length(); ++i) {
+                if (a.get(i) > 0d) {
+                    intersection.set(i);
+                    union.set(i);
+                }
+            }
+        }
     }
 
     /**
