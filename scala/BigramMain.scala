@@ -19,11 +19,12 @@ import java.util.HashSet
 
 
 val excludeSet = new HashSet[String]()
-Source.fromFile(args(1)).getLines.foreach { excludeSet.add(_) }
+Source.fromFile(args(0)).getLines.foreach { excludeSet.add(_) }
 val basis = new FilteredStringBasisMapping(excludeSet)
 val bigramSpace = new BigramSpace(basis, 8)
 val parser = new CoNLLDependencyExtractor()
-for (document <- new DependencyFileDocumentIterator(args(0))) {
+for (semevalFile <- args.slice(3, args.length);
+     document <- new DependencyFileDocumentIterator(semevalFile)) {
     document.reader.readLine
     val tree = parser.readNextTree(document.reader)
     val wordDoc = tree.map(_.word).mkString(" ")
@@ -34,5 +35,5 @@ bigramSpace.processSpace(System.getProperties)
 
 val matrix = Matrices.asMatrix(
     (for (w <- bigramSpace.getWords) yield bigramSpace.getVector(w)).toList)
-MatrixIO.writeMatrix(matrix, new File(args(2)), Format.SVDLIBC_SPARSE_TEXT)
-SerializableUtil.save(basis, args(3))
+MatrixIO.writeMatrix(matrix, new File(args(1)), Format.SVDLIBC_SPARSE_TEXT)
+SerializableUtil.save(basis, args(2))

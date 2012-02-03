@@ -911,7 +911,7 @@ public class Similarity {
             }
         } else {
             for (int i = 0; i < a.length(); ++i) {
-                if (a.get(i) > 0d) {
+                if (a.getValue(i).doubleValue() > 0d) {
                     intersection.set(i);
                     union.set(i);
                 }

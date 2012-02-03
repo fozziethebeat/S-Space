@@ -109,9 +109,16 @@ object ConsensusCluster {
 
     def printSingleCluster(numRows: Int, outputBase: String) {
         val rca = new PrintWriter("%s.rca01".format(outputBase))
+        val cca = new PrintWriter("%s.cca01".format(outputBase))
+
         rca.println("%d %d".format(numRows, 1))
+        cca.println("%d %d".format(numRows, 1))
+
         rca.println((0 until numRows).mkString(" "))
+        cca.println((0 until numRows).mkString(" "))
+
         rca.close
+        cca.close
 
         val cm = new PrintWriter("%s.cm01".format(outputBase))
         cm.print("%d %d\n".format(numRows, numRows))
