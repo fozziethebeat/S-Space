@@ -168,30 +168,30 @@ public class LinkClustering implements java.io.Serializable {
     public <E extends Edge> MultiMap<Integer,Integer> cluster(
                       final Graph<E> graph, Properties props) {
         
-        Indexer<E> edges = new ObjectIndexer<E>();
-        for (E e : graph.edges())
-            edges.index(e);
-        for (Map.Entry<E,Integer> e : edges)
-            System.out.println(e.getValue() + " " + e.getKey());
-        System.out.print(",");
-        for (int i = 0; i < graph.size(); ++i) {
-            E e = edges.lookup(i);
-            System.out.print(e.from() + "--" + e.to() + ",");
-        }
-        System.out.println();
-        for (int i = 0; i < graph.size(); ++i) {
-            E e = edges.lookup(i);
-            System.out.print(e.from() + "--" + e.to() + ",");
-            for (int j = 0; j < graph.size(); ++j) {
-                if (i == j)
-                    System.out.print("0");
-                else
-                    System.out.print(getConnectionSimilarity(graph, edges.lookup(i), edges.lookup(j)));
-                if (j + 1 < graph.size())
-                    System.out.print(",");
-            }
-            System.out.println();
-        }
+//         Indexer<E> edges = new ObjectIndexer<E>();
+//         for (E e : graph.edges())
+//             edges.index(e);
+//         for (Map.Entry<E,Integer> e : edges)
+//             System.out.println(e.getValue() + " " + e.getKey());
+//         System.out.print(",");
+//         for (int i = 0; i < graph.size(); ++i) {
+//             E e = edges.lookup(i);
+//             System.out.print(e.from() + "--" + e.to() + ",");
+//         }
+//         System.out.println();
+//         for (int i = 0; i < graph.size(); ++i) {
+//             E e = edges.lookup(i);
+//             System.out.print(e.from() + "--" + e.to() + ",");
+//             for (int j = 0; j < graph.size(); ++j) {
+//                 if (i == j)
+//                     System.out.print("0");
+//                 else
+//                     System.out.print(getConnectionSimilarity(graph, edges.lookup(i), edges.lookup(j)));
+//                 if (j + 1 < graph.size())
+//                     System.out.print(",");
+//             }
+//             System.out.println();
+//         }
 
 
         return singleLink(graph);

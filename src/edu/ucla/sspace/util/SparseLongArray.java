@@ -199,6 +199,62 @@ public class SparseLongArray
     }
 
     /**
+     * Divides the specified value to the index by the provided value and stores
+     * the result at the index (just as {@code array[index] /= value})
+     *
+     * @param index the position in the array
+     * @param value the value by which the value at the index will be divided
+     *
+     * @return the new value stored at the index
+     */
+    public long dividePrimitive(int index, long value) {
+        if (index < 0 || index >= maxLength) 
+            throw new ArrayIndexOutOfBoundsException(
+                    "invalid index: " + index);
+        
+        int pos = Arrays.binarySearch(indices, index);
+        
+        // The divide operation is dividing a non-existent value in the
+        // array, which is always 0, so the corresponding result is 0.
+        // Therefore, we don't need to make room.
+        if (pos < 0) 
+            return 0;
+        else {
+            long newValue = values[pos] / value;
+
+            // The new value is zero, so remove its position and shift
+            // everything over
+            if (newValue == 0) {
+                int newLength = indices.length - 1;
+                int[] newIndices = new int[newLength];
+                long[] newValues = new long[newLength];
+                for (int i = 0, j = 0; i < indices.length; ++i) {
+                    if (i != pos) {
+                        newIndices[j] = indices[i];
+                        newValues[j] = values[i];            
+                        j++;
+                    }
+                }
+                // swap the arrays
+                indices = newIndices;
+                values = newValues;
+            }
+            // Otherwise, the new value is still non-zero, so update it in the
+            // array
+            else
+                values[pos] = newValue;
+            return newValue;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Long divide(int index, Long value) {
+        return dividePrimitive(index, value.longValue());
+    }
+
+    /**
      * {@inheritDoc}
      */ 
     public Long get(int index) {
@@ -241,6 +297,62 @@ public class SparseLongArray
      */
     public int length() {
 	return maxLength;
+    }
+
+    /**
+     * Multiplies the value to the index by the provided value and saves the
+     * result at the index (just as {@code array[index] *= value})
+     *
+     * @param index the position in the array
+     * @param value the value that will be multiplied in value at the index
+     *
+     * @return the new value stored at the index
+     */
+    public long multiplyPrimitive(int index, long value) {
+        if (index < 0 || index >= maxLength) 
+            throw new ArrayIndexOutOfBoundsException(
+                    "invalid index: " + index);
+        
+        int pos = Arrays.binarySearch(indices, index);
+        
+        // The divide operation is dividing a non-existent value in the
+        // array, which is always 0, so the corresponding result is 0.
+        // Therefore, we don't need to make room.
+        if (pos < 0) 
+            return 0;
+        else {
+            long newValue = values[pos] / value;
+
+            // The new value is zero, so remove its position and shift
+            // everything over
+            if (newValue == 0) {
+                int newLength = indices.length - 1;
+                int[] newIndices = new int[newLength];
+                long[] newValues = new long[newLength];
+                for (int i = 0, j = 0; i < indices.length; ++i) {
+                    if (i != pos) {
+                        newIndices[j] = indices[i];
+                        newValues[j] = values[i];            
+                        j++;
+                    }
+                }
+                // swap the arrays
+                indices = newIndices;
+                values = newValues;
+            }
+            // Otherwise, the new value is still non-zero, so update it in the
+            // array
+            else
+                values[pos] = newValue;
+            return newValue;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Long multiply(int index, Long value) {
+        return multiplyPrimitive(index, value.longValue());
     }
 
     /**

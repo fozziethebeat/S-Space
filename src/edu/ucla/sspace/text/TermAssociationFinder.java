@@ -53,6 +53,10 @@ public class TermAssociationFinder
     private SignificanceTest test;
 
     private final Set<String> leftTerms;
+
+    /**
+     * The set of terms that may appear with of the focus term
+     */
     private final Set<String> rightTerms;
 
     /**

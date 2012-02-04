@@ -37,8 +37,8 @@ import java.util.Iterator;
  *
  * @author David Jurgens
  */
-public class SparseHashVector<T extends Number>
-    implements SparseVector<T>, java.io.Serializable {
+public class SparseHashVector<T extends Number> extends AbstractVector<T>
+        implements SparseVector<T>, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -75,6 +75,35 @@ public class SparseHashVector<T extends Number>
         magnitude = -1;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public boolean equals(Object o) {
+        if (o instanceof DoubleVector) {
+            DoubleVector v = (DoubleVector)o;
+            int len = v.length();
+            if (len != length())
+                return false;
+            for (int i = 0; i < len; ++i) {
+                if (v.get(i) != vector.get(i))
+                    return false;
+            }
+            return true;
+        }
+        else if (o instanceof Vector) {
+            DoubleVector v = Vectors.asDouble((Vector)o);
+            int len = v.length();
+            if (len != length())
+                return false;
+            for (int i = 0; i < len; ++i) {
+                if (v.get(i) != vector.get(i))
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     /** 
      * {@inheritDoc}
      */
@@ -102,9 +131,7 @@ public class SparseHashVector<T extends Number>
      */
     public double magnitude() {
         // Check whether the current magnitude is valid and if not, recompute it
-        System.out.println(magnitude);
         if (magnitude < 0) {
-            System.out.println("mag");
             magnitude = 0;
             for (int nz : getNonZeroIndices()) {
                 double d = vector.get(nz).doubleValue();
@@ -122,5 +149,4 @@ public class SparseHashVector<T extends Number>
         vector.set(index, (value.doubleValue() == 0d) ? null : value);
         magnitude = -1;
     }
-
 }

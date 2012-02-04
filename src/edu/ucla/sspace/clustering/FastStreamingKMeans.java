@@ -58,8 +58,8 @@ import static edu.ucla.sspace.util.LoggerUtil.info;
 
 
 /**
- * An implementation of a simple, highly accurate streaming K Means algorithm.
- * It is based on a the following paper:
+ * An implementation of Shindler's streaming K Means algorithm.  It is based on
+ * a the following paper:
  *
  * <ul> <li> Michael Shindler, Alex Wong, and Adam Meyerson. Fast and Accurate
  *   k-means for Large Datasets. In <i>NIPS</i>, 2011..  Available online <a
@@ -69,13 +69,8 @@ import static edu.ucla.sspace.util.LoggerUtil.info;
  * </p>
  *
  * A key feature of this algorithm is that only one pass is made through a data
- * set.  It is intended for applications where the total number of data points
- * is known, but can be used if a rough estimate of the data points is known.
- * This algorithm periodically reformulates the centroids by performing an
- * batch form of K Means over the centroids, and potentially a sample of data
- * points assigned to each centroid, clearing out all centroids, and then
- * treating the old centroids as new heavily weighted data points.  This process
- * happens automatically when one of several thresholds are passed.
+ * set and is intended for applications where the total number of data points is
+ * known, but the data set cannot be held in memory at any given time.
  *
  * @author David Jurgens
  */
@@ -116,7 +111,16 @@ public class FastStreamingKMeans {
      * The default value of beta that appeared to work best according ot Michael
      * Shindler
      */
-    public static final double DEFAULT_BETA = 4;
+    public static final double DEFAULT_BETA = 74;
+
+    /**
+     * The upper limit on the number of batch k-means iterations performed when
+     * coverting from kappa facilities to <i>k</i> facilities.  This upper bound
+     * is provided as a guard against potential edge cases where the batch
+     * k-means gets stuck oscilating between a few potential solutions without
+     * converging.
+     */
+    private static final int MAX_BATCH_KMEANS_ITERS = 1000;
 
     /**
      * The default similarity function is in the inverse of the square of the
@@ -225,6 +229,29 @@ public class FastStreamingKMeans {
         return cluster(matrix, numClusters, kappa, beta, simFunc);
     }
 
+    /**
+     * Clusters the rows of the provided matrix into the specified number of
+     * clusters in a single pass using the parameters to guide how clusters are
+     * formed.  Note that due to the streaming nature of the algorithm, fewer
+     * than {@code numClusters} may be returned.
+     *
+     * @param matrix the matrix whose rows are to be clustered
+     * @param numClusters the number of clusters to be returned.  Note that
+     *        under some circumstances, the algorithm may return fewer clusters
+     *        than this amount.
+     * @param kappa the maximum number of facilities (clusters) to keep in
+     *        memory at any given point.  At most this should be {@code
+     *        numClusters * Math.log(matrix.rows())}
+     * @param beta the initial cost for creating a new facility.  The default
+     *        value of {@value #DEFAULT_BETA_VALUE} is recommended for this
+     *        parameter, unless specific customization is required.
+     * @param simFunc the similarity function used to compare rows of the
+     *        matrix.  In the original paper, this is the inverse of square of
+     *        the Euclidean distance.
+     *
+     * @return an assignment from each row of the matrix to a cluster
+     *         identifier.
+     */
     public Assignments cluster(Matrix matrix, int numClusters, 
                                int kappa, double beta,
                                SimilarityFunction simFunc) {
@@ -236,18 +263,19 @@ public class FastStreamingKMeans {
         double f = 1d / (numClusters * (1 + Math.log(rows)));
         
         // This list contains at most kappa facilities.
-        List<Facility> facilities = new ArrayList<Facility>();
+        List<CandidateCluster> facilities = 
+            new ArrayList<CandidateCluster>(kappa);
 
         for (int r = 0; r < rows; /* no auto-increment */) {
             
             for ( ; facilities.size() <= kappa && r < rows; ++r) {
                 DoubleVector x = matrix.getRowVector(r);
                 
-                Facility closest = null;
+                CandidateCluster closest = null;
                 // Delta is ultimately assigned the lowest inverse-similarity
                 // (distance) to any of the current facilities' center of mass
                 double delta = Double.MAX_VALUE;
-                for (Facility y : facilities) {
+                for (CandidateCluster y : facilities) {
                     double similarity = 
                         simFunc.sim(x, y.centerOfMass());
                     double invSim = invertSim(similarity);
@@ -263,7 +291,7 @@ public class FastStreamingKMeans {
                 // Or if we surpass the probability of a new event occurring
                 // (line 6)
                 if (closest == null || Math.random() < delta / f) {
-                    Facility fac = new Facility();
+                    CandidateCluster fac = new CandidateCluster();
                     fac.add(r, x);
                     facilities.add(fac);
                 }
@@ -284,19 +312,19 @@ public class FastStreamingKMeans {
                     f *= beta;
 
                     int curNumFacilities = facilities.size();
-                    List<Facility> consolidated = 
-                        new ArrayList<Facility>(kappa);
+                    List<CandidateCluster> consolidated = 
+                        new ArrayList<CandidateCluster>(kappa);
                     consolidated.add(facilities.get(0));
                     for (int j = 1; j < curNumFacilities; ++j) {
-                        Facility x = facilities.get(j);
-                        int pointsAssigned = x.indices.size();
+                        CandidateCluster x = facilities.get(j);
+                        int pointsAssigned = x.size();
                         // Compute the similarity of this facility to all other
                         // consolidated facilities.  Delta represents the lowest
                         // inverse-similarity (distance) to another facility.
                         // See line 17 of the algorithm.
                         double delta = Double.MAX_VALUE;                        
-                        Facility closest = null;
-                        for (Facility y : consolidated) {
+                        CandidateCluster closest = null;
+                        for (CandidateCluster y : consolidated) {
                             double similarity = 
                                 simFunc.sim(x.centerOfMass(), y.centerOfMass());
                             double invSim = invertSim(similarity);
@@ -311,24 +339,17 @@ public class FastStreamingKMeans {
                         // If a random check is less than it, then we nominate
                         // this facilty to continue.
                         if (Math.random() < (pointsAssigned * delta) / f) {
-                                consolidated.add(x);
+                            consolidated.add(x);
                         }
                         // Otherwise, we consolidate the points in this
                         // community to the closest facility
                         else {
                             assert closest != null : "no closest facility";
-                            // Manually add the points in the consolidated
-                            // facility to those in closest one, as well as sum
-                            // its mass vector
-                            closest.indices.addAll(x.indices);
-                            VectorMath.add(closest.sumVector, x.sumVector);
-                            // Make sure to null out the centroid so that future
-                            // calls to centroid() get the updated version
-                            closest.centroid = null;
+                            closest.merge(x);
                         }
                     }
-                    info(LOGGER, "Consolidated %d facilities down to %d",
-                                facilities.size(), consolidated.size());
+                    verbose(LOGGER, "Consolidated %d facilities down to %d",
+                            facilities.size(), consolidated.size());
                     facilities = consolidated;
                 }
             }
@@ -338,19 +359,44 @@ public class FastStreamingKMeans {
                 // Edge case for when we already have fewer facilities than we
                 // need
                 if (facilities.size() <= numClusters) {
-                    info(LOGGER, "Had fewer facilities, %d, than the " +
-                                "requested number of clusters %d",
-                                facilities.size(), numClusters);
-                    throw new AssertionError();
+                    verbose(LOGGER, "Had fewer facilities, %d, than the " +
+                            "requested number of clusters %d",
+                            facilities.size(), numClusters);
+
+                    // There's no point in reducing the number of facilities
+                    // further since we're under the desired amount, nor can we
+                    // go back and increase the number of facilities since all
+                    // the data has been seen at this point.  Therefore, just
+                    // loop through the candidates and report their assignemnts.
+                    Assignment[] assignments = new Assignment[rows];
+                    int numFacilities = facilities.size();
+                    for (int j = 0; j < numFacilities; ++j) {
+                        CandidateCluster fac = facilities.get(j);
+                        veryVerbose(LOGGER, "Facility %d had a center of mass at %s",
+                                    j, fac.centerOfMass());
+                        
+                        int clusterId = j;
+                        IntIterator iter = fac.indices().iterator();
+                        while (iter.hasNext()) {
+                            int row = iter.nextInt();
+                            assignments[row] = 
+                                new HardAssignment(clusterId);
+                        }
+                    }
+                    return new Assignments(numClusters, assignments, matrix);                    
                 }
                 else {
+                    verbose(LOGGER, "Had more than %d facilities, " +
+                            "consolidating to %d", facilities.size(), 
+                            numClusters);
+                    
                     List<DoubleVector> facilityCentroids = 
                         new ArrayList<DoubleVector>(facilities.size());
                     int[] weights = new int[facilities.size()];
                     int i = 0;
-                    for (Facility fac : facilities) {
+                    for (CandidateCluster fac : facilities) {
                         facilityCentroids.add(fac.centerOfMass());
-                        weights[i++] = fac.indices.size();
+                        weights[i++] = fac.size();
                     }
                     // Wrap the facilities centroids in a matrix for convenience
                     Matrix m = Matrices.asMatrix(facilityCentroids);
@@ -361,7 +407,9 @@ public class FastStreamingKMeans {
                     // Euclidean distance
                     GeneralizedOrssSeed orss = new GeneralizedOrssSeed(simFunc);
                     DoubleVector[] centroids = orss.chooseSeeds(numClusters, m);
-
+                    assert nonNullCentroids(centroids) 
+                        : "ORSS seed returned too few centroids";
+                    
                     // This records the assignments of the kappa facilities to
                     // the k centers.  Initially, everyhting is assigned to the
                     // same center and iterations repeat until convergence.
@@ -371,6 +419,7 @@ public class FastStreamingKMeans {
                     // the facility centroids until no facilities change their
                     // memebership.
                     int numChanged = 0;
+                    int kmeansIters = 0;
                     do {
                         numChanged = 0;
                         // Recompute the new centroids each time
@@ -382,12 +431,15 @@ public class FastStreamingKMeans {
 
                         double similaritySum = 0;
                         
-                        // For each Facility find the most similar centroid
+                        // For each CandidateCluster find the most similar centroid
                         i = 0;
-                        for (Facility fac : facilities) {
+                        for (CandidateCluster fac : facilities) {
                             int mostSim = -1;
                             double highestSim = -1;
                             for (int j = 0; j < centroids.length; ++j) {
+//                                  System.out.printf("centroids[%d]: %s%n fac.centroid(): %s%n",
+//                                                    j, centroids[j], 
+//                                                    fac.centerOfMass());
                                 double sim = simFunc.sim(centroids[j], 
                                                          fac.centerOfMass());
                                 if (sim > highestSim) {
@@ -400,14 +452,15 @@ public class FastStreamingKMeans {
                             // of mass for the next round with the weighted
                             // vector
                             VectorMath.add(updatedCentroids[mostSim], 
-                                           fac.sumVector);
-                            updatedCentroidSizes[mostSim] += fac.indices.size();
+                                           fac.sum());
+                            updatedCentroidSizes[mostSim] += fac.size();
                             int curAssignment = facilityAssignments[i];
                             facilityAssignments[i] = mostSim;
                             similaritySum += highestSim;
                             if (curAssignment != mostSim) { 
-                                info(LOGGER, "Facility %d changed its centroid from %d to %d",
-                                     i, curAssignment, mostSim);
+                                veryVerbose(LOGGER, "Facility %d changed its " +
+                                            "centroid from %d to %d",
+                                            i, curAssignment, mostSim);
                                 numChanged++;
                             }
                             i++;
@@ -425,21 +478,27 @@ public class FastStreamingKMeans {
                             // Update this centroid for the next round
                             centroids[j] = v;                            
                         }
-                        
-                        info(LOGGER, "%d centroids swapped their facility",
-                             numChanged);
-                    } while (numChanged > 0);
+
+                        veryVerbose(LOGGER, "%d centroids swapped their facility",
+                                    numChanged);
+                    } while (numChanged > 0 && 
+                                 ++kmeansIters < MAX_BATCH_KMEANS_ITERS);
 
                     // Use the final assignments to create assignments for each
                     // of the input data points
                     Assignment[] assignments = new Assignment[rows];
                     for (int j = 0; j < facilityAssignments.length; ++j) {
-                        Facility fac = facilities.get(j);
+                        CandidateCluster fac = facilities.get(j);
+                        veryVerbose(LOGGER, "Facility %d had a center of mass at %s",
+                                    j, fac.centerOfMass());
+                        
                         int clusterId = facilityAssignments[j];
-                        IntIterator iter = fac.indices.iterator();
-                        while (iter.hasNext()) 
-                            assignments[iter.nextInt()] = 
+                        IntIterator iter = fac.indices().iterator();
+                        while (iter.hasNext()) {
+                            int row = iter.nextInt();
+                            assignments[row] = 
                                 new HardAssignment(clusterId);
+                        }
                     }
                     return new Assignments(numClusters, assignments, matrix);
                 }
@@ -449,91 +508,19 @@ public class FastStreamingKMeans {
             "Processed all data points without making assignment");
     }
 
+    static boolean nonNullCentroids(DoubleVector[] centroids) {
+        for (int i = 0; i < centroids.length; ++i)
+            if (centroids[i] == null)
+                return false;
+        return true;
+    }
+    
     /**
      * Inverts the similarity, effectively turning it into a distance
      */
     static double invertSim(double sim) {
         assert sim >= 0 : "negative similarity invalidates distance conversion";
         return (sim == 0) ? 0 : 1d / sim;
-    }
-
-    /**
-     * An interface for representing a facility to which data points have been
-     * assigned
-     */
-    private class Facility {    
-
-        private final IntSet indices;
-        private DoubleVector sumVector;
-        private DoubleVector centroid;
-
-        public Facility() {
-            indices = new TroveIntSet();
-            centroid = null;
-        }
-
-        /**
-         * Returns the average data point assigned to this facility
-         */
-        public DoubleVector centerOfMass() {
-            // Handle lazy initialization
-            if (centroid == null) {
-                if (indices.size() == 1)
-                    centroid = sumVector;
-                else {
-                    // Update the centroid by normalizing by the number of
-                    // elements
-                    int length = sumVector.length();
-                    double d = 1d / indices.size();
-                    if (sumVector instanceof SparseVector) {
-                        centroid = new SparseHashDoubleVector(length);
-                        SparseVector sv = (SparseVector)sumVector;
-                        for (int nz : sv.getNonZeroIndices())
-                            centroid.set(nz, sumVector.get(nz) * d);
-                    }
-                    else {
-                        centroid = new DenseVector(length);
-                        for (int i = 0; i < length; ++i) 
-                            centroid.set(i, sumVector.get(i) * d);                    
-                    }
-                }
-            }
-            return centroid;
-        }
-
-        /**
-         * Adds the data point with the specified index to the facility
-         */
-        public void add(int index, DoubleVector v) {
-            boolean added = indices.add(index);
-            assert added : "Adding duplicate indices to candidate facility";
-            if (sumVector == null) {
-                sumVector = Vectors.copyOf(v);
-            }
-            else {
-                VectorMath.add(sumVector, v);
-                centroid = null;
-            }           
-        }
-
-        public int hashCode() {
-            return indices.hashCode();
-        }
-
-        public boolean equals(Object o) {
-            if (o instanceof Facility) {
-                Facility f = (Facility)o;
-                return indices.equals(f.indices);
-            }
-            return false;
-        }
-
-        /**
-         * Returns the set of indices for vectors in this cluster
-         */
-        public IntSet indices() {
-            return indices;
-        }
     }
 
 }

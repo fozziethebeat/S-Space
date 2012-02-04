@@ -111,7 +111,7 @@ public class Streemer implements Clustering {
             CandidateCluster mostSim = null;
             double highestSim = -1d;
             for (CandidateCluster cc : candidateClusters) {
-                double sim = simFunc.sim(cc.centroid(), row);
+                double sim = simFunc.sim(cc.centerOfMass(), row);
                 if (sim > highestSim) {
                     mostSim = cc;
                     highestSim = sim;
@@ -135,14 +135,14 @@ public class Streemer implements Clustering {
             new ArrayList<CandidateCluster>();
 
         for (CandidateCluster cc : candidateClusters) {
-            if (cc.indices.size() < minClusterSize) 
+            if (cc.size() < minClusterSize) 
                 continue;
             
             double maxSim = -1;
             for (CandidateCluster cc2 : candidateClusters) {
                 if (cc == cc2)
                     continue;
-                double sim = simFunc.sim(cc.centroid(), cc2.centroid());
+                double sim = simFunc.sim(cc.centerOfMass(), cc2.centerOfMass());
                 if (sim > maxSim)
                     maxSim = sim;
             }
@@ -156,17 +156,17 @@ public class Streemer implements Clustering {
                 for (CandidateCluster cc2 : candidateClusters) {
                     if (cc == cc2)
                         continue;
-                    double sim = simFunc.sim(cc.centroid(), cc2.centroid());
+                    double sim = simFunc.sim(cc.centerOfMass(), cc2.centerOfMass());
                     if (sim < similarityThreshold) 
                         continue;
 
-                    IntIterator iter = cc2.indices.iterator();
+                    IntIterator iter = cc2.indices().iterator();
                     double similaritySum = 0;
                     while (iter.hasNext()) {
                         DoubleVector v = matrix.getRowVector(iter.next());
-                        similaritySum += simFunc.sim(cc2.centroid(), v);
+                        similaritySum += simFunc.sim(cc2.centerOfMass(), v);
                     }
-                    double avgSim = similaritySum / cc2.indices.size();
+                    double avgSim = similaritySum / cc2.size();
                     
                     if (avgSim > maxCohesiveness) {
                         maxCohesiveness = avgSim;
@@ -198,7 +198,7 @@ public class Streemer implements Clustering {
             int mostSim = -1;
             for (int j = 0; j < foundClusters; ++j) {
                 CandidateCluster cc = finalClusters.get(j);
-                double sim = simFunc.sim(v, cc.centroid());
+                double sim = simFunc.sim(v, cc.centerOfMass());
                 if (sim > highestSim) {
                     mostSim = j;
                     highestSim = sim;
@@ -228,75 +228,4 @@ public class Streemer implements Clustering {
 
         return new Assignments(foundClusters + 1, assignments, matrix);        
     }
-
-    /**
-     * An interface for representing a simple cluster
-     */
-    private class CandidateCluster {    
-
-        private final IntSet indices;
-        private DoubleVector sumVector;
-        private DoubleVector centroid;
-
-        public CandidateCluster() {
-            indices = new TroveIntSet();
-            centroid = null;
-        }
-
-        /**
-         * Adds the vector with the specified index to the cluster
-         */
-        public void add(int index, DoubleVector v) {
-            boolean added = indices.add(index);
-            assert added : "Adding duplicate indices to candidate clusters";
-            if (sumVector == null) {
-                sumVector = Vectors.copyOf(v);
-                centroid = sumVector; // no need to normalize
-            }
-            else {
-                VectorMath.add(sumVector, v);
-                // Update the centroid by normalizing by the number of elements
-                int length = sumVector.length();
-                double d = 1d / indices.size();
-                if (sumVector instanceof SparseVector) {
-                    centroid = new SparseHashDoubleVector(length);
-                    SparseVector sv = (SparseVector)sumVector;
-                    for (int nz : sv.getNonZeroIndices())
-                        centroid.set(nz, sumVector.get(nz) * d);
-                }
-                else {
-                    centroid = new DenseVector(length);
-                    for (int i = 0; i < length; ++i) 
-                        centroid.set(i, sumVector.get(i) * d);                    
-                }
-            }           
-        }
-
-        public int hashCode() {
-            return indices.hashCode();
-        }
-
-        public boolean equals(Object o) {
-            if (o instanceof CandidateCluster) {
-                CandidateCluster cc = (CandidateCluster)o;
-                return indices.equals(cc.indices);
-            }
-            return false;
-        }
-
-        /**
-         * Returns the set of indices for vectors in this cluster
-         */
-        public IntSet indices() {
-            return indices;
-        }
-
-        /**
-         * Returns the average vector in this cluster
-         */
-        public DoubleVector centroid() {
-            return centroid;
-        }
-    }
-    
 }

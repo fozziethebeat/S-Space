@@ -31,7 +31,8 @@ import java.util.Arrays;
  * @author Keith Stevens
  * @author David Jurgens
  */
-public class DenseIntVector implements IntegerVector, Serializable {
+public class DenseIntVector extends AbstractIntegerVector 
+        implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -91,13 +92,6 @@ public class DenseIntVector implements IntegerVector, Serializable {
     /**
      * {@inheritDoc}
      */
-    public Integer getValue(int index) {
-        return get(index);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public int length() {
         return vector.length;
     }
@@ -117,19 +111,5 @@ public class DenseIntVector implements IntegerVector, Serializable {
      */
     public void set(int index, int value) {
         vector[index] = value;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void set(int index, Number value) {
-        set(index, value.intValue());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int[] toArray() {
-        return Arrays.copyOf(vector, vector.length);
     }
 }

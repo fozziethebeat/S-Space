@@ -31,14 +31,18 @@ import edu.ucla.sspace.vector.Vectors;
  * An abstract {@link Matrix} class that provides common implementations for
  * generic matrix operations.  This class assumes that all subclasses are
  * row-based and will therefore call {@link #getRowVector(int) getRowVector} for
- * all operations.  At a minimum subclasses must define the following four
- * operations:
+ * all operations.  At a minimum subclasses must define the following three
+ * operations to be an immutable matrix:
  *
  * <ul>
  *  <li> {@link #getRowVector(int) getRowVector}
- *  <li> {@link #set(int, int, double) set}
  *  <li> {@link #rows()}
  *  <li> {@link #columns()}
+ * </ul>
+ *
+ * To support modification, implementations need only define
+ * <ul>
+ *  <li> {@link #set(int, int, double) set}
  * </ul>
  */
 public abstract class AbstractMatrix implements Matrix {
@@ -118,9 +122,12 @@ public abstract class AbstractMatrix implements Matrix {
     public abstract int rows();
 
     /**
-     * {@inheritDoc}
+     * Throws an {@link UnsupportedOperationException} if called (matrix is
+     * unmodifiable).
      */
-    public abstract void set(int row, int col, double val);
+    public void set(int row, int col, double val) {
+        throw new UnsupportedOperationException("Matrix is immutable");
+    }
 
     /**
      * {@inheritDoc}

@@ -300,7 +300,10 @@ public class GeneralizedOrssSeed implements KMeansSeed {
 
 	for (int i = 0; i < probs.length; i++) {
             curProbSum += probs[i];
-            assert curProbSum <= 1 : "sum of probabilities > 1";
+            // NOTE: the assert is slightly larger than 1 to allow for marginal
+            // accumulation due to double round-off errors
+            assert curProbSum <= 1.0001
+                : "sum of probabilities > 1: " + curProbSum;
             if (curProbSum >= cutoff)
                 return i;
         }
@@ -334,8 +337,10 @@ public class GeneralizedOrssSeed implements KMeansSeed {
 	for (int i = 0; i < probs.length; i++) {
             // Points that are currently selected do not have any probability
             // mass so that they will not be selected again in the future
-            if (selected.contains(i))
+            if (selected.contains(i)) {
+                probs[i] = 0;
                 continue;
+            }
             // The probability of a point is a product of its maximal inverse
             // similarity to any existing centroid and the relative weight.
             probs[i] = inverseSimilarities[i] * weights[i];

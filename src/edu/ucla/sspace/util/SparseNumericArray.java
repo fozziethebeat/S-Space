@@ -37,11 +37,38 @@ package edu.ucla.sspace.util;
 public interface SparseNumericArray<T extends Number> extends SparseArray<T> {
 
     /**
-     * Adds the specified value to the index.
+     * Adds the specified value to the value at the index and stores the result
+     * (just as {@code array[index] += delta}).  Note that this can be used with
+     * negative {@code delta} values to achieve equivalent {@code -=}
+     * functionality.
      *
      * @param index the position in the array
      * @param delta the change in value at the index
+     *
+     * @return the new value stored at the index
      */
     T add(int index, T delta);
+
+    /**
+     * Multiplies the value to the index by the provided value and saves the
+     * result at the index (just as {@code array[index] *= value})
+     *
+     * @param index the position in the array
+     * @param delta the change in value at the index
+     *
+     * @return the new value stored at the index
+     */
+    T multiply(int index, T value);
+
+    /**
+     * Divides the specified value to the index by the provided value and stores
+     * the result at the index (just as {@code array[index] /= value})
+     *
+     * @param index the position in the array
+     * @param delta the change in value at the index
+     *
+     * @return the new value stored at the index
+     */
+    T divide(int index, T value);
 
 }

@@ -24,20 +24,20 @@ package edu.ucla.sspace.vector;
 
 /**
  * An abstract base class that provides default implementations of common
- * methods in {@link DoubleVector}.  {@link DoubleVector} implementations need
+ * methods in {@link IntegerVector}.  {@link IntegerVector} implementations need
  * only implement {@link #length()} and {@link #get(int)} functionality to be
  * read-only vectors.
  */
-public abstract class AbstractDoubleVector extends AbstractVector<Double> 
-        implements DoubleVector {
+public abstract class AbstractIntegerVector extends AbstractVector<Integer> 
+        implements IntegerVector {
 
-    public AbstractDoubleVector() { }
+    public AbstractIntegerVector() { }
 
     /**
      * Throws an {@link UnsupportedOperationException} if called (vector is
      * unmodifiable).
      */
-    public double add(int index, double delta) {
+    public int add(int index, int delta) {
         throw new UnsupportedOperationException("set is not supported");
     }
 
@@ -45,8 +45,8 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
      * {@inheritDoc}
      */
     public boolean equals(Object o) {
-        if (o instanceof DoubleVector) {
-            DoubleVector v = (DoubleVector)o;
+        if (o instanceof IntegerVector) {
+            IntegerVector v = (IntegerVector)o;
             int len = v.length();
             if (len != length())
                 return false;
@@ -63,7 +63,7 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
     /**
      * {@inheritDoc}
      */
-    public Double getValue(int index) {
+    public Integer getValue(int index) {
         return get(index);
     }
 
@@ -73,11 +73,11 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
     public int hashCode() {
         int len = length();
         int hash = 0;
-        double sum = 0;
+        int sum = 0;
         for (int i = 0; i < len; ++i) {
             sum += get(i);
         }
-        return (int)sum;
+        return sum;
     }
 
     /**
@@ -97,7 +97,7 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
      * Throws an {@link UnsupportedOperationException} if called (vector is
      * unmodifiable).
      */
-    public void set(int index, double value) {
+    public void set(int index, int value) {
         throw new UnsupportedOperationException("set is not supported");
     }
 
@@ -105,14 +105,14 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
      * {@inheritDoc}
      */
     public void set(int index, Number value) {
-        set(index, value.doubleValue());
+        set(index, value.intValue());
     }
 
     /**
      * {@inheritDoc}
      */
-    public double[] toArray() {
-        double[] arr = new double[length()];
+    public int[] toArray() {
+        int[] arr = new int[length()];
         for (int i = 0; i < arr.length; ++i)
             arr[i] = get(i);
         return arr; 
