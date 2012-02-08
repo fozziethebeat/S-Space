@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.ucla.sspace</groupId>
-  <artifactId>sspace</artifactId>
+  <artifactId>sspace-wordsi</artifactId>
   <packaging>jar</packaging>
   <name>S-Space Package</name>
-  <version>1.6</version>
+  <version>2.0</version>
   <description>The S-Space Package is a collection of algorithms for building
     Semantic Spaces as well as a highly-scalable library for designing new
     distributional semantics algorithms. Distributional algorithms process text
