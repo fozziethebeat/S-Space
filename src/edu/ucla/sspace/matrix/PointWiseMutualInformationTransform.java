@@ -28,6 +28,9 @@ import java.io.File;
 
 
 /**
+ * Computes the <a
+ * href="http://en.wikipedia.org/wiki/Pointwise_mutual_information">Pointwise
+ * Mutual Information</a> for every joint event stored in a contingency matrix.  
  * @author Keith Stevens
  */
 public class PointWiseMutualInformationTransform extends BaseTransform {
