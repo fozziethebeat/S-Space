@@ -10,6 +10,12 @@
   <name>S-Space Package</name>
   <version>2.0</version>
 
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
+
   <description>The S-Space Package is a collection of algorithms for building
     Semantic Spaces as well as a highly-scalable library for designing new
     distributional semantics algorithms. Distributional algorithms process text
@@ -64,6 +70,13 @@
     <developerConnection>scm:git:git@github.com:fozziethebeat/S-Space.git</developerConnection>
     <url>http://github.com/fozziethebeat/S-Space</url>
   </scm>
+
+  <distributionManagement>
+    <site>
+      <id>github-site</id>
+      <url>gitsite:git@github.com/fozziethebeat/S-Space.git</url>
+    </site>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
