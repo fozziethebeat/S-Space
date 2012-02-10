@@ -697,40 +697,40 @@ public class MatrixIO {
     }
 
     /**
-      * Returns the contents of a matrix file as a {@link SparseMatrix} object,
-      * using the provided format as a hint for what kind to create.  The type
-      * of {@code SparseMatrix} object created will assuming that the entire matrix
-      * can fit in memory based on the format of the file speicfied.  Note that
-      * the returned {@link SparseMatrix} instance is not backed by the data on file;
-      * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
-      * original file's data.
-      *
-      * @param matrix a file containing matrix data
-      * @param format the format of the file
-      *
-      * @return the {@code SparseMatrix} instance that contains the data in the
-      *         provided file
-      */
+     * Returns the contents of a matrix file as a {@link SparseMatrix} object,
+     * using the provided format as a hint for what kind to create.  The type
+     * of {@code SparseMatrix} object created will assuming that the entire matrix
+     * can fit in memory based on the format of the file speicfied.  Note that
+     * the returned {@link SparseMatrix} instance is not backed by the data on file;
+     * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file containing matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code SparseMatrix} instance that contains the data in the
+     *         provided file
+     */
     public static SparseMatrix readSparseMatrix(String matrix, Format format)
              throws IOException {
         return readSparseMatrix(new File(matrix), format);
     }
  
     /**
-      * Returns the contents of a matrix file as a {@link SparseMatrix} object,
-      * using the provided format as a hint for what kind to create.  The type
-      * of {@code SparseMatrix} object created will assuming that the entire matrix
-      * can fit in memory based on the format of the file speicfied.  Note that
-      * the returned {@link SparseMatrix} instance is not backed by the data on file;
-      * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
-      * original file's data.
-      *
-      * @param matrix a file containing matrix data
-      * @param format the format of the file
-      *
-      * @return the {@code SparseMatrix} instance that contains the data in the
-      *         provided file
-      */
+     * Returns the contents of a matrix file as a {@link SparseMatrix} object,
+     * using the provided format as a hint for what kind to create.  The type
+     * of {@code SparseMatrix} object created will assuming that the entire matrix
+     * can fit in memory based on the format of the file speicfied.  Note that
+     * the returned {@link SparseMatrix} instance is not backed by the data on file;
+     * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file containing matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code SparseMatrix} instance that contains the data in the
+     *         provided file
+     */
     public static SparseMatrix readSparseMatrix(File matrix, Format format)
              throws IOException {
         Type type = Type.SPARSE_IN_MEMORY;
@@ -752,19 +752,39 @@ public class MatrixIO {
 
     /**
      * Converts the contents of a matrix file as a {@link Matrix} object, using
-      * the provided format as a hint for what kind to create.  The
-      * type of {@code Matrix} object created will assuming that the entire
-      * matrix can fit in memory based on the format of the file speicfied
-      * Note that the returned {@link Matrix} instance is not backed by the data
-      * on file; changes to the {@code Matrix} will <i>not</i> be reflected in
-      * the original file's data.
-      *
-      * @param matrix a file contain matrix data
-      * @param format the format of the file
-      *
-      * @return the {@code Matrix} instance that contains the data in the
-      *         provided file
-      */
+     * the provided format as a hint for what kind to create.  The type of
+     * {@code Matrix} object created will assuming that the entire matrix can
+     * fit in memory based on the format of the file speicfied Note that the
+     * returned {@link Matrix} instance is not backed by the data on file;
+     * changes to the {@code Matrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file contain matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code Matrix} instance that contains the data in the
+     *         provided file
+     */
+    public static Matrix readMatrix(String matrix, Format format)
+             throws IOException {
+        return readMatrix(new File(matrix), format);
+    }
+
+    /**
+     * Converts the contents of a matrix file as a {@link Matrix} object, using
+     * the provided format as a hint for what kind to create.  The type of
+     * {@code Matrix} object created will assuming that the entire matrix can
+     * fit in memory based on the format of the file speicfied Note that the
+     * returned {@link Matrix} instance is not backed by the data on file;
+     * changes to the {@code Matrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file contain matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code Matrix} instance that contains the data in the
+     *         provided file
+     */
      public static Matrix readMatrix(File matrix, Format format)
              throws IOException {
          switch (format) {

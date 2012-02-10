@@ -156,17 +156,41 @@ object AdjustedMutualInformation {
         // combination.
         for ( (id, classLabel) <- classMap) {
             val j = clusterMap.get(id) match {
-                case Some(clusterLabel) => clusterIndexer.getDimension(clusterLabel)
-                case _ => clusterIndexer.getDimension(missingLabel)
+                case Some(clusterLabel) => clusterIndexer.getDim(clusterLabel)
+                case _ => clusterIndexer.getDim(missingLabel)
             }
-            val i = labelIndexer.getDimension(classLabel)
+            val i = labelIndexer.getDim(classLabel)
             matches(i)(j) += 1.0
         }
+
+        println
+        for (m <- matches) println(m.mkString(" "))
 
         matches
     }
 
+    def simpleIndexer(labelFile:String) = {
+        val indexer = new HashMap[String, Int]() with Indexer
+        Source.fromFile(labelFile).getLines.foreach(w => indexer.getDim(w))
+        indexer
+    }
+
+    def lines(labelFile: String) = Source.fromFile(labelFile).getLines
+
     def main(args:Array[String]) {
+        if (args(0) == "-w") {
+            // Do special processing for a single word instance.  Here we
+            // interpret the label files differently.  They instead just have
+            // one item per line which is the class labeling.
+            val classIndexer = simpleIndexer(args(2))
+            val clustIndexer = simpleIndexer(args(1))
+            val matches = Array.fill(classIndexer.size, clustIndexer.size)(0.0)
+            for ((g,c) <- lines(args(2)).zip(lines(args(1))))
+                matches(classIndexer.getDim(g))(clustIndexer.getDim(c)) += 1.0
+            ami(matches)
+            return
+        }
+
         val filter = if (args.size == 3 && args(2) != "all") args(2) else ""
         val classLabels = extractLabels(args(1), filter, null)
         val clusterLabels = extractLabels(args(0), filter, classLabels)
@@ -197,8 +221,10 @@ object AdjustedMutualInformation {
         val rows = matches.size
         val columns = matches(0).size
         if (rows == 1 &&
-            columns == 1)
+            columns == 1) {
+            printf(" 1.0 0.0 0.0 0.0 0.0\n")
             return 1.0
+        }
 
         // Compute the total counts for each class and cluster and the total
         // number of points.
@@ -284,7 +310,7 @@ object AdjustedMutualInformation {
      * integers are assigned in ascending order with no gaps.
      */
     trait Indexer extends HashMap[String, Int] {
-        def getDimension(key: String) =
+        def getDim(key: String) =
             get(key) match {
                 case Some(value) => value
                 case None => val value = size
