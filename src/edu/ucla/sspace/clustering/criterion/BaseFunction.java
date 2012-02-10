@@ -177,7 +177,7 @@ public abstract class BaseFunction implements CriterionFunction {
     public boolean update(int currentVectorIndex) {
         int currentClusterIndex = assignments[currentVectorIndex];
 
-        double bestDelta = (isMaximize()) ? 0 : Double.MAX_VALUE;
+        double bestDelta = (isMaximize()) ? -Double.MAX_VALUE : Double.MAX_VALUE;
         int bestDeltaIndex = -1;
 
         // Get the current vector.
@@ -187,7 +187,7 @@ public abstract class BaseFunction implements CriterionFunction {
         // it.  Compute the cost delta with that point removed from the cluster.
         //DoubleVector altCurrentCentroid = subtract(
         //        centroids[currentClusterIndex], vector);
-        double deltaBase = (clusterSizes[currentClusterIndex] == 1)
+        double deltaBase = (clusterSizes[currentClusterIndex] <= 1)
             ? 0
             : getOldCentroidScore(vector, currentClusterIndex,
                                   clusterSizes[currentClusterIndex] - 1);
