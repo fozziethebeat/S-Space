@@ -1,13 +1,35 @@
+/*
+ * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.bigram;
 
 import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.matrix.AtomicGrowingSparseHashMatrix;
-import edu.ucla.sspace.matrix.ChiSquaredTransform;
+import edu.ucla.sspace.matrix.BaseTransform;
 import edu.ucla.sspace.matrix.FilteredTransform;
 import edu.ucla.sspace.matrix.PointWiseMutualInformationTransform;
-import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.Transform;
 import edu.ucla.sspace.text.IteratorFactory;
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -33,14 +55,21 @@ public class BigramSpace implements SemanticSpace {
 
     private final int windowSize;
 
+    private final Transform filter;
+
     public BigramSpace() {
-        this(new StringBasisMapping(), 8);
+        this(new StringBasisMapping(), 8,
+             new PointWiseMutualInformationTransform(), 5);
     }
 
-    public BigramSpace(BasisMapping<String, String> basis, int windowSize) {
+    public BigramSpace(BasisMapping<String, String> basis, 
+                       int windowSize,
+                       BaseTransform base,
+                       double minValue) {
         this.basis = basis;
         this.windowSize = windowSize;
-        bigramMatrix = new AtomicGrowingSparseHashMatrix();
+        this.filter = new FilteredTransform(base, minValue);
+        this.bigramMatrix = new AtomicGrowingSparseHashMatrix();
     }
 
     /**
@@ -50,15 +79,24 @@ public class BigramSpace implements SemanticSpace {
         return bigramMatrix.columns();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Set<String> getWords() {
         return basis.keySet();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public SparseDoubleVector getVector(String word) {
         int index = basis.getDimension(word);
         return (index < 0) ? null : bigramMatrix.getRowVector(index);
     }
 
+    /**
+     * Returns "BigramSpace".
+     */
     public String getSpaceName() {
         return "BigramSpace";
     }
@@ -100,12 +138,11 @@ public class BigramSpace implements SemanticSpace {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void processSpace(Properties props) {
-        Transform pmi = new FilteredTransform(
-                new PointWiseMutualInformationTransform(),
-                5.0, Double.MAX_VALUE);
-                //new ChiSquaredTransform(), 3.841, Double.MAX_VALUE);
-        pmi.transform(bigramMatrix, bigramMatrix);
+        filter.transform(bigramMatrix, bigramMatrix);
         basis.setReadOnly(true);
     }
 }

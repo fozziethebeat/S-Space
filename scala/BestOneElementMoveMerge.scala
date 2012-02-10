@@ -53,8 +53,8 @@ def boem(bestPartition: Partition,
             // Get the points current cluster.
             val elemCluster = best.assignments(r)
 
-            // Define a helper function for computing the cost of moving the point
-            // without actually changing the points assignment.
+            // Define a helper function for computing the cost of moving the
+            // point without actually changing the points assignment.
             def move(c:Int) = {
                 best.move(r, c)
                 val cost = totalCost(best, partitions)
@@ -225,7 +225,8 @@ class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) 
             else
                 assignments(x) < assignments(y)
 
-        val orderedOverlap = (0 until assignments.size).toList.sortWith(ordering)
+        val orderedOverlap = 
+            (0 until assignments.size).toList.sortWith(ordering)
 
         var a = 0
         var count = 1

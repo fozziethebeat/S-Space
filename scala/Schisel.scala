@@ -1,3 +1,27 @@
+/*
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+// Import the required Mallet code.
 import cc.mallet.types.Instance
 import cc.mallet.types.InstanceList
 import cc.mallet.pipe.Pipe
@@ -6,17 +30,29 @@ import cc.mallet.pipe.CharSequence2TokenSequence
 import cc.mallet.pipe.TokenSequence2FeatureSequence
 import cc.mallet.topics.ParallelTopicModel
 
+// Import some handy code for managing matrices from the S-Space package.
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
 
-import java.io.File
-import java.io.PrintWriter
+// Other standard imports from scala and java libraries.
 import scala.collection.JavaConversions.asJavaCollection
 import scala.io.Source
 
+import java.io.File
+import java.io.PrintWriter
 
-object RunLDA {
+
+/**
+ * A scala wrapper for using <a href="http://mallet.cs.umass.edu/">Mallet</a> on
+ * on a simple corpus where each document is on a line in a multi-line file and
+ * the tokens in each document can be split using white space.  After the model
+ * has been learned Schisel will save the word by topic probabilities and
+ * document by topic probabilities as dense matrices.  It will also store the
+ * top 10 words per topic to a separate file.
+ */
+object Schisel {
+
     /**
      * Returns a mallet {@link Instance} object by splitting the given document
      * into a document id and the document text.  It is assumed that the
@@ -32,9 +68,9 @@ object RunLDA {
 
     /**
      * Returns a mallet {@link InstanceList} built from a corpus file with one
-     * document per line.  Each line will be transformed into a {@link Instance}
-     * and added to the {@link InstanceList}.  Tokens in each document will be
-     * tokenized based on whitespace.
+     * document per line.  Each line will be transformed into an {@link
+     * Instance} and added to the {@link InstanceList}.  Tokens in each document
+     * will be tokenized based on whitespace.
      */
     def buildInstanceList(path: String, skip: Int) = {
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
@@ -65,7 +101,8 @@ object RunLDA {
      * Creates and runs a {@link ParallelTopicModel} using Mallet.  The
      * following paramenters will be set automatically before processing.
      */
-    def runLDA(instanceList:InstanceList, alpha:Double = 50.0, beta:Double = 0.01,
+    def runLDA(instanceList:InstanceList,
+               alpha:Double = 50.0, beta:Double = 0.01,
                showTopicInterval:Int = 50, topWordsPerInterval:Int = 10,
                numTopics:Int = 50, numIterations:Int = 500,
                optimizationInterval:Int = 25, optimizationBurnin:Int = 200,
@@ -82,19 +119,24 @@ object RunLDA {
         topicModel
     }
 
-    def printTopWords(outBase:String, topicModel:ParallelTopicModel, 
+    /**
+     * Prints the top {@code wordsPerTopic} words for each topic in the model
+     * and stores the topic words, with one topic per line, in {@code outFile}.
+     */
+    def printTopWords(outFile:String, topicModel:ParallelTopicModel, 
                       wordsPerTopic:Int) {
         System.err.println("Printing top words")
-        val writer = new PrintWriter(outBase + "-ws.dat.top" + wordsPerTopic)
-        for (topicWords <- topicModel.getTopWords(wordsPerTopic)) {
-            for (topicWord <- topicWords)
-                writer.printf("%s ", topicWord)
-            writer.println
-        }
-        writer.close
+        val w = new PrintWriter(outFile)
+        topicModel.getTopWords(wordsPerTopic).foreach(
+            t => w.println(t.mkString(" ")))
+        w.close
     }
 
-    def printDocumentSpace(outBase:String, topicModel:ParallelTopicModel,
+    /**
+     * Prints the document by topic probabilities as a dense matrix with each
+     * document as a row and each topic as a column.
+     */
+    def printDocumentSpace(outFile:String, topicModel:ParallelTopicModel,
                            numDocuments:Int, numTopics:Int) {
         System.err.println("Printing Document Space")
         val tFile = File.createTempFile("ldaTheta", "dat")
@@ -107,12 +149,14 @@ object RunLDA {
             for (Array(col, score) <- tokens.slice(2, tokens.length).sliding(2, 2))
                 documentSpace.set(row-1, col.toInt, score.toDouble)
         }
-        MatrixIO.writeMatrix(documentSpace, 
-                             outBase+"-ds.dat.transpose",
-                             Format.DENSE_TEXT)
+        MatrixIO.writeMatrix(documentSpace, outFile, Format.DENSE_TEXT)
     }
 
-    def printWordSpace(outBase:String, topicModel:ParallelTopicModel,
+    /**
+     * Prints the word by topic probabilities as a dense matrix with each
+     * word as a row and each topic as a column.
+     */
+    def printWordSpace(outFile:String, topicModel:ParallelTopicModel,
                        numTopics:Int) {
         System.err.println("Printing Word Space")
         val tFile = File.createTempFile("ldaTheta", "dat")
@@ -130,26 +174,32 @@ object RunLDA {
             wordSpace.set(row, col.toInt, score.toDouble)
             rowSums(row) += score.toDouble
         }
-        for (r <- 0 until wordSpace.rows;
-             c <- 0 until wordSpace.columns)
+        for (r <- 0 until wordSpace.rows; c <- 0 until wordSpace.columns)
             wordSpace.set(r, c, wordSpace.get(r, c) / rowSums(r))
 
-        MatrixIO.writeMatrix(wordSpace,
-                             outBase+"-ws.dat", 
-                             Format.DENSE_TEXT)
+        MatrixIO.writeMatrix(wordSpace, outFile, Format.DENSE_TEXT)
     }
 
     def main(args:Array[String]) {
+        // Load up the instances for LDA to process.
         val instances = buildInstanceList(args(0), args(4).toInt)
+
+        // Extract the number of desired topics and number of documents.
         val numTopics = args(2).toInt
         val numDocuments = instances.size
         System.err.println("Training model")
+
+        // Run LDA.
         val topicModel = runLDA(instances, numTopics=numTopics,
                                 optimizationInterval=args(3).toInt)
+
+        // Print out the top words, the word by topic probabilities, and
+        // document by topic probabilities as dense matrices.
         val outBase = args(1)
-        printWordSpace(outBase, topicModel, numTopics)
-        printDocumentSpace(outBase, topicModel, numDocuments, numTopics)
-        printTopWords(outBase, topicModel, 10)
+        printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
+        printDocumentSpace(outBase+"-ds.dat.transpose", 
+                           topicModel, numDocuments, numTopics)
+        printTopWords(outBase + "-ws.dat.top10", topicModel, 10)
         System.err.println("Done")
     }
 }
