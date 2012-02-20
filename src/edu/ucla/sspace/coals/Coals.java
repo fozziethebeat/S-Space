@@ -492,7 +492,7 @@ public class Coals implements SemanticSpace {
                 Arrays.asList(vectorList));
 
         // If maxwords was set to 0, save all words.
-        if (maxWords == 0)
+        if (maxWords == 0 || maxWords > wordToSemantics.size())
             maxWords = wordToSemantics.size();
 
         COALS_LOGGER.info("Forming the inverse mapping from terms to indices.");
