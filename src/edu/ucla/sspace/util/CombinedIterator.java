@@ -59,7 +59,7 @@ public class CombinedIterator<T> implements Iterator<T> {
      * Constructs a {@code CombinedIterator} from all of the provided iterators.
      */
     public CombinedIterator(Iterator<T>... iterators) {
-	this(Arrays.asList(iterators));
+        this(Arrays.asList(iterators));
     }
 
     /**
@@ -67,9 +67,9 @@ public class CombinedIterator<T> implements Iterator<T> {
      * provided collection.
      */
     public CombinedIterator(Collection<Iterator<T>> iterators) {
-	iters = new ArrayDeque<Iterator<T>>();
-	iters.addAll(iterators);
-	current = iters.poll();
+        iters = new ArrayDeque<Iterator<T>>();
+        iters.addAll(iterators);
+        current = iters.poll();
     }
 
     /**
@@ -77,10 +77,10 @@ public class CombinedIterator<T> implements Iterator<T> {
      * elements.
      */
     private void advance() {
-	while (current != null && !current.hasNext()) {
-	    prev = current;
-	    current = iters.poll();
-	}
+        while (current != null && !current.hasNext()) {
+            prev = current;
+            current = iters.poll();
+        }
     }
 
     /**
@@ -88,19 +88,19 @@ public class CombinedIterator<T> implements Iterator<T> {
      * iterators.
      */
     public synchronized boolean hasNext() {
-	return current != null && current.hasNext();
+        return current != null && current.hasNext();
     }
 
     /**
      * Returns the next element from some iterator.
      */
     public synchronized T next() {
-	if (current == null) {
-	    throw new NoSuchElementException();
-	}
-	T t = current.next();
-	advance();
-	return t;
+        if (current == null) {
+            throw new NoSuchElementException();
+        }
+        T t = current.next();
+        advance();
+        return t;
     }
 
     /**
@@ -108,9 +108,9 @@ public class CombinedIterator<T> implements Iterator<T> {
      * {@code remove} method.
      */
     public synchronized void remove() {
-	if (prev == null) {
-	    throw new NoSuchElementException();
-	}	
-	prev.remove();
+        if (prev == null) {
+            throw new NoSuchElementException();
+        }        
+        prev.remove();
     }
 }

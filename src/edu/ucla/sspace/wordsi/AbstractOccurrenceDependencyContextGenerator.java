@@ -57,6 +57,12 @@ public abstract class AbstractOccurrenceDependencyContextGenerator
     private final BasisMapping<String, String> basis;
 
     /**
+     * The {@link WeightingFunction} function used to weigh each co-occurrence
+     * frequency based on distance from the focus word.
+     */
+    private final WeightingFunction weighting;
+
+    /**
      * The maximum distance, left or right, from the focus word that will count
      * as a feature for any focus word.
      */
@@ -67,8 +73,10 @@ public abstract class AbstractOccurrenceDependencyContextGenerator
      */
     public AbstractOccurrenceDependencyContextGenerator(
             BasisMapping<String, String> basis,
+            WeightingFunction weighting,
             int windowSize) {
         this.basis = basis;
+        this.weighting = weighting;
         this.windowSize = windowSize;
     }
 
@@ -106,18 +114,24 @@ public abstract class AbstractOccurrenceDependencyContextGenerator
     protected void addContextTerms(SparseDoubleVector meaning,
                                    Queue<String> words,
                                    int distance) {
+        distance--;
         // Iterate through each of the context words.
         for (String term : words) {
             if (!term.equals(IteratorFactory.EMPTY_TOKEN)) {
+                // Modify the distance from the current word to the focus word.
+                // If we are working with the previous tokens, this shortens the
+                // distance, if we are working with the next tokens, this
+                // increases the distance.
+                ++distance;
+
                 // Ignore any features that have no valid dimension.
                 int dimension = basis.getDimension(term);
                 if (dimension == -1)
                     continue;
 
-                // Add the feature to the context vector and increase the
-                // distance from the focus word.
-                meaning.set(dimension, 1);
-                ++distance;
+                // Add the feature to the context vector using it's distance
+                // weight.
+                meaning.add(dimension, weighting.weight(distance, windowSize));
             }
         }
     }

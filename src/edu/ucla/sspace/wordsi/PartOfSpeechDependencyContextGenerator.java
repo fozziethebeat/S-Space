@@ -24,6 +24,8 @@ package edu.ucla.sspace.wordsi;
 import edu.ucla.sspace.basis.BasisMapping;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
+import edu.ucla.sspace.hal.EvenWeighting;
+import edu.ucla.sspace.hal.WeightingFunction;
 
 
 /**
@@ -41,7 +43,17 @@ public class PartOfSpeechDependencyContextGenerator
     public PartOfSpeechDependencyContextGenerator(
             BasisMapping<String, String> basis,
             int windowSize) {
-        super(basis, windowSize);
+        super(basis, new EvenWeighting(), windowSize);
+    }
+
+    /**
+     * Constructs a new {@link PartOfSpeechDependencyContextGenerator}.
+     */
+    public PartOfSpeechDependencyContextGenerator(
+            BasisMapping<String, String> basis,
+            WeightingFunction weighting,
+            int windowSize) {
+        super(basis, weighting, windowSize);
     }
 
     /**

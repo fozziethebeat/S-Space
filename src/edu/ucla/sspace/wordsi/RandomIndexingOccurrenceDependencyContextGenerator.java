@@ -25,6 +25,7 @@ package edu.ucla.sspace.wordsi;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
+import edu.ucla.sspace.hal.EvenWeighting;
 import edu.ucla.sspace.index.PermutationFunction;
 
 import edu.ucla.sspace.text.IteratorFactory;
@@ -78,7 +79,7 @@ public class RandomIndexingOccurrenceDependencyContextGenerator
             PermutationFunction<TernaryVector> perm,
             int indexVectorLength,
             int windowSize) {
-        super(null, windowSize);
+        super(null, new EvenWeighting(), windowSize);
 
         this.indexMap = indexMap;
         this.permFunc = perm;
