@@ -36,19 +36,19 @@ object PrintWordsi extends Wordsi {
         val excludeSet = new HashSet[String]()
         Source.fromFile(args(2)).getLines.foreach { excludeSet.add(_) }
 
-        val numFeatures = args(1).toInt
+        val windowSize = args(1).toInt
         val basis = new FilteredStringBasisMapping(excludeSet)
         var depBasis:RelationBasedBasisMapping = null
         val generator = args(0) match {
-            case "woc" => new OccurrenceDependencyContextGenerator(basis, numFeatures)
-            case "pos" => new PartOfSpeechDependencyContextGenerator(basis, numFeatures) 
-            case "ord" => new OrderingDependencyContextGenerator(basis, numFeatures)
+            case "woc" => new OccurrenceDependencyContextGenerator(basis, windowSize)
+            case "pos" => new PartOfSpeechDependencyContextGenerator(basis, windowSize) 
+            case "ord" => new OrderingDependencyContextGenerator(basis, windowSize)
             case "dep" => {
                 val acceptor = new UniversalPathAcceptor()
                 val weightor = new FlatPathWeight()
                 depBasis = new RelationBasedBasisMapping(excludeSet)
                 new WordOccrrenceDependencyContextGenerator(
-                    depBasis, weightor, acceptor, numFeatures)
+                    depBasis, weightor, acceptor, windowSize)
             }
         }
 

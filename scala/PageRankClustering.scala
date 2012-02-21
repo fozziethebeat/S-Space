@@ -72,7 +72,10 @@ class PageRankClustering extends AbstractGraphClustering {
         assignments
     }
 
-    def cluster(adj:Matrix, props:Properties) = {
+    def cluster(adj:Matrix, props:Properties) =
+        cluster(adj, 100, props)
+
+    def cluster(adj:Matrix, numClusters:Int, props:Properties) = {
         val n = adj.rows.toDouble
         val initialRanks = ((0 until adj.rows).map { _ => 1.0/n }).toArray
         val columnSums = sumColumns(adj)
@@ -98,7 +101,7 @@ class PageRankClustering extends AbstractGraphClustering {
         }
 
         val orderedRanks = ranks.zipWithIndex.toList.sorted.reverse.map ( _._2)
-        findMinSpanningTree(adj, orderedRanks take 100 toSet)
+        findMinSpanningTree(adj, orderedRanks take numClusters toSet)
     }
 
     def sumColumns(adj:Matrix) = {
