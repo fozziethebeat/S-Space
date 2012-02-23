@@ -60,12 +60,13 @@ object MorphAnalysisWordsi extends Wordsi {
         for (document <- new DependencyFileDocumentIterator(args(3))) {
             val header = document.reader.readLine
             val tree = parser.readNextTree(document.reader)
-            val filteredTree = tree.filter(w => !excludeSet.contains(w.word))
-            val expandedTokens = header + " " + filteredTree.map( node => 
+            val expandedTokens = header + " " + tree.map( node => 
                 if (node.lemma == header)
                     "|||| " + node.word
-                else
+                else if (!excludeSet.contains(node.word))
                     analyze(node.word)
+                else
+                    ""
             ).mkString(" ")
             extractor.processDocument(
                 new BufferedReader(new StringReader(expandedTokens)), this)
@@ -123,9 +124,12 @@ object MorphAnalysisWordsi extends Wordsi {
     }
 
     def analyze(token: String) : String = {
-        if (token.contains("$"))
+        if (token.contains("$") || token.contains("@") ||
+            token.contains("[") || token.contains("]") ||
+            token.contains("*"))
             return token
 
+        println(token)
         val out = new StringWriter()
         val inToken = token+"\n"
         fstp.analysis(new StringReader(inToken), out)
