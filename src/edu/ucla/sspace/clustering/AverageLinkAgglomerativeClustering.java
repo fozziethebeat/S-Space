@@ -33,7 +33,7 @@ public class AverageLinkAgglomerativeClustering implements Clustering {
      * number of clusters or the results will be undefined.
      */
     public AverageLinkAgglomerativeClustering() {
-        this(Double.MAX_VALUE);
+        this(-Double.MAX_VALUE);
     }
 
     /**
@@ -189,8 +189,8 @@ public class AverageLinkAgglomerativeClustering implements Clustering {
         public int compareTo(Link o) {
             double diff = this.sim - o.sim;
             if (diff < 0)
-                return -1;
-            return (diff == 0d) ? 0 : 1;
+                return 1;
+            return (diff == 0d) ? 0 : -1;
         }
     }
 

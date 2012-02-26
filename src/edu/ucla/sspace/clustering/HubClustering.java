@@ -32,9 +32,10 @@ public class HubClustering implements Clustering {
     public Assignments cluster(Matrix adj, int numClusters, Properties props) {
         Set<Integer> hubs = selectHubs(ranker.rank(adj), numClusters);
         Map<Integer, NodeLink> links = new HashMap<Integer, NodeLink>();
+        int hubId = 0;
         for (int n = 0; n < adj.rows(); ++n)
             if (hubs.contains(n))
-                links.put(n, new NodeLink(n, Double.MAX_VALUE, n));
+                links.put(n, new NodeLink(n, Double.MAX_VALUE, hubId++));
             else
                 links.put(n, new NodeLink(-1, -1.0, -1));
 
