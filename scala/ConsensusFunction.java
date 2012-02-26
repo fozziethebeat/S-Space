@@ -1,6 +1,12 @@
+import edu.ucla.sspace.clustering.Assignments
+import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering
+import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering.ClusterLinkage
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.Matrix
+import edu.ucla.sspace.matrix.SymmetricMatrix
 
+import scala.collection.JavaConversions.asScalaSet
+import scala.collection.JavaConversions.iterableAsScalaIterable
 import scala.collection.mutable.HashSet
 import scala.io.Source
 import scala.math.Ordering
@@ -8,39 +14,68 @@ import scala.util.Random
 
 import java.io.PrintWriter
 
-
 val numClusters = args(0).toInt
 val mergeType = args(1)
 val outFile = args(2)
+
 System.err.println("reporter:status:Loading partitions")
 val partitions = args.slice(3, args.size).map(Partition(_)).toArray
 
-System.err.println("reporter:status:Finding best of K")
-var bestPartition = partitions(0)
-var bestScore = partitions.map(bestPartition.sdd(_)).sum
-for (p1 <- partitions.slice(1, partitions.size)) {
-    val sddSum = partitions.map(p1.sdd(_)).sum
-    if (sddSum < bestScore) {
-        bestScore = sddSum
-        bestPartition = p1
-    }
-}
-
 System.err.println("reporter:status:Finding BOEM")
 val best = mergeType match {
-    case "filtered" => filteredBoem(bestPartition, partitions, numClusters)
-    case "complete" => boem(bestPartition, partitions, numClusters)
+    case "fsboem" => filteredBoem(partitions, numClusters)
+    case "boem" => boem(partitions, numClusters)
+    case "agglo" => agglo(partitions, numClusters)
+    case "bok" => bestOfK(partitions, numClusters)
 }
 System.err.println("reporter:status:Done")
 val writer = new PrintWriter(outFile)
 writer.println(best)
 writer.close
     
-def boem(bestPartition: Partition,
-         partitions:Array[Partition],
-         numClusters:Int) = {
-    var best = Partition(bestPartition)
-    val numPoints = bestPartition.assignments.size
+def addPairsToMatrix(points: Set[Int], matrix: Matrix) {
+    for ( Array(x,y) <- points.subsets(2).map(_.toArray))
+        matrix.add(x,y,1)
+}
+
+def agglo(partitions:Array[Partition], numClusters:Int) = {
+    System.err.println("reporter:status:Agglomerative Merge")
+    val rows = partitions(0).assignments.size
+    val adjacency = new SymmetricMatrix(rows, rows)
+    val indicators = new SymmetricMatrix(rows, rows)
+    for (partition <- partitions) {
+        addPairsToMatrix(partition.clusters.reduce(_++_).toSet, indicators)
+        for ( cluster <- partition.clusters )
+            addPairsToMatrix(cluster.toSet, adjacency)
+    }
+    for (r <- 0 until rows; c <- (r+1) until rows)
+        adjacency.set(r,c, adjacency.get(r,c) / indicators.get(r,c))
+
+    val assignments = HierarchicalAgglomerativeClustering.toAssignments(
+        HierarchicalAgglomerativeClustering.clusterSimilarityMatrix(
+            adjacency, -1, ClusterLinkage.MEAN_LINKAGE, numClusters),
+        null, numClusters)
+    Partition(assignments)
+}
+
+def bestOfK(partitions:Array[Partition], numClusters:Int) = {
+    System.err.println("reporter:status:Best of K")
+    var bestPartition = partitions(0)
+    var bestScore = partitions.map(bestPartition.sdd(_)).sum
+    for (p1 <- partitions.slice(1, partitions.size)) {
+        val sddSum = partitions.map(p1.sdd(_)).sum
+        if (sddSum < bestScore) {
+            bestScore = sddSum
+            bestPartition = p1
+        }
+    }
+    bestPartition
+}
+
+def boem(partitions:Array[Partition], numClusters:Int) = {
+    var best = Partition(bestOfK(partitions, numClusters))
+    System.err.println("reporter:status:Best One Element Move")
+    val numPoints = best.assignments.size
     var improved = true
     var bestMove = (-1, -1)
     var bestScore = totalCost(best, partitions)
@@ -91,13 +126,12 @@ def boem(bestPartition: Partition,
 def totalCost(partition: Partition, partitions: Array[Partition]) =
     partitions.par.map(partition.sdd(_)).sum
 
-def filteredBoem(bestPartition: Partition,
-                 partitions:Array[Partition],
-                 numClusters:Int) = {
-    var best = Partition(bestPartition)
+def filteredBoem(partitions:Array[Partition], numClusters:Int) = {
+    var best = Partition(bestOfK(partitions, numClusters))
+    System.err.println("reporter:status:Filtered Stochastic Best One Element Move")
     val beta = .99
     val numIterations = 75
-    val numPoints = bestPartition.assignments.size
+    val numPoints = best.assignments.size
     val stocasticCost = new ArrayMatrix(numPoints, numClusters)
 
     for (t <- 0 until numIterations) {
@@ -166,6 +200,18 @@ def findBestMove(stocasticCost: Matrix,
 }
 
 object Partition {
+    def apply(solution: Assignments) = {
+        val assignments = new Array[Int](solution.size)
+        for (p <- 0 until solution.size)
+            assignments(p) = solution.get(p)
+        val clusters = solution.clusters.map( c => {
+                val s = new HashSet[Int]()
+                for (p <- c) s.add(p)
+                s
+        }).toArray
+        new Partition(clusters, assignments)
+    }
+
     /**
      * Create a new Partition from a cluster assignment file.
      */
