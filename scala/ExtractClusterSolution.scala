@@ -8,6 +8,12 @@ import edu.ucla.sspace.vector.VectorMath
 import scala.io.Source
 
 
+/** 
+ * Extracts the cluster solutions and reports them in the SemEval format.  This
+ * works in two modes: (1) treating the cluster assignments as the final
+ * solution and (2) building a classifier using the cluster assignments and
+ * labeling each context with the best cluster label.
+ */
 object ExtractClusterSolution {
 
     def readCentroids(clusterFile: String, data:SparseMatrix) = {

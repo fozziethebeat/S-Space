@@ -21,6 +21,10 @@ import java.io.PrintWriter
 // (3) basis file
 // (4) context file
 
+/**
+ * Extracts the cluster labels for each data point using the distributed graph
+ * representation.
+ */
 object ConvertGraphSolution {
 
     def main(args: Array[String]) {

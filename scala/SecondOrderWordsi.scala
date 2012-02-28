@@ -13,6 +13,10 @@ import scala.collection.JavaConversions.seqAsJavaList
 
 import java.io.File
 
+/**
+ * Creates feature vectors using the second order wordsi model from a Bigram
+ * matrix.
+ */
 
 val bigrams = MatrixIO.readSparseMatrix(args(0), Format.SVDLIBC_SPARSE_TEXT)
 val basis:BasisMapping[String, String] = SerializableUtil.load(args(1))

@@ -30,6 +30,12 @@ import java.util.HashSet
 
 
 /**
+ * Creates feature vectors for SemEval using morphological analysis prior to
+ * computing word co-occurrence.  Some analysis features are discarded, namely
+ * part of speech features.  Tense and quantity features are retained.
+ *
+ * </p>
+ *
  * args:
  * <ol>
  *  <li>lttool-box morphological dictionary</li>

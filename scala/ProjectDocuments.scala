@@ -7,6 +7,9 @@ import edu.ucla.sspace.matrix.SparseMatrix
 import scala.Math._
 
 
+/**
+ * Projects a document matrix to retain only the top X features.
+ */
 object ProjectDocuments {
     def main(args: Array[String]) {
         val fullDocSpace = MatrixIO.readMatrix(args(0), Format.DENSE_TEXT)

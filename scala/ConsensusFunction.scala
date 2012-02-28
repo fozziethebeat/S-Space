@@ -293,5 +293,5 @@ class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) 
 
     override def toString =
         "%d %d\n".format(assignments.size, clusters.size) +
-        clusters.map(_.mkString(" ")).mkString("\n")
+        clusters.filter(_.size > 0).map(_.mkString(" ")).mkString("\n")
 }

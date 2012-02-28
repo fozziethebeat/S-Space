@@ -19,6 +19,9 @@ import java.io.File
 // (3) basis file
 // (4) context file
 
+/**
+ * Extracts the SemEval solution key for a given graph wordsi solution.
+ */
 object ExtractGraphSolution {
 
     def main(args: Array[String]) {

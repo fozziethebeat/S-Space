@@ -5,6 +5,9 @@ import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultip
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC
 
 
+/**
+ * Reduces a matrix using either NMF or SVD.
+ */
 object ReduceMatrix {
     def main(args:Array[String]) {
         val reduction = args(2) match {

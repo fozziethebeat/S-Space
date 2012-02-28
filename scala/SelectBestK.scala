@@ -1,6 +1,10 @@
 import scala.io.Source
 
 
+/**
+ * Heuristics for selecting the best number of clusters using the change in the
+ * area of the CDF of a consensus matrix.
+ */
 object SelectBestK {
     def pickFirstPositiveSlope(deltaPoints: List[(Int, Double)]):Int = {
         for (Seq((k, y1), (_, y2)) <- deltaPoints.sliding(2))

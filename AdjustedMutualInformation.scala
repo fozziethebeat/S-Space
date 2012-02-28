@@ -163,9 +163,6 @@ object AdjustedMutualInformation {
             matches(i)(j) += 1.0
         }
 
-        println
-        for (m <- matches) println(m.mkString(" "))
-
         matches
     }
 
@@ -222,8 +219,8 @@ object AdjustedMutualInformation {
         val columns = matches(0).size
         if (rows == 1 &&
             columns == 1) {
-            printf(" 1.0 0.0 0.0 0.0 0.0\n")
-            return 1.0
+            printf(" 0.0 0.0 0.0 0.0 0.0\n")
+            return 0.0
         }
 
         // Compute the total counts for each class and cluster and the total

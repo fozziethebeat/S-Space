@@ -7,6 +7,10 @@ import scala.io.Source
 import java.io.PrintWriter
 
 
+/**
+ * Extracts the emperical Cummulative Distribution Function given a consensus
+ * matrix.
+ */
 object GenerateCDF {
     def readConsensusMatrix(fileName: String) = {
         val matrixLines = Source.fromFile(fileName).getLines

@@ -1,6 +1,10 @@
 import scala.io.Source
 import scala.math._
 
+/**
+ * Computes the mean square error between the number of clusters for a solution
+ * compared to a known solution.
+ */
 object ScoreScala {
     def main(args:Array[String]) {
         val goldScores = (Source.fromFile(args(0)).getLines.map { line => 

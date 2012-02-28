@@ -44,6 +44,10 @@ import scala.io.Source
 import java.io.File
 import java.util.HashSet
 
+/**
+ * Creates a bigram word space using the Pointwise Mutual Information method for
+ * filtering out unimportant bigrams.
+ */
 
 // Read a set of words to exclude from our bigram statistics.  These include
 // generic stop words such as "the", "and", and a variety of punctuation 
