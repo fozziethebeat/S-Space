@@ -4,6 +4,7 @@ import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering.ClusterLin
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.Matrix
 import edu.ucla.sspace.matrix.SymmetricMatrix
+import edu.ucla.sspace.matrix.SymmetricIntMatrix
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.JavaConversions.iterableAsScalaIterable
@@ -72,10 +73,88 @@ def bestOfK(partitions:Array[Partition], numClusters:Int) = {
     bestPartition
 }
 
-def boem(partitions:Array[Partition], numClusters:Int) = {
-    var best = Partition(bestOfK(partitions, numClusters))
-    System.err.println("reporter:status:Best One Element Move")
+def boem(partitions:Array[Partition], numClusters:Int) : Partition = {
+    //var best = Partition(bestOfK(partitions, numClusters))
+    var best = Partition(agglo(partitions, numClusters))
     val numPoints = best.assignments.size
+    val numPartitions = partitions.size
+
+    System.err.println("reporter:status:Best One Element Move")
+
+    // Compute the cost of co-clustered points.  
+    val coClusterCost = new SymmetricIntMatrix(numPoints, numPoints)
+    for (r <- 0 until numPoints; c <- r+1 until numPoints) {
+        coClusterCost.set(r,c, numPartitions)
+        for ( partition <- partitions; if partition.coClustered(r, c))
+            coClusterCost.add(r, c, -2)
+    }
+
+    // Create the array that tracks the best one element move for each data
+    // point.  The tuple stores 1) the cost and 2) the move.
+    val bestMoves = Array.fill(numPoints)((0.0, 0))
+
+    // Compute the cost of moving each data point to a new cluster.
+    val moveCost = new ArrayMatrix(numPoints, numClusters)
+    for (r <- 0 until numPoints) {
+        var bestMove = (Double.MaxValue, 0)
+        for (c <- 0 until numClusters) {
+            val cost = best.clusters(c).filter(_!=r).map(coClusterCost.get(r,_)).sum
+            if (cost < bestMove._1)
+                bestMove = (cost, c)
+            moveCost.set(r, c, cost)
+        }
+        bestMoves(r) = bestMove
+    }
+
+    def getDelta(i: Int) =
+        (moveCost.get(i,best.assignments(i))-bestMoves(i)._1, i)
+
+    val maxIterations = 200
+    for (i <- 0 until maxIterations) {
+        // Get the best one element move by finding the element with the largest
+        // difference from it's current cluster to it's best next cluster.
+        var bestMove = getDelta(0)
+        for (p <- 1 until numPoints) {
+            val newMove = getDelta(p)
+            if (newMove._1 > bestMove._1)
+                bestMove = newMove
+        }
+
+        // Extract the difference and the point for convenience.
+        val (delta, point) = bestMove
+
+        // Get the cluster id's for the previous cluster and the new cluster for
+        // the point.
+        val oldCluster = best.assignments(point)
+        val newCluster = bestMoves(point)._2
+
+        // Check that this move makes a difference.  If it doesn't, we can exit
+        // early.
+        if (delta <= 0 || oldCluster == newCluster)
+            return best
+
+        // For each element, modify the cost of the move and update the best
+        // move costs.
+        for (r <- 0 until numPoints) {
+            // Update the cost for the old cluster.
+            moveCost.add(r, oldCluster, -coClusterCost.get(r, point))
+            // Update the cost for the new cluster.
+            moveCost.add(r, newCluster, coClusterCost.get(r, point))
+
+            // Update the best move cost for this element if needed.
+            if (moveCost.get(r, oldCluster) < bestMoves(r)._1)
+                bestMoves(r) = (moveCost.get(r, oldCluster), oldCluster)
+            if (moveCost.get(r, newCluster) < bestMoves(r)._1)
+                bestMoves(r) = (moveCost.get(r, newCluster), newCluster)
+        }
+        
+        // Finally, make the move for this data point to it's new cluster.
+        best.move(point, newCluster)
+    }
+    best
+}
+
+/*
     var improved = true
     var bestMove = (-1, -1)
     var bestScore = totalCost(best, partitions)
@@ -122,6 +201,7 @@ def boem(partitions:Array[Partition], numClusters:Int) = {
     }
     best
 }
+*/
 
 def totalCost(partition: Partition, partitions: Array[Partition]) =
     partitions.par.map(partition.sdd(_)).sum
@@ -244,6 +324,11 @@ class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) 
      * Returns the number of pairs co-clusters in this partition.
      */
     def numPairs = clusters.foldLeft(0)( (s,c) => s + chooseTwo(c.size))
+
+    /**
+     * Returns true if two data points are assigned to the same cluster.
+     */
+    def coClustered(i: Int, j:Int) = assignments(i) == assignments(j)
 
     /**
      * Moves an element to a new cluster.  Returns true if the point was moved
