@@ -36,6 +36,7 @@ import edu.ucla.sspace.graph.TypedEdge;
 import edu.ucla.sspace.util.ColorGenerator;
 import edu.ucla.sspace.util.Indexer;
 import edu.ucla.sspace.util.LineReader;
+import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.ObjectIndexer;
 
 import java.awt.Color;
@@ -140,6 +141,29 @@ public class DotIO {
         pw.close();
     }
 
+    public <E extends Edge> void writeUndirectedGraph(
+                      Graph<E> g, File f, Indexer<String> vertexLabels) 
+                throws IOException {
+
+        PrintWriter pw = new PrintWriter(f);
+        pw.println("graph g {");
+        // Write the vertices, which may be disconnected
+        for (int v : g.vertices()) {
+                String label = vertexLabels.lookup(v);
+                if (label == null)
+                    label = String.valueOf(v);
+                pw.println("  " + v + " [label=\"" + label + "\"];");
+        }
+        pw.println();
+        // Write the edges that connect the vertices
+        for (E e : g.edges()) 
+            pw.printf("  %d -- %d;%n", e.from(),
+                      e.to());
+        
+        pw.println("}");
+        pw.close();
+    }
+
     public <E extends DirectedEdge> void writeDirectedGraph(DirectedGraph<E> g,
                                                             File f) 
             throws IOException {
@@ -158,13 +182,20 @@ public class DotIO {
         pw.close();
     }
 
+    /**
+     * Writes the provided multigraph to the specified DOT file, using random
+     * colors to visualize each edge type.
+     *
+     * @param f the file where the DOT graph will be written.  Any existing file
+     *        contents will be overwritten
+     */
     public <T,E extends TypedEdge<T>> void writeUndirectedMultigraph(
                         Multigraph<T,E> g, File f) throws IOException {
         Map<T,Color> edgeColors = new HashMap<T,Color>();
         ColorGenerator cg = new ColorGenerator();
         for (T type : g.edgeTypes())
             edgeColors.put(type, cg.next());
-        this.writeUndirectedMultigraph(g, f, edgeColors);
+        this.writeUndirectedMultigraph(g, f, edgeColors, null, false);
     }
 
     /**
@@ -181,12 +212,52 @@ public class DotIO {
     public <T,E extends TypedEdge<T>> void writeUndirectedMultigraph(
                         Multigraph<T,E> g, File f, Map<T,Color> edgeColors) 
                         throws IOException {
+        this.writeUndirectedMultigraph(g, f, edgeColors, null, false);
+    }
+
+    /**
+     * Writes the provided multigraph to the specified DOT file, using {@code
+     * edgeColors} as a guide for how to display parallel edges of different
+     * types.
+     *
+     * @param f the file where the DOT graph will be written.  Any existing file
+     *        contents will be overwritten
+     * @param edgeColor a mapping from an edge type to a color.  Types that do
+     *        not have colors will be randomly assigned one and the {@code
+     *        edgeColors} map will be updated appropriately.
+     */
+    public <T,E extends TypedEdge<T>> void writeUndirectedMultigraph(
+                        Multigraph<T,E> g, File f, Map<T,Color> edgeColors,
+                        Indexer<String> vertexLabels) 
+                        throws IOException {
+        this.writeUndirectedMultigraph(g, f, edgeColors, vertexLabels, true);
+    }
+
+    /**
+     * The internal method that writes the undirect multigraph according to all
+     * various visualation configuration properties
+     *
+     * @param useLabels whether to use {@code vertexLabels} in naming the
+     *        vertices.  If {@code false}, vertices are labeled by number
+     */
+    private <T,E extends TypedEdge<T>> void writeUndirectedMultigraph(
+                         Multigraph<T,E> g, File f, Map<T,Color> edgeColors,
+                        Indexer<String> vertexLabels, boolean useLabels) 
+                        throws IOException {
+    
         PrintWriter pw = new PrintWriter(f);
         ColorGenerator cg = new ColorGenerator();
         pw.println("graph g {");
         // Write the vertices, which may be disconnected
         for (int v : g.vertices()) {
-            pw.println("  " + v + ";");
+            if (useLabels) {
+                String label = vertexLabels.lookup(v);
+                if (label == null)
+                    label = String.valueOf(v);
+                pw.println("  " + v + " [label=\"" + label + "\"];");
+            }
+            else 
+                pw.println("  " + v + ";");
         }
         for (E e : g.edges()) {
             Color c = edgeColors.get(e.edgeType());
@@ -196,13 +267,68 @@ public class DotIO {
             }
             String hexColor = Integer.toHexString(c.getRGB());
             hexColor = hexColor.substring(2, hexColor.length());
-            pw.printf("  %d -- %d [label=\"%s\", color=\"#%s\"]%n", e.from(), e.to(),
-                      e.edgeType(), hexColor);
+             pw.printf("  %d -- %d [label=\"%s\", color=\"#%s\"]%n", e.from(), e.to(),
+                       e.edgeType(), hexColor);                       
+//              pw.printf("  %d -- %d [style=\"setlinewidth(4)\", color=\"#%s\"]%n", e.from(), e.to(),
+//                        hexColor);                       
+
+
+
         }
         pw.println("}");
         pw.close();
     }
 
+    /**
+     * The internal method that writes the undirect multigraph according to all
+     * various visualation configuration properties
+     *
+     * @param useLabels whether to use {@code vertexLabels} in naming the
+     *        vertices.  If {@code false}, vertices are labeled by number
+     */
+    public <T,E extends TypedEdge<T>> void writeUndirectedMultigraph(
+                         Multigraph<T,E> g, File f, Map<T,Color> edgeColors,
+                         MultiMap<Integer,String> vertexMetadata) 
+                        throws IOException {
+    
+        PrintWriter pw = new PrintWriter(f);
+        ColorGenerator cg = new ColorGenerator();
+        pw.println("graph g {");
+        // Write the vertices, which may be disconnected
+        for (int v : g.vertices()) {
+            StringBuilder sb = new StringBuilder();
+            for (String attr : vertexMetadata.get(v))
+                sb.append(attr).append(' ');
+            pw.println("  " + v + " [" + sb + "];");
+        }
+        for (E e : g.edges()) {
+            Color c = edgeColors.get(e.edgeType());
+            if (c == null) {
+                c = cg.next();
+                edgeColors.put(e.edgeType(), c);
+            }
+            String hexColor = Integer.toHexString(c.getRGB());
+            hexColor = hexColor.substring(2, hexColor.length());
+             pw.printf("  %d -- %d [label=\"%s\", color=\"#%s\"]%n", e.from(), e.to(),
+                       e.edgeType(), hexColor);                       
+//              pw.printf("  %d -- %d [style=\"setlinewidth(4)\", color=\"#%s\"]%n", e.from(), e.to(),
+//                        hexColor);                       
+
+
+
+        }
+        pw.println("}");
+        pw.close();
+    }
+
+
+    /**
+     * Writes the provided multigraph to the specified DOT file, using random
+     * colors to visualize each edge type.
+     *
+     * @param f the file where the DOT graph will be written.  Any existing file
+     *        contents will be overwritten
+     */
     public <T,E extends DirectedTypedEdge<T>> void writeDirectedMultigraph(
                         Multigraph<T,E> g, File f) throws IOException {
         Map<T,Color> edgeColors = new HashMap<T,Color>();

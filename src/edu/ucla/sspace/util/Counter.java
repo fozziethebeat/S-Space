@@ -46,6 +46,8 @@ public interface Counter<T> extends Iterable<Map.Entry<T,Integer>> {
     /**
      * Adds the counts from the provided {@code Counter} to the current counts,
      * adding new elements as needed.
+     *
+     * @return the current count for the counted object
      */
     void add(Counter<? extends T> counter);
     
@@ -59,6 +61,8 @@ public interface Counter<T> extends Iterable<Map.Entry<T,Integer>> {
      * amount.
      *
      * @param count a positive value for the number of times the object occurred
+     *
+     * @return the current count for the counted object
      *
      * @throws IllegalArgumentException if {@code count} is not a positive value.
      */

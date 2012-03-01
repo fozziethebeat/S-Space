@@ -204,6 +204,24 @@ public class WorkQueue {
     }
 
     /**
+     * Returns the number of tasks that need to be completed before the group
+     * associated with the key is complete.  Note that this number includes both
+     * those tasks running and not yet completed, as well as tasks that have yet
+     * to be enqueued on behalf of this id.
+     *
+     * @param taskGroupId the key associated with a task group
+     *
+     * @return the number of tasks remaining or 0 if no group is associated with
+     *         that task key
+     */
+    public long getRemainingTasks(Object taskGroupId) {
+        CountDownLatch latch = taskKeyToLatch.get(taskGroupId);
+        return (latch == null)
+            ? 0
+            : latch.getCount();
+    }
+
+    /**
      * Returns the canonical instance of the {@link WorkQueue} to be used in
      * running concurrent tasks.
      */

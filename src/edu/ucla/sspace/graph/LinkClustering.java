@@ -27,13 +27,10 @@ import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Merge;
 import edu.ucla.sspace.clustering.SoftAssignment;
 
-import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.HashMultiMap;
 import edu.ucla.sspace.util.HashIndexer;
 import edu.ucla.sspace.util.Indexer;
 import edu.ucla.sspace.util.MultiMap;
-import edu.ucla.sspace.util.ObjectCounter;
-import edu.ucla.sspace.util.ObjectIndexer;
 import edu.ucla.sspace.util.Pair;
 import edu.ucla.sspace.util.WorkQueue;
 
@@ -42,34 +39,17 @@ import edu.ucla.sspace.util.primitive.IntSet;
 import edu.ucla.sspace.util.primitive.IntIntMultiMap;
 import edu.ucla.sspace.util.primitive.IntIntHashMultiMap;
 
-import edu.ucla.sspace.vector.CompactSparseIntegerVector;
-import edu.ucla.sspace.vector.DoubleVector;
-import edu.ucla.sspace.vector.SparseDoubleVector;
-import edu.ucla.sspace.vector.SparseIntegerVector;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
 import java.util.Set;
 
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 
 import static edu.ucla.sspace.util.LoggerUtil.verbose;
 import static edu.ucla.sspace.util.LoggerUtil.veryVerbose;

@@ -73,11 +73,10 @@ public abstract class AbstractIntegerVector extends AbstractVector<Integer>
     public int hashCode() {
         int len = length();
         int hash = 0;
-        int sum = 0;
         for (int i = 0; i < len; ++i) {
-            sum += get(i);
+            hash ^= i ^ get(i);
         }
-        return sum;
+        return hash;
     }
 
     /**

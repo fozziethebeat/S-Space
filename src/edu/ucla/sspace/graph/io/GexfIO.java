@@ -232,6 +232,15 @@ public class GexfIO {
      */
     public void write(WeightedGraph<? extends WeightedEdge> g, File gexfFile) 
             throws IOException {
+        write(g, gexfFile, null);
+    }
+
+    /**
+     * Writes the {@link WeightedGraph} to file in {@code gexf} format.
+     */
+    public void write(WeightedGraph<? extends WeightedEdge> g, 
+                      File gexfFile, Indexer<String> vertexLabels) 
+            throws IOException {
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = null;
@@ -263,8 +272,13 @@ public class GexfIO {
         while (vIter.hasNext()) {
             int vertex = vIter.next();
             Element node = doc.createElement("node");
-            node.setAttribute("id", String.valueOf(vertex));
-            node.setAttribute("label", String.valueOf(vertex));
+            String vLabel = (vertexLabels == null)
+                ? String.valueOf(vertex)
+                : vertexLabels.lookup(vertex);
+            if (vLabel == null)
+                vLabel = String.valueOf(vertex);
+            node.setAttribute("id", vLabel);
+            node.setAttribute("label", vLabel);
             nodes.appendChild(node);
         }
 
@@ -273,8 +287,21 @@ public class GexfIO {
             Element edge = doc.createElement("edge");
             edges.appendChild(edge);
             edge.setAttribute("id", "" + (edgeId++));
-            edge.setAttribute("source", String.valueOf(e.from()));
-            edge.setAttribute("target", String.valueOf(e.to()));
+
+            String sourceLabel = (vertexLabels == null)
+                ? String.valueOf(e.from())
+                : vertexLabels.lookup(e.from());
+            if (sourceLabel == null)
+                sourceLabel = String.valueOf(e.from());
+
+            String targetLabel = (vertexLabels == null)
+                ? String.valueOf(e.to())
+                : vertexLabels.lookup(e.to());
+            if (targetLabel == null)
+                targetLabel = String.valueOf(e.to());
+
+            edge.setAttribute("source", sourceLabel);
+            edge.setAttribute("target", targetLabel);
             edge.setAttribute("weight", String.valueOf(e.weight()));
         }
 

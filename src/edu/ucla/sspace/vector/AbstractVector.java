@@ -64,11 +64,11 @@ public abstract class AbstractVector<T extends Number> implements Vector<T> {
     public int hashCode() {
         int len = length();
         int hash = 0;
-        double sum = 0;
+
         for (int i = 0; i < len; ++i) {
-            sum += getValue(i).doubleValue();
+            hash ^= i ^ getValue(i).intValue();
         }
-        return (int)sum;
+        return hash;
     }
 
     /**

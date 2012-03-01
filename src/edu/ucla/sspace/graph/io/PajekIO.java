@@ -69,6 +69,79 @@ public class PajekIO {
     public PajekIO(Indexer<String> vertexIndex) {
         this.vertexIndex = vertexIndex;
     }
+
+    public static Graph<DirectedEdge> readPajek(File f) throws IOException {
+        Graph<DirectedEdge> g = new SparseDirectedGraph();
+        int lineNo = 0;
+        boolean seenVertices = false;
+        boolean seenEdges = false;
+        Map<String,Integer> labelToVertex = new HashMap<String,Integer>();
+
+        for (String line : new LineReader(f)) {
+            ++lineNo;
+            // Skip comments and blank lines
+            if (line.matches("\\s*%.*") || line.matches("\\s+"))
+                continue;
+            else if (line.startsWith("*vertices")) {
+                if (seenVertices) {
+                    throw new IOException("Duplicate vertices definiton on " +
+                                          "line " + lineNo);
+                }
+                String[] arr = line.split("\\s+");
+                if (arr.length < 2) 
+                    throw new IOException("Missing specification of how many " +
+                                          "vertices");
+                int numVertices = -1;
+                try {
+                    numVertices = Integer.parseInt(arr[1]);
+                } catch (NumberFormatException nfe) {
+                    throw new IOException("Invalid number of vertices: " +
+                                          arr[1], nfe);
+                }
+                if (numVertices < 1)
+                    throw new IOException("Must have at least one vertex");
+
+                // Add the vertices to the graph
+                for (int i = 0; i < numVertices; ++i)
+                    g.add(i);
+
+                seenVertices = true;
+            }
+            else if (line.startsWith("*edges") 
+                     || line.startsWith("*arcs")) {
+                if (!seenVertices)
+                    throw new IOException("Must specify vertices before edges");
+                if (seenEdges) 
+                    throw new IOException("Duplicate edges definition on line" 
+                                          + lineNo);
+                seenEdges = true;
+            }
+            // If the edges flag is true all subsequent lines should be an edge
+            // specifaction
+            else if (seenEdges) { 
+                String[] arr = line.split("\\s+");
+                if (arr.length < 2) 
+                    throw new IOException("Missing vertex declaration(s) for " +
+                                          "edge definition: " + line);
+                int v1 = -1;
+                int v2 = -1;
+                try {
+                    v1 = Integer.parseInt(arr[0]);
+                    v2 = Integer.parseInt(arr[1]);
+                } catch (NumberFormatException nfe) {
+                    throw new IOException("Invalid vertex value: " + line, nfe);
+                }
+                g.add(new SimpleDirectedEdge(v1, v2));
+            }
+            else if (seenVertices) {
+                // Handle labels here?
+            }
+            else
+                throw new IOException("Unknown line content type: " + line);
+        }
+        
+        return g;
+    }
  
     public <E extends Edge> void writeUndirectedGraph(Graph<E> g, File f) 
             throws IOException {
@@ -90,5 +163,4 @@ public class PajekIO {
             pw.println(vertexMap.index(e.from()) + " " + vertexMap.index(e.to()));
         pw.close();
     }
-   
 }

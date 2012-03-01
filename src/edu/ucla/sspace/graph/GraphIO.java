@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static edu.ucla.sspace.util.LoggerUtil.verbose;
+import static edu.ucla.sspace.util.LoggerUtil.veryVerbose;
 
 
 /**
@@ -78,7 +80,7 @@ public class GraphIO {
         default: 
             throw new Error("Reading GraphType " + type + " is current unsupported");
         }
-    }
+    }   
 
     public static Graph<Edge> readUndirected(File f) throws IOException {
         return readUndirected(f, new ObjectIndexer<String>());
@@ -105,7 +107,7 @@ public class GraphIO {
             int v2 = vertexIndexer.index(arr[1]);
             g.add(new LabeledEdge(v1, v2, arr[0], arr[1]));
             if (lineNo % 100000 == 0)
-                verbose(LOGGER, "read %d lines from %s", lineNo, f);
+                verbose(LOGGER, "Read %d lines from %s", lineNo, f);
         }
         verbose(LOGGER, "Read undirected graph with %d vertices and %d edges", 
                 g.order(), g.size());
@@ -116,9 +118,8 @@ public class GraphIO {
         return readWeighted(f, new ObjectIndexer<String>());
     }
 
-    public static WeightedGraph<WeightedEdge> readWeighted(File f, 
-                                                           Indexer<String> vertexIndexer)
-            throws IOException {        
+    public static WeightedGraph<WeightedEdge> readWeighted(
+            File f, Indexer<String> vertexIndexer) throws IOException {        
 
         BufferedReader br = new BufferedReader(new FileReader(f));
         WeightedGraph<WeightedEdge> g = new SparseWeightedGraph();
@@ -139,10 +140,104 @@ public class GraphIO {
             int v2 = vertexIndexer.index(arr[1]);
             double weight = Double.parseDouble(arr[2]);
             g.add(new SimpleWeightedEdge(v1, v2, weight));
+            if (lineNo % 1000 == 0)
+                System.out.printf("Read %d lines from %s%n", lineNo, f);
+
+            if (lineNo % 100000 == 0)
+                veryVerbose(LOGGER, "Read %d lines from %s", lineNo, f);
         }
         verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
                 g.order(), g.size());
         return g;
+    }
+
+    public static WeightedGraph<WeightedEdge> readWeighted(
+            File f, Indexer<String> vertexIndexer, double minWeight) throws IOException {        
+
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        WeightedGraph<WeightedEdge> g = new SparseWeightedGraph();
+        int lineNo = 0;
+        for (String line = null; (line = br.readLine()) != null; ) {
+            ++lineNo;
+            line = line.trim();
+            if (line.startsWith("#"))
+                continue;
+            else if (line.length() == 0)
+                continue;
+            String[] arr = line.split("\\s+");
+            if (arr.length < 2) 
+                throw new IOException("Missing vertex on line " + lineNo);
+            if (arr.length < 3) 
+                throw new IOException("Missing edge weight on line " + lineNo);
+            int v1 = vertexIndexer.index(arr[0]);
+            int v2 = vertexIndexer.index(arr[1]);
+            double weight = Double.parseDouble(arr[2]);
+            if (weight >= minWeight)
+                g.add(new SimpleWeightedEdge(v1, v2, weight));
+
+            if (lineNo % 100000 == 0)
+                veryVerbose(LOGGER, "Read %d lines from %s", lineNo, f);
+        }
+        verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
+                g.order(), g.size());
+        return g;
+    }
+
+    /**
+     * Reads in an undirected network from a file containing weighted edges,
+     * only keeping those undirected edges whose weight was above the specified
+     * threshold
+     */
+    public static Graph<Edge> readUndirectedFromWeighted(
+            File f, Indexer<String> vertexIndexer, double minWeight) throws IOException {        
+
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        Graph<Edge> g = new SparseUndirectedGraph();
+
+        int lineNo = 0;
+        for (String line = null; (line = br.readLine()) != null; ) {
+            ++lineNo;
+            line = line.trim();
+            if (line.startsWith("#"))
+                continue;
+            else if (line.length() == 0)
+                continue;
+            String[] arr = line.split("\\s+");
+            if (arr.length < 2) 
+                throw new IOException("Missing vertex on line " + lineNo);
+            if (arr.length < 3) 
+                throw new IOException("Missing edge weight on line " + lineNo);
+            int v1 = vertexIndexer.index(arr[0]);
+            int v2 = vertexIndexer.index(arr[1]);
+            double weight = Double.parseDouble(arr[2]);
+            if (weight >= minWeight)
+                g.add(new SimpleEdge(v1, v2));
+
+            if (lineNo % 100000 == 0)
+                veryVerbose(LOGGER, "Read %d lines from %s", lineNo, f);
+        }
+        verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
+                g.order(), g.size());
+        return g;
+    }
+
+
+    public static void writeUndirected(
+            File f, Graph<? extends Edge> g, 
+            Indexer<String> vertexLabels) throws IOException {
+
+        PrintWriter pw = new PrintWriter(f);
+        for (Edge e : g.edges()) {
+            String v1 = vertexLabels.lookup(e.from());
+            if (v1 == null)
+                v1 = String.valueOf(e.from());
+            String v2 = vertexLabels.lookup(e.to());
+            if (v2 == null)
+                v2 = String.valueOf(e.to());
+
+            pw.printf("%s\t%s%n", v1, v2);
+        }
+        pw.close();
     }
 
     public static DirectedGraph<DirectedEdge> readDirected(File f) throws IOException {
@@ -169,6 +264,8 @@ public class GraphIO {
             int v1 = vertexIndexer.index(arr[0]);
             int v2 = vertexIndexer.index(arr[1]);
             g.add(new SimpleDirectedEdge(v1, v2));
+            if (lineNo % 100000 == 0)
+                veryVerbose(LOGGER, "read %d lines from %s", lineNo, f);
         }
         verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
                 g.order(), g.size());
@@ -203,9 +300,9 @@ public class GraphIO {
             g.add(new SimpleDirectedTypedEdge<String>(type, v1, v2));
 
             if (lineNo % 100000 == 0) {
-                verbose(LOGGER, "read %d lines from %s, graph now has %d " + 
-                        "vertices, %d edges, and %d types", lineNo, f, 
-                        g.order(), g.size(), g.edgeTypes().size());
+                veryVerbose(LOGGER, "read %d lines from %s, graph now has %d " + 
+                            "vertices, %d edges, and %d types", lineNo, f, 
+                            g.order(), g.size(), g.edgeTypes().size());
             }
         }
         verbose(LOGGER, "Read directed multigraph with %d vertices, %d edges, and %d types", 
@@ -243,7 +340,7 @@ public class GraphIO {
             g.add(new SimpleTypedEdge<String>(type, v1, v2));
 
             if (lineNo % 100000 == 0) {
-                verbose(LOGGER, "read %d lines from %s, graph now has %d " + 
+                veryVerbose(LOGGER, "read %d lines from %s, graph now has %d " + 
                         "vertices, %d edges, and %d types", lineNo, f, 
                         g.order(), g.size(), g.edgeTypes().size());
             }
@@ -254,80 +351,55 @@ public class GraphIO {
         }
         verbose(LOGGER, "Read undirected multigraph with %d vertices, %d edges, and %d types", 
                 g.order(), g.size(), g.edgeTypes().size());
-        return g;
+        return g;   
+    }
+
+    public static <T> void writeUndirectedMultigraph(
+            Multigraph<T,TypedEdge<T>> g, File f) throws IOException {
+        PrintWriter pw = new PrintWriter(f);
+        for (TypedEdge<T> e : g.edges()) {
+            pw.printf("%d %d %f%n", e.from(), e.to(), e.edgeType());
+        }
+        pw.close();        
+    }
+
+    public static <T> void writeUndirectedMultigraph(
+            Multigraph<T,TypedEdge<T>> g, File f, 
+            Indexer<String> vertexLabels) throws IOException {
+        PrintWriter pw = new PrintWriter(f);
+        for (TypedEdge<T> e : g.edges()) {
+            pw.printf("%d %d %f%n", vertexLabels.lookup(e.from()),
+                      vertexLabels.lookup(e.to()), e.edgeType());
+        }
+        pw.close();        
     }
 
 
-    public static Graph<DirectedEdge> readPajek(File f) throws IOException {
-        Graph<DirectedEdge> g = new SparseDirectedGraph();
-        int lineNo = 0;
-        boolean seenVertices = false;
-        boolean seenEdges = false;
-        Map<String,Integer> labelToVertex = new HashMap<String,Integer>();
-
-        for (String line : new LineReader(f)) {
-            ++lineNo;
-            // Skip comments and blank lines
-            if (line.matches("\\s*%.*") || line.matches("\\s+"))
-                continue;
-            else if (line.startsWith("*vertices")) {
-                if (seenVertices) {
-                    throw new IOException("Duplicate vertices definiton on " +
-                                          "line " + lineNo);
-                }
-                String[] arr = line.split("\\s+");
-                if (arr.length < 2) 
-                    throw new IOException("Missing specification of how many " +
-                                          "vertices");
-                int numVertices = -1;
-                try {
-                    numVertices = Integer.parseInt(arr[1]);
-                } catch (NumberFormatException nfe) {
-                    throw new IOException("Invalid number of vertices: " +
-                                          arr[1], nfe);
-                }
-                if (numVertices < 1)
-                    throw new IOException("Must have at least one vertex");
-
-                // Add the vertices to the graph
-                for (int i = 0; i < numVertices; ++i)
-                    g.add(i);
-
-                seenVertices = true;
-            }
-            else if (line.startsWith("*edges") 
-                     || line.startsWith("*arcs")) {
-                if (!seenVertices)
-                    throw new IOException("Must specify vertices before edges");
-                if (seenEdges) 
-                    throw new IOException("Duplicate edges definition on line" 
-                                          + lineNo);
-                seenEdges = true;
-            }
-            // If the edges flag is true all subsequent lines should be an edge
-            // specifaction
-            else if (seenEdges) { 
-                String[] arr = line.split("\\s+");
-                if (arr.length < 2) 
-                    throw new IOException("Missing vertex declaration(s) for " +
-                                          "edge definition: " + line);
-                int v1 = -1;
-                int v2 = -1;
-                try {
-                    v1 = Integer.parseInt(arr[0]);
-                    v2 = Integer.parseInt(arr[1]);
-                } catch (NumberFormatException nfe) {
-                    throw new IOException("Invalid vertex value: " + line, nfe);
-                }
-                g.add(new SimpleDirectedEdge(v1, v2));
-            }
-            else if (seenVertices) {
-                // Handle labels here?
-            }
-            else
-                throw new IOException("Unknown line content type: " + line);
+    public static void writeWeighted(
+            File f, WeightedGraph<? extends WeightedEdge> g) 
+               throws IOException {
+        PrintWriter pw = new PrintWriter(f);
+        for (WeightedEdge e : g.edges()) {
+            pw.printf("%d %d %f%n", e.from(), e.to(), e.weight());
         }
-        
-        return g;
+        pw.close();
+    }
+
+    public static void writeWeighted(
+            File f, WeightedGraph<? extends WeightedEdge> g, 
+            Indexer<String> vertexLabels) throws IOException {
+
+        PrintWriter pw = new PrintWriter(f);
+        for (WeightedEdge e : g.edges()) {
+            String v1 = vertexLabels.lookup(e.from());
+            if (v1 == null)
+                v1 = String.valueOf(e.from());
+            String v2 = vertexLabels.lookup(e.to());
+            if (v2 == null)
+                v2 = String.valueOf(e.to());
+
+            pw.printf("%s\t%s\t%f%n", v1, v2, e.weight());
+        }
+        pw.close();
     }
 }

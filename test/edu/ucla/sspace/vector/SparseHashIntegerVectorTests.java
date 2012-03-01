@@ -26,14 +26,75 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import edu.ucla.sspace.util.*;
+
+import java.util.*;
+
 
 
 /**
  * Tests for the {@link SparseHashIntegerVector} class.
  */
 public class SparseHashIntegerVectorTests {
+
+    @Test public void testGetAndSet() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        v.set(1, 1);
+        assertEquals(1, v.get(1));
+
+        v.set(1, 2);
+        assertEquals(2, v.get(1));
+
+        v.set(2, 3);
+        assertEquals(3, v.get(2));
+    }
+
+    @Test public void testGetAndSetZero() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        v.set(1, 1);
+        assertEquals(1, v.get(1));
+
+        v.set(1, 0);
+        assertEquals(0, v.get(1));
+
+        v.set(1, 2);
+        assertEquals(2, v.get(1));
+    }       
+
+    @Test public void testNonZero() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        v.set(1, 1);
+        int[] nz = v.getNonZeroIndices();
+        assertEquals(1, nz.length);
+        assertEquals(1, nz[0]);
+
+        v.set(1, 0);
+        nz = v.getNonZeroIndices();
+        assertEquals(0, nz.length);
+
+        v.set(1, 2);
+        v.set(2, 2);
+        nz = v.getNonZeroIndices();
+        assertEquals(2, nz.length);
+    }       
+
+    @Test public void testIterator() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        Map<Integer,Integer> control = new HashMap<Integer,Integer>();
+        Map<Integer,Integer> test = new HashMap<Integer,Integer>();
+        for (int i = 20; i < 30; ++i) {
+            v.set(i, i);
+            control.put(i, i);
+        }
+        
+        Iterator<IntegerEntry> iter = v.iterator();
+        while (iter.hasNext()) {
+            IntegerEntry e = iter.next();
+            test.put(e.index(), e.value());
+        }
+        
+        assertEquals(control, test);
+    }       
 
     @Test public void testMagnitude() {
         SparseHashIntegerVector v = new SparseHashIntegerVector(100);

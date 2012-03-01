@@ -73,11 +73,10 @@ public abstract class AbstractDoubleVector extends AbstractVector<Double>
     public int hashCode() {
         int len = length();
         int hash = 0;
-        double sum = 0;
         for (int i = 0; i < len; ++i) {
-            sum += get(i);
+            hash ^= i ^ (int)(get(i));
         }
-        return (int)sum;
+        return hash;
     }
 
     /**
