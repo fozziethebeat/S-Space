@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2011 David Jurgens
  *
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  * or for cases where not all of the data for the tasks is availabe at once
  * (although the number of tasks is known).
  *<pre>
- *WorkQueue q = WorkQueue.getWorkQueue();
+ *WorkQueue q = new WorkQueue();
  *Object taskGroupId = Thread.currentThread(); // a unique id
  *q.registerTaskGroup(taskGroupId, numTasks);
  *for (int i = 0; i < numTasks; ++i)
@@ -74,15 +75,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class WorkQueue {
 
-    private static WorkQueue QUEUE;
-
     /**
      * The list of all threads drawing work from the queue.
      */
     private final List<Thread> threads;
 
     /**
-     * The queue from which worker threads run word-word comparisons
+     * The queue from which worker threads draw jobs to execute
      */
     private final BlockingQueue<Runnable> workQueue;
 
@@ -90,32 +89,17 @@ public class WorkQueue {
      * A mapping from a group identifier to the associated latch.
      */
     private final ConcurrentMap<Object,CountDownLatch> taskKeyToLatch;
+
+    /**
+     * The singleton {@code WorkQueue} instance supported by this class
+     */
+    private static WorkQueue singleton;
     
-    /**
-     * Returns the {@link WorkQueue} available to all processes.  If the queue
-     * has not been created yet, one will be created that uses all of the
-     * available processes.
-     */
-    public static WorkQueue getWorkQueue() {
-        return getWorkQueue(Runtime.getRuntime().availableProcessors());
-    }
-
-    /**
-     * Returns the {@link WorkQueue} available to all processes.  If the queue
-     * has not been created yet, one will be created that uses {@code numProcs}
-     * processes.
-     */
-    public static WorkQueue getWorkQueue(int numProcs) {
-        if (QUEUE == null)
-            QUEUE = new WorkQueue(numProcs);
-        return QUEUE;
-    }
-
     /**
      * Creates a new work queue with the number of threads executing tasks the
      * same as the number as processors on the system.
      */
-    public WorkQueue() {
+    WorkQueue() {
         this(Runtime.getRuntime().availableProcessors());
     }
 
@@ -123,7 +107,7 @@ public class WorkQueue {
      * Creates a new work queue with the specified number of threads executing
      * tasks.
      */
-    public WorkQueue(int numThreads) {
+    WorkQueue(int numThreads) {
         workQueue = new LinkedBlockingQueue<Runnable>();
         threads = new ArrayList<Thread>();
         taskKeyToLatch = new ConcurrentHashMap<Object,CountDownLatch>();
@@ -150,7 +134,18 @@ public class WorkQueue {
         if (latch == null)
             throw new IllegalArgumentException(
                 "Unknown task id: " + taskGroupId);
+        if (task == null)
+            throw new NullPointerException("Cannot add null tasks");                                           
         workQueue.offer(new CountingRunnable(task, latch));
+    }
+    
+    /**
+     * Increases the number of concurrently processing threads by one.
+     */
+    private void addThread() {
+        Thread t = new WorkerThread(workQueue);
+        threads.add(t);
+        t.start();            
     }
 
     /**
@@ -208,8 +203,60 @@ public class WorkQueue {
     }
 
     /**
-     * Registers a new task group with the specified number of tasks to execute
-     * and returns a task group identifier to use when registering its tasks.
+     * Returns the number of tasks that need to be completed before the group
+     * associated with the key is complete.  Note that this number includes both
+     * those tasks running and not yet completed, as well as tasks that have yet
+     * to be enqueued on behalf of this id.
+     *
+     * @param taskGroupId the key associated with a task group
+     *
+     * @return the number of tasks remaining or 0 if no group is associated with
+     *         that task key
+     */
+    public long getRemainingTasks(Object taskGroupId) {
+        CountDownLatch latch = taskKeyToLatch.get(taskGroupId);
+        return (latch == null)
+            ? 0
+            : latch.getCount();
+    }
+
+    /**
+     * Returns the canonical instance of the {@link WorkQueue} to be used in
+     * running concurrent tasks.
+     */
+    public static WorkQueue getWorkQueue() {
+        if (singleton == null) {
+            synchronized (WorkQueue.class) {
+                if (singleton == null)
+                    // REMINDER: default number of threads?
+                    singleton = new WorkQueue(); 
+            }
+        }
+        return singleton;
+    }
+
+    /**
+     * Returns the canonical instance of the {@link WorkQueue} to be used in
+     * running concurrent tasks, ensuring the <i>at least</i> the specified
+     * number of threads are available.
+     */
+    public static WorkQueue getWorkQueue(int numThreads) {
+        if (singleton == null) {
+            synchronized (WorkQueue.class) {
+                if (singleton == null)
+                    singleton = new WorkQueue(numThreads); 
+            }
+        }
+
+        while (singleton.availableThreads() < numThreads) {
+            singleton.addThread();
+        }
+        return singleton;
+    }
+
+    /**
+     * Registers a new task group with the specified number of tasks to execute and 
+     * returns a task group identifier to use when registering its tasks.
      *
      * @param numTasks the number of tasks that will be eventually run as a part
      *        of this group.
@@ -264,6 +311,8 @@ public class WorkQueue {
         int numTasks = tasks.size();
         CountDownLatch latch = new CountDownLatch(numTasks);
         for (Runnable r : tasks) {
+            if (r == null)
+                throw new NullPointerException("Cannot run null tasks");
             workQueue.offer(new CountingRunnable(r, latch));
         }
         try {
@@ -276,9 +325,10 @@ public class WorkQueue {
     }
 
     /**
-     * Returns the number of threads being used to process the enqueued tasks.
+     * Returns the number of threads that are available to this {@code
+     * WorkQueue} for processing the enqueued tasks.
      */
-    public int numThreads() {
+    public int availableThreads() {
         return threads.size();
     }
     

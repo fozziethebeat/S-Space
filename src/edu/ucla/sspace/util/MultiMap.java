@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * An object that maps a key to one or more values.  A map cannot contain
  * duplicate keys and each key cannot map to duplicate values.
@@ -34,43 +35,54 @@ import java.util.Set;
 public interface MultiMap<K,V> {
 
     /**
+     * Returns a {@link Map}-based view of this {@code MultiMap}
+     */
+    Map<K,Set<V>> asMap();
+
+    /**
      * Removes all of the mappings from this multi-map.
      */
-    public void clear();
+    void clear();
 
     /**
      * Returns {@code true} if this multi-map contains a mapping for the
      * specified key.
      */
-    public boolean containsKey(Object key);
+    boolean containsKey(Object key);
+
+    /**
+     * Returns {@code true} if this multi-map contains a mapping from specified
+     * key to the specified value.
+     */
+    boolean containsMapping(Object key, Object value);
 
     /**
      * Returns {@code true} if this multi-map contains from any key to the
      * specified value.
      */
-    public boolean containsValue(Object key);
+    boolean containsValue(Object key);
 
     /**
      * Returns a {@link Set} view of all the key-value mappings contained in
      * this multi-map.
      */
-    public Set<Map.Entry<K,V>> entrySet();
+    Set<Map.Entry<K,V>> entrySet();
 
     /**
-     * Returns {@code true} if this multi-map maps one or more keys to the specified
-     * value.
+     * Returns the set of values mapped to this key or {@code null} of the key
+     * is not mapped to any values
      */
-    public Set<V> get(Object key);
+    Set<V> get(Object key);
 
     /**
      * Returns {@code true} if this multi-map contains no mappings.
      */
-    public boolean isEmpty();
+    boolean isEmpty();
 
     /**
      * Returns a {@link Set} view of the mappings contained in this multi-map.
      */
-    public Set<K> keySet();
+    Set<K> keySet();
 
     /**
      * Adds the specified value to the set of values associated with the
@@ -82,17 +94,17 @@ public interface MultiMap<K,V> {
      * @return {@code true} if the provided value was not already in the set of
      *         value mapped to the specified key
      */
-    public boolean put(K key, V value);
+    boolean put(K key, V value);
 
     /**
      * Copies all of the mappings from the specified map to this mutli-map
      */
-    public void putAll(Map<? extends K,? extends V> m);
+    void putAll(Map<? extends K,? extends V> m);
 
     /**
      * Copies all of the mappings from the specified mulit-map to this mutli-map
      */
-    public void putAll(MultiMap<? extends K,? extends V> m);
+    void putAll(MultiMap<? extends K,? extends V> m);
 
     /**
      * Adds all of the specified values to the set of values associated with the
@@ -105,12 +117,12 @@ public interface MultiMap<K,V> {
      * @return {@code true} if at least one of the provided value was not
      *         already in the set of value mapped to the specified key
      */
-    public boolean putMulti(K key, Collection<V> values);
+    boolean putMany(K key, Collection<V> values);
 
     /**
      * Removes the mapping for a key from this multi-map if it is present
      */
-    public Set<V> remove(K key);
+    Set<V> remove(K key);
 
     /**
      * Removes the specified mapping for a key if it is present.  If the key is
@@ -120,7 +132,7 @@ public interface MultiMap<K,V> {
      *
      * @return {@code true} if the specified mapping was removed
      */
-    public boolean remove(K key, V value);
+    boolean remove(Object key, Object value);
 
     /**
      * Returns the number of values maped to keys.  Note that in the
@@ -131,7 +143,7 @@ public interface MultiMap<K,V> {
      *
      * @return the number of values maped to keys
      */
-    public int range();
+    int range();
 
     /**
      * Returns the number of keys that are mapped to one or more values in this
@@ -139,11 +151,16 @@ public interface MultiMap<K,V> {
      *
      * @see #range()
      */
-    public int size();
+    int size();
 
     /**
      * Returns a {@link Collection} view of the values contained in this map.
      */
-    public Collection<V> values();
+    Collection<V> values();
 
+    /**
+     * Returns a {@link Collection} view of the sets of values mapped to each
+     * key in this map.
+     */
+    Collection<Set<V>> valueSets();
 }

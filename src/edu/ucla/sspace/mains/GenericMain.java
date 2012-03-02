@@ -466,8 +466,8 @@ public abstract class GenericMain {
                 // If the parent was null, then the file must be being created
                 // in the directory from which this class was invoked.  
                 if (outputDir == null)
-                    outputDir = new File("");
-                System.out.println("base dir: " + outputDir);
+                    outputDir = new File(".");
+                verbose("base dir: " + outputDir);
                 outputFile = File.createTempFile(baseName, extension, outputDir);
             }
             else

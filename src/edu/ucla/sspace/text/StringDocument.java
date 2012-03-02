@@ -31,9 +31,9 @@ import java.io.StringReader;
 public class StringDocument implements Document {
 
     /**
-     * A reader to the text of the document
+     * The text of the document
      */
-    private final BufferedReader reader;
+    private final String text;
     
     /**
      * Constructs a {@code Document} using the provided string as the document
@@ -42,14 +42,21 @@ public class StringDocument implements Document {
      * @param docText the document text
      */
     public StringDocument(String docText) {
-        reader = new BufferedReader(new StringReader(docText));
+        this.text = docText;        
     }
     
     /**
-     * {@inheritDoc}
+     * {@inheritDoc} This method may be repeatedly called to re-read the
+     * contents of the document.
      */
     public BufferedReader reader() {
-        return reader;
+        return new BufferedReader(new StringReader(text));
     }
 
+    /**
+     * Returns the entire document
+     */
+    public String toString() {
+        return text;
+    }
 }

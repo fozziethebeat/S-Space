@@ -49,22 +49,6 @@ import static org.junit.Assert.*;
  */
 public class WorkQueueTests {
     
-    private static void treeRecursiveCall(final int depth) {
-        if (depth == 0)
-            return;
-        WorkQueue workQueue = new WorkQueue(2);
-        Object key = workQueue.registerTaskGroup(2);
-        workQueue.add(key, new Runnable() {
-            public void run() {treeRecursiveCall(depth-1);}});
-        workQueue.add(key, new Runnable() {
-            public void run() {treeRecursiveCall(depth-1);}});
-        workQueue.await(key);
-    }
-
-    @Test public void testManyQueues() {
-        treeRecursiveCall(20);
-    }
-
     @Test public void testSingleOp() {
         WorkQueue w = new WorkQueue(4);
         final AtomicInteger j = new AtomicInteger();

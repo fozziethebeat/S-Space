@@ -62,7 +62,10 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class VectorMapSemanticSpace<T extends Vector> implements SemanticSpace {
+public class VectorMapSemanticSpace<T extends Vector> 
+        implements SemanticSpace, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = 
         Logger.getLogger(VectorMapSemanticSpace.class.getName());

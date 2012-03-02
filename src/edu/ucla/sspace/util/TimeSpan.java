@@ -192,33 +192,22 @@ public class TimeSpan {
     }
 
     /**
-     * Adds the duration of this time span to the provided {@code Calendar}
-     * instance, moving it forward in time.
+     * Creates a time span from the time between the two dates
      *
-     * @param c the calendar whose date will be moved forward by the duration of
-     *        this time span
+     * @throws IllegalArgumentException if {@code start} is not before {@code
+     *         end}
      */
-    public void addTo(Calendar c) {
-        c.add(Calendar.YEAR, years);
-        c.add(Calendar.MONTH, months);
-        c.add(Calendar.WEEK_OF_YEAR, weeks);
-        c.add(Calendar.DAY_OF_YEAR, days);
-        c.add(Calendar.HOUR_OF_DAY, hours);
-    }
-
-    /**
-     * Adds the duration of this time span to the provided {@code Date}
-     * instance, moving it forward in time.
-     *
-     * @param d the date whose value will be moved forward by the duration of
-     *        this time span
-     */
-    public void addTo(Date d) {
-	Calendar c = Calendar.getInstance();
-	c.setTime(d);
-        addTo(c);
-        d.setTime(c.getTime().getTime());
-    }
+    /* public TimeSpan(Date start, Date end) {
+        Calendar s = Calendar.getInstance();
+        s.setTime(start);
+        Calendar e = Calendar.getInstance();
+        e.setTime(start);
+        this.years = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.month = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.day = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.seconds = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+        this.years = e.get(Calendar.YEAR) - s.get(Calendar.YEAR);
+    } */
 
     /**
      * Checks whether the index is already set in the bit flags and throws an

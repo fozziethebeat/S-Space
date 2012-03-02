@@ -28,22 +28,21 @@ import java.util.List;
 import java.util.Iterator;
 
 /**
- * A simple {@link DependencyPath} that is created from a list
+ * A {@link DependencyPath} that supports constant time access to the nodes and
+ * relations that make up its sequence.
  */
 public class SimpleDependencyPath implements DependencyPath {
     
     /**
      * The list of terms and relations.
      */
-    private final List<DependencyRelation> path;
+    final List<DependencyRelation> path;
 
     /**
-     * {@code true} if the head of this path is the head node of the first
-     * relation.  Conversely, if {@code false}, the path begins at the dependent
-     * node in the first relation.
+     * The list of terms and relations.
      */
-    private final boolean isHeadFirst;
-        
+    final List<DependencyTreeNode> nodes;
+
     /**
      * Creates a {@link SimpleDependencyPath} starting at the head node of the
      * first relation in the list.
@@ -60,8 +59,20 @@ public class SimpleDependencyPath implements DependencyPath {
                                 boolean isHeadFirst) {
         if (path == null || path.size() == 0)
             throw new IllegalArgumentException("Cannot provide empty path");
-        this.path = path;        
-        this.isHeadFirst = isHeadFirst;
+        this.path = new ArrayList<DependencyRelation>(path);        
+        this.nodes = new ArrayList<DependencyTreeNode>(path.size() + 1);
+        DependencyTreeNode cur = (isHeadFirst)
+            ? path.get(0).headNode() : path.get(0).dependentNode();
+        nodes.add(cur);
+        for (DependencyRelation r : path) {
+            DependencyTreeNode next = r.headNode();
+            // If the head node is the last node we saw, then the dependent node
+            // must be the next node in the path
+            if (next.equals(cur)) 
+                next = r.dependentNode();
+            nodes.add(next);
+            cur = next;
+        }
     }
 
     /**
@@ -71,94 +82,123 @@ public class SimpleDependencyPath implements DependencyPath {
         if (path == null || path.length() == 0)
             throw new IllegalArgumentException("Cannot provide empty path");
 
-        // Special case if we're cloning an instances of this class
-        if (path instanceof SimpleDependencyPath) {
-            SimpleDependencyPath p = (SimpleDependencyPath)path;
-            // Copy over the relations
-            this.path = new ArrayList<DependencyRelation>(p.path);
-            // Ensure the iteration order stays the same.
-            this.isHeadFirst = p.isHeadFirst;
+        int size = path.length();
+        this.path = new ArrayList<DependencyRelation>(size);
+        this.nodes = new ArrayList<DependencyTreeNode>(size + 1);
+        DependencyTreeNode cur = path.first();
+        nodes.add(cur);
+        for (DependencyRelation r : path) {
+            this.path.add(r);
+            DependencyTreeNode next = r.headNode();
+            // If the head node is the last node we saw, then the dependent node
+            // must be the next node in the path
+            if (next.equals(cur)) 
+                next = r.dependentNode();
+            nodes.add(next);
+            next = cur;
+        }
+    }       
+
+    /**
+     * Creates a {@link SimpleDependencyPath} from a single relation, optionally
+     * starting at the head node of the relation.
+     */
+    public SimpleDependencyPath(DependencyRelation relation, 
+                                boolean startFromHead) {
+        this();
+        if (relation == null)
+            throw new IllegalArgumentException("Cannot provide empty path");
+        path.add(relation);
+        if (startFromHead) {
+            nodes.add(relation.headNode());
+            nodes.add(relation.dependentNode());
         }
         else {
-            this.path = new ArrayList<DependencyRelation>(path.length());
-            for (DependencyRelation r : path)
-                this.path.add(r);
-            // Decide whether the provided path starts with the head element of
-            // the relation not
-            DependencyRelation r = path.firstRelation();
-            DependencyTreeNode n = path.first();
-            this.isHeadFirst = r.headNode().equals(n);
+            nodes.add(relation.dependentNode());
+            nodes.add(relation.headNode());           
         }
+    }
+
+    /**
+     * Creates an empty dependency path
+     */
+    public SimpleDependencyPath() { 
+        path = new ArrayList<DependencyRelation>();
+        nodes = new ArrayList<DependencyTreeNode>();
+    }
+
+    /**
+     * Returns a copy of this dependency path
+     */
+    public SimpleDependencyPath copy() {
+        SimpleDependencyPath copy = new SimpleDependencyPath();
+        copy.path.addAll(path);
+        copy.nodes.addAll(nodes);
+        return copy;
+    }
+
+    /**
+     * Returns a copy of this dependency path that has the provided related
+     * appended to the end of its path sequence.
+     */
+    public SimpleDependencyPath extend(DependencyRelation relation) {
+        SimpleDependencyPath copy = copy();
+        // Figure out which node is at the end of our path, and then add the new
+        // node to the end of our nodes
+        DependencyTreeNode last = last(); 
+        copy.nodes.add((relation.headNode().equals(last)) 
+                       ? relation.dependentNode() : relation.headNode());
+        copy.path.add(relation);
+        return copy;
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof DependencyPath) {
+            DependencyPath p = (DependencyPath)o;
+            if (p.length() != length())
+                return false;
+            DependencyTreeNode f = p.first();
+            DependencyTreeNode n = first();
+            if (!(f == n || (f != null && f.equals(n))))
+                return false;
+            Iterator<DependencyRelation> it1 = iterator();
+            Iterator<DependencyRelation> it2 = p.iterator();
+            while (it1.hasNext())
+                if (!(it1.next().equals(it2.next())))
+                    return false;
+            return true;
+        }
+        return false;
     }
 
     /**
      * {@inheritDoc}
      */
     public DependencyTreeNode first() {
-        DependencyRelation r = path.get(0);
-        // Check whether the relation path starts at either the head or
-        // dependent node
-        return (isHeadFirst) ? r.headNode() : r.dependentNode();
+        return (nodes.isEmpty()) ? null : nodes.get(0);
     }
 
     /**
      * {@inheritDoc}
      */
     public DependencyRelation firstRelation() {
-        return path.get(0);
+        return (path.isEmpty()) ? null : path.get(0);
     }    
 
     /**
      * {@inheritDoc}
      */
     public DependencyTreeNode getNode(int position) {
-        if (position < 0 || position > path.size() + 1)
+        if (position < 0 || position >= nodes.size())
             throw new IndexOutOfBoundsException("Invalid node: " + position);
-        // Special case for getting the very first node.
-        if (position == 0)
-            return (isHeadFirst)
-                ? path.get(0).headNode()
-                : path.get(0).dependentNode();
-        if (position == 1)
-            return (isHeadFirst)
-                ? path.get(0).dependentNode()
-                : path.get(0).headNode();
-        // Special case for if only one relation exists in the path
-        // Special case for if only one relation exists in the path
-        if (path.size() == 1)
-            return ((isHeadFirst && position == 1) 
-                    || (!isHeadFirst && position == 0))
-                ? path.get(0).dependentNode() 
-                : path.get(0).headNode();
-        DependencyRelation prev = path.get(position - 2);
-        DependencyRelation cur = path.get(position - 1);
-        return getNextNode(prev, cur);
-    }
-
-    /**
-     * Given the nodes in the previous relation, determines which of the nodes
-     * in the next relation is new and return that.  This method provides a way
-     * of determine the next node in a path independent of the direction of the
-     * path's dependency edges.
-     *
-     * @param prev the dependency relation that was previously seen in the path
-     * @param cur the current dependency relation 
-     *
-     * @return the node in {@code cur} that is not present in {@code prev}
-     */
-    private DependencyTreeNode getNextNode(DependencyRelation prev,
-                                           DependencyRelation cur) {
-        return (prev.headNode().equals(cur.headNode()) ||
-                prev.dependentNode().equals(cur.headNode()))
-            ? cur.dependentNode()
-            : cur.headNode();
+        return nodes.get(position);
     }
 
     /**
      * {@inheritDoc}
      */
     public String getRelation(int position) {
-        if (position < 0 || position > (path.size() - 1))
+        if (position < 0 || position >= path.size())
             throw new IndexOutOfBoundsException("Invalid relation: " +position);
         DependencyRelation r = path.get(position);
         return r.relation();
@@ -175,13 +215,7 @@ public class SimpleDependencyPath implements DependencyPath {
      * {@inheritDoc}
      */
     public DependencyTreeNode last() {
-        if (path.size() == 1)
-            return (isHeadFirst)
-                ? path.get(0).dependentNode()
-                : path.get(0).headNode();
-        DependencyRelation prev = path.get(path.size() - 2);
-        DependencyRelation last = path.get(path.size() - 1);
-        return getNextNode(prev, last);
+        return nodes.get(nodes.size() - 1);
     }
 
     /**
@@ -202,14 +236,13 @@ public class SimpleDependencyPath implements DependencyPath {
      * Returns the path in order with words and relations space delimited.
      */
     public String toString() {
-        int size = length();
-        StringBuilder sb = new StringBuilder(8 * size);
-        sb.append('[');
-        for (int i = 0; i < size; ++i) {
-            sb.append(getNode(i).word());
-            if (i + i < size)
-                sb.append(' ').append(getRelation(i)).append(' ');
-        }
-        return sb.append(']').toString();
+         int size = nodes.size();
+         StringBuilder sb = new StringBuilder(8 * size);
+         sb.append(nodes.get(0).word());
+         for (int i = 1; i < size; ++i)
+             sb.append(' ')
+                 .append(path.get(i-1).relation())
+                 .append(' ').append(nodes.get(i).word());
+         return sb.toString();
     }
 }

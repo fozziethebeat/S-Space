@@ -53,7 +53,7 @@ public class CombinedIterator<T> implements Iterator<T> {
      * The iterator that was last used to return an element.  This field is
      * needed to support {@code remove}
      */
-    private Iterator<T> prev;
+    private Iterator<T> toRemoveFrom;
 
     /**
      * Constructs a {@code CombinedIterator} from all of the provided iterators.
@@ -67,9 +67,28 @@ public class CombinedIterator<T> implements Iterator<T> {
      * provided collection.
      */
     public CombinedIterator(Collection<Iterator<T>> iterators) {
-	iters = new ArrayDeque<Iterator<T>>();
-	iters.addAll(iterators);
-	current = iters.poll();
+        this((Queue<Iterator<T>>)(new ArrayDeque<Iterator<T>>(iterators)));
+    }
+
+    /**
+     * Constructs a {@code CombinedIterator} from all of the iterators in the
+     * provided collection.
+     */
+    private CombinedIterator(Queue<Iterator<T>> iterators) {
+	this.iters = iterators;
+        advance();
+    }
+
+    /**
+     * Joins the iterators of all the provided iterables as one unified
+     * iterator.
+     */
+    public static <T> Iterator<T> join(Collection<Iterable<T>> iterables) {
+        Queue<Iterator<T>> iters = 
+            new ArrayDeque<Iterator<T>>(iterables.size());
+        for (Iterable<T> i : iterables)
+            iters.add(i.iterator());
+        return new CombinedIterator<T>(iters);
     }
 
     /**
@@ -77,10 +96,11 @@ public class CombinedIterator<T> implements Iterator<T> {
      * elements.
      */
     private void advance() {
-	while (current != null && !current.hasNext()) {
-	    prev = current;
-	    current = iters.poll();
-	}
+        if (current == null || !current.hasNext()) {
+            do {
+                current = iters.poll();
+            } while (current != null && !current.hasNext());
+        }
     }
 
     /**
@@ -99,6 +119,10 @@ public class CombinedIterator<T> implements Iterator<T> {
 	    throw new NoSuchElementException();
 	}
 	T t = current.next();
+        // Once an element has been drawn from the iterator, the current
+        // iterator should be used for any subsequent remove call.
+        if (toRemoveFrom != current)
+            toRemoveFrom = current;
 	advance();
 	return t;
     }
@@ -108,9 +132,9 @@ public class CombinedIterator<T> implements Iterator<T> {
      * {@code remove} method.
      */
     public synchronized void remove() {
-	if (prev == null) {
+	if (toRemoveFrom == null) {
 	    throw new NoSuchElementException();
 	}	
-	prev.remove();
+	toRemoveFrom.remove();
     }
 }

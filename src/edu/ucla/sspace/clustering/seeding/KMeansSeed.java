@@ -41,7 +41,7 @@ public interface KMeansSeed {
 
     /**
      * Returns an array of length {@code numCentroids} that contains centroids
-     * composed of either vectors from {@code dataPoints} or a linar combination
+     * composed of either vectors from {@code dataPoints} or a linear combination
      * of vectors from {@code dataPoints}.
      */
     DoubleVector[] chooseSeeds(int numCentroids, Matrix dataPoints);

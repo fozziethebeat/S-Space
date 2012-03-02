@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.matrix;
 
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 
 /**

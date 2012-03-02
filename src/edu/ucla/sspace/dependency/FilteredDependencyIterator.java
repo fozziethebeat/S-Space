@@ -42,12 +42,6 @@ import java.util.Deque;
 public class FilteredDependencyIterator implements Iterator<DependencyPath> {
 
     /**
-     * The maximum length of the returned paths.  The length is considedered to
-     * not include the first term.
-     */
-    private final int maxPathLength;
-
-    /**
      * The {@link DependencyPathAcceptor} that validates each link before it is
      * traversed and returned as part of a {@link DependencyPath}.
      */
@@ -89,19 +83,15 @@ public class FilteredDependencyIterator implements Iterator<DependencyPath> {
      * @param startNode the node that will start all the paths to be generated.
      * @param acceptor The {@link DependencyPathAcceptor} that will validate
      *        the paths returned by this iterator
-     * @param maxPathLength the maximum number of nodes in any path
+     * @param maxPathLength the maximum number of relations in any path
      * 
      * @throws IllegalArgumentException if {@code maxPathLength} is less than 1
      */
     public FilteredDependencyIterator(DependencyTreeNode startNode,
                                       DependencyPathAcceptor acceptor,
                                       int maxPathLength) {
-        if (maxPathLength < 1)
-            throw new IllegalArgumentException(
-                "Must specify a path length greater than 1");
-        this.iterator = new BreadthFirstPathIterator(startNode);
+        this.iterator = new BreadthFirstPathIterator(startNode, maxPathLength);
         this.acceptor = acceptor;
-        this.maxPathLength = maxPathLength;
         advance();
     }
 
@@ -110,20 +100,15 @@ public class FilteredDependencyIterator implements Iterator<DependencyPath> {
      * the value to {@code null} if no further paths exist.
      */
     private void advance() {
-        DependencyPath p = null;
+        next = null;
 
         // While the underlying iterator has paths, check whether any are
-        // accepted by the filter.  If a path is over the maximum path length,
-        // break, since no further returned paths will be smaller.
-        while (iterator.hasNext()) {
-            p = iterator.next();
-            if (p.length() > maxPathLength) {
-                p = null;
-                break;
-            } else if (acceptor.accepts(p))
-                break;
+        // accepted by the filter.
+        while (iterator.hasNext() && next == null) {
+            DependencyPath p = iterator.next();
+            if (acceptor.accepts(p)) 
+                next = p;
         }        
-        next = p;
     }
 
     /**

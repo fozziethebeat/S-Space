@@ -358,7 +358,7 @@ public class BigramExtractor {
     }
 
     /**
-     * Returns the &Chi;<sup>2<sup> score of the contingency table
+     * Returns the &Chi;<sup>2</sup> score of the contingency table
      */
     private double chiSq(int[] contingencyTable) {
         // Rename for short-hand convenience

@@ -38,7 +38,7 @@ import java.util.Iterator;
  *
  * @author Keith Stevens
  */
-public class CompactSparseVector
+public class CompactSparseVector extends AbstractDoubleVector
     implements SparseDoubleVector, Serializable, Iterable<DoubleEntry> {
 
     private static final long serialVersionUID = 1L;
@@ -137,27 +137,12 @@ public class CompactSparseVector
         return vector.iterator();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void set(double[] values) {
-        vector = new SparseDoubleArray(values);
-        magnitude = -1;
-    }
 
     /**
      * {@inheritDoc}
      */
-    public void set(int index, double value) {
-        vector.setPrimitive(index, value);
-        magnitude = -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void set(int index, Number value) {
-        set(index, value.doubleValue());
+    public double get(int index) {
+        return vector.getPrimitive(index);
     }
 
     /** 
@@ -165,6 +150,14 @@ public class CompactSparseVector
      */
     public int[] getNonZeroIndices() {
         return vector.getElementIndices();
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public int length() {
+        return vector.length();
     }
 
     /**
@@ -184,30 +177,24 @@ public class CompactSparseVector
     /**
      * {@inheritDoc}
      */
+    public void set(double[] values) {
+        vector = new SparseDoubleArray(values);
+        magnitude = -1;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void set(int index, double value) {
+        vector.setPrimitive(index, value);
+        magnitude = -1;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double[] toArray() {
         double[] array = new double[vector.length()];
         return vector.toPrimitiveArray(array);
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double get(int index) {
-        return vector.getPrimitive(index);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Double getValue(int index) {
-        return get(index);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int length() {
-        return vector.length();
-    }
-
 }

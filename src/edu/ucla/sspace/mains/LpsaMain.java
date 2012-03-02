@@ -29,8 +29,8 @@ import edu.ucla.sspace.matrix.AffinityMatrixCreator;
 
 import edu.ucla.sspace.nonlinear.LocalityPreservingSemanticAnalysis;
 
-import edu.ucla.sspace.sim.CosineSimilarity;
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.CosineSimilarity;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 

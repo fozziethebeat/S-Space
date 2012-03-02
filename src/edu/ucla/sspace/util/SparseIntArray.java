@@ -238,6 +238,62 @@ public class SparseIntArray
     }
 
     /**
+     * Divides the specified value to the index by the provided value and stores
+     * the result at the index (just as {@code array[index] /= value})
+     *
+     * @param index the position in the array
+     * @param value the value by which the value at the index will be divided
+     *
+     * @return the new value stored at the index
+     */
+    public int dividePrimitive(int index, int value) {
+        if (index < 0 || index >= maxLength) 
+            throw new ArrayIndexOutOfBoundsException(
+                    "invalid index: " + index);
+        
+        int pos = Arrays.binarySearch(indices, index);
+        
+        // The multiply operation is divide a non-existent value in the
+        // array, which is always 0, so the corresponding result is 0.
+        // Therefore, we don't need to make room.
+        if (pos < 0) 
+            return 0;
+        else {
+            int newValue = values[pos] / value;
+
+            // The new value is zero, so remove its position and shift
+            // everything over
+            if (newValue == 0) {
+                int newLength = indices.length - 1;
+                int[] newIndices = new int[newLength];
+                int[] newValues = new int[newLength];
+                for (int i = 0, j = 0; i < indices.length; ++i) {
+                    if (i != pos) {
+                        newIndices[j] = indices[i];
+                        newValues[j] = values[i];            
+                        j++;
+                    }
+                }
+                // swap the arrays
+                indices = newIndices;
+                values = newValues;
+            }
+            // Otherwise, the new value is still non-zero, so update it in the
+            // array
+            else
+                values[pos] = newValue;
+            return newValue;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Integer divide(int index, Integer value) {
+        return dividePrimitive(index, value.intValue());
+    }
+
+    /**
      * {@inheritDoc}
      */ 
     public Integer get(int index) {
@@ -287,6 +343,62 @@ public class SparseIntArray
      */
     public int length() {
         return maxLength;
+    }
+
+    /**
+     * Multiplies the value to the index by the provided value and saves the
+     * result at the index (just as {@code array[index] *= value})
+     *
+     * @param index the position in the array
+     * @param value the value that will be multiplied in value at the index
+     *
+     * @return the new value stored at the index
+     */
+    public int multiplyPrimitive(int index, int value) {
+        if (index < 0 || index >= maxLength) 
+            throw new ArrayIndexOutOfBoundsException(
+                    "invalid index: " + index);
+        
+        int pos = Arrays.binarySearch(indices, index);
+        
+        // The multiply operation is multiplying a non-existent value in the
+        // array, which is always 0, so the corresponding result is 0.
+        // Therefore, we don't need to make room.
+        if (pos < 0) 
+            return 0;
+        else {
+            int newValue = values[pos] * value;
+
+            // The new value is zero, so remove its position and shift
+            // everything over
+            if (newValue == 0) {
+                int newLength = indices.length - 1;
+                int[] newIndices = new int[newLength];
+                int[] newValues = new int[newLength];
+                for (int i = 0, j = 0; i < indices.length; ++i) {
+                    if (i != pos) {
+                        newIndices[j] = indices[i];
+                        newValues[j] = values[i];            
+                        j++;
+                    }
+                }
+                // swap the arrays
+                indices = newIndices;
+                values = newValues;
+            }
+            // Otherwise, the new value is still non-zero, so update it in the
+            // array
+            else
+                values[pos] = newValue;
+            return newValue;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Integer multiply(int index, Integer value) {
+        return multiplyPrimitive(index, value.intValue());
     }
 
     /**
@@ -390,6 +502,17 @@ public class SparseIntArray
         }
 
         return array;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder(indices.length * 6);
+        sb.append('[');
+        for (int i = 0; i < indices.length; ++i) {
+            sb.append(indices[i]).append(':').append(values[i]);
+            if (i + 1 < indices.length)
+                sb.append(", ");
+        }
+        return sb.append(']').toString();
     }
 
     /**

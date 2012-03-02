@@ -28,6 +28,9 @@ import java.io.Serializable;
 
 import java.util.Iterator;
 
+import gnu.trove.iterator.TIntIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.hash.TIntIntHashMap;
 
 /**
  * A {@code SparseVector} implementation backed by a {@code HashMap}.  This
@@ -39,10 +42,14 @@ import java.util.Iterator;
  *
  * @author David Jurgens
  */
-public class SparseHashIntegerVector extends SparseHashVector<Integer>
+public class SparseHashIntegerVector extends AbstractIntegerVector
          implements SparseIntegerVector, Iterable<IntegerEntry>, Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private final TIntIntMap map;
+    
+    private final int length;
 
     /**
      * Creates a new vector of the specified length
@@ -50,7 +57,8 @@ public class SparseHashIntegerVector extends SparseHashVector<Integer>
      * @param length the length of this vector
      */
     public SparseHashIntegerVector(int length) {
-        super(length);
+        this.length = length;
+        map = new TIntIntHashMap();
     }
 
     /**
@@ -61,34 +69,34 @@ public class SparseHashIntegerVector extends SparseHashVector<Integer>
      * @param values the intial values for this vector to have
      */
     public SparseHashIntegerVector(int[] values) {
-        super(values.length);
+        this(values.length);
         for (int i = 0; i < values.length; ++i)
             if (values[i] != 0)
-                vector.set(i, values[i]);
+                map.put(i, values[i]);
     }
 
     /**
      * {@inheritDoc}
      */
     public int add(int index, int delta) {
-        int val = get(index);
-        set(index, val + delta);
-        return val + delta;
+        int val = map.get(index);
+        int newVal = val + delta;
+        map.put(index, newVal);
+        return newVal;
     }
 
     /**
      * {@inheritDoc}
      */
     public int get(int index) {
-        Number i = vector.get(index);
-        return (i == null) ? 0 : i.intValue();
+        return map.get(index);
     }
 
     /**
      * {@inheritDoc}
      */
-    public Integer getValue(int index) {
-        return get(index);
+    public int[] getNonZeroIndices() {
+        return map.keys();
     }
 
     /**
@@ -99,30 +107,25 @@ public class SparseHashIntegerVector extends SparseHashVector<Integer>
     public Iterator<IntegerEntry> iterator() {
         return new IntegerIterator();
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public int length() {
+        return length;
+    }    
 
     /**
      * {@inheritDoc}
      */
     public void set(int index, int value) {
-        vector.set(index, value);
-        magnitude = -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void set(int index, Number value) {
-        vector.set(index, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int[] toArray() {
-        int[] array = new int[length()];
-        for (int i : vector.getElementIndices())
-            array[i] = vector.get(i).intValue();
-        return array;
+        int cur = map.get(index);
+        if (value == 0) {
+            if (cur != 0)
+                map.remove(index);
+        }
+        else 
+            map.put(index, value);
     }
 
     /**
@@ -131,21 +134,21 @@ public class SparseHashIntegerVector extends SparseHashVector<Integer>
      */
     class IntegerIterator implements Iterator<IntegerEntry> {
 
-        Iterator<ObjectEntry<Number>> it;
+        TIntIntIterator iter;
 
         public IntegerIterator() {
-            it = vector.iterator();
+            iter = map.iterator();
         }
 
         public boolean hasNext() {
-            return it.hasNext();
+            return iter.hasNext();
         }
 
         public IntegerEntry next() {
-            final ObjectEntry<Number> e = it.next();
+            iter.advance();
             return new IntegerEntry() {
-                public int index() { return e.index(); }
-                public int value() { return e.value().intValue(); }
+                public int index() { return iter.key(); }
+                public int value() { return iter.value(); }
             };
         }
 

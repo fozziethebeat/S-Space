@@ -35,7 +35,7 @@ import java.util.Iterator;
  * @author Keith Stevens
  * @author David Jurgens
  */
-public class CompactSparseIntegerVector
+public class CompactSparseIntegerVector extends AbstractIntegerVector
         implements SparseIntegerVector, Serializable, Iterable<IntegerEntry> {
 
     private static final long serialVersionUID = 1L;
@@ -112,13 +112,6 @@ public class CompactSparseIntegerVector
     /**
      * {@inheritDoc}
      */
-    public Integer getValue(int index) {
-        return get(index);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public int[] getNonZeroIndices() {
         return intArray.getElementIndices();
     }
@@ -160,23 +153,5 @@ public class CompactSparseIntegerVector
     public void set(int index, int value) {
         intArray.set(index,  value);
         magnitude = -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void set(int index, Number value) {
-        set(index, value.intValue());
-        magnitude = -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public int[] toArray() {
-        int[] array = new int[intArray.length()];
-        for (int i : intArray.getElementIndices())
-            array[i] = intArray.getPrimitive(i);
-        return array;
     }
 }

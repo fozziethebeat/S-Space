@@ -26,9 +26,10 @@ import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.Similarity.SimType;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO;
-import edu.ucla.sspace.common.WordComparator;
 
 import edu.ucla.sspace.util.BoundedSortedMap;
+import edu.ucla.sspace.util.NearestNeighborFinder;
+import edu.ucla.sspace.util.PartitioningNearestNeighborFinder;
 import edu.ucla.sspace.util.Pair;
 import edu.ucla.sspace.util.SortedMultiMap;
 
@@ -77,9 +78,10 @@ public class SimilarityListGenerator {
                              "whether to print the similarity score " +
                              "(default: false)",
                              false, null, "Program Options");
-        argOptions.addOption('s', "similarityFunction",
-                             "name of a similarity function (default: cosine)",
-                             true, "String", "Program Options");
+        // dj: current unsupported; will be next release
+        //         argOptions.addOption('s', "similarityFunction",
+        //                              "name of a similarity function (default: cosine)",
+        //                              true, "String", "Program Options");
         argOptions.addOption('n', "numSimilar", "the number of similar words " +
                              "to print (default: 10)", true, "String", 
                              "Program Options");
@@ -153,12 +155,13 @@ public class SimilarityListGenerator {
         // load the behavior options
         final boolean printSimilarity = argOptions.hasOption('p');
 
-        String similarityTypeName = (argOptions.hasOption('s'))
-            ? argOptions.getStringOption('s').toUpperCase() : "COSINE";
+        // dj: setting the similarity type is currently unsupported but will be
+        //     in the next release
 
-        SimType similarityType = SimType.valueOf(similarityTypeName);
-        
-        LOGGER.fine("using similarity measure: " + similarityType);
+        //         String similarityTypeName = (argOptions.hasOption('s'))
+        //             ? argOptions.getStringOption('s').toUpperCase() : "COSINE";        
+        //         SimType similarityType = SimType.valueOf(similarityTypeName);        
+        //         LOGGER.fine("using similarity measure: " + similarityType);
         
         final int numSimilar = (argOptions.hasOption('n'))
             ? argOptions.getIntOption('n') : 10;
@@ -175,14 +178,14 @@ public class SimilarityListGenerator {
         final PrintWriter outputWriter = new PrintWriter(output);
             
         final Set<String> words = sspace.getWords();
-        WordComparator comparator = new WordComparator(numThreads);
+        NearestNeighborFinder nnf = 
+            new PartitioningNearestNeighborFinder(sspace);
 
 
         for (String word : words) {            
             // compute the k most-similar words to this word
             SortedMultiMap<Double,String> mostSimilar =
-                comparator.getMostSimilar(word, sspace, numSimilar,
-                                          similarityType);
+                nnf.getMostSimilar(word, numSimilar);
             
             // once processing has finished write the k most-similar words to
             // the output file.

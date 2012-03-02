@@ -24,6 +24,8 @@ package edu.ucla.sspace.dependency;
 import edu.ucla.sspace.text.StringDocument;
 import edu.ucla.sspace.text.Document;
 
+import java.io.BufferedReader;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -39,21 +41,21 @@ import static org.junit.Assert.*;
 public class CoNLLDependencyExtractorTest {
 
     public static final String SINGLE_PARSE = 
-        "1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
-        "2   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+        "1   mr. _   NNP NNP _   2   NMOD    _   _\n" +
+        "2   holt    _   NNP NNP _   3   SBJ _   _\n" +
         "3   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
         "4   a   _   DT  DT  _   5   NMOD    _   _\n" +
         "5   columnist   _   NN  NN  _   3   PRD _   _\n" +
         "6   for _   IN  IN  _   5   NMOD    _   _\n" +
         "7   the _   DT  DT  _   9   NMOD    _   _\n" +
-        "8   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
-        "9   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+        "8   literary    _   NNP NNP _   9   NMOD    _   _\n" +
+        "9   review  _   NNP NNP _   6   PMOD    _   _\n" +
         "10  in  _   IN  IN  _   9   ADV _   _\n" +
-        "11  London  _   NNP NNP _   10  PMOD    _   _\n" +
+        "11  london  _   NNP NNP _   10  PMOD    _   _\n" +
         "12  .   _   .   .   _   3   P   _   _";
 
     public static final String SECOND_PARSE =
-        "1   Individuell _   AJ  AJ  _   2   AT  _   _\n" +
+        "1   individuell _   AJ  AJ  _   2   AT  _   _\n" +
         "2   beskattning _   N   VN  _   0   ROOT    _   _\n" +
         "3   av  _   PR  PR  _   2   ET  _   _\n" +
         "4   arbetsinkomster _   N   NN  SS  3   PA  _   _\n";
@@ -68,19 +70,19 @@ public class CoNLLDependencyExtractorTest {
         SINGLE_PARSE + "\n" + SECOND_PARSE;
 
     public static final String DOUBLE_ZERO_OFFSET_PARSE = 
-        "0   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
-        "1   Holt    _   NNP NNP _   3   SBJ _   _\n" +
+        "0   mr. _   NNP NNP _   2   NMOD    _   _\n" +
+        "1   holt    _   NNP NNP _   3   SBJ _   _\n" +
         "2   is  _   VBZ VBZ _   0   ROOT    _   _\n" +
         "3   a   _   DT  DT  _   5   NMOD    _   _\n" +
         "4   columnist   _   NN  NN  _   3   PRD _   _\n" +
         "5   for _   IN  IN  _   5   NMOD    _   _\n" +
         "6   the _   DT  DT  _   9   NMOD    _   _\n" +
-        "7   Literary    _   NNP NNP _   9   NMOD    _   _\n" +
-        "8   Review  _   NNP NNP _   6   PMOD    _   _\n" +
+        "7   literary    _   NNP NNP _   9   NMOD    _   _\n" +
+        "8   review  _   NNP NNP _   6   PMOD    _   _\n" +
         "9   in  _   IN  IN  _   9   ADV _   _\n" +
-        "10  London  _   NNP NNP _   10  PMOD    _   _\n" +
+        "10  london  _   NNP NNP _   10  PMOD    _   _\n" +
         "11  .   _   .   .   _   3   P   _   _" + "\n" +
-        "0   Individuell _   AJ  AJ  _   2   AT  _   _\n" +
+        "0   individuell _   AJ  AJ  _   2   AT  _   _\n" +
         "1   beskattning _   N   VN  _   0   ROOT    _   _\n" +
         "2   av  _   PR  PR  _   2   ET  _   _\n" +
         "3   arbetsinkomster _   N   NN  SS  3   PA  _   _\n";
@@ -91,7 +93,7 @@ public class CoNLLDependencyExtractorTest {
      * is connected to {@code relation}.
      */
     protected void evaluateRelations(DependencyTreeNode node,
-                                   List<DependencyRelation> expectedRelations) {
+                                     List<DependencyRelation> expectedRelations) {
         // Check that the relations have the expected number 
         assertEquals(expectedRelations.size(), node.neighbors().size());
 
@@ -99,6 +101,8 @@ public class CoNLLDependencyExtractorTest {
         // Check that all the neighbors are in the e
         for (DependencyRelation rel : node.neighbors()) {
             System.out.println("relation: " + rel);
+            if (!expectedRelations.contains(rel))
+                System.out.printf("FAIL: %s does not contain %s%n", expectedRelations, rel);
             assertTrue(expectedRelations.contains(rel));
             // Remove the relation from the list to double check that the
             // neighbors are a list of duplicate relations.
@@ -163,7 +167,7 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testSingleExtraction() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] nodes = extractor.readNextTree(doc.reader());
 
         assertEquals(12, nodes.length);
@@ -198,14 +202,18 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testDoubleExtraction() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_PARSE);
-        DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
+        Document doc = new StringDocument("\n\n" +
+                                          toTabs(SINGLE_PARSE) +
+                                          "\n" +
+                                          toTabs(SECOND_PARSE));
+        BufferedReader reader = doc.reader();
+        DependencyTreeNode[] relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(12, relations.length);
 
         testFirstRoot(relations, 2);
 
-        relations = extractor.readNextTree(doc.reader());
+        relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
@@ -214,7 +222,7 @@ public class CoNLLDependencyExtractorTest {
     
     @Test public void testRootNode() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
 
         assertEquals(12, relations.length);
@@ -224,7 +232,7 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTrees() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(CONCATONATED_PARSE);
+        Document doc = new StringDocument(toTabs(CONCATONATED_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
@@ -234,11 +242,26 @@ public class CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTreesZeroOffset() throws Exception {
         DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_ZERO_OFFSET_PARSE);
+        Document doc = new StringDocument(toTabs(DOUBLE_ZERO_OFFSET_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
         testSecondRoot(relations, 13);
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

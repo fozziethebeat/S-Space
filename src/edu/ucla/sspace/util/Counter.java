@@ -41,163 +41,97 @@ import java.util.Set;
  *
  * @param T the type of object being counted.
  */
-public class Counter<T> implements Iterable<Map.Entry<T,Integer>>,
-                                   java.io.Serializable {
-
-    private static final long serialVersionUID = 1L;
+public interface Counter<T> extends Iterable<Map.Entry<T,Integer>> {
 
     /**
-     * A mapping from an object to the number of times it has been seen
+     * Adds the counts from the provided {@code Counter} to the current counts,
+     * adding new elements as needed.
+     *
+     * @return the current count for the counted object
      */
-    private final Map<T,Integer> counts;
-
-    /**
-     * The total number of objects that have been counted
-     */
-    private int sum;
-
-    /**
-     * Creates an empty {@code Counter}.
-     */
-    public Counter() {
-        counts = new HashMap<T,Integer>();
-        sum = 0;
-    }
-
-    /**
-     * Creates a {@code Counter} whose initial state has counted all of the
-     * specified items.
-     */
-    public Counter(Collection<? extends T> items) {
-        this();
-        for (T item : items)
-            count(item);
-    }      
+    void add(Counter<? extends T> counter);
     
     /**
      * Counts the object, increasing its total count by 1.
      */
-    public int count(T obj) {
-        Integer count = counts.get(obj);
-        int newCount = (count == null) ? 1 : count + 1;
-        counts.put(obj, newCount);
-        sum++;
-        return newCount;
-    }
+    int count(T obj);
 
     /**
-     * Counts the object, increasing its total count by {@code inc}.
+     * Counts the object, increasing its total count by the specified positive
+     * amount.
+     *
+     * @param count a positive value for the number of times the object occurred
+     *
+     * @return the current count for the counted object
+     *
+     * @throws IllegalArgumentException if {@code count} is not a positive value.
      */
-    public int count(T obj, int inc) {
-        Integer count = counts.get(obj);
-        int newCount = (count == null) ? inc : count + inc;
-        counts.put(obj, newCount);
-        sum += inc;
-        return newCount;
-    }
-    public boolean equals(Object o) {
-        return (o instanceof Counter)
-            && ((Counter)o).counts.equals(counts);
-    }
+    int count(T obj, int count);
+
+    /**
+     * Counts all the elements in the collection.
+     *
+     * @param c a collection of elements to count
+     */
+    void countAll(Collection<? extends T> c);
+
+    boolean equals(Object o);
 
     /**
      * Returns the number of times the specified object has been seen by this
      * counter.
      */
-    public int getCount(T obj) {
-        Integer count = counts.get(obj);
-        return (count == null) ? 0 : count;
-    }
+    int getCount(T obj);
 
     /**
      * Returns the frequency of this object relative to the counts of all other
      * objects.  This value may also be interpreted as the probability of the
      * instance of {@code obj} being seen in the items that have been counted.
      */
-    public double getFrequency(T obj) {
-        double count = getCount(obj);
-        return (sum == 0) ? 0 : count / sum;
-    }
+    double getFrequency(T obj);
 
-    public int hashCode() {
-        return counts.hashCode();
-    }
+    int hashCode();
 
     /**
      * Returns a view of the items currently being counted.  The returned view
      * is read-only; any attempts to modify this view will throw an {@link
      * UnsupportedOperationException}.
      */
-    public Set<T> items() {
-        return Collections.unmodifiableSet(counts.keySet());
-    }
+    Set<T> items();
 
     /**
      * Returns an interator over the elements that have been counted thusfar and
      * their respective counts.
      */
-    public Iterator<Map.Entry<T,Integer>> iterator() {
-        return Collections.unmodifiableSet(counts.entrySet()).iterator();
-    }
+    Iterator<Map.Entry<T,Integer>> iterator();
     
     /**
      * Returns the element that currently has the largest count.  If no objects
      * have been counted, {@code null} is returned.  Ties in counts are
      * arbitrarily broken.
      */
-    public T max() {
-        int maxCount = -1;
-        T max = null;
-        for (Map.Entry<T,Integer> e : counts.entrySet()) {
-            if (e.getValue() > maxCount) {
-                maxCount = e.getValue();
-                max = e.getKey();
-            }
-        }
-        return max;
-    }
+    T max();
 
     /**
      * Returns the element that currently has the smallest count.  If no objects
      * have been counted, {@code null} is returned.  Ties in counts are
      * arbitrarily broken.
      */
-    public T min() {
-        int minCount = -1;
-        T min = null;
-        for (Map.Entry<T,Integer> e : counts.entrySet()) {
-            if (e.getValue() < minCount) {
-                minCount = e.getValue();
-                min = e.getKey();
-            }
-        }
-        return min;
-    }
+    T min();
 
     /**
      * Resets the counts for all objects.  The size of {@link #items()} will be
      * 0 after this call.
      */
-    public void reset() {
-        counts.clear();
-        sum = 0;
-    }
+    void reset();
 
     /**
-     * Returns the number of instances that are currently being counted.
+     * Returns the number of unique instances that are currently being counted.
      */
-    public int size() {
-        return counts.size();
-    }
+    int size();
 
     /**
      * Returns the total number of instances that have been counted.
      */
-    public int sum() {
-        return sum;
-    }
-
-    @Override public String toString() {
-        return counts.toString();
-    }
+    int sum();    
 }

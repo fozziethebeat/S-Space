@@ -31,12 +31,24 @@ package edu.ucla.sspace.vector;
 public interface Vector<T extends Number> {
 
     /**
+     * Returns {@code true} if the object is a {@link Vector} of the same length
+     * and whose corresponding indices have equivalent values.
+     */
+    boolean equals(Object o);
+
+    /**
      * Return the value of the vector at the given index as a {@code Number}.
      *
      * @param index index to retrieve.
      * @return value at index.
      */
     Number getValue(int index);
+
+    /**
+     * Returns the hash code as the sum of the vectors elements, normalized to
+     * an {@code int}.
+     */
+    int hashCode();
 
     /**
      * Return the size of the {@code Vector}.

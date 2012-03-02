@@ -146,7 +146,7 @@ public class StreamingWordsi extends BaseWordsi {
     public void processSpace(Properties props) {
         final double mergeThreshold = .15;
 
-        WorkQueue workQueue = new WorkQueue();
+        WorkQueue workQueue = WorkQueue.getWorkQueue();
         Object key = workQueue.registerTaskGroup(clusterMap.size());
 
         // Iterate through all of the clusters and perform an agglomerative

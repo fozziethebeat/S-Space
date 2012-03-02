@@ -195,7 +195,7 @@ public class WaitingWordsi extends BaseWordsi {
      * {@inheritDoc}
      */
     public void processSpace(final Properties props) {
-        WorkQueue workQueue = new WorkQueue();
+        WorkQueue workQueue = WorkQueue.getWorkQueue();
 
         Object key = workQueue.registerTaskGroup(dataVectors.size());
         // Process each word's context set in a worker thread.

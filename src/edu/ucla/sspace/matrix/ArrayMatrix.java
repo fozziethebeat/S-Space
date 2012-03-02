@@ -21,6 +21,7 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.AbstractDoubleVector;
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 
@@ -29,9 +30,16 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import java.util.Arrays;
+
 
 /**
- * A {@code Matrix} backed by an array.
+ * A {@code Matrix} backed by an array.  The matrix is represented in
+ * row-striped format, so row-based access will have better performance.
+ *
+ * <p> The {@link DoubleVector} views of this matrix are back by data in the
+ * array so changes to the vectors will be reflected in the matrix and vice
+ * versa.
  *
  * @author David Jurgens
  */
@@ -183,12 +191,7 @@ public class ArrayMatrix implements Matrix {
      */
     public DoubleVector getRowVector(int row) {
         checkIndices(row, 0);
-
-        DoubleVector rowArr = new DenseVector(cols);
-        int index = getIndex(row, 0);
-        for (int i = 0; i < cols; ++i)
-            rowArr.set(i, matrix[index++]);
-        return rowArr;
+        return new RowVector(getIndex(row, 0));
     }
 
     /**
@@ -273,5 +276,111 @@ public class ArrayMatrix implements Matrix {
      */
     public int rows() {
         return rows;
+    }
+    
+    /**
+     * A matrix-internal view of a row vector that exposes is contents as a
+     * {@link DoubleVector} without duplicating the data
+     */
+    class RowVector extends AbstractDoubleVector {
+
+        /**
+         * The index into the {@linke ArrayMatrix#matrix} array where the data
+         * for this row is stored
+         */
+        final int startIndex;
+
+        /**
+         * The magnitude of this vector, cached for better performance.
+         */
+        double magnitude;
+
+        public RowVector(int startIndex) {
+            this.startIndex = startIndex;
+            magnitude = -1;
+        }
+
+        /**
+         * Maps the index of this vector an index in the matrix or throws an
+         * {@link IndexOutOfBoundsException} of the vector index is outside of
+         * its dimensions.
+         */
+        private int toMatrixIndex(int index) {
+            int i = startIndex + index;
+            if (i < 0 || i >= startIndex + cols)
+                throw new IndexOutOfBoundsException(
+                    index + " outside vector bounds");
+            return i;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double add(int index, double delta) {
+            int i = toMatrixIndex(index);
+            magnitude = -1;
+            matrix[i] += delta;
+            return matrix[i];
+        }     
+
+        /**
+         * {@inheritDoc}
+         */
+        public void set(int index, double value) {
+            int i = toMatrixIndex(index);
+            magnitude = -1;
+            matrix[i] = value;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void set(int index, Number value) {
+            set(index, value.doubleValue());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double get(int index) {
+            int i = toMatrixIndex(index);
+            return matrix[i];
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Double getValue(int index) {
+            return get(index);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double magnitude() {
+            if (magnitude < 0) {
+                double m = 0;
+                for (int i = startIndex; i < startIndex + cols; ++i) {
+                    double d = matrix[i];
+                    m += d * d;
+                }
+                magnitude = Math.sqrt(m);
+            }
+            return magnitude;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public double[] toArray() {
+            return Arrays.copyOfRange(matrix, startIndex, startIndex + cols);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public int length() {
+            return cols;
+        }
     }
 }

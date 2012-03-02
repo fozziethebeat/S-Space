@@ -21,6 +21,7 @@
 
 package edu.ucla.sspace.dependency;
 
+import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,13 +39,19 @@ import java.util.Deque;
  *
  * Note that this class is <b>NOT</b> thread safe.
  */
-public class DependencyIterator extends BreadthFirstPathIterator {
+public class DependencyIterator implements Iterator<DependencyPath> {
 
     /**
      * The maximum length of the returned paths.  The length is considedered to
      * not include the first term.
      */
     private final int maxPathLength;
+
+    /**
+     * The paths that have been expanded from the starting node but have not yet
+     * been returned.
+     */
+    protected final Queue<SimpleDependencyPath> frontier;
 
     /**
      * The {@link DependencyRelationAcceptor} that validates each link before it is
@@ -68,13 +75,24 @@ public class DependencyIterator extends BreadthFirstPathIterator {
     public DependencyIterator(DependencyTreeNode startNode,
                               DependencyRelationAcceptor acceptor,
                               int maxPathLength) {
-        super(startNode);
         if (maxPathLength < 1)
             throw new IllegalArgumentException(
-                "Must specify a path length greater than 1");
-
-        this.acceptor = acceptor;
+                "Must specify a path length greater than or equal to 1");
         this.maxPathLength = maxPathLength;
+        this.acceptor = acceptor;
+        frontier = new ArrayDeque<SimpleDependencyPath>();
+
+        // Base-case: find all the paths of length 1
+        for (DependencyRelation rel : startNode.neighbors()) {
+            // Orient the path depending on whether the root was the head of the
+            // relationship or not.  This ensures that the root is always the
+            // first node in the path and any expansion will continue away from
+            // the root.
+            if (acceptor.accept(rel)) {
+                frontier.offer(new SimpleDependencyPath(
+                               rel, rel.headNode().equals(startNode)));
+            }
+        }
     }
 
     /**
@@ -82,28 +100,48 @@ public class DependencyIterator extends BreadthFirstPathIterator {
      * relations that are shorter than the maximum path length and that are
      * accepted by the {@code DependencyRelationAcceptor} used by this instance.
      */
-    @Override void advance(DependencyPath path) {
-        // Skip processing paths that would exceed the maximum length
-        if (path.length() == maxPathLength)
+    void advance(SimpleDependencyPath path) {
+        if (path.length() >= maxPathLength)
             return;
 
         // Get the last node and last relation to decide how to expand.
-        DependencyTreeNode last = path.last();
-        DependencyRelation lastRel = path.lastRelation();
+        DependencyRelation lastRelation = path.lastRelation();
+        DependencyTreeNode last = path.last(); 
         
         // Expand all of the possible relations from the last node, creating a
         // new path for each, except if the relation is the one that generated
         // this path.
         for (DependencyRelation rel : last.neighbors()) {
-            // Skip re-adding the current relation and those relations that do
-            // not pass the filter
-            if (lastRel.equals(rel) || !acceptor.accept(rel))
+            // Skip re-adding the current relation
+            if (lastRelation.equals(rel) || !acceptor.accept(rel))
                 continue;
-            // Use an extension of the path, rather than having to copy all of
-            // the nodes again.  This just creates a view of path with rel as
-            // the last relation in path
-            DependencyPath extended = new ExtendedPathView(path, rel);
+            SimpleDependencyPath extended = path.extend(rel);
             frontier.offer(extended);
         }
+    }
+
+    /**
+     * Returns {@code true} if there are still paths to return for the tree.
+     */
+    public boolean hasNext() {
+        return !frontier.isEmpty();
+    }
+
+    /**
+     * Returns the next {@code DependencyPath} in the tree whose length is equal
+     * or greater than the previously returned path.
+     */
+    public DependencyPath next() {
+        SimpleDependencyPath p = frontier.remove();
+        // Expand the frontier 1 link starting from the current path
+        advance(p);
+        return p;
+    }
+
+    /**
+     * Throws an {@code UnsupportedOperationException} if called
+     */
+    public void remove() {
+        throw new UnsupportedOperationException("Removal is not possible");
     }
 }

@@ -24,6 +24,8 @@ package edu.ucla.sspace.dependency;
 import edu.ucla.sspace.text.StringDocument;
 import edu.ucla.sspace.text.Document;
 
+import java.io.BufferedReader;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -42,21 +44,21 @@ import static org.junit.Assert.*;
 public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
 
     public static final String SINGLE_PARSE = 
-        "Mr. _   NNP 1  2   NMOD    _   _\n" +
-        "Holt    _   NNP 2   3   SBJ _   _\n" +
+        "mr. _   NNP 1  2   NMOD    _   _\n" +
+        "holt    _   NNP 2   3   SBJ _   _\n" +
         "is  _   VBZ 3   0   ROOT    _   _\n" +
         "a   _   DT  4   5   NMOD    _   _\n" +
         "columnist   _   NN  5   3   PRD _   _\n" +
         "for _   IN  6   5   NMOD    _   _\n" +
         "the _   DT  7   9   NMOD    _   _\n" +
-        "Literary    _   NNP 8   9   NMOD    _   _\n" +
-        "Review  _   NNP 9   6   PMOD    _   _\n" +
+        "literary    _   NNP 8   9   NMOD    _   _\n" +
+        "review  _   NNP 9   6   PMOD    _   _\n" +
         "in  _   IN  10   9   ADV _   _\n" +
-        "London  _   NNP 11   10  PMOD    _   _\n" +
+        "london  _   NNP 11   10  PMOD    _   _\n" +
         ".   _   .   12   3   P   _   _";
 
     public static final String SECOND_PARSE =
-        "Individuell _   AJ  1   2   AT  _   _\n" +
+        "individuell _   AJ  1   2   AT  _   _\n" +
         "beskattning _   N  2   0   ROOT    _   _\n" +
         "av  _   PR  3   2   ET  _   _\n" +
         "arbetsinkomster _   NN  4  3   PA  _   _\n";
@@ -71,26 +73,26 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
         SINGLE_PARSE + "\n" + SECOND_PARSE;
 
     public static final String DOUBLE_ZERO_OFFSET_PARSE = 
-        "Mr. _   NNP 0   2   NMOD    _   _\n" +
-        "Holt    _   NNP 1   3   SBJ _   _\n" +
+        "mr. _   NNP 0   2   NMOD    _   _\n" +
+        "holt    _   NNP 1   3   SBJ _   _\n" +
         "is  _   VBZ 2   0   ROOT    _   _\n" +
         "a   _   DT  3   5   NMOD    _   _\n" +
         "columnist   _   NN  4   3   PRD _   _\n" +
         "for _   IN  5   5   NMOD    _   _\n" +
         "the _   DT  6  9   NMOD    _   _\n" +
-        "Literary    _   NNP 7   9   NMOD    _   _\n" +
-        "Review  _   NNP 8   6   PMOD    _   _\n" +
+        "literary    _   NNP 7   9   NMOD    _   _\n" +
+        "review  _   NNP 8   6   PMOD    _   _\n" +
         "in  _   IN  9   9   ADV _   _\n" +
         "London  _   NNP 10   10  PMOD    _   _\n" +
         ".   _   .   11   3   P   _   _" + "\n" +
-        "Individuell _   AJ  0   2   AT  _   _\n" +
+        "individuell _   AJ  0   2   AT  _   _\n" +
         "beskattning _   N  1   0   ROOT    _   _\n" +
         "av  _   PR  2   2   ET  _   _\n" +
         "arbetsinkomster _   NN  3  3   PA  _   _\n";
  
     @Test public void testSingleExtraction() throws Exception {
         DependencyExtractor extractor = new WaCKyDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] nodes = extractor.readNextTree(doc.reader());
 
         assertEquals(12, nodes.length);
@@ -124,14 +126,15 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
 
     @Test public void testDoubleExtraction() throws Exception {
         DependencyExtractor extractor = new WaCKyDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_PARSE);
-        DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
+        Document doc = new StringDocument(toTabs(DOUBLE_PARSE));
+        BufferedReader reader = doc.reader();
+        DependencyTreeNode[] relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(12, relations.length);
 
         testFirstRoot(relations, 2);
 
-        relations = extractor.readNextTree(doc.reader());
+        relations = extractor.readNextTree(reader);
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
@@ -140,7 +143,7 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
     
     @Test public void testRootNode() throws Exception {
         DependencyExtractor extractor = new WaCKyDependencyExtractor();
-        Document doc = new StringDocument(SINGLE_PARSE);
+        Document doc = new StringDocument(toTabs(SINGLE_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
 
         assertEquals(12, relations.length);
@@ -150,7 +153,7 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTrees() throws Exception {
         DependencyExtractor extractor = new WaCKyDependencyExtractor();
-        Document doc = new StringDocument(CONCATONATED_PARSE);
+        Document doc = new StringDocument(toTabs(CONCATONATED_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
@@ -160,11 +163,26 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
 
     @Test public void testConcatonatedTreesZeroOffset() throws Exception {
         DependencyExtractor extractor = new WaCKyDependencyExtractor();
-        Document doc = new StringDocument(DOUBLE_ZERO_OFFSET_PARSE);
+        Document doc = new StringDocument(toTabs(DOUBLE_ZERO_OFFSET_PARSE));
         DependencyTreeNode[] relations = extractor.readNextTree(doc.reader());
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
         testSecondRoot(relations, 13);
+    }
+
+    static String toTabs(String doc) {
+        StringBuilder sb = new StringBuilder();
+        String[] arr = doc.split("\n");
+        for (String line : arr) {
+            String[] cols = line.split("\\s+");
+            for (int i = 0; i < cols.length; ++i) {
+                sb.append(cols[i]);
+                if (i + 1 < cols.length)
+                    sb.append('\t');
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

@@ -92,10 +92,10 @@ public class SvdlibjDriver {
         // itself computes all that's needed to covert to the SMat format.
         // However, to avoid having an explosion of duplicated formatting logic,
         // the conversion call is just used instead to simplify the code.
-        if (format != Format.SVDLIBC_SPARSE_BINARY) 
-           matrix = MatrixIO.convertFormat(
-                   matrix, format, Format.SVDLIBC_SPARSE_BINARY);
-        SMat input = readToSMat(matrix);
+        File formatted = MatrixIO.convertFormat(
+            matrix, format, Format.SVDLIBC_SPARSE_BINARY);
+        SMat input = readToSMat(formatted);
+        formatted.delete();
         return svd(input, dimensions);
     }
 

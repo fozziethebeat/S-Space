@@ -41,6 +41,7 @@ public class DefaultPermutationFunctionTest {
 
         DefaultPermutationFunction func = new DefaultPermutationFunction();
         Vector permuted = func.permute(v, 1);
+        System.out.printf("%d %d\n", permuted.getValue(0).intValue(), v.get(0));
         assertNotEquals(v, permuted);
         assertEquals(v.length(), permuted.length());
         assertTrue(permuted instanceof IntegerVector);

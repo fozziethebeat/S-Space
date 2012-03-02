@@ -6,7 +6,6 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Similarity;
 import edu.ucla.sspace.common.Similarity.SimType;
 import edu.ucla.sspace.common.StaticSemanticSpace;
-import edu.ucla.sspace.common.WordComparator;
 
 import edu.ucla.sspace.hal.LinearWeighting;
 
@@ -15,7 +14,9 @@ import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.corpora.SemEvalLexSubReader;
 
 import edu.ucla.sspace.util.MultiMap;
+import edu.ucla.sspace.util.NearestNeighborFinder;
 import edu.ucla.sspace.util.SerializableUtil;
+import edu.ucla.sspace.util.SimpleNearestNeighborFinder;
 
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
@@ -44,7 +45,8 @@ public class LexSubWordsiMain {
         Wordsi wordsi = new LexSubWordsi(args[3], args[0]);
 
         System.err.println("Loading basis mapping and extractor.");
-        BasisMapping<String, String> basis = SerializableUtil.load(args[2]);
+        BasisMapping<String, String> basis = 
+            SerializableUtil.load(new File(args[2]));
         basis.setReadOnly(true);
         ContextGenerator generator =
             new WordOccrrenceContextGenerator(basis, new LinearWeighting(), 25);
@@ -59,7 +61,7 @@ public class LexSubWordsiMain {
     }
 
     public static class LexSubWordsi implements Wordsi {
-        private final WordComparator comparator;
+        private final NearestNeighborFinder comparator;
 
         private final PrintWriter output;
 
@@ -67,9 +69,9 @@ public class LexSubWordsiMain {
 
         public LexSubWordsi(String outFile, String sspaceFile) {
             try {
-                comparator = new WordComparator();
                 output = new PrintWriter(outFile);
                 wordsiSpace = new StaticSemanticSpace(sspaceFile);
+                comparator = new SimpleNearestNeighborFinder(wordsiSpace);
             } catch (IOException ioe) {
                 throw new IOError(ioe);
             }
@@ -86,10 +88,9 @@ public class LexSubWordsiMain {
             System.err.printf("Processing %s\n", secondary);
             String bestSense = getBaseSense(focus, vector);
             if (bestSense == null)
-                return;
-
+                return;            
             MultiMap<Double, String> topWords = comparator.getMostSimilar(
-                    bestSense, wordsiSpace, 10, SimType.COSINE);
+                    bestSense, 10);
             output.printf("%s ::", secondary);
             for (String term : topWords.values())
                 output.printf(" %s", term);

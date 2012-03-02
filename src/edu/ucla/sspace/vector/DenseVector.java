@@ -34,7 +34,8 @@ import java.util.Arrays;
  *
  * @author Keith Stevens
 */
-public class DenseVector implements DoubleVector, Serializable {
+public class DenseVector extends AbstractDoubleVector
+        implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -108,31 +109,8 @@ public class DenseVector implements DoubleVector, Serializable {
     /**
      * {@inheritDoc}
      */
-    public void set(int index, double value) {
-        magnitude = -1;
-        vector[index] = value;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void set(int index, Number value) {
-        magnitude = -1;
-        set(index, value.doubleValue());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public double get(int index) {
         return vector[index];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Double getValue(int index) {
-        return get(index);
     }
 
     /**
@@ -146,6 +124,14 @@ public class DenseVector implements DoubleVector, Serializable {
             magnitude = Math.sqrt(m);
         }
         return magnitude;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void set(int index, double value) {
+        magnitude = -1;
+        vector[index] = value;
     }
 
     /**

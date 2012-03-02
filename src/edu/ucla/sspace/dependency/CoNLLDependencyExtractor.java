@@ -296,7 +296,7 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
             sb.append(line).append("\n");
 
             // CoNLL formats using tabs between features.
-            String[] nodeFeatures = line.split("\\s+");
+            String[] nodeFeatures = line.split("\t");
 
             // Multiple parse trees may be within the same set of lines, so in
             // order for the later parse trees to be linked correctly, we need
@@ -382,7 +382,7 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
      * lemma.  If neither case holds, the original term is returned.
      */
     private String getWord(String[] nodeFeatures) {
-        String word = nodeFeatures[formIndex].toLowerCase();
+        String word = nodeFeatures[formIndex];
         // Filter if neccessary.
         if (filter != null && !filter.accept(word))
             return IteratorFactory.EMPTY_TOKEN;

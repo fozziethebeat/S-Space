@@ -88,8 +88,10 @@ public class UkWacDependencyFileIterator implements Iterator<Document> {
             if (line.startsWith("<s>") || line.startsWith("</s>"))
                 continue;
 
-            // Append the token line.
-            sb.append(line).append("\n");
+            // Append the token line, while avoiding blank lines that seemingly
+            // creep into the corpus.
+            if (line.length() > 0)
+                sb.append(line).append("\n");
        }
 
         return sb.toString();

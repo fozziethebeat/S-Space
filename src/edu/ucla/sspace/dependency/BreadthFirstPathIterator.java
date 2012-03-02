@@ -50,15 +50,38 @@ public class BreadthFirstPathIterator implements Iterator<DependencyPath> {
      * The paths that have been expanded from the starting node but have not yet
      * been returned.
      */
-    protected final Queue<DependencyPath> frontier;
-    
+    protected final Queue<SimpleDependencyPath> frontier;
+
+    /**
+     * The maximum length of any path returned by the iterator.
+     */
+    private final int maxPathLength;
+
     /**
      * Creates a new iterator over all the paths starting at the provided index.
      *
      * @param startNode the node that will start all the paths to be generated.
      */
     public BreadthFirstPathIterator(DependencyTreeNode startNode) {
-        frontier = new ArrayDeque<DependencyPath>();
+        this(startNode, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a new iterator over all the paths starting at the provided index
+     * that will only return paths up to the specified maximum length.
+     *
+     * @param startNode the node that will start all the paths to be generated.
+     * @param maxPathLength the maximum path length to return
+     *
+     * @throws IllegalArgumentException if {@maxPathLength} is &lt; 1.
+     */
+    public BreadthFirstPathIterator(DependencyTreeNode startNode, 
+                                    int maxPathLength) {
+        if (maxPathLength < 1)
+            throw new IllegalArgumentException(
+                "Must specify a path length greater than or equal to 1");
+        this.maxPathLength = maxPathLength;
+        frontier = new ArrayDeque<SimpleDependencyPath>();
 
         // Base-case: find all the paths of length 1
         for (DependencyRelation rel : startNode.neighbors()) {
@@ -66,10 +89,8 @@ public class BreadthFirstPathIterator implements Iterator<DependencyPath> {
             // relationship or not.  This ensures that the root is always the
             // first node in the path and any expansion will continue away from
             // the root.
-            SimpleDependencyPath p = new SimpleDependencyPath(
-                Collections.singletonList(rel), 
-                rel.headNode().equals(startNode));
-            frontier.offer(p);
+            frontier.offer(new SimpleDependencyPath(
+                               rel, rel.headNode().equals(startNode)));
         }
     }
 
@@ -77,22 +98,22 @@ public class BreadthFirstPathIterator implements Iterator<DependencyPath> {
      * Expands the breadth-first frontier by adding all the new paths one link
      * away to the end of {@code frontier}.
      */
-    /* package-private */ void advance(DependencyPath path) {
+    /* package-private */ void advance(SimpleDependencyPath path) {
+        if (path.length() >= maxPathLength)
+            return;
+
         // Get the last node and last relation to decide how to expand.
-        DependencyTreeNode last = path.last();
-        DependencyRelation lastRel = path.lastRelation();
+        DependencyRelation lastRelation = path.lastRelation();
+        DependencyTreeNode last = path.last(); 
         
         // Expand all of the possible relations from the last node, creating a
         // new path for each, except if the relation is the one that generated
         // this path.
         for (DependencyRelation rel : last.neighbors()) {
             // Skip re-adding the current relation
-            if (lastRel.equals(rel))
+            if (lastRelation.equals(rel))
                 continue;
-            // Use an extension of the path, rather than having to copy all of
-            // the nodes again.  This just creates a view of path with rel as
-            // the last relation in path
-            DependencyPath extended = new ExtendedPathView(path, rel);
+            SimpleDependencyPath extended = path.extend(rel);
             frontier.offer(extended);
         }
     }
@@ -109,7 +130,7 @@ public class BreadthFirstPathIterator implements Iterator<DependencyPath> {
      * or greater than the previously returned path.
      */
     public DependencyPath next() {
-        DependencyPath p = frontier.remove();
+        SimpleDependencyPath p = frontier.remove();
         // Expand the frontier 1 link starting from the current path
         advance(p);
         return p;

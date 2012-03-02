@@ -73,7 +73,7 @@ public class NonNegativeMatrixFactorizationMultiplicativeTest {
                 double v = 0;
                 for (int k = 0; k < 2; ++k)
                     v += W.get(r, k) * H.get(k, c);
-                assertEquals(EXPECTED[r][c], v, .001);
+                assertEquals(EXPECTED[r][c], v, .01);
             }
         }
     }
