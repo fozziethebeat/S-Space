@@ -30,6 +30,7 @@ import edu.ucla.sspace.matrix.Matrix.Type;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.OnDiskMatrix;
+import edu.ucla.sspace.matrix.SymmetricMatrix;
 
 import edu.ucla.sspace.util.WorkQueue;
 
@@ -1131,9 +1132,9 @@ public class HierarchicalAgglomerativeClustering implements Clustering {
      * specified similarity function
      */
     public static Matrix computeSimilarityMatrix(Matrix m, 
-                                                  SimType similarityFunction) {
-        Matrix similarityMatrix = 
-            Matrices.create(m.rows(), m.rows(), Matrix.Type.DENSE_ON_DISK);
+                                                 SimType similarityFunction) {
+        Matrix similarityMatrix = Matrices.create(
+                m.rows(), m.rows(), Matrix.Type.DENSE_ON_DISK);
         for (int i = 0; i < m.rows(); ++i) {
             for (int j = i + 1; j < m.rows(); ++j) {
                 double similarity = 

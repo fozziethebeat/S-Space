@@ -73,9 +73,15 @@ def bestOfK(partitions:Array[Partition], numClusters:Int) = {
     bestPartition
 }
 
+def printBest(best:Partition) {
+    println("""alignl %pi^"*" = \{ \{""")
+    println(best.clusters.map(_.mkString(", ")).mkString("""\} newline alignl phantom {%pi^"*" = \{}  \{"""))
+    println("""\}""")
+}
+
 def boem(partitions:Array[Partition], numClusters:Int) : Partition = {
-    //var best = Partition(bestOfK(partitions, numClusters))
-    var best = Partition(agglo(partitions, numClusters))
+    var best = Partition(bestOfK(partitions, numClusters))
+    //var best = Partition(agglo(partitions, numClusters))
     val numPoints = best.assignments.size
     val numPartitions = partitions.size
 
@@ -109,8 +115,7 @@ def boem(partitions:Array[Partition], numClusters:Int) : Partition = {
     def getDelta(i: Int) =
         (moveCost.get(i,best.assignments(i))-bestMoves(i)._1, i)
 
-    val maxIterations = 200
-    for (i <- 0 until maxIterations) {
+    for (i <- 0 until 200) {
         // Get the best one element move by finding the element with the largest
         // difference from it's current cluster to it's best next cluster.
         var bestMove = getDelta(0)
@@ -153,55 +158,6 @@ def boem(partitions:Array[Partition], numClusters:Int) : Partition = {
     }
     best
 }
-
-/*
-    var improved = true
-    var bestMove = (-1, -1)
-    var bestScore = totalCost(best, partitions)
-    var count = 0
-    while (improved) {
-        System.err.println("reporter:counter:boem,move,1")
-        improved = false
-        // Consider moving each data point.
-        for (r <- 0 until numPoints) {
-            // Get the points current cluster.
-            val elemCluster = best.assignments(r)
-
-            // Define a helper function for computing the cost of moving the
-            // point without actually changing the points assignment.
-            def move(c:Int) = {
-                best.move(r, c)
-                val cost = totalCost(best, partitions)
-                best.move(r, elemCluster)
-                cost
-            }
-
-            // Check the improvement for moving the point to each alternate
-            // cluster and update the best score for it.
-            for (c <- 0 until numClusters) {
-                val score = if (c == elemCluster) bestScore
-                            else move(c)
-                if (score < bestScore) {
-                    bestScore = score
-                    bestMove = (r, c)
-                    improved = true
-                }
-            }
-        }
-
-        // If we found an improvement, make the move.
-        if (improved)
-            best.move(bestMove._1, bestMove._2)
-
-        // Set a hard counter so that the moving does not get stuck in a local
-        // minimum of swaps.
-        count += 1
-        if (count == 200)
-            improved = false
-    }
-    best
-}
-*/
 
 def totalCost(partition: Partition, partitions: Array[Partition]) =
     partitions.par.map(partition.sdd(_)).sum
@@ -299,8 +255,8 @@ object Partition {
         val lines = Source.fromFile(clusterSolution).getLines
         val Array(n, c) = lines.next.split("\\s+").map(_.toInt)
         val assignments = new Array[Int](n)
-        val clusters = (0 until c).toArray.map(_ => new HashSet[Int]())
-        for ((line, ci) <- lines zipWithIndex;
+        val clusters = Array.fill(c)(new HashSet[Int]())
+        for ((line, ci) <- lines.filter(_!= "").zipWithIndex; 
              elem <- line.split("\\s+").map(_.toInt)) {
             assignments(elem) = ci
             clusters(ci) += (elem)

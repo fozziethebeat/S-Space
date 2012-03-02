@@ -37,10 +37,10 @@ import edu.ucla.sspace.util.IntegerEntry;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.VectorMath;
-import edu.ucla.sspace.vector.DoubleVector;
 
 import java.lang.reflect.Method;
 
@@ -699,23 +699,24 @@ public class Similarity {
         check(a, b);
         
         if (a instanceof SparseVector && b instanceof SparseVector) {
-            SparseVector svA = (SparseVector)a;
-            SparseVector svB = (SparseVector)b;
-
-            int[] aNonZero = svA.getNonZeroIndices();
-            int[] bNonZero = svB.getNonZeroIndices();
-            HashSet<Integer> sparseIndicesA = new HashSet<Integer>(
-                    aNonZero.length);
-            double sum = 0;
-            for (int nonZero : aNonZero) {
-                sum += Math.pow((a.get(nonZero) - b.get(nonZero)), 2);
-                sparseIndicesA.add(nonZero);
+            SparseDoubleVector svA = (SparseDoubleVector)a;
+            SparseDoubleVector svB = (SparseDoubleVector)b;
+            if (svA.getNonZeroIndices().length >
+                svB.getNonZeroIndices().length) {
+                SparseDoubleVector t = svA;
+                svA = svB;
+                svB = t;
             }
 
-            for (int nonZero : bNonZero)
-                if (!sparseIndicesA.contains(nonZero))
-                    sum += Math.pow(b.get(nonZero), 2);
-            return sum;
+            double sum = 0;
+            double bMagnitude = Math.pow(b.magnitude(), 2);
+            for (int nonZero : svA.getNonZeroIndices()) {
+                double value = svB.get(nonZero);
+                bMagnitude -= value * value;
+                sum += Math.pow((svA.get(nonZero) - value), 2);
+            }
+            sum += bMagnitude;
+            return (sum < 0d) ? 0 : Math.sqrt(sum);
         } else if (b instanceof SparseVector) {
             // If b is sparse, use a special case where we use the cached
             // magnitude of a and the sparsity of b to avoid most of the

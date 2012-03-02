@@ -326,6 +326,24 @@ public class VectorMath {
         double dotProduct = 0;
         // Special case if either of the vectors is a sparse vectors to save on
         // computation costs.
+        if (x instanceof SparseDoubleVector &&
+            y instanceof SparseDoubleVector) {
+            // If both vectors are sparse, then determine which one has fewer
+            // non zero values and iterate over that one.
+            SparseDoubleVector sx = (SparseDoubleVector) x;
+            SparseDoubleVector sy = (SparseDoubleVector) y;
+
+            // y is shorter than x, so swap and iterate over y's indices.
+            if (sx.getNonZeroIndices().length >
+                sy.getNonZeroIndices().length) {
+                SparseDoubleVector t = sx;
+                sx = sy;
+                sy = t;
+            }
+
+            for (int c : sx.getNonZeroIndices())
+                dotProduct += sx.get(c) * sy.get(c);
+        }
         if (x instanceof SparseDoubleVector) {
             SparseDoubleVector sdv = (SparseDoubleVector)x;
             for (int i  : sdv.getNonZeroIndices()) 

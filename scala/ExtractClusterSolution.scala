@@ -52,9 +52,9 @@ object ExtractClusterSolution {
                 printf("%s %s %s.%d\n", term, header, term, bestIndex)
             }
         } else {
-            val headers = Source.fromFile(args(2)).getLines.toList
+            val headers = Source.fromFile(args(1)).getLines.toList
             val term = headers(0).replaceAll(".[0-9]+", "")
-            val clusterData = Source.fromFile(args(3)).getLines
+            val clusterData = Source.fromFile(args(2)).getLines
             clusterData.next
             for ((line, clusterId) <- clusterData zipWithIndex ;
                  x <- line.split("\\s+") if x != "" )

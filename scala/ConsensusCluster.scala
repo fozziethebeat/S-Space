@@ -1,8 +1,7 @@
 import edu.ucla.sspace.common.ArgOptions
 import edu.ucla.sspace.clustering.Assignments
 import edu.ucla.sspace.clustering.Clustering
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering.ClusterLinkage
+import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering
 import edu.ucla.sspace.matrix.CellMaskedMatrix
 import edu.ucla.sspace.matrix.CellMaskedSparseMatrix
 import edu.ucla.sspace.matrix.Matrices
@@ -12,6 +11,7 @@ import edu.ucla.sspace.matrix.MatrixIO.Format
 import edu.ucla.sspace.matrix.SparseMatrix
 //import edu.ucla.sspace.matrix.ScalarMatrix
 import edu.ucla.sspace.matrix.SymmetricIntMatrix
+import edu.ucla.sspace.sim.CosineSimilarity;
 import edu.ucla.sspace.util.Counter
 import edu.ucla.sspace.util.ReflectionUtil
 
@@ -40,14 +40,15 @@ object ConsensusCluster {
      */
     def rowSubSample(matrix: Matrix, indicators: Matrix, 
                      fraction: Double, useGraphs: Boolean) = {
+        var start = System.currentTimeMillis
         val indices = 0 until matrix.rows
         val dims = (fraction * matrix.rows).toInt
         val rowMap:Array[Int] = (Random.shuffle(indices) take dims) toArray
         val columnMap:Array[Int] = if (useGraphs) rowMap 
                                    else 0 until matrix.columns toArray
 
-        for (Array(r1, r2) <- rowMap.combinations(2))
-            indicators.set(r1, r2, indicators.get(r1, r2) + 1)
+        start = System.currentTimeMillis
+        updateMatrix(rowMap.toSet, indicators)
         matrix match {
             case sm:SparseMatrix =>
                 (new CellMaskedSparseMatrix(sm, rowMap, columnMap), rowMap)
@@ -69,12 +70,11 @@ object ConsensusCluster {
      *         each cluster.
      */
     def findClusters(assignments: Assignments, rowMap: Array[Int]) = {
-        val clusters = 0 until assignments.numClusters map {
-            _ => HashSet[Int]() }
+        val clusters = Array.fill(assignments.numClusters)(new HashSet[Int]())
         for ((assignment, i) <- assignments.assignments zipWithIndex)
             clusters(assignment(0)).add(
               if (rowMap == null) i else rowMap(i))
-        clusters map { cluster => cluster toArray }
+        clusters.map(_.toSet)
     }
 
     def consensus(matrix: Matrix, indicators:Matrix, row: Int, col: Int) = {
@@ -99,12 +99,14 @@ object ConsensusCluster {
     def printAssignments(assignments: Assignments, rows: Int, fileName: String) { 
         val writer = new PrintWriter(fileName)
         writer.println("%d %d".format(rows, assignments.numClusters))
-        for (points <- findClusters(assignments, null)) {
-            for (point <- points)
-                writer.print("%d ".format(point))
-            writer.println
-        }
+        for (points <- findClusters(assignments, null))
+            writer.println(points.mkString(" "))
         writer.close
+    }
+
+    def updateMatrix(points: Set[Int], matrix: Matrix) {
+        for (Array(x, y) <- points.subsets(2).map(_.toArray))
+            matrix.add(x,y,1)
     }
 
     def printSingleCluster(numRows: Int, outputBase: String) {
@@ -207,15 +209,15 @@ object ConsensusCluster {
         (1 to numSamples).par foreach { h =>
             var failed = true
             while (failed) {
+            printf("Forming sampled dataset k: %d, h: %d\n", k, h)
             val (sampledMatrix, rowMap) = rowSubSample(
                 dataset, indicators, dimFraction, useGraphs)
             printf("Running consensus clustering k: %d, h: %d\n", k, h)
             try {
             val assignments = clustering.cluster(
                 sampledMatrix, numPartitions, props)
-            for (points <- findClusters(assignments, rowMap);
-                 Array(x, y) <- points.combinations(2))
-                adjacency.add(x,y,1)
+            for (points <- findClusters(assignments, rowMap))
+                updateMatrix(points, adjacency)
             failed = false
             } catch {
                 case _ => failed = true
@@ -227,10 +229,8 @@ object ConsensusCluster {
         printConsensusMatrix(adjacency, indicators, k, vargs(5))
 
         System.err.println("reporter:status:final hac")
-        val hacSol = HierarchicalAgglomerativeClustering.toAssignments(
-            HierarchicalAgglomerativeClustering.clusterSimilarityMatrix(
-                adjacency, -1, ClusterLinkage.MEAN_LINKAGE, k),
-            null, k)
+        val hacSol = NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
+            adjacency, new CosineSimilarity(), k);
         printAssignments(hacSol, adjacency.rows, 
                          "%s.cca%02d".format(vargs(5), k))
 

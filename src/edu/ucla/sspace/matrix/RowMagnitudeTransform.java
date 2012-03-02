@@ -54,7 +54,7 @@ public class RowMagnitudeTransform extends BaseTransform {
      * Returns the name of this transform.
      */
     public String toString() {
-        return "TF-IDF";
+        return "RowMagnitude";
     }
 
     public class RowMagnitudeGlobalTransform implements GlobalTransform {

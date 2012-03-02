@@ -217,10 +217,9 @@ object AdjustedMutualInformation {
         // not, return 1.0.
         val rows = matches.size
         val columns = matches(0).size
-        if (rows == 1 &&
-            columns == 1) {
-            printf(" 0.0 0.0 0.0 0.0 0.0\n")
-            return 0.0
+        if (rows == 1 && columns == 1) {
+            printf(" 1.0 0.0 0.0 0.0 0.0\n")
+            return 1.0
         }
 
         // Compute the total counts for each class and cluster and the total
