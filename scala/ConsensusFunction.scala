@@ -1,6 +1,6 @@
 import edu.ucla.sspace.clustering.Assignments
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering
-import edu.ucla.sspace.clustering.HierarchicalAgglomerativeClustering.ClusterLinkage
+import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering
+import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering.ClusterLink
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.Matrix
 import edu.ucla.sspace.matrix.SymmetricMatrix
@@ -52,11 +52,9 @@ def agglo(partitions:Array[Partition], numClusters:Int) = {
     for (r <- 0 until rows; c <- (r+1) until rows)
         adjacency.set(r,c, adjacency.get(r,c) / indicators.get(r,c))
 
-    val assignments = HierarchicalAgglomerativeClustering.toAssignments(
-        HierarchicalAgglomerativeClustering.clusterSimilarityMatrix(
-            adjacency, -1, ClusterLinkage.MEAN_LINKAGE, numClusters),
-        null, numClusters)
-    Partition(assignments)
+    val sol = NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
+            adjacency, ClusterLink.MEAN_LINK, numClusters)
+    Partition(sol)
 }
 
 def bestOfK(partitions:Array[Partition], numClusters:Int) = {

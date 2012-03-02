@@ -2,6 +2,7 @@ import edu.ucla.sspace.common.ArgOptions
 import edu.ucla.sspace.clustering.Assignments
 import edu.ucla.sspace.clustering.Clustering
 import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering
+import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering.ClusterLink
 import edu.ucla.sspace.matrix.CellMaskedMatrix
 import edu.ucla.sspace.matrix.CellMaskedSparseMatrix
 import edu.ucla.sspace.matrix.Matrices
@@ -11,7 +12,6 @@ import edu.ucla.sspace.matrix.MatrixIO.Format
 import edu.ucla.sspace.matrix.SparseMatrix
 //import edu.ucla.sspace.matrix.ScalarMatrix
 import edu.ucla.sspace.matrix.SymmetricIntMatrix
-import edu.ucla.sspace.sim.CosineSimilarity;
 import edu.ucla.sspace.util.Counter
 import edu.ucla.sspace.util.ReflectionUtil
 
@@ -229,11 +229,10 @@ object ConsensusCluster {
         printConsensusMatrix(adjacency, indicators, k, vargs(5))
 
         System.err.println("reporter:status:final hac")
-        val hacSol = NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
-            adjacency, new CosineSimilarity(), k);
-        printAssignments(hacSol, adjacency.rows, 
+        val sol = NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
+            adjacency, ClusterLink.MEAN_LINK, k);
+        printAssignments(sol, adjacency.rows, 
                          "%s.cca%02d".format(vargs(5), k))
-
         println("Done!")
     }
 }
