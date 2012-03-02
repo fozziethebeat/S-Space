@@ -30,6 +30,7 @@ import java.io.IOError;
 import java.io.IOException;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 
 /**
@@ -88,12 +89,17 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
         nextDoc = null;
         StringBuilder sb = new StringBuilder();
         String line = null;
+        next_doc:
         while ((line = documentsReader.readLine()) != null) {
             // The <text> tag contains the document id, so update where the
             // source of all the following sentences
             if (line.contains("<text")) {
                 int start = line.indexOf("\"");
+                if (start < 0)
+                    continue;
                 int end = line.indexOf("\"", start + 1);
+                if (end < 0)
+                    continue;
                 currentSource = line.substring(start+1, end);                 
             }            
             // If the line indicates the start of a new sentence, then pull out
@@ -109,8 +115,11 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
                         int start = line.indexOf("\"");
                         int end = line.indexOf("\"", start + 1);
                         if (end < 0) {
-                            throw new IllegalStateException("Unable to find " + 
-                                "closing \" in text element: " + line);
+                            // Reset the contents of the current document so
+                            // that if we managed to find another document, its
+                            // contents aren't corrupted.
+                            sb.setLength(0);
+                            continue next_doc;
                         }
                         currentSource = line.substring(start+1, end);
                     }
@@ -137,11 +146,25 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
      * Returns the next document from the file.
      */
     public LabeledParsedDocument next() {
+        if (nextDoc == null)
+            throw new NoSuchElementException("No further documents");
         LabeledParsedDocument next = nextDoc;
-        try {
-            advance();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
+        while (true) {
+            try {
+                advance();
+                break;
+            } 
+            // Case for if we didn't property read the line
+            catch (IOException ioe) {
+                throw new IOError(ioe);
+            } 
+            // Some lines in the PukWaC are corrupted due to missing characters.
+            // We silently catch these errors here and try to advance further to
+            // the next parse tree.  Note that if none further exist, advance
+            // will still return and we will break from the loop.
+            catch (Exception e) {
+
+            }
         }
         return next;
     }        

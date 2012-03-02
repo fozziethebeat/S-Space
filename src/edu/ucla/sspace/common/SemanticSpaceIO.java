@@ -24,6 +24,7 @@ package edu.ucla.sspace.common;
 import edu.ucla.sspace.util.SerializableUtil;
 
 import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.SparseVector;
 import edu.ucla.sspace.vector.Vector;
@@ -404,8 +405,33 @@ public class SemanticSpaceIO {
         LOGGER.fine("saving text S-Space with " + words.size() + 
                     " words with " + dimensions + "-dimensional vectors");
 
+
+        // For each word, write out the word itself, followed by the '|'
+        // character and then a list of space-separated values.
         for (String word : words) {
-            pw.println(word + "|" + VectorIO.toString(sspace.getVector(word)));
+            StringBuilder sb = new StringBuilder(word);
+            sb.append('|');
+            Vector vector = sspace.getVector(word);            
+            int length = vector.length();
+            // Special case for the types just to make writing go a bit faster
+            if (vector instanceof DoubleVector) {
+                DoubleVector dv = (DoubleVector)vector;
+                for (int i = 0; i < length - 1; ++i)
+                    sb.append(dv.get(i)).append(" ");
+                sb.append(dv.get(length - 1));
+            }
+            else if (vector instanceof IntegerVector) {
+                IntegerVector iv = (IntegerVector)vector;
+                for (int i = 0; i < length - 1; ++i)
+                    sb.append(iv.get(i)).append(" ");
+                sb.append(iv.get(length - 1));
+            }
+            else {
+                for (int i = 0; i < length - 1; ++i)
+                    sb.append(vector.getValue(i).doubleValue()).append(" ");
+                sb.append(vector.getValue(length - 1).doubleValue());
+            }
+            pw.println(sb);
         }
         pw.close();
     }

@@ -36,35 +36,34 @@ import java.util.regex.Pattern;
  */
 public class LabeledParsedStringDocument extends LabeledStringDocument 
         implements LabeledParsedDocument {
-
-    private final DependencyExtractor extractor;
     
+    private final DependencyTreeNode[] nodes;
+
     public LabeledParsedStringDocument(String label, 
                                        DependencyExtractor extractor,
                                        String parse) {
         super(label, parse);
-        this.extractor = extractor;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DependencyTreeNode[] parsedDocument() {
         try {
-            return extractor.readNextTree(reader());
+            nodes = extractor.readNextTree(reader());
         } catch (IOException ioe) {
+            // NOTE: this should never happen because we're being given the
+            // parse string itself, so the reader passed to readNextTree() will
+            // be reading from an in-memory buffer, rather than file
             throw new IOError(ioe);
-        } catch (Exception e) {
-            System.err.println("\n" + toString() + "\n");
-            throw new Error(e);
         }
     }
 
     /**
      * {@inheritDoc}
      */
+    public DependencyTreeNode[] parsedDocument() {
+        return nodes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public String text() {
-        DependencyTreeNode[] nodes = parsedDocument();
         StringBuilder sb = new StringBuilder(nodes.length * 8);
         for (int i = 0; i < nodes.length; ++i) {
             String token = nodes[i].word();
@@ -80,7 +79,6 @@ public class LabeledParsedStringDocument extends LabeledStringDocument
      */
     public String prettyPrintText() {
         Pattern punctuation = Pattern.compile("[!,-.:;?`]");
-        DependencyTreeNode[] nodes = parsedDocument();
         StringBuilder sb = new StringBuilder(nodes.length * 8);
         boolean evenSingleQuote = false;
         boolean evenDoubleQuote = false;

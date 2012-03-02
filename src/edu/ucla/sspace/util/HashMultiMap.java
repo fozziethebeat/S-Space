@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import gnu.trove.set.hash.THashSet;
+
 /**
  * A hash table based implementation of the {@code MultiMap} interface.  This
  * implementation permits both {@code null} keys and values. 
@@ -155,7 +157,7 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
     public boolean put(K key, V value) {
         Set<V> values = map.get(key);
         if (values == null) {
-            values = new HashSet<V>();
+            values = new THashSet<V>();
             map.put(key, values);
         }
         boolean added = values.add(value);
@@ -193,7 +195,7 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
             return false;
         Set<V> vals = map.get(key);
         if (vals == null) {
-            vals = new HashSet<V>(values.size());
+            vals = new THashSet<V>(values.size());
             map.put(key, vals);
         }
         int oldSize = vals.size();
