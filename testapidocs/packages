@@ -1,4 +1,5 @@
 edu.ucla.sspace.util
+edu.ucla.sspace.util.primitive
 edu.ucla.sspace.dependency
 edu.ucla.sspace.matrix
 edu.ucla.sspace.matrix.factorization
@@ -10,7 +11,10 @@ edu.ucla.sspace.index
 edu.ucla.sspace.clustering
 edu.ucla.sspace.ri
 edu.ucla.sspace.common
+edu.ucla.sspace.graph
+edu.ucla.sspace.graph.isomorphism
 edu.ucla.sspace.vector
 edu.ucla.sspace.text
+edu.ucla.sspace.text.corpora
 edu.ucla.sspace.hal
 edu.ucla.sspace.evaluation
