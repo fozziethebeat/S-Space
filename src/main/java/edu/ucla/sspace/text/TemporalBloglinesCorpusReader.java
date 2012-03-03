@@ -1,7 +1,5 @@
 /*
- * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
- * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
- * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ * Copyright 2009 Keith Stevens 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,21 +19,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.matrix.factorization;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
+package edu.ucla.sspace.text;
 
 /**
+ * A subclass of {@code BloglinesCorpusReader} that always includes timestamps.
+ *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibJTest {
+public class TemporalBloglinesCorpusReader extends BloglinesCorpusReader {
 
-    @Test public void testMatrixReduction() {
-        SingularValueDecompositionTestUtil.testReductionMatrix(
-                new SingularValueDecompositionLibJ());
+    /**
+     * Creates a {@code BloglinesCorpusReader} that will always include
+     * timestamps.
+     */
+    public TemporalBloglinesCorpusReader() {
+        super(true);
     }
 }

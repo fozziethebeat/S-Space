@@ -89,7 +89,6 @@ public class SingularValueDecompositionOctave extends AbstractSvd {
             pw.printf(
                 "Z = load('%s','-ascii');\n" +
                 "A = spconvert(Z);\n" + 
-                "% Remove the raw data file to save space\n" +
                 "clear Z;\n" + 
                 "[U, S, V] = svds(A, %d);\n" +
                 "save(\"-ascii\", \"%s\", \"U\");\n" +
@@ -157,9 +156,6 @@ public class SingularValueDecompositionOctave extends AbstractSvd {
         } catch (InterruptedException ie) {
             LOG.log(Level.SEVERE, "Octave svds", ie);
         }
-        
-        throw new UnsupportedOperationException(
-            "Octave svds is not correctly installed on this system");
     }
 
     /**
