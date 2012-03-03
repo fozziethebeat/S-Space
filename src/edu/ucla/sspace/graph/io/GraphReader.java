@@ -43,6 +43,10 @@ import java.io.File;
 import java.io.IOException;
 
 
+/**
+ * A general interface for reading {@link Graph} instances for a variety of
+ * formats.
+ */
 public interface GraphReader {
 
     /**
