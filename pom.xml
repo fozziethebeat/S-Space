@@ -6,7 +6,7 @@
 
   <groupId>edu.ucla.sspace</groupId>
   <artifactId>sspace</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
   <name>S-Space Package</name>
   <version>2.0</version>
 

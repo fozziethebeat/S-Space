@@ -9,26 +9,21 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>sspace-opt</artifactId>
-  <name>Optional S-Space</name>
-  <description>Optional Semantic Space Implementations</description>
+  <artifactId>sspace-hadoop</artifactId>
+  <name>Hadoop S-Space</name>
+  <description>Hadoop based Semantic Space Implementations</description>
 
   <dependencies>
     <!-- our modules -->
     <dependency>
-      <artifactId>sspace</artifactId>
       <groupId>${project.groupId}</groupId>
+      <artifactId>sspace</artifactId>
       <version>2.0</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.lucene</groupId>
-      <artifactId>lucene-core</artifactId>
-      <version>2.4.1</version>
-    </dependency>
-    <dependency>
-      <groupId>jaws</groupId>
-      <artifactId>jaws</artifactId>
-      <version>1.2</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>1.0.1</version>
     </dependency>
   </dependencies>
 </project>
