@@ -18,9 +18,28 @@ import java.util.Set;
 
 
 /**
- * A simple O(N^2 log N) implementation of Agglomerative Clustering using the
- * Mean link criteria and the cosine similarity measure.  We acheive O(N^2 log
- * n) by using a priority heap to order the possible clusters to be merged.
+ * A Nearest Neighbor Chain Agglomerative Clustering implementation.  This
+ * approach builds large chains starting from a random node of nearest
+ * neighbors.  As soon as a recirocal nearest neighbor (RNN) is found, the pair
+ * is merged.  This approach find an exact solution and runs in O(n^2) time.  It
+ * also uses O(n^2) space to represent an adjacency matrix based on a similar
+ * function.
+ *
+ * </p>
+ *
+ * Currently, this algorithm only implements the UGPMA agglomerative criteria.
+ * However, it does use any symmetric {@link SimilarityFunction}.
+ *
+ * </p>
+ *
+ * This implementation is based on the following paper:
+ *
+ *   <li style="font-family:Garamond, Georgia, serif">Murtagh, Fionn and
+ *   Contreras, PedroM. Algorithms for hierarchical clustering: an overview.  In
+ *   <i>Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery</i>
+ *   Available <a
+ *   href="http://onlinelibrary.wiley.com/doi/10.1002/widm.53/full">here</a>
+ *   </li>
  *
  * @author Keith Stevens
  */
