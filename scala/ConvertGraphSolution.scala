@@ -1,9 +1,7 @@
 import edu.ucla.sspace.basis.BasisMapping
-import edu.ucla.sspace.common.Similarity
-import edu.ucla.sspace.matrix.YaleSparseMatrix
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
-import edu.ucla.sspace.matrix.SparseMatrix
+import edu.ucla.sspace.sim.JaccardIndex
 import edu.ucla.sspace.text.DependencyFileDocumentIterator
 import edu.ucla.sspace.util.SerializableUtil
 import edu.ucla.sspace.vector.CompactSparseVector
@@ -25,63 +23,51 @@ import java.io.PrintWriter
  * Extracts the cluster labels for each data point using the distributed graph
  * representation.
  */
-object ConvertGraphSolution {
 
-    def main(args: Array[String]) {
-        val clusterMatrix = readSolution(args(0))
-        val basis = readBasis(args(2))
-        basis.setReadOnly(true)
+// Read in the cluster solution and create a vector recording which words were
+// assigned to each cluster.
+val lines = Source.fromFile(args(0)).getLines
+val Array(numPoints, numClusters) = lines.next.split("\\s+").map(_.toInt)
+val clusters = Array.fill(numClusters)(new CompactSparseVector(numPoints))
+for ( (line, cid) <- lines.zipWithIndex;
+      if line != "";
+      point <- line.split("\\s+") )
+    clusters(cid).add(point.toInt, 1.0)
 
-        var numPoints = 0
-        val finalClusters = Array.fill(clusterMatrix.rows)(new HashSet[Int]())
-        for ( (instanceId, rowVec) <- readContextMatrix(args(3), basis)) {
-            val (clusterId, _) = rowVectors(clusterMatrix).foldLeft((-1,-1.0))(
-                (best, cluster) => { 
-                    val sim = Similarity.jaccardIndex(rowVec, cluster._1)
-                    if (sim >= best._2) (cluster._2, sim) else best
-            })
-            finalClusters(clusterId).add(instanceId)
-            numPoints += 1
+// Read in the basis mapping and set it to read only.
+val basis:BasisMapping[String, String] = SerializableUtil.load(args(2))
+basis.setReadOnly(true)
+
+// Iterate through each document in the corpus and determine which cluster has
+// the highset jaccard similarity to it.
+val sim = new JaccardIndex()
+val finalClusters = Array.fill(numClusters)(new HashSet[Int]())
+for ( (id, v) <- readContextMatrix(args(3), basis)) {
+    val label = clusters.zipWithIndex.map(x=>(sim.sim(x._1, v), x._2)).max._2
+    finalClusters(label).add(id)
+}
+
+val numInstances = finalClusters.map(_.size).sum
+// Write out the cluster assignments in terms of the contexts.
+val writer = new PrintWriter(args(1))
+writer.println("%d %d".format(numInstances, numClusters))
+for ( cluster <- finalClusters )
+    writer.println(cluster.mkString(" "))
+writer.close
+
+def readContextMatrix(contextFile: String, basis:BasisMapping[String, String]) = {
+    val docIter = new DependencyFileDocumentIterator(contextFile)
+    for ( (doc, id) <- docIter.zipWithIndex) yield {
+        val reader = doc.reader
+        reader.readLine
+        val rowVector = new CompactSparseVector()
+        var line = reader.readLine
+        while (line != null) {
+            val d = basis.getDimension(line.split("\\s+")(1))
+            if (d >= 0)
+                rowVector.set(d, 1)
+            line = reader.readLine
         }
-
-        val writer = new PrintWriter(args(1))
-        writer.println("%d %d".format(numPoints, clusterMatrix.rows))
-        for ( cluster <- finalClusters )
-            writer.println(cluster.mkString(" "))
-        writer.close
-    }
-
-    def rowVectors(m:SparseMatrix) =
-        for (r <- 0 until m.rows) yield (m.getRowVector(r), r)
-
-    def readBasis(basisFile: String):BasisMapping[String,String] = 
-        SerializableUtil.load(basisFile)
-
-    def readContextMatrix(contextFile: String, basis:BasisMapping[String, String]) = {
-        val docIter = new DependencyFileDocumentIterator(contextFile)
-        for (doc <- docIter) yield {
-            val reader = doc.reader
-            val l = reader.readLine
-            val instanceId = l.split("\\.")(2).toInt
-            val rowVector = new CompactSparseVector()
-            var line = reader.readLine
-            while (line != null) {
-                val d = basis.getDimension(line.split("\\s+")(1))
-                if (d >= 0)
-                    rowVector.set(d, 1)
-                line = reader.readLine
-            }
-            (instanceId-1, rowVector)
-        }
-    }
-
-    def readSolution(solution: String) = {
-        val lines = Source.fromFile(solution).getLines
-        val Array(numPoints, numClusters) = lines.next.split("\\s+").map(_.toInt)
-        val clusterMatrix = new YaleSparseMatrix(numClusters, numPoints)
-        for ( (line, clusterIndex) <- lines.zipWithIndex;
-              point <- line.split("\\s+") if point != "" )
-            clusterMatrix.set(clusterIndex, point.toInt, 1)
-        clusterMatrix
+        (id, rowVector)
     }
 }

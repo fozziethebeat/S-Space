@@ -78,8 +78,8 @@ def printBest(best:Partition) {
 }
 
 def boem(partitions:Array[Partition], numClusters:Int) : Partition = {
-    var best = Partition(bestOfK(partitions, numClusters))
-    //var best = Partition(agglo(partitions, numClusters))
+    //var best = Partition(bestOfK(partitions, numClusters))
+    var best = Partition(agglo(partitions, numClusters))
     val numPoints = best.assignments.size
     val numPartitions = partitions.size
 

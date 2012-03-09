@@ -1,37 +1,72 @@
+import edu.ucla.sspace.basis.BasisMapping
+import edu.ucla.sspace.basis.FilteredStringBasisMapping
+import edu.ucla.sspace.dependency.CoNLLDependencyExtractor
+import edu.ucla.sspace.matrix.Matrices
+import edu.ucla.sspace.matrix.MatrixIO
+import edu.ucla.sspace.matrix.MatrixIO.Format
+import edu.ucla.sspace.text.DependencyFileDocumentIterator
+import edu.ucla.sspace.vector.CompactSparseVector
+import edu.ucla.sspace.util.SerializableUtil
+
+import scala.collection.JavaConversions.asScalaIterator
+import scala.collection.JavaConversions.seqAsJavaList
 import scala.io.Source
+
 import java.io.PrintWriter
+import java.util.HashSet
 
-object ExtractTop10TermsScala {
-    def main(args: Array[String]) {
-        // Iterate through all top 10 term files and read the topic lines.  For
-        // each line, split the terms and add them to the keep set.
-        val keepSet = (for ( top10File <- args.slice(1, args.length);
-                             line <- Source.fromFile(top10File).getLines;
-                             term <- line.split("\\s+") )
-                          yield term.toLowerCase.trim).toSet
 
-        // Now pass through all the raw counts read from standard in.  Lines
-        // come in two formats, "{word1, word2} count" or "{,word} count".  If
-        // both two words occur and both are in the keepSet, write them to the
-        // pairCounts file.  If the one word occurs in the keepSet, write that
-        // to the single file.
+// Form the basis mapping by first creating a filtered bases of words to exclude
+// during processing.
+val excludeSet = new HashSet[String]()
+Source.fromFile(args(0)).getLines.foreach { excludeSet.add(_) }
+val basis = new FilteredStringBasisMapping(excludeSet)
 
-        // First open the output files.
-        val countWriter = new PrintWriter(args(0))
+// Reader in the clustering assignments for the given solution and add each row
+// to the assigned cluster.
+val assignmentFile = Source.fromFile(args(1)).getLines
 
-        // Create the regular expressions for matching our lines of interest.
-        val pairCount = """\{(\S+),\s*([^}]+)\}\s*(\d+)""".r
-        val singleCount = """\{\s*,\s*([^}]+)\}\s*(\d+)""".r
-        for (line <- Source.fromInputStream(System.in).getLines) {
-            line match {
-                case pairCount(word1, word2, count) =>
-                    if (keepSet.contains(word1) && keepSet.contains(word2))
-                        countWriter.printf("%s %s %s\n", word1, word2, count)
-                case singleCount(word1, count) =>
-                    if (keepSet contains word1)
-                        countWriter.printf("%s %s\n", word1, count)
-            }
-        }
-        countWriter.close
+// Get the number of clusters and create a centroid for each one.  The header
+// for the assignments details the number of points and the number of clusters.
+val Array(numPoints, k) = assignmentFile.next.split("\\s").map(_.toInt)
+val clusters = Array.fill(k)(new CompactSparseVector())
+
+// Create a mapping from each data point id to it's cluster assignment.
+val assignments = new Array[Int](numPoints)
+for ((line, cluster) <- assignmentFile.zipWithIndex; 
+     if line != ""; id <- line.split("\\s+"))
+    assignments(id.toInt) = cluster
+
+// Create a parser for extracting dependency trees.
+val parser = new CoNLLDependencyExtractor()
+// Iterate through each dependency document.
+val docIter = new DependencyFileDocumentIterator(args(2))
+for ( (document, id) <- docIter.zipWithIndex ) {
+    // read the header.
+    val header = document.reader.readLine
+    // Parse the document into a dependency tree
+    val tree = parser.readNextTree(document.reader)
+    // Get the centroid for the data point.
+    val center = clusters(assignments(id))
+    // Iterate for each word in the tree and add counts for those words to the
+    // cluster vector.  Only ignore the focus word.
+    for (node <- tree; if node.lemma != header) {
+        val index = basis.getDimension(node.word)
+        if (index >= 0)
+            center.add(index, 1)
     }
 }
+
+// Extract the 10 most frequently occurring features for each cluster and print
+// out their dimension descriptions.
+val writer = new PrintWriter(args(3))
+for (cluster <- clusters) {
+    val top10 = (cluster.getNonZeroIndices.map { i =>
+        (cluster.get(i), i)}).sorted.map(x=>basis.getDimensionDescription(x._2)).reverse.slice(0, 10)
+    writer.println(top10.mkString(" "))
+}
+writer.close
+
+MatrixIO.writeMatrix(Matrices.asSparseMatrix(clusters.toList, basis.numDimensions),
+                     args(4), Format.SVDLIBC_SPARSE_TEXT)
+SerializableUtil.save(basis, args(5))
