@@ -219,11 +219,11 @@ public class Streemer implements Clustering {
         // clusters)
         int backgroundClusterId = foundClusters;
 
-        Assignment[] assignments = new Assignment[rows];
+        int[] assignments = new int[rows];
         for (int i = 0; i < similarities.length; ++i) {
             if (similarities[i] < cutoffSim)
                 clusterAssignments[i] = backgroundClusterId;
-            assignments[i] = new HardAssignment(clusterAssignments[i]);
+            assignments[i] = clusterAssignments[i];
         }
 
         return new Assignments(foundClusters + 1, assignments, matrix);        

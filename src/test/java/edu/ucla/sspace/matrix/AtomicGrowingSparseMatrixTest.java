@@ -191,13 +191,13 @@ public class AtomicGrowingSparseMatrixTest {
         Thread t1 = new Thread() {
                 public void run() {
                     for (int i = 0; i < 100; ++i)
-                        m.getAndAdd(0,0,1);
+                        m.add(0,0,1);
                 }
             };
         Thread t2 = new Thread() {
                 public void run() {
                     for (int i = 0; i < 100; ++i)
-                        m.getAndAdd(0,0,1);
+                        m.add(0,0,1);
                 }
             };
 
@@ -220,14 +220,14 @@ public class AtomicGrowingSparseMatrixTest {
             threads[i] = (new Thread() {
                 public void run() {
                     for (int i = 0; i < updates; ++i)
-                        m.getAndAdd(i, i, 1);
+                        m.add(i, i, 1);
                 }
             });
         }
         threads[numThreads] = (new Thread() {
             public void run() {
                 for (int i = 0; i < updates + 1; ++i)
-                    m.getAndAdd(i, i, 1);
+                    m.add(i, i, 1);
             }
         });
 

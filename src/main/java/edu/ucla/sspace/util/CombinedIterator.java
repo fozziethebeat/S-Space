@@ -67,11 +67,6 @@ public class CombinedIterator<T> implements Iterator<T> {
      * provided collection.
      */
     public CombinedIterator(Collection<Iterator<T>> iterators) {
-<<<<<<< HEAD
-        iters = new ArrayDeque<Iterator<T>>();
-        iters.addAll(iterators);
-        current = iters.poll();
-=======
         this((Queue<Iterator<T>>)(new ArrayDeque<Iterator<T>>(iterators)));
     }
 
@@ -80,7 +75,7 @@ public class CombinedIterator<T> implements Iterator<T> {
      * provided collection.
      */
     private CombinedIterator(Queue<Iterator<T>> iterators) {
-	this.iters = iterators;
+        this.iters = iterators;
         advance();
     }
 
@@ -94,7 +89,6 @@ public class CombinedIterator<T> implements Iterator<T> {
         for (Iterable<T> i : iterables)
             iters.add(i.iterator());
         return new CombinedIterator<T>(iters);
->>>>>>> master
     }
 
     /**
@@ -102,16 +96,10 @@ public class CombinedIterator<T> implements Iterator<T> {
      * elements.
      */
     private void advance() {
-<<<<<<< HEAD
-        while (current != null && !current.hasNext()) {
-            prev = current;
-            current = iters.poll();
-=======
         if (current == null || !current.hasNext()) {
             do {
                 current = iters.poll();
             } while (current != null && !current.hasNext());
->>>>>>> master
         }
     }
 
@@ -127,25 +115,16 @@ public class CombinedIterator<T> implements Iterator<T> {
      * Returns the next element from some iterator.
      */
     public synchronized T next() {
-<<<<<<< HEAD
         if (current == null) {
             throw new NoSuchElementException();
         }
         T t = current.next();
-        advance();
-        return t;
-=======
-	if (current == null) {
-	    throw new NoSuchElementException();
-	}
-	T t = current.next();
         // Once an element has been drawn from the iterator, the current
         // iterator should be used for any subsequent remove call.
         if (toRemoveFrom != current)
             toRemoveFrom = current;
-	advance();
-	return t;
->>>>>>> master
+        advance();
+        return t;
     }
 
     /**
@@ -153,16 +132,9 @@ public class CombinedIterator<T> implements Iterator<T> {
      * {@code remove} method.
      */
     public synchronized void remove() {
-<<<<<<< HEAD
-        if (prev == null) {
+        if (toRemoveFrom == null) {
             throw new NoSuchElementException();
         }        
-        prev.remove();
-=======
-	if (toRemoveFrom == null) {
-	    throw new NoSuchElementException();
-	}	
-	toRemoveFrom.remove();
->>>>>>> master
+        toRemoveFrom.remove();
     }
 }

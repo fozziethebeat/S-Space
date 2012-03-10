@@ -368,7 +368,7 @@ public class FastStreamingKMeans {
                     // go back and increase the number of facilities since all
                     // the data has been seen at this point.  Therefore, just
                     // loop through the candidates and report their assignemnts.
-                    Assignment[] assignments = new Assignment[rows];
+                    int[] assignments = new int[rows];
                     int numFacilities = facilities.size();
                     for (int j = 0; j < numFacilities; ++j) {
                         CandidateCluster fac = facilities.get(j);
@@ -379,8 +379,7 @@ public class FastStreamingKMeans {
                         IntIterator iter = fac.indices().iterator();
                         while (iter.hasNext()) {
                             int row = iter.nextInt();
-                            assignments[row] = 
-                                new HardAssignment(clusterId);
+                            assignments[row] = clusterId;
                         }
                     }
                     return new Assignments(numClusters, assignments, matrix);                    
@@ -486,7 +485,7 @@ public class FastStreamingKMeans {
 
                     // Use the final assignments to create assignments for each
                     // of the input data points
-                    Assignment[] assignments = new Assignment[rows];
+                    int[] assignments = new int[rows];
                     for (int j = 0; j < facilityAssignments.length; ++j) {
                         CandidateCluster fac = facilities.get(j);
                         veryVerbose(LOGGER, "Facility %d had a center of mass at %s",
@@ -496,8 +495,7 @@ public class FastStreamingKMeans {
                         IntIterator iter = fac.indices().iterator();
                         while (iter.hasNext()) {
                             int row = iter.nextInt();
-                            assignments[row] = 
-                                new HardAssignment(clusterId);
+                            assignments[row] = clusterId;
                         }
                     }
                     return new Assignments(numClusters, assignments, matrix);

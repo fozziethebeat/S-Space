@@ -45,11 +45,8 @@ import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.VectorMath;
 import edu.ucla.sspace.vector.Vectors;
-<<<<<<< HEAD
 import edu.ucla.sspace.vector.VectorMath;
-=======
 import edu.ucla.sspace.vector.SparseIntegerVector;
->>>>>>> master
 
 import java.lang.reflect.Method;
 

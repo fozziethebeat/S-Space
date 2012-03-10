@@ -1,7 +1,7 @@
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.sim.CosineSimilarity;
-import edu.ucla.sspace.sim.SimilarityFunction;
+import edu.ucla.sspace.similarity.CosineSimilarity;
+import edu.ucla.sspace.similarity.SimilarityFunction;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.SymmetricMatrix;
 import edu.ucla.sspace.vector.DoubleVector;

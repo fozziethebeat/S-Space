@@ -61,13 +61,13 @@ public class AtomicGrowingMatrixTest {
         Thread t1 = new Thread() {
             public void run() {
                 for (int i = 0; i < 100; ++i)
-                    m.getAndAdd(0,0,1);
+                    m.add(0,0,1);
             }
         };
         Thread t2 = new Thread() {
             public void run() {
                 for (int i = 0; i < 100; ++i)
-                    m.getAndAdd(0,0,1);
+                    m.add(0,0,1);
             }
         };
 
