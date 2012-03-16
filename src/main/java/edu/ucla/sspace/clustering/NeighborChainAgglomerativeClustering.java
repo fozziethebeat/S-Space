@@ -45,7 +45,44 @@ import java.util.Set;
  */
 public class NeighborChainAgglomerativeClustering implements Clustering {
 
-    private final double minSim;
+    /**
+     * The similarity method used when comparing and merging compelte clusters.
+     * See <a
+     * href="http://home.dei.polimi.it/matteucc/Clustering/tutorial_html/hierarchical.html">this
+     * guide</a> for examples of how each link method operates.
+     */
+    public enum ClusterLink {
+        /**
+         * Similarity will be based on the most similar item pair connecting
+         * two clusters.
+         */
+        SINGLE_LINK,
+
+        /**
+         * Similarity will be based on most dissimilar item pair connecting 
+         * two clusters.
+         */
+        COMPLETE_LINK,
+
+        /**
+         * Similarity will be the average similarity of all item pairs
+         * connecting two clusters.
+         */
+        MEAN_LINK,
+
+        /**
+         * Similarity will be based on median points for each cluster.
+         */
+        MEDIAN_LINK,
+
+        /**
+         * Similarity will be the unweighted average similarity of all item
+         * pairs connecting two clusters.
+         */
+        MCQUITTY_LINK,
+    }
+
+    private final ClusterLink method;
 
     private final SimilarityFunction simFunc;
     
@@ -55,7 +92,7 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
      * number of clusters or the results will be undefined.
      */
     public NeighborChainAgglomerativeClustering() {
-        this(-Double.MAX_VALUE, new CosineSimilarity());
+        this(ClusterLink.MEAN_LINK, new CosineSimilarity());
     }
 
     /**
@@ -64,30 +101,33 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
      * number of clusters, clustering stops when the most similar clusters have
      * a similarity below this threshold.
      */
-    public NeighborChainAgglomerativeClustering(double minSim,
+    public NeighborChainAgglomerativeClustering(ClusterLink method,
                                                 SimilarityFunction simFunc) {
         if (!simFunc.isSymmetric())
             throw new IllegalArgumentException(
                     "Agglomerative Clustering requires a symmetric " +
                     "similarity function");
 
-        this.minSim = minSim;
+        this.method = method;
         this.simFunc = simFunc;
     }
 
     /**
-     * Returns the agglomerative clustering result using the mean link criteria
-     * and the cosine similarity metric.  Clustering stops when the {@link
-     * #minSim} similarity threshold is larger than the two most similar
-     * clusters found.  This threshold should be set by the constructor.
+     * Unsupported 
+     *
+     * @throws UnsupportedOperationException
      */
     public Assignments cluster(Matrix m, Properties props) {
-        return cluster(m, 0, props);
+        throw new UnsupportedOperationException(
+                "Cannot cluster without specifying the number of clusters.");
     }
 
     /**
-     * Returns the agglomerative clustering result using the mean link criteria
-     * and the cosine similarity metric for the specified number of clusters.
+     * Returns the agglomerative clustering result using {@link ClusterLink} and
+     * {@code SimilarityFunction} specified from the constructor.  The {@link
+     * SimilarityFunction} will be used to build a symmetric adjacency matrix
+     * and the {@link ClusterLink} will determine how to udpate similarities
+     * between newly nerged clusters.
      */
     public Assignments cluster(Matrix m, int numClusters, Properties props) {
         Matrix adj = new SymmetricMatrix(m.rows(), m.rows());
@@ -96,11 +136,24 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
             for (int c = r+1; c < m.rows(); ++c)
                 adj.set(r,c, simFunc.sim(v, m.getRowVector(c)));
         }
-        return clusterAdjacencyMatrix(adj, simFunc, numClusters);
+        return clusterAdjacencyMatrix(adj, method, numClusters);
     }
 
+    /**
+     * Clusters the points represented as an adjacency matrix in {@code adj}
+     * using the supplied {@code ClusterLink} method into {@code numCluster}. 
+     *
+     * @param adj A symmetric {@link Matrix} recording similarities between
+     *        nodes in a graph.
+     * @param method {@link ClusterLink} method that determines how similarities
+     *        between clusters will be updated.
+     * @param numClusters The desired number of clusters.
+     *
+     * @return {@link Assignments} from each data point to it's assigned
+     *         cluster.
+     */
     public static Assignments clusterAdjacencyMatrix(Matrix adj,
-                                                     SimilarityFunction simFunc,
+                                                     ClusterLink method,
                                                      int numClusters) {
         // A mapping from cluster id's to their point sets.
         Map<Integer, Set<Integer>> clusterMap = 
@@ -163,13 +216,9 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
 
                 // Update the distance from the parent id to all other elements
                 // in the cluster map.
-                for (int o : clusterMap.keySet()) {
-                    double d1 = adj.get(top.x, o);
-                    double d2 = adj.get(parent.x, o);
-                    double newDist = (c1Size*d1 + c2Size*d2) / 
-                                     (c1Size + c2Size);
-                    adj.set(parent.x, o, newDist);
-                }
+                for (int o : clusterMap.keySet())
+                    adj.set(parent.x, o, 
+                            updateSimilarity(method, adj, top.x, c1Size, parent.x, c2Size, 0));
 
                 // Merge the set assignments for the two clusters.
                 c1Points.addAll(c2Points);
@@ -189,6 +238,41 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
         return formAssignments(clusterMap.values(), adj.rows());
     }
 
+    /**
+     * Returns the updated similarity between a newly formed cluster containing
+     * clusters {@code c1Index} and {@code c2Index} to the cluster {@code
+     * otherIndex}.  These similarity updates use the Lance-Williams recurrence
+     * relations which hold for both similarity metrics and distance metrics.
+     */
+    private static double updateSimilarity(ClusterLink method,
+                                           Matrix adj,
+                                           int c1Index,
+                                           int c1Size,
+                                           int c2Index,
+                                           int c2Size,
+                                           int otherIndex) {
+        double s1 = adj.get(c1Index, otherIndex);
+        double s2 = adj.get(c2Index, otherIndex);
+        switch (method) {
+            case MEAN_LINK:
+                return (c1Size*s1 + c2Size*s2) / (c1Size + c2Size);
+            case MEDIAN_LINK:
+                return .5*s1 + .5 * s2 - .25*adj.get(c1Index, c2Index);
+            case SINGLE_LINK:
+                return .5*s1 + .5*s2 + Math.min(s1, s2);
+            case COMPLETE_LINK:
+                return .5*s1 + .5*s2 + Math.max(s1, s2);
+            case MCQUITTY_LINK:
+                return .5 * s1 + .5*s2;
+            default: throw new IllegalArgumentException(
+                             "Unsupported ClusterLink Method");
+        }
+    }
+
+    /**
+     * Initializes the neighbor {@code chain} with the first element in {@code
+     * remaining} and removes that elment from the set.
+     */
     private static void initializeChain(Deque<Link> chain, 
                                         Set<Integer> remaining) {
         Iterator<Integer> iter = remaining.iterator();
@@ -196,6 +280,11 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
         iter.remove();
     }
 
+    /**
+     * Returns a {@link Link} representing the nearest cluster in {@code
+     * remaining} to {@code cluster} and the similarity between the two clusters
+     * as defined in {@code adj}.
+     */
     private static Link findBest(Set<Integer> remaining,
                                  Matrix adj,
                                  int cluster) {
@@ -229,10 +318,10 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
     }
 
     /**
-     * A simple struct for storing and comparing links between two clusters.
-     * Links with a higher similarity should be given higher priority.
+     * A simple struct for storing links between two clusters.
      */
-    public static class Link implements Comparable<Link> {
+    public static class Link {
+
         /**
          * The similarity between the current cluster and it's parent in the
          * chain.
@@ -244,16 +333,12 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
          */
         public int x;
 
+        /**
+         * Creates a new {@link Link}.
+         */
         public Link(double sim, int x) {
             this.sim = sim;
             this.x = x;
-        }
-
-        public int compareTo(Link o) {
-            double diff = this.sim - o.sim;
-            if (diff < 0)
-                return -1;
-            return (diff == 0d) ? 0 : 1;
         }
     }
 }
