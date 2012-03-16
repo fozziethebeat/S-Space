@@ -43,7 +43,7 @@ public class SimilarityTest {
                 b.set(i, v[i]);
             }
         }
-        assertEquals(0, Similarity.euclideanDistance(a, b), .00000001);
+        assertEquals(0, Similarity.euclideanDistance(a, b), .000001);
     }
 
     @Test public void testEuclideanDistSparseDoubleDiff() {
@@ -55,7 +55,7 @@ public class SimilarityTest {
             a.set(i, v1[i]);
             b.set(i, v2[i]);
         }
-        assertEquals(4, Similarity.euclideanDistance(a, b), .00000001);
+        assertEquals(2, Similarity.euclideanDistance(a, b), .00000001);
     }
 
     public static double rawCosine(DoubleVector v1, DoubleVector v2) {

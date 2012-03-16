@@ -66,7 +66,7 @@ public class BreadthFirstPathIteratorTest extends PathIteratorTestBase {
         = new TreeMap<String,Integer>();
 
     static {
-        PATH_START_COUNTS.put(",", 12);
+        PATH_START_COUNTS.put(",", 14);
         PATH_START_COUNTS.put(".", 3);
         PATH_START_COUNTS.put("a", 4);
         PATH_START_COUNTS.put("ad/", 7);
@@ -89,7 +89,7 @@ public class BreadthFirstPathIteratorTest extends PathIteratorTestBase {
         PATH_START_COUNTS.put("which", 3);
     }
 
-    private static final int expected = 132;
+    private static final int expected = 134;
 
     @Test public void testIterator() throws Exception {
 
@@ -116,44 +116,7 @@ public class BreadthFirstPathIteratorTest extends PathIteratorTestBase {
             }
         }
         assertEquals(expected, pathCount);
-        assertEquals(220, sumOfPathLengths);
+        assertEquals(224, sumOfPathLengths);
         assertEquals(PATH_START_COUNTS, headToCount);
-
-        /*
-        String[][] treeData = {
-            {"cat", "n", "1"},
-            {"is", "det", "obj"},
-            {"dog", "n", "2"},
-            {"and", "conj", "blah"},
-            {"chicken", "n", "3"}
-        };
-        int[][] treeLinks = {
-            {},
-            {0, 2, 4},
-            {3},
-            {4},
-            {}
-        };
-        DependencyTreeNode[] tree = makeTree(treeData, treeLinks);
-        Iterator<DependencyPath> pathIter = new BreadthFirstPathIterator(
-                tree[1]);
-
-        assertTrue(pathIter.hasNext());
-        testPath(pathIter.next(), 1, "obj", "is", "cat");
-
-        assertTrue(pathIter.hasNext());
-        testPath(pathIter.next(), 1, "obj", "is", "dog");
-
-        assertTrue(pathIter.hasNext());
-        testPath(pathIter.next(), 1, "obj", "is", "chicken");
-
-        assertTrue(pathIter.hasNext());
-        testPath(pathIter.next(), 2, "obj", "is", "and");
-
-        assertTrue(pathIter.hasNext());
-        testPath(pathIter.next(), 3, "obj", "is", "chicken");
-
-        assertFalse(pathIter.hasNext());
-        */
     }
 }

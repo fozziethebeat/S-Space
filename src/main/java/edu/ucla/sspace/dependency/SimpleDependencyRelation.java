@@ -64,10 +64,10 @@ public class SimpleDependencyRelation implements DependencyRelation {
     public boolean equals(Object o) {
         if (o instanceof SimpleDependencyRelation) {
             SimpleDependencyRelation r = (SimpleDependencyRelation)o;
-            return headNode.equals(r.headNode) 
-                && relation.equals(r.relation)
-                && dependent.equals(r.dependent);            
-        } 
+            return headNode.equals(r.headNode) &&
+                   relation.equals(r.relation) &&
+                   dependent.equals(r.dependent);            
+        }
         return false;
     }
 
