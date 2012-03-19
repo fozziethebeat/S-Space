@@ -308,8 +308,7 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
                 offset = nodes.size();
 
             // Get the node id and the parent node id.
-            int parent =
-                Integer.parseInt(nodeFeatures[parentIndex]) - 1 + offset;
+            int parent = Integer.parseInt(nodeFeatures[parentIndex]) - 1 + offset;
 
             String word = getWord(nodeFeatures);
 

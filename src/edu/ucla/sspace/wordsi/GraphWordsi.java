@@ -45,7 +45,7 @@ public class GraphWordsi implements SemanticSpace {
 
     private final Map<String, Double> referenceLikilhood;
 
-    private final Map<String, SparseMatrix> termGraphs;
+    private final SparseMatrix termGraph;
 
     private final String matrixFileName;
     private final String basisFileName;
@@ -57,7 +57,7 @@ public class GraphWordsi implements SemanticSpace {
         this.basis = basis;
         this.extractor = extractor;
         this.referenceLikilhood = referenceLikilhood;
-        this.termGraphs = new HashMap<String, SparseMatrix>();
+        this.termGraph = new SparseSymmetricMatrix(new GrowingSparseMatrix());
         this.matrixFileName = outName + ".mat";
         this.basisFileName = outName + ".basis";
     }
@@ -91,13 +91,6 @@ public class GraphWordsi implements SemanticSpace {
             if (!secondarykey.equals(header))
                 continue;
 
-            SparseMatrix termGraph = termGraphs.get(focusWord);
-            if (termGraph == null) {
-                termGraph = new SparseSymmetricMatrix(
-                        new GrowingSparseMatrix());
-                termGraphs.put(focusWord, termGraph);
-            }
-
             for (int i = 0; i < nodes.length; ++i) {
                 if (i == wordIndex ||
                     !nodes[i].pos().startsWith("N"))
@@ -115,8 +108,7 @@ public class GraphWordsi implements SemanticSpace {
                     if (index2 < 0)
                         continue;
 
-                    termGraph.set(index1, index2, 1 + 
-                            termGraph.get(index1, index2));
+                    termGraph.add(index1, index2, 1);
                 }
             }
         }
@@ -124,69 +116,43 @@ public class GraphWordsi implements SemanticSpace {
 
     public void processSpace(Properties props) {
         try {
-            for (Map.Entry<String, SparseMatrix> entry : termGraphs.entrySet()) {
-                StringBasisMapping finalBasis = new StringBasisMapping();
-                SparseMatrix termGraph = entry.getValue();
-                String term = entry.getKey();
+            StringBasisMapping finalBasis = new StringBasisMapping();
 
-                int[] termFrequency = new int[termGraph.rows()];
-                double total = 0;
-                for (int r = 0; r < termGraph.rows(); ++r)
-                    for (int c = r+1; c < termGraph.columns(); ++c) {
-                        termFrequency[r] += termGraph.get(r,c);
-                        total += termGraph.get(r,c);
-                    }
-
-                int savedRows = 0;
-                List<Integer> rowMapList = new ArrayList<Integer>();
-                for (int r = 0; r < termGraph.rows(); ++r) {
-                    String word = basis.getDimensionDescription(r);
-                    Double l = referenceLikilhood.get(word);
-                    double reference = (l == null) ? .0000000001 : l;
-                    double logLikelihood = -2 * Math.log(reference/(termFrequency[r] / total));
-                    if (termFrequency[r] >= 10 && logLikelihood >= 0) {
-                        rowMapList.add(r);
-                        finalBasis.getDimension(word);
-                    }
+            double[] termFrequency = new double[termGraph.rows()];
+            double total = 0;
+            for (int r = 0; r < termGraph.rows(); ++r)
+                for (int c = r+1; c < termGraph.columns(); ++c) {
+                    termFrequency[r] += termGraph.get(r,c);
+                    total += termGraph.get(r,c);
                 }
 
-                int[] rowMap = new int[rowMapList.size()];
-                for (int i = 0; i < rowMap.length; ++i)
-                    rowMap[i] = rowMapList.get(i);
-
-                Matrix maskedMatrix = new CellMaskedSparseMatrix(
-                        termGraph, rowMap, rowMap);
-                MatrixIO.writeMatrix(maskedMatrix,
-                                     new File(matrixFileName),
-                                     Format.SVDLIBC_SPARSE_TEXT);
-                SerializableUtil.save(finalBasis, basisFileName);
+            int savedRows = 0;
+            List<Integer> rowMapList = new ArrayList<Integer>();
+            for (int r = 0; r < termGraph.rows(); ++r) {
+                String word = basis.getDimensionDescription(r);
+                Double l = referenceLikilhood.get(word);
+                double reference = (l == null) ? .0000000001 : l;
+                double logLikelihood = -2 * Math.log(reference/(termFrequency[r] / total));
+                if (termFrequency[r] >= 10 && logLikelihood >= 0) {
+                    rowMapList.add(r);
+                    finalBasis.getDimension(word);
+                }
             }
+
+            int[] rowMap = new int[rowMapList.size()];
+            for (int i = 0; i < rowMap.length; ++i)
+                rowMap[i] = rowMapList.get(i);
+
+            Matrix maskedMatrix = new CellMaskedSparseMatrix(
+                    termGraph, rowMap, rowMap);
+
+            MatrixIO.writeMatrix(maskedMatrix,
+                                 new File(matrixFileName),
+                                 Format.SVDLIBC_SPARSE_TEXT);
+            SerializableUtil.save(finalBasis, basisFileName);
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        Set<String> excludeSet = new HashSet<String>();
-        BufferedReader br = new BufferedReader(new FileReader(args[0]));
-        for (String line = null; (line = br.readLine()) != null; ) 
-            excludeSet.add(line);
-
-        Map<String, Double> referenceLikilhood = new HashMap<String, Double>();
-        br = new BufferedReader(new FileReader(args[3]));
-        for (String line = null; (line = br.readLine()) != null; ) {
-            String[] wordCount = line.split("\\s+");
-            referenceLikilhood.put(wordCount[0], Double.parseDouble(wordCount[1]));
-        }
-
-        BasisMapping<String, String> basis = new FilteredStringBasisMapping(excludeSet);
-        DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        GraphWordsi wordsi = new GraphWordsi(basis, extractor, referenceLikilhood, args[2]);
-
-        Iterator<Document> iter = new DependencyFileDocumentIterator(args[1]);
-        while (iter.hasNext())
-            wordsi.processDocument(iter.next().reader());
-        wordsi.processSpace(System.getProperties());
     }
 
     public String getSpaceName() {

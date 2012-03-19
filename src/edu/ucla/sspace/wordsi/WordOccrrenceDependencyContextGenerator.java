@@ -114,7 +114,6 @@ public class WordOccrrenceDependencyContextGenerator
                 continue;
 
             double weight = weighter.scorePath(path);
-            System.out.printf("%d %f\n", dimension, weight);
             focusMeaning.add(dimension, weight);                                        
         }
         return focusMeaning;

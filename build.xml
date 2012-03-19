@@ -97,7 +97,7 @@
     <!-- Compile all of the classes and put the results in the classes
 	 directory -->
      <javac srcdir="./" destdir="classes" classpathref="classpath" 
-	    debug="true" debuglevel="lines,source">
+	    debug="true" nowarn="yes" debuglevel="lines,source">
        <compilerarg value="-Xlint"/>
        <compilerarg value="-g"/>
        <include name="src/**"/>

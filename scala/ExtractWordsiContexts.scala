@@ -3,6 +3,7 @@ import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.JavaConversions.setAsJavaSet
 import scala.collection.mutable.ArrayBuffer
 
+import edu.ucla.sspace.basis.BasisMapping
 import edu.ucla.sspace.basis.FilteredStringBasisMapping
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor
 import edu.ucla.sspace.dependency.FlatPathWeight
@@ -32,13 +33,25 @@ import scala.io.Source
 
 object PrintWordsi extends Wordsi {
 
-    def main(args:Array[String]) {
-        val excludeSet = new HashSet[String]()
-        Source.fromFile(args(2)).getLines.foreach { excludeSet.add(_) }
+    def main(vargs:Array[String]) {
+        val (args, loadBasis) = if (vargs(0) == "-l") (vargs.slice(1, vargs.size), true) 
+                                else (vargs, false)
+
+        var basis:BasisMapping[String, String] = null
+        var depBasis:RelationBasedBasisMapping = null
+        if (loadBasis) {
+            if (args(0) == "dep") depBasis = SerializableUtil.load(args(5))
+            else basis = SerializableUtil.load(args(5))
+        } else {
+            val excludeSet = new HashSet[String]()
+            Source.fromFile(args(2)).getLines.foreach { excludeSet.add(_) }
+            if (args(0) == "dep")
+                depBasis = new RelationBasedBasisMapping(excludeSet)
+            else
+                basis = new FilteredStringBasisMapping(excludeSet)
+        }
 
         val windowSize = args(1).toInt
-        val basis = new FilteredStringBasisMapping(excludeSet)
-        var depBasis:RelationBasedBasisMapping = null
         val generator = args(0) match {
             case "woc" => new OccurrenceDependencyContextGenerator(basis, windowSize)
             case "pos" => new PartOfSpeechDependencyContextGenerator(basis, windowSize) 
@@ -46,7 +59,6 @@ object PrintWordsi extends Wordsi {
             case "dep" => {
                 val acceptor = new UniversalPathAcceptor()
                 val weightor = new FlatPathWeight()
-                depBasis = new RelationBasedBasisMapping(excludeSet)
                 new WordOccrrenceDependencyContextGenerator(
                     depBasis, weightor, acceptor, windowSize)
             }
@@ -63,7 +75,12 @@ object PrintWordsi extends Wordsi {
         printVectors(new File(args(4)), generator.getVectorLength)
 
         println("Saving basis mapping")
-        SerializableUtil.save(depBasis, args(5))
+        if (!loadBasis) {
+            args(0) match {
+                case "dep" => SerializableUtil.save(depBasis, args(5))
+                case _ => SerializableUtil.save(basis, args(5))
+            }
+        }
     }
 
     val vectors = new ArrayBuffer[SparseDoubleVector]
