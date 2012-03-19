@@ -435,6 +435,15 @@ public class DependencyVectorSpace
     }
         
     /**
+     * Unsupported.
+     *
+     * @throws UnsupportedOperationException
+     */
+    public void processDocument(Iterable<String> document) {
+        throw new UnsupportedOperationException("Cannot process tokens");
+    }
+
+    /**
      * Does nothing.
      *
      * @param properties {@inheritDoc}

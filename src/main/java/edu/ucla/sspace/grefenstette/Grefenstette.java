@@ -69,7 +69,7 @@ public class Grefenstette implements SemanticSpace {
      * The logger for reporting all debugging information
      */
     private static final Logger LOGGER = 
-	Logger.getLogger(Grefenstette.class.getName());
+        Logger.getLogger(Grefenstette.class.getName());
 
     /**
      * The temporary file used to record syntactic word relations while the
@@ -120,240 +120,248 @@ public class Grefenstette implements SemanticSpace {
      *         processing
      */
     public Grefenstette() {
-	try {
-	    wordRelations = File.createTempFile("word-relation-list","txt");
-	    wordRelationsWriter = new PrintWriter(wordRelations);
-	  
-	    objectTable = new HashMap<String,Integer>();
-	    attributeTable = new HashMap<String,Integer>();
-	  
-	    syntacticCooccurrence = new GrowingSparseMatrix();
-	  
-	    objectCounter = new AtomicInteger(0);
-	    attributeCounter = new AtomicInteger(0);
-	} catch (IOException ioe) {
-	    throw new IOError(ioe);
-	}
+        try {
+            wordRelations = File.createTempFile("word-relation-list","txt");
+            wordRelationsWriter = new PrintWriter(wordRelations);
+          
+            objectTable = new HashMap<String,Integer>();
+            attributeTable = new HashMap<String,Integer>();
+          
+            syntacticCooccurrence = new GrowingSparseMatrix();
+          
+            objectCounter = new AtomicInteger(0);
+            attributeCounter = new AtomicInteger(0);
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public void processDocument (BufferedReader document) {
-	ArrayList<Pair<String>> wordsInPhrase = new ArrayList<Pair<String>>();
+        ArrayList<Pair<String>> wordsInPhrase = new ArrayList<Pair<String>>();
 
-	String nounPhrase = "";
-	String lastNoun = "";
-	String lastVerb = "";
-	String secondPrevPhrase = "";
-	String prevPhrase = "";
+        String nounPhrase = "";
+        String lastNoun = "";
+        String lastVerb = "";
+        String secondPrevPhrase = "";
+        String prevPhrase = "";
 
-	try {
-	    nounPhrase = document.readLine();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            nounPhrase = document.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	for( String tag = getNextTag(nounPhrase); 
-	     tag != null; tag = getNextTag(nounPhrase) ) {
-	    String word;
+        for( String tag = getNextTag(nounPhrase); 
+             tag != null; tag = getNextTag(nounPhrase) ) {
+            String word;
 
-	    int startOfTag = nounPhrase.indexOf(tag);
+            int startOfTag = nounPhrase.indexOf(tag);
 
-	    nounPhrase = nounPhrase.substring(startOfTag);
-	    wordsInPhrase.clear();
+            nounPhrase = nounPhrase.substring(startOfTag);
+            wordsInPhrase.clear();
 
-	    if( tag.equals("NP") ) {
-		while( nounPhrase.charAt(0) != ')' ) {
+            if( tag.equals("NP") ) {
+                while( nounPhrase.charAt(0) != ')' ) {
 
-		    // extract tag of word in noun phrase
-		    tag = getNextTag(nounPhrase); 
+                    // extract tag of word in noun phrase
+                    tag = getNextTag(nounPhrase); 
 
-		    if( isPhraseOrClause(tag) || isPreposition(tag) ) {
-			nounPhrase = nounPhrase.
-			    substring(nounPhrase.indexOf(tag) + tag.length());
-			// stop processing NP
-			break;
-		    } else if( inStartSet(tag) || inReceiveSet(tag) ) {
-			// note to self: find out why this broke
-			try {
-			    word = nounPhrase.
-				substring(nounPhrase.indexOf(" ", 
-					      nounPhrase.indexOf(tag)) + 1, 
-					  nounPhrase.indexOf(")"));
+                    if( isPhraseOrClause(tag) || isPreposition(tag) ) {
+                        nounPhrase = nounPhrase.
+                            substring(nounPhrase.indexOf(tag) + tag.length());
+                        // stop processing NP
+                        break;
+                    } else if( inStartSet(tag) || inReceiveSet(tag) ) {
+                        // note to self: find out why this broke
+                        try {
+                            word = nounPhrase.
+                                substring(nounPhrase.indexOf(" ", 
+                                              nounPhrase.indexOf(tag)) + 1, 
+                                          nounPhrase.indexOf(")"));
 
-			    wordsInPhrase.add(new Pair<String>(tag,word));
+                            wordsInPhrase.add(new Pair<String>(tag,word));
 
-			    nounPhrase = nounPhrase.
-				substring(nounPhrase.indexOf(")",
-					      nounPhrase.indexOf(word))+1);
-			} catch (StringIndexOutOfBoundsException e) {
-			    nounPhrase = nounPhrase.substring(nounPhrase.indexOf(")"));
-			}
-			// else it's not a tag I care about
-		    } else {
-			nounPhrase = nounPhrase.substring(nounPhrase.indexOf(")")+1);
-		    }
-		}
+                            nounPhrase = nounPhrase.
+                                substring(nounPhrase.indexOf(")",
+                                              nounPhrase.indexOf(word))+1);
+                        } catch (StringIndexOutOfBoundsException e) {
+                            nounPhrase = nounPhrase.substring(nounPhrase.indexOf(")"));
+                        }
+                        // else it's not a tag I care about
+                    } else {
+                        nounPhrase = nounPhrase.substring(nounPhrase.indexOf(")")+1);
+                    }
+                }
 
-		// note to self: is this if statement represent the same thing
-		// as the next if statement??
-		if( !wordsInPhrase.isEmpty() ) {
-		    // set head noun to last word in noun phrase
-		    String headNoun = wordsInPhrase.get(wordsInPhrase.size()-1).y;
+                // note to self: is this if statement represent the same thing
+                // as the next if statement??
+                if( !wordsInPhrase.isEmpty() ) {
+                    // set head noun to last word in noun phrase
+                    String headNoun = wordsInPhrase.get(wordsInPhrase.size()-1).y;
 
-		    // create the relations from pass two
-		    if( prevPhrase.equals("PP") && secondPrevPhrase.equals("NP") 
-			&& lastNoun.length() != 0 ) {
-			wordRelationsWriter.println(lastNoun + " " + headNoun);
+                    // create the relations from pass two
+                    if( prevPhrase.equals("PP") && secondPrevPhrase.equals("NP") 
+                        && lastNoun.length() != 0 ) {
+                        wordRelationsWriter.println(lastNoun + " " + headNoun);
 
-			addRelation(lastNoun, headNoun);
-		    }
+                        addRelation(lastNoun, headNoun);
+                    }
 
-		    // create relations from pass four
-		    if( prevPhrase.equals("PP") && secondPrevPhrase.equals("VP")
-			&& lastVerb.length() != 0 ) {
+                    // create relations from pass four
+                    if( prevPhrase.equals("PP") && secondPrevPhrase.equals("VP")
+                        && lastVerb.length() != 0 ) {
 
-			wordRelationsWriter.println(lastVerb + " " + headNoun);
+                        wordRelationsWriter.println(lastVerb + " " + headNoun);
 
-			addRelation(lastVerb, headNoun);
-		    } else if( prevPhrase.equals("VP") ) {
+                        addRelation(lastVerb, headNoun);
+                    } else if( prevPhrase.equals("VP") ) {
 
-			wordRelationsWriter.println(lastVerb + " " + headNoun);
+                        wordRelationsWriter.println(lastVerb + " " + headNoun);
 
-			addRelation(lastVerb, headNoun);
-		    }
+                        addRelation(lastVerb, headNoun);
+                    }
 
-		    lastNoun = headNoun;
-		}
+                    lastNoun = headNoun;
+                }
 
-		// reached end of noun phrase
-		if( nounPhrase.charAt(0) == ')' ) {
-		    // create relations between words in noun phrase
-		    // relations from pass one
-		    processWordsInNP(wordsInPhrase);
+                // reached end of noun phrase
+                if( nounPhrase.charAt(0) == ')' ) {
+                    // create relations between words in noun phrase
+                    // relations from pass one
+                    processWordsInNP(wordsInPhrase);
 
-		    if( !"NP".equals(prevPhrase) ) {
-			secondPrevPhrase = prevPhrase;
-			prevPhrase = "NP";
-		    }
-		}
-	    } //end processing NP
-	    else if( tag.equals("VP") ) {
-		while( tag != null && tag.startsWith("V") ) {
-		    // nonphrase verb
-		    if( tag.startsWith("VB") ) {
-			word = nounPhrase.substring( nounPhrase.indexOf(" ", 
-									nounPhrase.indexOf(tag))+1, nounPhrase.indexOf(")"));
-			lastVerb = word;
-		    }
+                    if( !"NP".equals(prevPhrase) ) {
+                        secondPrevPhrase = prevPhrase;
+                        prevPhrase = "NP";
+                    }
+                }
+            } //end processing NP
+            else if( tag.equals("VP") ) {
+                while( tag != null && tag.startsWith("V") ) {
+                    // nonphrase verb
+                    if( tag.startsWith("VB") ) {
+                        word = nounPhrase.substring( nounPhrase.indexOf(" ", 
+                                                                        nounPhrase.indexOf(tag))+1, nounPhrase.indexOf(")"));
+                        lastVerb = word;
+                    }
 
-		    nounPhrase = nounPhrase.substring(nounPhrase.indexOf(tag)+1);
-		    tag = getNextTag(nounPhrase);
-		}
+                    nounPhrase = nounPhrase.substring(nounPhrase.indexOf(tag)+1);
+                    tag = getNextTag(nounPhrase);
+                }
 
-		// relations from pass three
-		if( prevPhrase.equals("NP") && lastNoun.length() != 0 ) {
+                // relations from pass three
+                if( prevPhrase.equals("NP") && lastNoun.length() != 0 ) {
 
-		    wordRelationsWriter.println(lastNoun + " " + lastVerb);
+                    wordRelationsWriter.println(lastNoun + " " + lastVerb);
 
-		    addRelation(lastNoun, lastVerb);
-		}
+                    addRelation(lastNoun, lastVerb);
+                }
 
-		if( !prevPhrase.equals("VP") ) {
-		    secondPrevPhrase = prevPhrase;
-		    prevPhrase = "VP";
-		}
-	    }
-	    else if( isPhraseOrClause(tag) || isPreposition(tag) ) {
-		nounPhrase = nounPhrase.substring( nounPhrase.indexOf(tag)
-						   + tag.length());
-		if( !tag.equals(prevPhrase) ) {
-		    secondPrevPhrase = prevPhrase;
-		    prevPhrase = tag;
-		}
-	    }
-	    else {
-		nounPhrase = nounPhrase.substring( nounPhrase.indexOf(tag)
-						   + tag.length());
-	    }
-	}
+                if( !prevPhrase.equals("VP") ) {
+                    secondPrevPhrase = prevPhrase;
+                    prevPhrase = "VP";
+                }
+            }
+            else if( isPhraseOrClause(tag) || isPreposition(tag) ) {
+                nounPhrase = nounPhrase.substring( nounPhrase.indexOf(tag)
+                                                   + tag.length());
+                if( !tag.equals(prevPhrase) ) {
+                    secondPrevPhrase = prevPhrase;
+                    prevPhrase = tag;
+                }
+            }
+            else {
+                nounPhrase = nounPhrase.substring( nounPhrase.indexOf(tag)
+                                                   + tag.length());
+            }
+        }
     }
 
+    /**
+     * Unsupported.
+     *
+     * @throws UnsupportedOperationException
+     */
+    public void processDocument(Iterable<String> document) {
+        throw new UnsupportedOperationException("Cannot process tokens");
+    }
 
     /**
      * Adds a relation pair to the matrix
      */
     private void addRelation(String object, String attribute) {
-	double val;
-	int row, col;
+        double val;
+        int row, col;
 
         object = object.toLowerCase();
         attribute = attribute.toLowerCase();
 
-	// get row in matrix
-	if( objectTable.containsKey(object) ) {
+        // get row in matrix
+        if( objectTable.containsKey(object) ) {
             // if the object already exists in matrix, find its index
-	    row = objectTable.get(object);
-	} else {
+            row = objectTable.get(object);
+        } else {
             // otherwise give the object a new index number
-	    row = Integer.valueOf(objectCounter.getAndIncrement());
+            row = Integer.valueOf(objectCounter.getAndIncrement());
             // insert new object/index pair into lookup table
-	    objectTable.put( object, row );
+            objectTable.put( object, row );
             System.out.println(object + " " + row);
-	}
+        }
 
-	// get column in matrix
-	if( attributeTable.containsKey(attribute) ) {
-	    col = attributeTable.get(attribute);
-	} else {
-	    col = Integer.valueOf(attributeCounter.getAndIncrement());
-	    attributeTable.put( attribute, col );
-	}
+        // get column in matrix
+        if( attributeTable.containsKey(attribute) ) {
+            col = attributeTable.get(attribute);
+        } else {
+            col = Integer.valueOf(attributeCounter.getAndIncrement());
+            attributeTable.put( attribute, col );
+        }
 
-	// update entry in matrix which records how many times the
+        // update entry in matrix which records how many times the
         // object/attribute pair has been seen
-	if( row < syntacticCooccurrence.rows() && 
-	    col < syntacticCooccurrence.columns()) {
+        if( row < syntacticCooccurrence.rows() && 
+            col < syntacticCooccurrence.columns()) {
             // if there's already an entry for the object and attribute, get the
             // current value for the pair of words
-	    val = syntacticCooccurrence.get(row, col);
+            val = syntacticCooccurrence.get(row, col);
             // increment the current value by one and store in matrix
-	    syntacticCooccurrence.set(row, col, val+1);
-	} else {
+            syntacticCooccurrence.set(row, col, val+1);
+        } else {
             // otherwise set the row, col value to 1
-	    syntacticCooccurrence.set(row, col, 1.0);
-	}
+            syntacticCooccurrence.set(row, col, 1.0);
+        }
     }
 
     /**
      * Creates relations between words in a noun phrase
      */
     private void processWordsInNP(ArrayList<Pair<String>> wordsInPhrase) {
-	if( wordsInPhrase.size() > 1 ) {
-	    // this is from Grefenstette's pseudo code
-	    for (int i = 0; i < wordsInPhrase.size()-1; i++) {
+        if( wordsInPhrase.size() > 1 ) {
+            // this is from Grefenstette's pseudo code
+            for (int i = 0; i < wordsInPhrase.size()-1; i++) {
 
-		if (inStartSet(wordsInPhrase.get(i).x) ) {
-		
-		    for (int j = i+1; j < wordsInPhrase.size(); j++ ) {
-			
-			if (inReceiveSet( wordsInPhrase.get(j).x ) ) {
+                if (inStartSet(wordsInPhrase.get(i).x) ) {
+                
+                    for (int j = i+1; j < wordsInPhrase.size(); j++ ) {
+                        
+                        if (inReceiveSet( wordsInPhrase.get(j).x ) ) {
 
-			    wordRelationsWriter.
-				println(wordsInPhrase.get(j).y + " "
-					+ wordsInPhrase.get(i).y);
-			    
-// 			    System.out.println(wordsInPhrase.get(j).y + " "
-// 					       + wordsInPhrase.get(i).y);
-			    
-			    addRelation(wordsInPhrase.get(j).y, 
-					wordsInPhrase.get(i).y);
-			}
-		    }
-		}
-	    }
-	}
+                            wordRelationsWriter.
+                                println(wordsInPhrase.get(j).y + " "
+                                        + wordsInPhrase.get(i).y);
+                            
+//                             System.out.println(wordsInPhrase.get(j).y + " "
+//                                                + wordsInPhrase.get(i).y);
+                            
+                            addRelation(wordsInPhrase.get(j).y, 
+                                        wordsInPhrase.get(i).y);
+                        }
+                    }
+                }
+            }
+        }
     }
 
   
@@ -363,15 +371,15 @@ public class Grefenstette implements SemanticSpace {
      * @param tag A tag from the parsed corpus to be checked
      */
     private boolean inStartSet(String tag) {
-	return
-	    // noun
-	    tag.startsWith("NN") ||
-	    // adjective
-	    tag.startsWith("JJ") ||
-	    // adverb
-	    tag.startsWith("RB") ||
-	    // cardinal number
-	    tag.startsWith("CD");
+        return
+            // noun
+            tag.startsWith("NN") ||
+            // adjective
+            tag.startsWith("JJ") ||
+            // adverb
+            tag.startsWith("RB") ||
+            // cardinal number
+            tag.startsWith("CD");
     }
 
 
@@ -379,9 +387,9 @@ public class Grefenstette implements SemanticSpace {
      * Checks to see if tag can be modified by a word in StartSet
      */
     private boolean inReceiveSet(String tag) {
-	return
-	    tag.startsWith("NN") ||
-	    tag.startsWith("VB");
+        return
+            tag.startsWith("NN") ||
+            tag.startsWith("VB");
     }
 
 
@@ -389,7 +397,7 @@ public class Grefenstette implements SemanticSpace {
      * Checks to see if tag is a preposition
      */
     private boolean isPreposition(String tag) {
-	return tag.startsWith("PP");
+        return tag.startsWith("PP");
     }
 
 
@@ -397,29 +405,29 @@ public class Grefenstette implements SemanticSpace {
      * Checks to see if tag marks a phrase or clause
      */
     private boolean isPhraseOrClause(String tag) {
-	// find out why adding more reduced the number of relations
-	return
-	    (!tag.equals("SYM") &&
-	     tag.startsWith("S")) ||
-	    tag.equals("ADJP") ||
-	    tag.equals("ADVP") ||
-	    tag.equals("CONJP") ||
-	    tag.equals("FRAG") ||
-	    tag.equals("INTJ") ||
-	    tag.equals("LST") ||
-	    tag.equals("NAC") ||
-	    tag.equals("NP") ||
-	    tag.equals("NX") ||
-	    tag.equals("PP") ||
-	    tag.equals("PRN") ||
-	    /* removing prt adds 1% more relations */
-	    tag.equals("PRT") ||
-	    tag.equals("QP") ||
-	    tag.equals("RRC") ||
-	    tag.equals("UCP") ||
-	    tag.equals("VP") ||
-	    tag.startsWith("WH") ||
-	    tag.equals("X");
+        // find out why adding more reduced the number of relations
+        return
+            (!tag.equals("SYM") &&
+             tag.startsWith("S")) ||
+            tag.equals("ADJP") ||
+            tag.equals("ADVP") ||
+            tag.equals("CONJP") ||
+            tag.equals("FRAG") ||
+            tag.equals("INTJ") ||
+            tag.equals("LST") ||
+            tag.equals("NAC") ||
+            tag.equals("NP") ||
+            tag.equals("NX") ||
+            tag.equals("PP") ||
+            tag.equals("PRN") ||
+            /* removing prt adds 1% more relations */
+            tag.equals("PRT") ||
+            tag.equals("QP") ||
+            tag.equals("RRC") ||
+            tag.equals("UCP") ||
+            tag.equals("VP") ||
+            tag.startsWith("WH") ||
+            tag.equals("X");
     }
 
     /**
@@ -427,36 +435,36 @@ public class Grefenstette implements SemanticSpace {
      * @param str The sentence that the tag is extracted from
      */
     private String getNextTag(String str) {
-	String tag;
-	int endIndex;
-	int tagIndex = str.indexOf("(");
+        String tag;
+        int endIndex;
+        int tagIndex = str.indexOf("(");
 
-	if( tagIndex < 0 ) {
-	    return null;
-	}
+        if( tagIndex < 0 ) {
+            return null;
+        }
 
-	// in case there's nothing in the sentence
-	endIndex = str.indexOf(" ", tagIndex);
+        // in case there's nothing in the sentence
+        endIndex = str.indexOf(" ", tagIndex);
 
-	if( endIndex < 0 ) {
-	    return null;
-	}
+        if( endIndex < 0 ) {
+            return null;
+        }
 
-	tag = str.substring( tagIndex+1, endIndex ); 
+        tag = str.substring( tagIndex+1, endIndex ); 
 
-	if( tag.length() > 0 ) {
-	    return tag;
-	} else {
-	    str = str.substring( tagIndex+1 );
-	    return getNextTag(str);
-	}
+        if( tag.length() > 0 ) {
+            return tag;
+        } else {
+            str = str.substring( tagIndex+1 );
+            return getNextTag(str);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<String> getWords() {
-	return Collections.unmodifiableSet(objectTable.keySet());
+        return Collections.unmodifiableSet(objectTable.keySet());
     }
 
     /**
@@ -486,7 +494,7 @@ public class Grefenstette implements SemanticSpace {
      * {@inheritDoc}
      */
     public String getSpaceName() {
-	return "grefenstette-syntatic-analysis";
+        return "grefenstette-syntatic-analysis";
     }
 
     /**

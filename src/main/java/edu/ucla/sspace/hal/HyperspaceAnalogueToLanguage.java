@@ -289,12 +289,18 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * {@inheritDoc}
      */
     public void  processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenizeOrdered(document)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void  processDocument(Iterable<String> document) {
+        Iterator<String> documentTokens = document.iterator();
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
-            
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
-            
+
         String focus = null;
 
         // Rather than updating the matrix every time an occurrence is seen,

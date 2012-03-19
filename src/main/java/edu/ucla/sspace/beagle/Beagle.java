@@ -202,10 +202,18 @@ public class Beagle implements SemanticSpace {
      * {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenizeOrdered(document)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void processDocument(Iterable<String> tokens) {
+        Iterator<String> it = tokens.iterator();
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
 
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
         Map<String, DoubleVector> documentVectors =
             new HashMap<String, DoubleVector>();
 

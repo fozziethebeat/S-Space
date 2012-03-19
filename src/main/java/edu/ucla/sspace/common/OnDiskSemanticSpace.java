@@ -531,6 +531,14 @@ public class OnDiskSemanticSpace implements SemanticSpace {
     /**
      * Not supported; throws an {@link UnsupportedOperationException} if called.
      */
+    public void processDocument(Iterable<String> document) { 
+        throw new UnsupportedOperationException(
+            "OnDiskSemanticSpace instances cannot be updated");
+    }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     */
     public void processSpace(Properties props) { 
         throw new UnsupportedOperationException(
             "OnDiskSemanticSpace instances cannot be updated");

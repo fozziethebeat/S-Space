@@ -145,6 +145,12 @@ public class VectorMapSemanticSpace<T extends Vector>
     /**
      * A no-op
      */
+    public void processDocument(Iterable<String> document) { 
+    }
+
+    /**
+     * A no-op
+     */
     public void processSpace(Properties props) { 
     }
 }

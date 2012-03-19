@@ -163,6 +163,16 @@ public class CachingOnDiskSemanticSpace implements SemanticSpace {
      *
      * @throws an {@link UnsupportedOperationException} if called.
      */
+    public void processDocument(Iterable<String> document) { 
+        throw new UnsupportedOperationException(
+            "CachingOnDiskSemanticSpace instances cannot be updated");
+    }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
     public void processSpace(Properties props) { 
         throw new UnsupportedOperationException(
             "CachingOnDiskSemanticSpace instances cannot be updated");

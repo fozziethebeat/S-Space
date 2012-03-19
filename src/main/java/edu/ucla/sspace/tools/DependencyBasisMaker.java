@@ -263,6 +263,13 @@ public class DependencyBasisMaker extends DependencyGenericMain {
         }
 
         /**
+         * Unsupported
+         */
+        public void processDocument(Iterable<String> document) {
+            throw new UnsupportedOperationException("Cannot process Tokens");
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Set<String> getWords() {

@@ -460,11 +460,21 @@ public class RandomIndexing implements SemanticSpace, Filterable {
      * @param document {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable( 
+            IteratorFactory.tokenizeOrdered(document)));
+        document.close();
+    }
+
+    /**
+     * Updates the semantic vectors based on the words in the document.
+     *
+     * @param document {@inheritDoc}
+     */
+    public void processDocument(Iterable<String> document) {
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);
 
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
+        Iterator<String> documentTokens = document.iterator();
 
         String focusWord = null;
 
@@ -547,8 +557,6 @@ public class RandomIndexing implements SemanticSpace, Filterable {
                 prevWords.remove();
             }
         }    
-
-        document.close();
     }
     
     /**

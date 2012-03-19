@@ -380,10 +380,21 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
      * @param document {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+            IteratorFactory.tokenizeOrdered(document)));
+        document.close();
+    }
+
+    /**
+     * Updates the semantic vectors based on the words in the document.
+     *
+     * @param document {@inheritDoc}
+     */
+    public void processDocument(Iterable<String> document) {
+        try {
         int docIndex = documentCounter.getAndIncrement();
 
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
+        Iterator<String> documentTokens = document.iterator();
 
         // As we read in the document, generate a compressed version of it,
         // which we will use during the process space method to recompute all of
@@ -409,12 +420,12 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
                 semanticFilter.isEmpty() || semanticFilter.contains(focusWord)
                 && !focusWord.equals(IteratorFactory.EMPTY_TOKEN);
 
-	    // If the filter does not accept this word, skip the semantic
-	    // processing, continue with the next word
+            // If the filter does not accept this word, skip the semantic
+            // processing, continue with the next word
             if (!calculateSemantics) {
                 // Do not write out any removed tokens to save space
-		continue;
-	    }
+                continue;
+            }
 
             // Update the occurrences of this token
             unfilteredTokens++;
@@ -425,14 +436,12 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
             // NOTE: this call to termToIndex *must* come after the
             // getTermIndexVector() call, which is responsible for adding this
             // mapping if it doesn't already exist.
-	    int focusIndex = termToIndex.get(focusWord);
+            int focusIndex = termToIndex.get(focusWord);
 
             // write the term index into the compressed for the document for
             // later corpus reprocessing
             dos.writeInt(focusIndex);
         }
-
-        document.close();
         
         dos.close();
         byte[] docAsBytes = compressedDocument.toByteArray();
@@ -443,6 +452,9 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
             // Write how many terms were in this document after filtering
             compressedDocumentsWriter.writeInt(unfilteredTokens);
             compressedDocumentsWriter.write(docAsBytes, 0, docAsBytes.length);
+        }
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
         }
     }
     

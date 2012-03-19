@@ -66,6 +66,13 @@ public interface SemanticSpace {
     void processDocument(BufferedReader document) throws IOException;
 
     /**
+     * Processes the contents of the tokens.
+     *
+     * @param tokens an iterator over tokens within a context.
+     */
+    void processDocument(Iterable<String> document);
+
+    /**
      * Returns the set of words that are represented in this semantic space.
      *
      * @return the set of words that are represented in this semantic space.

@@ -494,11 +494,18 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
      * {@inheritDoc}  Note that this method is <i>not</i> thread safe.
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+            IteratorFactory.tokenizeOrdered(document)));
+        document.close();
+    }
+
+    /**
+     * {@inheritDoc}  Note that this method is <i>not</i> thread safe.
+     */
+    public void processDocument(Iterable<String> document) {
+        Iterator<String> documentTokens = document.iterator();
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);
-
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
 
         String focusWord = null;
 
@@ -583,8 +590,6 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
                 prevWords.remove();
             }
         }    
-
-        document.close();
     }
         
     /**

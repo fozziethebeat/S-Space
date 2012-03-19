@@ -283,9 +283,28 @@ public abstract class OrderedTemporalRandomIndexing
     /**
      * {@inheritDoc}
      */
+    public void processDocument(Iterable<String> document) {
+        processDocument(document, System.currentTimeMillis());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public void processDocument(BufferedReader document, long timeStamp) 
         throws IOException {
+        updateTime(timeStamp);
+        currentSlice.processDocument(document);
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    public void processDocument(Iterable<String> document, long timeStamp) {
+        updateTime(timeStamp);
+        currentSlice.processDocument(document);
+    }
+
+    private void updateTime(long timeStamp) {
         if (startTime != null && shouldPartitionSpace(timeStamp)) {
             for (Iterator<Runnable> it = partitionHooks.iterator(); 
                  it.hasNext(); ) {
@@ -311,8 +330,6 @@ public abstract class OrderedTemporalRandomIndexing
         }
         else if (endTime < timeStamp)
             timeStamp = endTime;
-
-        currentSlice.processDocument(document);
     }
 
     /**

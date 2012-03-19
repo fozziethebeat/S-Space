@@ -51,6 +51,16 @@ public interface TemporalSemanticSpace extends SemanticSpace {
     void processDocument(BufferedReader document) throws IOException;
 
     /**
+     * Processes the contents of the provided reader as a document, using the
+     * current time as the timestamp.
+     *
+     * @param document a reader that allows access to the text of the document
+     *
+     * @throws IOException if any error occurs while reading the document
+     */
+    void processDocument(Iterable<String> document);
+
+    /**
      * Processes the contents of the provided buffer as a document, using the
      * provided timestamp as the date when the document was written.
      *

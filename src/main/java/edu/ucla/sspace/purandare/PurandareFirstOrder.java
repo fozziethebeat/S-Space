@@ -218,7 +218,7 @@ public class PurandareFirstOrder implements SemanticSpace {
      * properties for configuration
      */
     public PurandareFirstOrder(Properties props) {
-	cooccurrenceMatrix = new AtomicGrowingMatrix();
+        cooccurrenceMatrix = new AtomicGrowingMatrix();
         termToIndex = new ConcurrentHashMap<String,Integer>();
         termToVector = new ConcurrentHashMap<String,DoubleVector>();
         termCounts = new CopyOnWriteArrayList<AtomicInteger>();
@@ -250,50 +250,58 @@ public class PurandareFirstOrder implements SemanticSpace {
      * {@inheritDoc}
      */
     public void  processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenizeOrdered(document)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void  processDocument(Iterable<String> document) {
+        try {
         documentCounter.getAndIncrement();
-	Queue<String> nextWords = new ArrayDeque<String>();
-	Queue<String> prevWords = new ArrayDeque<String>();
-		
-	Iterator<String> documentTokens = 
-	    IteratorFactory.tokenizeOrdered(document);
-		
-	String focus = null;
-		
+        Queue<String> nextWords = new ArrayDeque<String>();
+        Queue<String> prevWords = new ArrayDeque<String>();
+                
+        Iterator<String> documentTokens = document.iterator();
+                
+        String focus = null;
+                
         ByteArrayOutputStream compressedDocument = 
             new ByteArrayOutputStream(4096);
         DataOutputStream dos = new DataOutputStream(compressedDocument);
         int tokens = 0; // count how many are in this document
         int unfilteredTokens = 0; 
-	//Load the first windowSize words into the Queue		
-	for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
-	    nextWords.offer(documentTokens.next());
-			
-	while(!nextWords.isEmpty()) {
+        //Load the first windowSize words into the Queue                
+        for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
+            nextWords.offer(documentTokens.next());
+                        
+        while(!nextWords.isEmpty()) {
             tokens++;
 
-	    // Load the top of the nextWords Queue into the focus word
-	    focus = nextWords.remove();
+            // Load the top of the nextWords Queue into the focus word
+            focus = nextWords.remove();
 
-	    // Add the next word to nextWords queue (if possible)
-	    if (documentTokens.hasNext()) {		
-		String windowEdge = documentTokens.next();
-		nextWords.offer(windowEdge);
-	    }			
+            // Add the next word to nextWords queue (if possible)
+            if (documentTokens.hasNext()) {                
+                String windowEdge = documentTokens.next();
+                nextWords.offer(windowEdge);
+            }                        
 
-	    // If the filter does not accept this word, skip the semantic
-	    // processing, continue with the next word
-	    if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+            // If the filter does not accept this word, skip the semantic
+            // processing, continue with the next word
+            if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
                 // Mark the token as empty using a negative term index in the
                 // compressed form of the document
                 dos.writeInt(-1);
-		// shift the window
-		prevWords.offer(focus);
-		if (prevWords.size() > windowSize)
-		    prevWords.remove();
-		continue;
-	    }
-		
-	    int focusIndex = getIndexFor(focus);
+                // shift the window
+                prevWords.offer(focus);
+                if (prevWords.size() > windowSize)
+                    prevWords.remove();
+                continue;
+            }
+                
+            int focusIndex = getIndexFor(focus);
             // write the term index into the compressed for the document for
             // later corpus reprocessing
             dos.writeInt(focusIndex);
@@ -301,31 +309,31 @@ public class PurandareFirstOrder implements SemanticSpace {
             termCounts.get(focusIndex).incrementAndGet();
             unfilteredTokens++;
             
-	    // Iterate through the words occurring after and add values
-	    for (String after : nextWords) {
-		// skip adding co-occurence values for words that are not
-		// accepted by the filter
-		if (!after.equals(IteratorFactory.EMPTY_TOKEN)) {
-		    int index = getIndexFor(after);
-                    cooccurrenceMatrix.addAndGet(focusIndex, index, 1);		 
+            // Iterate through the words occurring after and add values
+            for (String after : nextWords) {
+                // skip adding co-occurence values for words that are not
+                // accepted by the filter
+                if (!after.equals(IteratorFactory.EMPTY_TOKEN)) {
+                    int index = getIndexFor(after);
+                    cooccurrenceMatrix.addAndGet(focusIndex, index, 1);                 
                 }
-	    }
+            }
 
-	    for (String before : prevWords) {
-		// skip adding co-occurence values for words that are not
-		// accepted by the filter
-		if (!before.equals(IteratorFactory.EMPTY_TOKEN)) {
-		    int index = getIndexFor(before);
+            for (String before : prevWords) {
+                // skip adding co-occurence values for words that are not
+                // accepted by the filter
+                if (!before.equals(IteratorFactory.EMPTY_TOKEN)) {
+                    int index = getIndexFor(before);
                     cooccurrenceMatrix.addAndGet(focusIndex, index, 1);
                 }
-	    }
-	    		            
-	    // last, put this focus word in the prev words and shift off the
-	    // front if it is larger than the window
-	    prevWords.offer(focus);
-	    if (prevWords.size() > windowSize)
-		prevWords.remove();
-	}
+            }
+                                        
+            // last, put this focus word in the prev words and shift off the
+            // front if it is larger than the window
+            prevWords.offer(focus);
+            if (prevWords.size() > windowSize)
+                prevWords.remove();
+        }
 
         dos.close();
         byte[] docAsBytes = compressedDocument.toByteArray();
@@ -338,6 +346,9 @@ public class PurandareFirstOrder implements SemanticSpace {
             compressedDocumentsWriter.writeInt(unfilteredTokens);
             compressedDocumentsWriter.write(docAsBytes, 0, docAsBytes.length);
         }
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     } 
 
     /**
@@ -346,34 +357,34 @@ public class PurandareFirstOrder implements SemanticSpace {
      * returns that index.
      */
     private final int getIndexFor(String word) {
-	Integer index = termToIndex.get(word);
-	if (index == null) {	 
-	    synchronized(this) {
-		// recheck to see if the term was added while blocking
-		index = termToIndex.get(word);
-		// if another thread has not already added this word while the
-		// current thread was blocking waiting on the lock, then add it.
-		if (index == null) {
-		    int i = wordIndexCounter++;
+        Integer index = termToIndex.get(word);
+        if (index == null) {         
+            synchronized(this) {
+                // recheck to see if the term was added while blocking
+                index = termToIndex.get(word);
+                // if another thread has not already added this word while the
+                // current thread was blocking waiting on the lock, then add it.
+                if (index == null) {
+                    int i = wordIndexCounter++;
                     // Add a new counter for this term.  Because the
                     // wordIndexCounter starts at zero, so the next index will
                     // be the last index in the termCounts list.
                     termCounts.add(new AtomicInteger(0));
-		    termToIndex.put(word, i);
-		    return i; // avoid the auto-boxing to assign i to index
-		}
-	    }
-	}
-	return index;
+                    termToIndex.put(word, i);
+                    return i; // avoid the auto-boxing to assign i to index
+                }
+            }
+        }
+        return index;
     }
 
         /**
      * {@inheritDoc}
      */
     public Set<String> getWords() {
-	// If no documents have been processed, it will be empty		
-	return Collections.unmodifiableSet(termToVector.keySet());
-    }		
+        // If no documents have been processed, it will be empty                
+        return Collections.unmodifiableSet(termToVector.keySet());
+    }                
 
     /**
      * {@inheritDoc}
@@ -730,7 +741,7 @@ public class PurandareFirstOrder implements SemanticSpace {
      * {@inheritDoc}
      */
     public String getSpaceName() {
-	return "purandare-petersen";
+        return "purandare-petersen";
     }
 
     /**

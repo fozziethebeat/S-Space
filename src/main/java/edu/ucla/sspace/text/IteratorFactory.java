@@ -35,6 +35,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -320,6 +322,13 @@ public class IteratorFactory {
      */
     public static void setResourceFinder(ResourceFinder finder) {
         resourceFinder = finder;
+    }
+
+    public static Iterable<String> iterable(Iterator<String> tokenIterator) {
+        List<String> tokens = new LinkedList<String>();
+        while (tokenIterator.hasNext())
+            tokens.add(tokenIterator.next());
+        return tokens;
     }
 
     /**

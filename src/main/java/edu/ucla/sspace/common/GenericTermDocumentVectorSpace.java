@@ -182,6 +182,21 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      * @param document {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenize(document)));
+    }
+
+    /**
+     * Tokenizes the document using the {@link IteratorFactory} and updates the
+     * term-document frequency counts.
+     *
+     * <p>
+     *
+     * This method is thread-safe and may be called in parallel with separate
+     * documents to speed up overall processing time.
+     */
+    public void processDocument(Iterable<String> document) {
+        Iterator<String> documentTokens = document.iterator();
         // Create a mapping for each term that is seen in the document to the
         // number of times it has been seen.  This mapping would more elegantly
         // be a SparseArray<Integer> however, the length of the sparse array
@@ -191,7 +206,6 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // converted to its index form for each occurrence, which results in a
         // double Map look-up.
         Map<String,Integer> termCounts = new HashMap<String,Integer>(1000);
-        Iterator<String> documentTokens = IteratorFactory.tokenize(document);
 
         // Increaes the count of documents observed so far.
         int docCount = documentCounter.getAndAdd(1);
@@ -223,8 +237,6 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
                            ? 1
                            : 1 + termCount.intValue());
         }
-
-        document.close();
 
         // Check that we actually loaded in some terms before we increase the
         // documentIndex. This is done after increasing the document count since

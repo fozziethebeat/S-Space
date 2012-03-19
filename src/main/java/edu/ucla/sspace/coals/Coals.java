@@ -284,6 +284,15 @@ public class Coals implements SemanticSpace {
      * {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenizeOrdered(document)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void processDocument(Iterable<String> document) {
+        Iterator<String> it = document.iterator();
         Map<String, Integer> wordFreq = new HashMap<String, Integer>();
         Map<String, SparseDoubleVector> wordDocSemantics =
             new HashMap<String, SparseDoubleVector>();
@@ -292,8 +301,6 @@ public class Coals implements SemanticSpace {
         // context.
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
-
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
 
         for (int i = 0; i < 4 && it.hasNext(); ++i)
             nextWords.offer(it.next());

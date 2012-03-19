@@ -467,7 +467,17 @@ public class FileBasedTemporalSemanticSpace implements TemporalSemanticSpace {
     /**
      * A noop.
      */
+    public void processDocument(Iterable<String> document) { }
+
+    /**
+     * A noop.
+     */
     public void processDocument(BufferedReader document, long time) { }
+
+    /**
+     * A noop.
+     */
+    public void processDocument(Iterable<String> document, long time) { }
 
     /**
      * A noop.

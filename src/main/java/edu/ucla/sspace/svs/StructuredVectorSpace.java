@@ -376,6 +376,13 @@ public class StructuredVectorSpace implements SemanticSpace, Serializable {
     }
 
     /**
+     * Unsupported.
+     */
+    public void processDocument(Iterable<String> document) {
+        throw new UnsupportedOperationException("Cannot process tokens");
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void processSpace(Properties properties) {

@@ -415,7 +415,16 @@ public class DependencyRandomIndexing implements SemanticSpace {
         }
         document.close();
     }
-        
+
+    /**
+     * Unsupported.
+     *
+     * @throws UnsupportedOperationException
+     */
+    public void processDocument(Iterable<String> document) {
+        throw new UnsupportedOperationException("Cannot process tokens");
+    }
+
     /**
      * Does nothing.
      *

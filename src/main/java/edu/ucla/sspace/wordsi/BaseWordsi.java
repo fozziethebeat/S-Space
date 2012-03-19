@@ -94,4 +94,11 @@ public abstract class BaseWordsi implements Wordsi, SemanticSpace {
     public void processDocument(BufferedReader document) {
         extractor.processDocument(document, this);
     }
+
+    /**
+     * Unsupported.
+     */
+    public void processDocument(Iterable<String> document) {
+        throw new UnsupportedOperationException("Cannot process tokens");
+    }
 }

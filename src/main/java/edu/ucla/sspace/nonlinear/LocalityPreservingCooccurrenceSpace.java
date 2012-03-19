@@ -212,11 +212,18 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
      * {@inheritDoc}
      */
     public void  processDocument(BufferedReader document) throws IOException {
+        processDocument(IteratorFactory.iterable(
+                    IteratorFactory.tokenizeOrdered(document)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void  processDocument(Iterable<String> document) {
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
             
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
+        Iterator<String> documentTokens = document.iterator();
             
         String focus = null;
 
