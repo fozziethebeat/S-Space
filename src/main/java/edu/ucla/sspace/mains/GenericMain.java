@@ -536,7 +536,7 @@ public abstract class GenericMain {
             Document doc = docIter.next();
             int docNumber = ++count;
             int terms = 0;
-            sspace.processDocument(doc.reader());
+            sspace.processDocument(doc);
             long endTime = System.currentTimeMillis();
             verbose("processed document #%d in %.3f seconds",
                     docNumber, ((endTime - startTime) / 1000d));
@@ -582,7 +582,7 @@ public abstract class GenericMain {
                         int docNumber = count.incrementAndGet();
                         int terms = 0;
                         try {
-                            sspace.processDocument(doc.reader());
+                            sspace.processDocument(doc);
                         } catch (Throwable t) {
                             t.printStackTrace();
                         }

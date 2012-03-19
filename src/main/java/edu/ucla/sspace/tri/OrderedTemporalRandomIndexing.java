@@ -27,6 +27,8 @@ import edu.ucla.sspace.ri.RandomIndexing;
 
 import edu.ucla.sspace.temporal.TemporalSemanticSpace;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.Vector;
 
@@ -277,30 +279,16 @@ public abstract class OrderedTemporalRandomIndexing
      * {@inheritDoc}
      */
     public void processDocument(BufferedReader document) throws IOException {
-        processDocument(document, System.currentTimeMillis());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public void processDocument(Iterable<String> document) {
-        processDocument(document, System.currentTimeMillis());
     }
 
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, long timeStamp) 
-        throws IOException {
-        updateTime(timeStamp);
-        currentSlice.processDocument(document);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void processDocument(Iterable<String> document, long timeStamp) {
-        updateTime(timeStamp);
+    public void processDocument(Document document) {
+        updateTime(document.timeStamp());
         currentSlice.processDocument(document);
     }
 

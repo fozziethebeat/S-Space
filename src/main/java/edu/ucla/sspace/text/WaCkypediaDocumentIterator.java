@@ -106,7 +106,7 @@ public class WaCkypediaDocumentIterator implements Iterator<Document> {
      * Returns the next document from the file.
      */
     public synchronized Document next() {
-        Document next = new StringDocument(nextLine);
+        Document next = new TokenizedDocument(nextLine);
         try {
             nextLine = advance();
         } catch (IOException ioe) {

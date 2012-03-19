@@ -25,6 +25,7 @@ import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor;
+import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyPath;
 import edu.ucla.sspace.dependency.DependencyPathAcceptor;
 import edu.ucla.sspace.dependency.DependencyPathWeight;
@@ -85,9 +86,15 @@ public class DVWordsiMain extends GenericWordsiMain {
      */
     private DependencyPathBasisMapping basis;
 
+    private final DependencyExtractor parser;
+
     public static void main(String[] args) throws Exception {
         DVWordsiMain main = new DVWordsiMain();
         main.run(args);
+    }
+
+    public DVWordsiMain() {
+        parser = new CoNLLDependencyExtractor();
     }
 
     /**
@@ -177,20 +184,17 @@ public class DVWordsiMain extends GenericWordsiMain {
         // If the evaluation type is for semEval, use a
         // SemEvalDependencyContextExtractor.
         if (argOptions.hasOption('E'))
-            return new SemEvalDependencyContextExtractor(
-                    new CoNLLDependencyExtractor(), generator);
+            return new SemEvalDependencyContextExtractor(parser, generator);
 
         // If the evaluation type is for pseudoWord, use a
         // PseudoWordDependencyContextExtractor.
         if (argOptions.hasOption('P'))
             return new PseudoWordDependencyContextExtractor(
-                    new CoNLLDependencyExtractor(), 
-                    generator, getPseudoWordMap());
+                    parser, generator, getPseudoWordMap());
 
         // Otherwise return the normal extractor.
         return new DependencyContextExtractor(
-                        new CoNLLDependencyExtractor(), generator,
-                        argOptions.hasOption('h'));
+                        parser, generator, argOptions.hasOption('h'));
     }
 
     /**
@@ -214,8 +218,12 @@ public class DVWordsiMain extends GenericWordsiMain {
      */
     protected void addDocIterators(Collection<Iterator<Document>> docIters,
                                    String[] fileNames) throws IOException {
+        boolean readHeader = argOptions.hasOption('E') ||
+                             argOptions.hasOption('P') ||
+                             argOptions.hasOption('h');
         // All the documents are listed in one file, with one document per line
         for (String s : fileNames)
-            docIters.add(new DependencyFileDocumentIterator(s));
+            docIters.add(new DependencyFileDocumentIterator(
+                        s, parser, readHeader));
     }
 }

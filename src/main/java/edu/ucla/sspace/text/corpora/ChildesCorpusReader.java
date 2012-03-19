@@ -24,12 +24,13 @@ package edu.ucla.sspace.text.corpora;
 import edu.ucla.sspace.text.DirectoryCorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.DocumentPreprocessor;
-import edu.ucla.sspace.text.StringDocument;
+import edu.ucla.sspace.text.TokenizedDocument;
 
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -142,7 +143,8 @@ public class ChildesCorpusReader extends DirectoryCorpusReader<Document> {
                     utteranceBuilder.append(". ");
                 }
             }
-            return new StringDocument(utteranceBuilder.toString());
+            return new TokenizedDocument(Arrays.asList(
+                        utteranceBuilder.toString().split("\\s+")));
         }
 
         /**

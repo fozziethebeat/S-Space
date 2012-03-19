@@ -1,83 +1,19 @@
-/*
- * Copyright 2011 David Jurgens
- *
- * This file is part of the S-Space package and is covered under the terms and
- * conditions therein.
- *
- * The S-Space package is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as published
- * by the Free Software Foundation and distributed hereunder to you.
- *
- * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
- * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
- * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
- * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
- * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
- * RIGHTS.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
-package edu.ucla.sspace.text;
-
-import edu.ucla.sspace.dependency.DependencyExtractor;
-import edu.ucla.sspace.dependency.DependencyTreeNode;
-
-import java.io.IOError;
-import java.io.IOException;
+package edu.ucla.sspace.dependency;
 
 import java.util.regex.Pattern;
 
-
 /**
- * An abstraction for a document that has been (or will be) dependency parsed to
- * generate an accompanying parse tree of its contents.
+ * A collection of helpful utility methods for Dependency Parsed data.
+ *
+ * @author Keith Stevens
  */
-public class LabeledParsedStringDocument extends LabeledStringDocument 
-        implements LabeledParsedDocument {
-    
-    private final DependencyTreeNode[] nodes;
-
-    public LabeledParsedStringDocument(String label, 
-                                       DependencyExtractor extractor,
-                                       String parse) {
-        super(label, parse);
-        try {
-            nodes = extractor.readNextTree(reader());
-        } catch (IOException ioe) {
-            // NOTE: this should never happen because we're being given the
-            // parse string itself, so the reader passed to readNextTree() will
-            // be reading from an in-memory buffer, rather than file
-            throw new IOError(ioe);
-        }
-    }
+public class DependencyUtil {
 
     /**
-     * {@inheritDoc}
+     * Returns an approximated reconstruction of the original document based on
+     * the tokens in a given {@link DependencyTreeNode} array.
      */
-    public DependencyTreeNode[] parsedDocument() {
-        return nodes;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String text() {
-        StringBuilder sb = new StringBuilder(nodes.length * 8);
-        for (int i = 0; i < nodes.length; ++i) {
-            String token = nodes[i].word();
-            sb.append(token);
-            if (i+1 < nodes.length)
-                sb.append(' ');
-        }
-        return sb.toString();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String prettyPrintText() {
+    public static String prettyPrintTree(DependencyTreeNode[] nodes) {
         Pattern punctuation = Pattern.compile("[!,-.:;?`]");
         StringBuilder sb = new StringBuilder(nodes.length * 8);
         boolean evenSingleQuote = false;
@@ -136,6 +72,21 @@ public class LabeledParsedStringDocument extends LabeledStringDocument
                         sb.append(' ').append(token);
                 }
             }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Returns a simple white space separated string containing each word in the
+     * given {@link DependencyTreeNode} array.
+     */
+    public String toString(DependencyTreeNode[] nodes) {
+        StringBuilder sb = new StringBuilder(nodes.length * 8);
+        for (int i = 0; i < nodes.length; ++i) {
+            String token = nodes[i].word();
+            sb.append(token);
+            if (i+1 < nodes.length)
+                sb.append(' ');
         }
         return sb.toString();
     }

@@ -64,18 +64,12 @@ public class DepPsdTokenCounter {
     private final Set<String> foundTokens;
 
     /**
-     * The {@link DependencyExtractor} used to extract parse trees.
-     */
-    private final DependencyExtractor extractor;
-
-    /**
      * Creates a new token counter that optionally lower cases tokens
      *
      * @param doLowerCasing {@code true} if the token counter should lower case
      *        all tokens before counting
      */
-    public DepPsdTokenCounter(DependencyExtractor extractor) { 
-        this.extractor = extractor;
+    public DepPsdTokenCounter() { 
         foundTokens = new HashSet<String>();
     }
 
@@ -90,12 +84,11 @@ public class DepPsdTokenCounter {
         long numTokens = 0;
         while (docs.hasNext()) {
             Document doc = docs.next();
-            BufferedReader br = doc.reader();
-            String header = br.readLine();
+            String header = doc.title();
             String[] pieces = header.split("\\s+");
             int index = Integer.parseInt(pieces[3]);
 
-            DependencyTreeNode[] nodes = extractor.readNextTree(br);
+            DependencyTreeNode[] nodes = doc.parseTree();
             foundTokens.add(nodes[index].word().toLowerCase());
             for (int i = index+1; i < index+10 && i < nodes.length; ++i)
                 foundTokens.add(nodes[i].word().toLowerCase());
@@ -135,12 +128,12 @@ public class DepPsdTokenCounter {
 
         // setup the dependency extractor.
         DependencyExtractor e = new CoNLLDependencyExtractor(filter, null);
-        DepPsdTokenCounter counter = new DepPsdTokenCounter(e);
+        DepPsdTokenCounter counter = new DepPsdTokenCounter();
 
         // Process each of the input files
         for (int i = 1; i < options.numPositionalArgs(); ++i)
             counter.process(new DependencyFileDocumentIterator(
-                        options.getPositionalArg(i)));
+                        options.getPositionalArg(i), e, true));
 
         // Then write the results to disk
         PrintWriter pw = new PrintWriter(options.getPositionalArg(0));

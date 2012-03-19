@@ -23,35 +23,76 @@ package edu.ucla.sspace.text;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
-import java.io.BufferedReader;
+import java.util.Iterator;
 
 
 /**
- * An abstraction for a document that has been (or will be) dependency parsed to
- * generate an accompanying parse tree of its contents.
+ * A {@link Document} implementation that centers around a parsed array of
+ * {@link DependencyTreeNode}s.  {@link Iterator}s over tokens will be created
+ * based on the tokenization provided by the parsed tree.
  */
-public interface ParsedDocument extends Document {
+public class ParsedDocument implements Document {
 
-    /**
-     * Returns the dependency tree of the next document as a sequence of {@link
-     * DependencyTreeNode} instances.
-     */
-    DependencyTreeNode[] parsedDocument();
+    private final DependencyTreeNode[] tree;
 
-    /**
-     * Returns the text of the parsed document without any of the
-     * parsing-related annotation, with each parsed token separated by
-     * whitespace.
-     */
-    String text();
+    private final String title;
 
-    /**
-     * Returns a pretty-printed version of the document's text without any of
-     * the parsing-related annotation and using heuristics to appropriately
-     * space punctuation, quotes, and contractions.  This methods is intended as
-     * only a useful way to displaying the document's text in a more readable
-     * format than {@link #text()}, but makes no claims as to reproducing the
-     * original surface form of the document prior to parsing.
-     */
-    String prettyPrintText();
+    private final long timestamp;
+
+    public ParsedDocument(DependencyTreeNode[] tree) {
+        this(tree, "", System.currentTimeMillis());
+    }
+
+    public ParsedDocument(DependencyTreeNode[] tree, String title) {
+        this(tree, title, System.currentTimeMillis());
+    }
+
+    public ParsedDocument(DependencyTreeNode[] tree,
+                          String title,
+                          long timestamp) {
+        this.tree = tree;
+        this.title = title;
+        this.timestamp = timestamp;
+    }
+
+    public String title() {
+        return title;
+    }
+
+    public long timeStamp() {
+        return timestamp;
+    }
+
+    public DependencyTreeNode[] parseTree() {
+        return tree;
+    }
+
+    public Iterator<String> iterator() {
+        return new TreeTokenIterator(tree);
+    }
+
+    private static class TreeTokenIterator implements Iterator<String> {
+
+        private int index;
+
+        private final DependencyTreeNode[] tree;
+
+        public TreeTokenIterator(DependencyTreeNode[] tree) {
+            this.tree = tree;
+            this.index = 0;
+        }
+
+        public boolean hasNext() {
+            return index < tree.length;
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException(
+                    "Cannot remove elements from a TreeTokenIterator");
+        }
+
+        public String next() {
+            return tree[index++].word();
+        }
+    }
 }

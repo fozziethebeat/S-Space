@@ -26,6 +26,8 @@ import edu.ucla.sspace.matrix.Matrix;
 
 import edu.ucla.sspace.temporal.TemporalSemanticSpaceUtils.TSSpaceFormat;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.util.IntegerMap;
 
 import edu.ucla.sspace.vector.DenseVector;
@@ -472,12 +474,7 @@ public class FileBasedTemporalSemanticSpace implements TemporalSemanticSpace {
     /**
      * A noop.
      */
-    public void processDocument(BufferedReader document, long time) { }
-
-    /**
-     * A noop.
-     */
-    public void processDocument(Iterable<String> document, long time) { }
+    public void processDocument(Document document) { }
 
     /**
      * A noop.

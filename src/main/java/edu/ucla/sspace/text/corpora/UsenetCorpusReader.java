@@ -24,7 +24,7 @@ package edu.ucla.sspace.text.corpora;
 import edu.ucla.sspace.text.DirectoryCorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.DocumentPreprocessor;
-import edu.ucla.sspace.text.StringDocument;
+import edu.ucla.sspace.text.TokenizedDocument;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +32,7 @@ import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -43,7 +44,6 @@ import java.util.Iterator;
  * corpus</a> provided by the <a
  * href="http://www.psych.ualberta.ca/~westburylab/index.html">Westbury Lab</a>.
  * The corpus filenames are expected to remain unchanged from how they were
- * specified, i.e. have the numeric timestamp naming convention.
  *
  * @author Keith Stevens
  */
@@ -54,10 +54,6 @@ public class UsenetCorpusReader extends DirectoryCorpusReader<Document> {
      */
     private static final String END_OF_DOCUMENT =
         "---END.OF.DOCUMENT---";
-
-    public UsenetCorpusReader() {
-        super();
-    }
 
     public UsenetCorpusReader(DocumentPreprocessor preprocessor) {
         super(preprocessor);
@@ -75,14 +71,12 @@ public class UsenetCorpusReader extends DirectoryCorpusReader<Document> {
         private BufferedReader usenetReader;
 
         /**
-         * {@code true} if the reader should output UNIX timestamps for each
-         * document, indicating when it was created.
+         * The time stamp of the current document.
          */
-        private final boolean useTimestamps;
+        private long curDocTimestamp;
 
         public UseNetIterator(Iterator<File> files) {
             super(files);
-            useTimestamps = false;
         }
 
         /**
@@ -93,6 +87,18 @@ public class UsenetCorpusReader extends DirectoryCorpusReader<Document> {
             try {
                 usenetReader =
                     new BufferedReader(new FileReader(currentDocName));
+
+                // Extract the time stamp of the current doc.  All usenet files
+                // are named in the format "text.text.date.txt".  the date
+                // portion is formated with YYYYMMDD followed with extra
+                // information.
+                String[] parsedName = currentDocName.getName().split("\\.");
+                String date = parsedName[parsedName.length - 2];
+                Calendar calendar = new GregorianCalendar(
+                        Integer.parseInt(date.substring(0, 4)),
+                        Integer.parseInt(date.substring(4, 6)),
+                        Integer.parseInt(date.substring(6, 8)));
+                curDocTimestamp = calendar.getTimeInMillis();
             } catch (IOException ioe) {
                 throw new IOError(ioe);
             }
@@ -113,7 +119,8 @@ public class UsenetCorpusReader extends DirectoryCorpusReader<Document> {
                 // each line.
                 while ((line = usenetReader.readLine()) != null) {
                     if (line.contains(END_OF_DOCUMENT)) 
-                        return new StringDocument(cleanDoc(content.toString()));
+                        return new TokenizedDocument(
+                                Arrays.asList(cleanDoc(content.toString()).split("\\s+")), "", curDocTimestamp);
                     else {
                         int lineStart = 0;
                         // Find the first non '>' or ' ' in the line to

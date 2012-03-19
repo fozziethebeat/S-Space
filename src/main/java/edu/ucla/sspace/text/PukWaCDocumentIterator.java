@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.StringReader;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -41,7 +42,7 @@ import java.util.NoSuchElementException;
  * href="http://wacky.sslmit.unibo.it/doku.php?id=corpora">WaCky</a> group's
  * website for more information on the PukWaC.
  */
-public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
+public class PukWaCDocumentIterator implements Iterator<Document> {
 
     /**
      * The extractor used to build trees from the PukWaC documents
@@ -62,7 +63,7 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
     /**
      * The next document (sentence) in the corpus
      */
-    private LabeledParsedDocument nextDoc;
+    private Document nextDoc;
 
     /**
      * Creates an {@code Iterator} over the file where each document returned
@@ -100,8 +101,8 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
                 int end = line.indexOf("\"", start + 1);
                 if (end < 0)
                     continue;
-                currentSource = line.substring(start+1, end);                 
-            }            
+                currentSource = line.substring(start+1, end);
+            }
             // If the line indicates the start of a new sentence, then pull out
             // all parsed lines
             else if (line.equals("<s>")) {
@@ -127,11 +128,13 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
                         sb.append(line).append("\n");
                 }
                 
-                nextDoc = new LabeledParsedStringDocument(
-                    currentSource, extractor, sb.toString());
+                BufferedReader br = new BufferedReader(new StringReader(
+                            sb.toString()));
+                nextDoc = new ParsedDocument(
+                    extractor.readNextTree(br), currentSource);
                 break;
             }
-        }        
+        }
     }
 
     /**
@@ -145,10 +148,11 @@ public class PukWaCDocumentIterator implements Iterator<LabeledParsedDocument> {
     /**
      * Returns the next document from the file.
      */
-    public LabeledParsedDocument next() {
+    public Document next() {
         if (nextDoc == null)
             throw new NoSuchElementException("No further documents");
-        LabeledParsedDocument next = nextDoc;
+
+        Document next = nextDoc;
         while (true) {
             try {
                 advance();

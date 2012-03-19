@@ -51,6 +51,8 @@ import java.util.Iterator;
  */
 public abstract class DependencyGenericMain extends GenericMain {
 
+    private DependencyExtractor e;
+
     /**
      * A description of the currently supported {@link DependencyExtractor}
      * configuration options.
@@ -108,7 +110,7 @@ public abstract class DependencyGenericMain extends GenericMain {
             "dependencyParseFormat", "CoNLL");
 
         if (format.equals("CoNLL")) {
-            DependencyExtractor e = (argOptions.hasOption('G'))
+            e = (argOptions.hasOption('G'))
                 ? new CoNLLDependencyExtractor(argOptions.getStringOption('G'), 
                                                filter, stemmer)
                 : new CoNLLDependencyExtractor(filter, stemmer);
@@ -117,8 +119,7 @@ public abstract class DependencyGenericMain extends GenericMain {
             if (argOptions.hasOption('G'))
                 throw new IllegalArgumentException(
                     "WaCKy does not support configuration with -G");
-            DependencyExtractor e = 
-                new WaCKyDependencyExtractor(filter, stemmer);
+            e = new WaCKyDependencyExtractor(filter, stemmer);
             DependencyExtractorManager.addExtractor("WaCKy", e, true);
         } else 
             throw new IllegalArgumentException(
@@ -143,7 +144,7 @@ public abstract class DependencyGenericMain extends GenericMain {
         boolean removeHeader = argOptions.hasOption('H');
         for (String s : fileNames)
           docIters.add(
-              new DependencyFileDocumentIterator(s, removeHeader));
+              new DependencyFileDocumentIterator(s, e, removeHeader));
     }
 
     /**

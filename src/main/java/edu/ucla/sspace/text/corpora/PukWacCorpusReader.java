@@ -25,7 +25,7 @@ package edu.ucla.sspace.text.corpora;
 
 import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
-import edu.ucla.sspace.text.StringDocument;
+import edu.ucla.sspace.text.TokenizedDocument;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,6 +34,7 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.Reader;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 
@@ -93,7 +94,7 @@ public class PukWacCorpusReader implements CorpusReader<Document> {
          * {@inheritDoc}
          */
         public Document next() {
-            Document doc = new StringDocument(next);
+            Document doc = new TokenizedDocument(next);
             next = advance();
             return doc;
         }

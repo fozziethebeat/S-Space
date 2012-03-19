@@ -64,18 +64,12 @@ public class DepSemTokenCounter {
     private final Set<String> foundTokens;
 
     /**
-     * The {@link DependencyExtractor} used to extract parse trees.
-     */
-    private final DependencyExtractor extractor;
-
-    /**
      * Creates a new token counter that optionally lower cases tokens
      *
      * @param doLowerCasing {@code true} if the token counter should lower case
      *        all tokens before counting
      */
-    public DepSemTokenCounter(DependencyExtractor extractor) { 
-        this.extractor = extractor;
+    public DepSemTokenCounter() { 
         foundTokens = new HashSet<String>();
     }
 
@@ -90,10 +84,8 @@ public class DepSemTokenCounter {
         long numTokens = 0;
         while (docs.hasNext()) {
             Document doc = docs.next();
-            BufferedReader br = doc.reader();
-            String header = br.readLine();
-
-            DependencyTreeNode[] nodes = extractor.readNextTree(br);
+            String header = doc.title();
+            DependencyTreeNode[] nodes = doc.parseTree();
             int index;
             for (index = 0; index < nodes.length; ++index)
                 if (nodes[index].lemma().equals(header))
@@ -138,12 +130,12 @@ public class DepSemTokenCounter {
 
         // setup the dependency extractor.
         DependencyExtractor e = new CoNLLDependencyExtractor(filter, null);
-        DepSemTokenCounter counter = new DepSemTokenCounter(e);
+        DepSemTokenCounter counter = new DepSemTokenCounter();
 
         // Process each of the input files
         for (int i = 1; i < options.numPositionalArgs(); ++i)
             counter.process(new DependencyFileDocumentIterator(
-                        options.getPositionalArg(i)));
+                        options.getPositionalArg(i), e, true));
 
         // Then write the results to disk
         PrintWriter pw = new PrintWriter(options.getPositionalArg(0));

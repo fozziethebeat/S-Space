@@ -25,7 +25,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.Iterator;
+
 
 /**
  * An iterator implementation that returns {@link TemporalDocument} instances
@@ -35,8 +37,7 @@ import java.util.Iterator;
  *
  * This class is thread-safe.
  */
-public class OneLinePerTemporalDocumentIterator 
-        implements Iterator<TemporalDocument> {
+public class OneLinePerTemporalDocumentIterator implements Iterator<Document> {
     
     /**
      * The reader for accessing the file containing the documents
@@ -58,43 +59,42 @@ public class OneLinePerTemporalDocumentIterator
      *         documentsFile}
      */
     public OneLinePerTemporalDocumentIterator(String documentsFile) 
-	    throws IOException {
-	
-	documentsReader = new BufferedReader(new FileReader(documentsFile));
-	nextLine = documentsReader.readLine();
+            throws IOException {
+        documentsReader = new BufferedReader(new FileReader(documentsFile));
+        nextLine = documentsReader.readLine();
     }
     
     /**
      * Returns {@code true} if there are more documents in the provided file.
      */
     public synchronized boolean hasNext() { 
-	return nextLine != null;
+        return nextLine != null;
     }    
 
     /**
      * Returns the next document from the file.
      */
-    public synchronized TemporalDocument next() {
-	
-	int firstSpace = nextLine.indexOf(" ");
-	String timeStr = nextLine.substring(0, firstSpace);
-	String doc = nextLine.substring(firstSpace);
-	TemporalDocument next = 
-	    new TemporalStringDocument(doc, Long.parseLong(timeStr));
-	try {
-	    nextLine = documentsReader.readLine();
-	} catch (Throwable t) {
-	    t.printStackTrace();
-	    nextLine = null;
-	}
-	return next;
-    }	
+    public synchronized Document next() {
+        
+        int firstSpace = nextLine.indexOf(" ");
+        String timeStr = nextLine.substring(0, firstSpace);
+        String doc = nextLine.substring(firstSpace);
+        Document next = new TokenizedDocument(
+                Arrays.asList(doc.split("\\s+")), "", Long.parseLong(timeStr));
+        try {
+            nextLine = documentsReader.readLine();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            nextLine = null;
+        }
+        return next;
+    }        
 
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */
     public void remove() {
-	throw new UnsupportedOperationException(
-	    "removing documents is not supported");
+        throw new UnsupportedOperationException(
+            "removing documents is not supported");
     }
 }

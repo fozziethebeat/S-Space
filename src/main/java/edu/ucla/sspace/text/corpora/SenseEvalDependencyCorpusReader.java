@@ -21,16 +21,20 @@
 
 package edu.ucla.sspace.text.corpora;
 
+import edu.ucla.sspace.dependency.DependencyExtractor;
+
 import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
-import edu.ucla.sspace.text.StringDocument;
+import edu.ucla.sspace.text.ParsedDocument;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 
 import java.util.Iterator;
 
@@ -63,6 +67,12 @@ import org.xml.sax.InputSource;
  * @author Keith Stevens
  */
 public class SenseEvalDependencyCorpusReader implements CorpusReader<Document> {
+
+    private final DependencyExtractor parser;
+
+    public SenseEvalDependencyCorpusReader(DependencyExtractor parser) {
+        this.parser = parser;
+    }
 
     /**
      * {@inheritDoc}
@@ -130,9 +140,14 @@ public class SenseEvalDependencyCorpusReader implements CorpusReader<Document> {
          * {@inheritDoc}
          */
         public synchronized Document next() {
-            Document doc = new StringDocument(currentDoc);
-            currentDoc = advance();
-            return doc;
+            try {
+                Document doc = new ParsedDocument(parser.readNextTree(
+                            new BufferedReader(new StringReader(currentDoc))));
+                currentDoc = advance();
+                return doc;
+            } catch (IOException ioe) {
+                throw new IOError(ioe);
+            }
         }
 
         /**

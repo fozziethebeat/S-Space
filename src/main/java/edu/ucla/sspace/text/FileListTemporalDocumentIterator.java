@@ -30,6 +30,7 @@ import java.util.Queue;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+
 /**
  * An iterator implementation that returns {@link TemporalDocument} instances
  * given a file that contains list of files and their creation time stamps, each
@@ -41,7 +42,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * This class is thread-safe.
  */
 public class FileListTemporalDocumentIterator 
-        implements Iterator<TemporalDocument> {
+        implements Iterator<Document> {
 
     /**
      * The files in the list that have yet to be returned as {@code Document}
@@ -58,57 +59,50 @@ public class FileListTemporalDocumentIterator
      * @throws IOException if any error occurs when reading {@code fileListName}
      */
     public FileListTemporalDocumentIterator(String fileListName) 
-	    throws IOException {
-	
-	filesToProcess = new ConcurrentLinkedQueue<NameAndTime>();
-	
-	// read in all the files we have to process
-	BufferedReader br = new BufferedReader(new FileReader(fileListName));
-	for (String line = null; (line = br.readLine()) != null; ) {
-	    if (line.length() == 0 || line.startsWith("#")) {
-		continue;
-	    }
+            throws IOException {
+        filesToProcess = new ConcurrentLinkedQueue<NameAndTime>();
+        // read in all the files we have to process
+        BufferedReader br = new BufferedReader(new FileReader(fileListName));
+        for (String line = null; (line = br.readLine()) != null; ) {
+            if (line.length() == 0 || line.startsWith("#"))
+                continue;
 
-	    // REMINDER: make a note that files with whitespace in their titles
-	    // could have problems.  We might want to fix this is some point.
-	    String[] s = line.split("\\s+");
-	    String fileName = s[0];	    
-	    long timeStamp = (s.length > 1) ? Long.parseLong(s[1]) : -1;
-	    filesToProcess.offer(new NameAndTime(fileName, timeStamp));
-	}
-	br.close();
+            // REMINDER: make a note that files with whitespace in their titles
+            // could have problems.  We might want to fix this is some point.
+            String[] s = line.split("\\s+");
+            String fileName = s[0];
+            long timeStamp = (s.length > 1) ? Long.parseLong(s[1]) : -1;
+            filesToProcess.offer(new NameAndTime(fileName, timeStamp));
+        }
+        br.close();
     }
 
     /**
      * Returns {@code true} if there are more documents to return.
      */
     public boolean hasNext() {
-	return !filesToProcess.isEmpty();
+        return !filesToProcess.isEmpty();
     }
     
     /**
      * Returns the next document from the list.
      */
-    public TemporalDocument next() {
-	//String fileName = filesToProcess.poll();
-	NameAndTime n = filesToProcess.poll();
-	if (n == null) 
-	    return null;
-	try {
-	    return (n.hasTimeStamp()) 
-		? new TemporalFileDocument(n.fileName, n.timeStamp)
-		: new TemporalFileDocument(n.fileName); // no timestamp
-	} catch (IOException ioe) {
-	    return null;
-	}
-    }	
-    
+    public Document next() {
+        //String fileName = filesToProcess.poll();
+        NameAndTime n = filesToProcess.poll();
+        if (n == null) 
+            return null;
+        return (n.hasTimeStamp()) 
+            ? new TokenizedDocument(FileListDocumentIterator.readText(n.fileName), "", n.timeStamp)
+            : new TokenizedDocument(FileListDocumentIterator.readText(n.fileName));
+}
+
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */
     public void remove() {
-	throw new UnsupportedOperationException(
-	    "removing documents is not supported");
+        throw new UnsupportedOperationException(
+            "removing documents is not supported");
     }
 
     /**
@@ -116,16 +110,16 @@ public class FileListTemporalDocumentIterator
      */
     private static class NameAndTime {
 
-	public final String fileName;
-	public final long timeStamp;
+        public final String fileName;
+        public final long timeStamp;
 
-	public NameAndTime(String fileName, long timeStamp) {
-	    this.fileName = fileName;
-	    this.timeStamp = timeStamp;
-	}
+        public NameAndTime(String fileName, long timeStamp) {
+            this.fileName = fileName;
+            this.timeStamp = timeStamp;
+        }
 
-	public boolean hasTimeStamp() {
-	    return timeStamp >= 0;
-	}
+        public boolean hasTimeStamp() {
+            return timeStamp >= 0;
+        }
     }
 }

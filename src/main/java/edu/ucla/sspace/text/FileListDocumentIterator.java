@@ -22,13 +22,18 @@
 package edu.ucla.sspace.text;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOError;
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Queue;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 /**
  * An iterator implementation that returns {@link Document} instances given a
@@ -55,43 +60,55 @@ public class FileListDocumentIterator implements Iterator<Document> {
      * @throws IOException if any error occurs when reading {@code fileListName}
      */
     public FileListDocumentIterator(String fileListName) throws IOException {
-	
-	filesToProcess = new ConcurrentLinkedQueue<String>();
-	
-	// read in all the files we have to process
-	BufferedReader br = new BufferedReader(new FileReader(fileListName));
-	for (String line = null; (line = br.readLine()) != null; )
-	    filesToProcess.offer(line.trim());	    
-
-	br.close();
+        
+        filesToProcess = new ConcurrentLinkedQueue<String>();
+        
+        // read in all the files we have to process
+        BufferedReader br = new BufferedReader(new FileReader(fileListName));
+        for (String line = null; (line = br.readLine()) != null; )
+            filesToProcess.offer(line.trim());            
+        br.close();
     }
 
     /**
      * Returns {@code true} if there are more documents to return.
      */
     public boolean hasNext() {
-	return !filesToProcess.isEmpty();
+        return !filesToProcess.isEmpty();
     }
     
     /**
      * Returns the next document from the list.
      */
     public Document next() {
-	String fileName = filesToProcess.poll();
-	if (fileName == null) 
-	    return null;
-	try {
-	    return new FileDocument(fileName);
-	} catch (IOException ioe) {
-	    return null;
-	}
-    }	
-    
+        String fileName = filesToProcess.poll();
+        if (fileName == null) 
+            return null;
+        return new TokenizedDocument(readText(fileName));
+    }
+
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */
     public void remove() {
-	throw new UnsupportedOperationException(
-	    "removing documents is not supported");
+        throw new UnsupportedOperationException(
+            "removing documents is not supported");
+    }
+
+    public static Iterable<String> readText(String file) {
+        return readText(new File(file));
+    }
+
+    public static Iterable<String> readText(File file) {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            List<String> tokens = new ArrayList<String>();
+            for (String line = null; (line = br.readLine()) != null; )
+                for (String token : line.split("\\s+"))
+                    tokens.add(token);
+            return tokens;
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
 }

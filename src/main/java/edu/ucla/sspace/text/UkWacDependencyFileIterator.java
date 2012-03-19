@@ -21,10 +21,13 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.dependency.DependencyExtractor;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.StringReader;
 
 import java.util.Iterator;
 
@@ -45,10 +48,12 @@ public class UkWacDependencyFileIterator implements Iterator<Document> {
      */
     private final BufferedReader documentsReader;
     
+    private final DependencyExtractor parser;
+
     /**
      * The next line in the file
      */
-    private String nextLine;
+    private Document nextDoc;
 
     /**
      * Creates an {@code Iterator} over the file where each document returned
@@ -60,20 +65,22 @@ public class UkWacDependencyFileIterator implements Iterator<Document> {
      * @throws IOException if any error occurs when reading
      *                     {@code documentsFile}
      */
-    public UkWacDependencyFileIterator(String documentsFile)
+    public UkWacDependencyFileIterator(String documentsFile, 
+                                       DependencyExtractor parser)
             throws IOException {
         documentsReader = new BufferedReader(new FileReader(documentsFile));
-        nextLine = advance();
+        this.parser = parser;
+        nextDoc = advance();
     }
 
     /**
      * Returns {@code true} if there are more documents to return.
      */
     public boolean hasNext() {
-        return nextLine != null;
+        return nextDoc != null;
     }
     
-    private String advance() throws IOException {
+    private Document advance() throws IOException {
         StringBuilder sb = new StringBuilder();
         String line = null;
 
@@ -94,20 +101,21 @@ public class UkWacDependencyFileIterator implements Iterator<Document> {
                 sb.append(line).append("\n");
        }
 
-        return sb.toString();
+        BufferedReader br = new BufferedReader(new StringReader(sb.toString()));
+        return new ParsedDocument(parser.readNextTree(br));
     }
 
     /**
      * Returns the next document from the file.
      */
     public synchronized Document next() {
-        Document next = new StringDocument(nextLine);
+        Document current = nextDoc;
         try {
-            nextLine = advance();
+            nextDoc = advance();
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
-        return next;
+        return current;
     }        
     
     /**

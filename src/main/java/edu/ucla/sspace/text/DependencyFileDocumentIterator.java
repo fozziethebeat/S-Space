@@ -21,10 +21,13 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.dependency.DependencyExtractor;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.StringReader;
 
 import java.util.Iterator;
 
@@ -51,10 +54,12 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
      */
     private final boolean ignoreHeader;
 
+    private final DependencyExtractor parser;
+
     /**
      * The next line in the file
      */
-    private String nextLine;
+    private Document nextDoc;
 
     /**
      * Creates an {@code Iterator} over the file where each document returned
@@ -66,9 +71,10 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
      * @throws IOException if any error occurs when reading
      *                     {@code documentsFile}
      */
-    public DependencyFileDocumentIterator(String documentsFile)
+    public DependencyFileDocumentIterator(String documentsFile,
+                                          DependencyExtractor parser)
             throws IOException {
-        this(documentsFile, false);
+        this(documentsFile, parser, false);
     }
 
     /**
@@ -84,27 +90,30 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
      *                     {@code documentsFile}
      */
     public DependencyFileDocumentIterator(String documentsFile,
+                                          DependencyExtractor parser,
                                           boolean ignoreHeader)
             throws IOException {
         this.ignoreHeader = ignoreHeader;
+        this.parser = parser;
         documentsReader = new BufferedReader(new FileReader(documentsFile));
-        nextLine = advance();
+        nextDoc = advance();
     }
 
     /**
      * Returns {@code true} if there are more documents to return.
      */
     public boolean hasNext() {
-        return nextLine != null;
+        return nextDoc != null;
     }
     
-    private String advance() throws IOException {
+    private Document advance() throws IOException {
         StringBuilder sb = new StringBuilder();
+        String title = null;
         String line = null;
 
         // Read off any preceding blank lines
-        while ((line = documentsReader.readLine()) != null
-               && line.length() == 0)
+        while ((line = documentsReader.readLine()) != null &&
+               line.length() == 0)
             ; 
 
         // If there were no lines left return null.
@@ -113,29 +122,30 @@ public class DependencyFileDocumentIterator implements Iterator<Document> {
 
         // If we found a line, and we keep any headers, then append it.  
         if (!ignoreHeader)
-            sb.append(line).append("\n");
+            title = line;
 
         // Keep reading until a blank line was seen or the reader has no further
         // lines
         while ((line = documentsReader.readLine()) != null
                && line.length() != 0)
             sb.append(line).append("\n");
-        return sb.toString();
+        BufferedReader br = new BufferedReader(new StringReader(sb.toString()));
+        return new ParsedDocument(parser.readNextTree(br), title);
     }
 
     /**
      * Returns the next document from the file.
      */
     public synchronized Document next() {
-        Document next = new StringDocument(nextLine);
+        Document current = nextDoc;
         try {
-            nextLine = advance();
+            nextDoc = advance();
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }
-        return next;
-    }        
-    
+        return current;
+    }
+
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */

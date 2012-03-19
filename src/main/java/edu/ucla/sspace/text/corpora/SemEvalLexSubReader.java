@@ -2,7 +2,7 @@ package edu.ucla.sspace.text.corpora;
 
 import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
-import edu.ucla.sspace.text.StringDocument;
+import edu.ucla.sspace.text.TokenizedDocument;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -172,7 +172,7 @@ public class SemEvalLexSubReader extends DefaultHandler
                 inLexElement = false;
             else if (name.equals("context")) {
                 inContext = false;
-                contexts.add(new StringDocument(context.toString()));
+                contexts.add(new TokenizedDocument(context.toString()));
                 context.setLength(0);
             }
         }

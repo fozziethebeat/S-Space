@@ -2,8 +2,7 @@
  * Copyright 2009 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
- * conditions therein.
- *
+ * conditions therein.  *
  * The S-Space package is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation and distributed hereunder to you.
@@ -21,17 +20,39 @@
 
 package edu.ucla.sspace.text;
 
-import java.io.BufferedReader;
+import edu.ucla.sspace.dependency.DependencyTreeNode;
+
+import java.util.Iterator;
+
 
 /**
  * An abstraction for a document that allows document processors to access text
  * in a uniform manner.
  */
-public interface Document {
+public interface Document extends Iterable<String> {
     
     /**
-     * Returns the {@code BufferedReader} for this document's text
+     * Returns the title of the document, or the empty string if no title was
+     * provided in the document.
      */
-    BufferedReader reader();
-    
+    String title();
+
+    /**
+     * Returns the time at which this document was created.  If the source
+     * data did not provide a timestamp, this should return the time at which
+     * the {@link Document} object was created.
+     */
+    long timeStamp();
+
+    /**
+     * Returns an iterator over the tokens in a {@link Document}.
+     */
+    Iterator<String> iterator();
+
+    /**
+     * Returns a Dependency Tree over the text in this {@link Document}.  If a
+     * full parse tree is not available, this should return a disconnected tree
+     * of {@link DependencyTreeNode}s.
+     */
+    DependencyTreeNode[] parseTree();
 }

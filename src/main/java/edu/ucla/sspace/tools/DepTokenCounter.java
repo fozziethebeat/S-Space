@@ -95,23 +95,15 @@ public class DepTokenCounter {
     private final boolean doPos;
 
     /**
-     * The {@link DependencyExtractor} used to extract parse trees.
-     */
-    private final DependencyExtractor extractor;
-
-    /**
      * Creates a new token counter that optionally lower cases tokens
      *
      * @param doLowerCasing {@code true} if the token counter should lower case
      *        all tokens before counting
      */
     public DepTokenCounter(boolean doLowerCasing,
-                           boolean doPos,
-                           DependencyExtractor extractor) { 
+                           boolean doPos) {
         this.doLowerCasing = doLowerCasing;
         this.doPos = doPos;
-        this.extractor = extractor;
-
         tokenToCount = new TrieMap<Integer>();
     }
 
@@ -129,8 +121,7 @@ public class DepTokenCounter {
         long numTokens = 0;
         while (docs.hasNext()) {
             Document doc = docs.next();
-            DependencyTreeNode[] nodes = extractor.readNextTree(doc.reader());
-            for (DependencyTreeNode node : nodes) {
+            for (DependencyTreeNode node : doc.parseTree()) {
                 String token = node.word();
                 if (doLowerCasing)
                     token = token.toLowerCase();
@@ -214,12 +205,12 @@ public class DepTokenCounter {
         else if (format.equals("WaCKy"))
             e = new WaCKyDependencyExtractor(filter, stemmer);
 
-        DepTokenCounter counter = new DepTokenCounter(doLowerCasing, doPos, e);
+        DepTokenCounter counter = new DepTokenCounter(doLowerCasing, doPos);
 
         // Process each of the input files
         for (int i = 1; i < options.numPositionalArgs(); ++i)
             counter.process(new DependencyFileDocumentIterator(
-                        options.getPositionalArg(i), discardHeader));
+                        options.getPositionalArg(i), e, discardHeader));
 
         // Then write the results to disk
         PrintWriter pw = new PrintWriter(options.getPositionalArg(0));

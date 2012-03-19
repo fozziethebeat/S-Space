@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.io.IOError;
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 
@@ -37,7 +38,7 @@ import java.util.Iterator;
  * href="http://wacky.sslmit.unibo.it/doku.php?id=corpora">WaCky</a> group's
  * website for more information on the ukWaC.
  */
-public class UkWaCDocumentIterator implements Iterator<LabeledDocument> {
+public class UkWaCDocumentIterator implements Iterator<Document> {
 
     /**
      * The reader for accessing the file containing the documents
@@ -47,7 +48,7 @@ public class UkWaCDocumentIterator implements Iterator<LabeledDocument> {
     /**
      * The next document in the file
      */
-    private LabeledDocument nextDoc;
+    private Document nextDoc;
 
     /**
      * Creates an {@code Iterator} over the file where each document returned
@@ -85,22 +86,23 @@ public class UkWaCDocumentIterator implements Iterator<LabeledDocument> {
     }
     
     private void advance() throws IOException {
+        nextDoc = null;
         String header = lineReader.readLine();
-        if (header == null) {
+        if (header == null)
             lineReader.close();
-        }
         else {
             String doc = lineReader.readLine();
             assert doc != null;
-            nextDoc = new LabeledStringDocument(header, doc);
+            nextDoc = new TokenizedDocument(
+                    Arrays.asList(doc.split("\\s+")), header);
         }
     }
     
     /**
      * Returns the next document from the file.
      */
-    public LabeledDocument next() {
-        LabeledDocument next = nextDoc;
+    public Document next() {
+        Document next = nextDoc;
         try {
             advance();
         } catch (IOException ioe) {

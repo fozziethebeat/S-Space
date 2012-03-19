@@ -32,10 +32,10 @@ import edu.ucla.sspace.ri.IndexVectorUtil;
 
 import edu.ucla.sspace.temporal.TemporalSemanticSpace;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.FileListTemporalDocumentIterator;
 import edu.ucla.sspace.text.IteratorFactory;
 import edu.ucla.sspace.text.OneLinePerTemporalDocumentIterator;
-import edu.ucla.sspace.text.TemporalDocument;
 
 import edu.ucla.sspace.tri.FixedDurationTemporalRandomIndexing;
 import edu.ucla.sspace.tri.OrderedTemporalRandomIndexing;
@@ -321,7 +321,7 @@ public class FixedDurationTemporalRandomIndexingMain {
         }
         
         // all the documents are listed in one file, with one document per line
-        Iterator<TemporalDocument> docIter = null;
+        Iterator<Document> docIter = null;
         String fileList = (argOptions.hasOption("fileList"))
             ? argOptions.getStringOption("fileList")
             : null;
@@ -335,8 +335,8 @@ public class FixedDurationTemporalRandomIndexingMain {
 
         // Second, determine where the document input sources will be coming
         // from.
-        Collection<Iterator<TemporalDocument>> docIters = 
-            new LinkedList<Iterator<TemporalDocument>>();
+        Collection<Iterator<Document>> docIters = 
+            new LinkedList<Iterator<Document>>();
 
         if (fileList != null) {
             String[] fileNames = fileList.split(",");
@@ -356,7 +356,7 @@ public class FixedDurationTemporalRandomIndexingMain {
         }
 
         // combine all of the document iterators into one iterator.
-        docIter = new CombinedIterator<TemporalDocument>(docIters);
+        docIter = new CombinedIterator<Document>(docIters);
         
         int numThreads = Runtime.getRuntime().availableProcessors();
         if (argOptions.hasOption("threads")) {
@@ -836,7 +836,7 @@ public class FixedDurationTemporalRandomIndexingMain {
      */
     protected void parseDocumentsMultiThreaded(
         final FixedDurationTemporalRandomIndexing fdTri, 
-        final Iterator<TemporalDocument> docIter,
+        final Iterator<Document> docIter,
         final TimeSpan timeSpan, int numThreads)
             throws IOException, InterruptedException {
 
@@ -938,7 +938,7 @@ public class FixedDurationTemporalRandomIndexingMain {
                         // remain
                         while (docIter.hasNext()) {
                             
-                            TemporalDocument doc = docIter.next();
+                            Document doc = docIter.next();
                             int docNumber = count.incrementAndGet();
                             long docTime = doc.timeStamp();
 
@@ -982,12 +982,7 @@ public class FixedDurationTemporalRandomIndexingMain {
                                 }
                             }
 
-                            try {
-                                fdTri.processDocument(doc.reader());
-                            } catch (IOException ioe) {
-                                // rethrow
-                                throw new IOError(ioe);
-                            }
+                            fdTri.processDocument(doc);
                             LOGGER.fine("parsed document #" + docNumber);
                         }
                     }
