@@ -221,8 +221,7 @@
     </artifact:mvn>
   </target>
 
-  <target name="tools" depends="sse-jar,svd-jar,tc-jar">
-  </target>
+  <target name="tools" depends="sse-jar,svd-jar,tc-jar,nnf-jar"/>
 
   <!--
     **
@@ -234,7 +233,7 @@
 
   
   <target name="jar" depends="compile">
-    <jar destfile="${bin.dir}/sspace-lib.jar" basedir="classes">
+    <jar destfile="${dist.dir}/sspace-lib.jar" basedir="classes">
       <include name="**/*.class"/>
       <exclude name="jnt/*"/>
       <manifest>
@@ -538,6 +537,21 @@
     </jar>
   </target>
 
+  <target name="nnf-jar" depends="compile">
+    <jar destfile="${tools.dir}/nnf.jar" basedir="classes">
+      <include name="**/*.class"/>
+      <manifest>
+	<!-- Who is building this jar? -->
+	<attribute name="Built-By" value="${user.name}"/>
+	<!-- Information about the program itself -->
+	<attribute name="Implementation-Vendor" value="AIRhead Research"/>
+	<attribute name="Implementation-Title" value="SVD"/>
+	<attribute name="Implementation-Version" value="${version}"/>
+	<attribute name="Main-Class" value="edu.ucla.sspace.tools.NearestNeighborFinderTool"/>
+      </manifest>
+    </jar>
+  </target>
+
   <!--
     **
     ** 
@@ -584,11 +598,15 @@
     <cobertura-report srcdir="${src.dir}" destdir="${coverage.html.dir}" />
   </target>
 
+  <property name="junit.default.timeout" value="5000" /> <!-- 5 minute default timeout is 300000 -->
+
   <target name="test" depends="compile-tests">
     <delete dir="reports"/>
     <mkdir dir="reports"/>
 
-    <junit printsummary="yes" fork="yes" haltonfailure="no">
+    <junit printsummary="yes" fork="yes" haltonfailure="no" timeout="5000">
+      <!-- <sysproperty key="junit.default.timeout" value="${junit.default.timeout}" />-->
+
       <jvmarg value="-Xmx1g"/>
       <jvmarg value="-debug"/>
       <classpath location="${build.instrumented.dir}"/>
@@ -604,7 +622,7 @@
           <include name="**/*Tests.java"/>
         </fileset>
       </batchtest>
-
+      <!-- -->
     </junit>
   </target>
 
