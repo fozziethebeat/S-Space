@@ -23,8 +23,6 @@ package edu.ucla.sspace.dv;
 
 import edu.ucla.sspace.common.DimensionallyInterpretableSemanticSpace;
 
-import edu.ucla.sspace.dependency.DependencyExtractor;
-import edu.ucla.sspace.dependency.DependencyExtractorManager;
 import edu.ucla.sspace.dependency.DependencyIterator;
 import edu.ucla.sspace.dependency.DependencyPath;
 import edu.ucla.sspace.dependency.DependencyPathAcceptor;
@@ -34,7 +32,7 @@ import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.FilteredDependencyIterator;
 import edu.ucla.sspace.dependency.FlatPathWeight;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Document;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -201,12 +199,6 @@ public class DependencyVectorSpace
     private Map<String,SparseDoubleVector> termToVector;
 
     /**
-     * The {@link DependencyExtractor} used to extract parse trees from the
-     * already parsed documents
-     */
-    private final DependencyExtractor extractor;
-
-    /**
      * A basis mapping from dependency paths to the the dimensions that
      * represent the content of those paths.
      */
@@ -298,8 +290,6 @@ public class DependencyVectorSpace
         this.pathLength = (pathLength == 0)
             ? acceptor.maxPathLength()
             : pathLength;
-
-        extractor = DependencyExtractorManager.getDefaultExtractor();
     }
 
     /**
@@ -381,57 +371,51 @@ public class DependencyVectorSpace
      * templates, according to this instance's {@link BasisFunction}.  Path
      * occurrences are weighted using this instance's {@link PathWeight}.
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        
-        // Iterate over all of the parseable dependency parsed sentences in the
-        // document.
-        for (DependencyTreeNode[] nodes = null; 
-                 (nodes = extractor.readNextTree(document)) != null; ) {
+    public void processDocument(Document document) {
+        DependencyTreeNode[] nodes = document.parseTree();
 
-            // Skip empty documents.
-            if (nodes.length == 0)
-                continue;            
+        // Skip empty documents.
+        if (nodes.length == 0)
+            return;            
 
-            // Examine the paths for each word in the sentence.
-            for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
+        // Examine the paths for each word in the sentence.
+        for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
 
-                String focusWord = nodes[wordIndex].word();              
+            String focusWord = nodes[wordIndex].word();              
 
-                // Acquire the semantic vector for the focus word.
-                SparseDoubleVector focusMeaning = getSemanticVector(focusWord);
+            // Acquire the semantic vector for the focus word.
+            SparseDoubleVector focusMeaning = getSemanticVector(focusWord);
 
-                // Get all the valid paths starting from this word.  The
-                // acceptor will filter out any paths that don't contain the
-                // semantic connections we're looking for.
-                Iterator<DependencyPath> paths = new FilteredDependencyIterator(
-                            nodes[wordIndex], acceptor, pathLength);
-                
-                // For each of the paths rooted at the focus word, update the
-                // co-occurrences of the focus word in the dimension that the
-                // BasisFunction states.
-                while (paths.hasNext()) {
-                    DependencyPath path = paths.next();
+            // Get all the valid paths starting from this word.  The
+            // acceptor will filter out any paths that don't contain the
+            // semantic connections we're looking for.
+            Iterator<DependencyPath> paths = new FilteredDependencyIterator(
+                        nodes[wordIndex], acceptor, pathLength);
+            
+            // For each of the paths rooted at the focus word, update the
+            // co-occurrences of the focus word in the dimension that the
+            // BasisFunction states.
+            while (paths.hasNext()) {
+                DependencyPath path = paths.next();
 
-                    // Get the dimension associated with the relation and/or
-                    // words in the path from the basis function.  The basis
-                    // function creates a specific dimension for the syntactic
-                    // context in order to meaningfully comparable vectors.
-                    int dimension = basisMapping.getDimension(path);
+                // Get the dimension associated with the relation and/or
+                // words in the path from the basis function.  The basis
+                // function creates a specific dimension for the syntactic
+                // context in order to meaningfully comparable vectors.
+                int dimension = basisMapping.getDimension(path);
 
-                    // Then calculate the weight for the feature presence in the
-                    // dimension.  For example, the weighter might score paths
-                    // inversely proportional to their length.
-                    double weight = weighter.scorePath(path);
+                // Then calculate the weight for the feature presence in the
+                // dimension.  For example, the weighter might score paths
+                // inversely proportional to their length.
+                double weight = weighter.scorePath(path);
 
-                    // Last, update the focus word's semantic vector based on
-                    // the dimension and weight
-                    synchronized(focusMeaning) {
-                        focusMeaning.add(dimension, weight);                    
-                    }
+                // Last, update the focus word's semantic vector based on
+                // the dimension and weight
+                synchronized(focusMeaning) {
+                    focusMeaning.add(dimension, weight);                    
                 }
             }
         }
-        document.close();
     }
         
     /**

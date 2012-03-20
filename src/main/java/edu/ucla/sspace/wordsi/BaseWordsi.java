@@ -22,13 +22,12 @@
 package edu.ucla.sspace.wordsi;
 
 import edu.ucla.sspace.common.SemanticSpace;
+import edu.ucla.sspace.text.Document;
 
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import java.io.BufferedReader;
 
 
 /**
@@ -91,7 +90,7 @@ public abstract class BaseWordsi implements Wordsi, SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) {
+    public void processDocument(Document document) {
         extractor.processDocument(document, this);
     }
 

@@ -28,6 +28,7 @@ import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 import edu.ucla.sspace.index.TernaryPermutationFunction;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.GeneratorMap;
@@ -43,12 +44,6 @@ import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Serializable;
-
-import java.lang.reflect.Constructor;
-
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,8 +52,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.Set;
-
-import java.util.logging.Logger;
 
 
 /**
@@ -493,16 +486,7 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
     /**
      * {@inheritDoc}  Note that this method is <i>not</i> thread safe.
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-            IteratorFactory.tokenizeOrdered(document)));
-        document.close();
-    }
-
-    /**
-     * {@inheritDoc}  Note that this method is <i>not</i> thread safe.
-     */
-    public void processDocument(Iterable<String> document) {
+    public void processDocument(Document document) {
         Iterator<String> documentTokens = document.iterator();
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);

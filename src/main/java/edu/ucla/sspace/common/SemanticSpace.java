@@ -21,10 +21,8 @@
 
 package edu.ucla.sspace.common;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.vector.Vector;
-
-import java.io.BufferedReader;
-import java.io.IOException;
 
 import java.util.Properties;
 import java.util.Set;
@@ -35,7 +33,7 @@ import java.util.Set;
  *
  * <ol>
 
- * <li> {@link #processDocument(BufferedReader) processDocument} will be called
+ * <li> {@link #processDocument(Document) processDocument} will be called
  *      one or more times with the text of the corpus.
  *
  * <li> {@link #processSpace(Properties) processSpace} will be called after all
@@ -59,18 +57,10 @@ public interface SemanticSpace {
     /**
      * Processes the contents of the provided file as a document.
      *
-     * @param document a reader that allows access to the text of the document
-     *
-     * @throws IOException if any error occurs while reading the document
+     * @param document a {@link Document} that allows access to the text of the
+     * document
      */
-    void processDocument(BufferedReader document) throws IOException;
-
-    /**
-     * Processes the contents of the tokens.
-     *
-     * @param tokens an iterator over tokens within a context.
-     */
-    void processDocument(Iterable<String> document);
+    void processDocument(Document document);
 
     /**
      * Returns the set of words that are represented in this semantic space.

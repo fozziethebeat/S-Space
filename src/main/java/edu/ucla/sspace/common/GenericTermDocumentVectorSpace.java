@@ -33,6 +33,7 @@ import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.LoggerUtil;
@@ -42,7 +43,6 @@ import edu.ucla.sspace.util.SparseIntHashArray;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vector;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -82,9 +82,9 @@ import java.util.logging.Logger;
  * <p>
  *
  * This class is thread-safe for concurrent calls of {@link
- * #processDocument(BufferedReader) processDocument}.  Once {@link
+ * #processDocument(Document) processDocument}.  Once {@link
  * #processSpace(Transform) processSpace} has been called, no further calls to
- * {@link #processDocument(BufferedReader) processDocument} should be made.
+ * {@link #processDocument(Document) processDocument} should be made.
  * This implementation does not support access to the semantic vectors until
  * after {@link #processSpace(Properties) processSpace} has been called.
  *
@@ -181,21 +181,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      *
      * @param document {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenize(document)));
-    }
-
-    /**
-     * Tokenizes the document using the {@link IteratorFactory} and updates the
-     * term-document frequency counts.
-     *
-     * <p>
-     *
-     * This method is thread-safe and may be called in parallel with separate
-     * documents to speed up overall processing time.
-     */
-    public void processDocument(Iterable<String> document) {
+    public void processDocument(Document document) {
         Iterator<String> documentTokens = document.iterator();
         // Create a mapping for each term that is seen in the document to the
         // number of times it has been seen.  This mapping would more elegantly
@@ -210,9 +196,8 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // Increaes the count of documents observed so far.
         int docCount = documentCounter.getAndAdd(1);
 
-        // If the first token is to be interpreted as a document header read it.
-        if (readHeaderToken)
-            handleDocumentHeader(docCount, documentTokens.next());
+        // Process the document title if needed.
+        handleDocumentHeader(docCount, document.title());
 
         // If the document is empty, skip it
         if (!documentTokens.hasNext())

@@ -25,13 +25,12 @@ import edu.ucla.sspace.wordsi.ContextExtractor;
 import edu.ucla.sspace.wordsi.ContextGenerator;
 import edu.ucla.sspace.wordsi.Wordsi;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.vector.SparseDoubleVector;
 
 import edu.ucla.sspace.vector.VectorIO;
-
-import java.io.BufferedReader;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
@@ -110,17 +109,17 @@ public class SemEvalContextExtractor implements ContextExtractor {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, Wordsi wordsi) {
+    public void processDocument(Document document, Wordsi wordsi) {
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
 
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
+        Iterator<String> it = document.iterator();
 
         // Skip empty documents.
         if (!it.hasNext())
             return;
 
-        String instanceId = it.next();
+        String instanceId = document.title();
 
         // Fill up the words after the context so that when the real processing
         // starts, the context is fully prepared.

@@ -46,9 +46,9 @@ import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.VectorMath;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -283,15 +283,7 @@ public class Coals implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenizeOrdered(document)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void processDocument(Iterable<String> document) {
+    public void processDocument(Document document) {
         Iterator<String> it = document.iterator();
         Map<String, Integer> wordFreq = new HashMap<String, Integer>();
         Map<String, SparseDoubleVector> wordDocSemantics =

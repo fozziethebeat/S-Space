@@ -25,10 +25,11 @@ import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyPath;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 
-import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
 
@@ -43,12 +44,6 @@ import java.io.IOException;
  * @author Keith Stevens
  */
 public class DependencyContextExtractor implements ContextExtractor {
-
-    /**
-     * The {@link DependencyExtractor} used to extract parse trees from the
-     * already parsed documents
-     */
-    protected final DependencyExtractor extractor;
 
     /**
      * The {@link DependencyContextGenerator} responsible for processing a
@@ -88,7 +83,6 @@ public class DependencyContextExtractor implements ContextExtractor {
     public DependencyContextExtractor(DependencyExtractor extractor,
                                       DependencyContextGenerator generator,
                                       boolean readHeader) {
-        this.extractor = extractor;
         this.generator = generator;
         this.readHeader = readHeader;
     }
@@ -103,45 +97,40 @@ public class DependencyContextExtractor implements ContextExtractor {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, Wordsi wordsi) {
-        try {
-            // Handle the context header, if one exists.  Context headers are
-            // assumed to be the first line in a document.
-            String contextHeader = handleContextHeader(document);
+    public void processDocument(Document document, Wordsi wordsi) {
+        // Handle the context header, if one exists.  Context headers are
+        // assumed to be the first line in a document.
+        String contextHeader = document.title();
 
-            // Iterate over all of the parseable dependency parsed sentences in
-            // the document.
-            DependencyTreeNode[] nodes = extractor.readNextTree(document);
+        // Iterate over all of the parseable dependency parsed sentences in
+        // the document.
+        DependencyTreeNode[] nodes = document.parseTree();
 
-            // Skip empty documents.
-            if (nodes.length == 0)
-                return;
+        // Skip empty documents.
+        if (nodes.length == 0)
+            return;
 
-            // Examine the paths for each word in the sentence.
-            for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
-                DependencyTreeNode focusNode = nodes[wordIndex];
+        // Examine the paths for each word in the sentence.
+        for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
+            DependencyTreeNode focusNode = nodes[wordIndex];
 
-                // Get the focus word, i.e., the primary key, and the
-                // secondary key.  These steps are made as protected methods
-                // so that the SenseEvalDependencyContextExtractor
-                // PseudoWordDependencyContextExtractor can manage only the
-                // keys, instead of the document traversal.
-                String focusWord = getPrimaryKey(focusNode);
-                String secondarykey = getSecondaryKey(focusNode, contextHeader);
+            // Get the focus word, i.e., the primary key, and the
+            // secondary key.  These steps are made as protected methods
+            // so that the SenseEvalDependencyContextExtractor
+            // PseudoWordDependencyContextExtractor can manage only the
+            // keys, instead of the document traversal.
+            String focusWord = getPrimaryKey(focusNode);
+            String secondarykey = getSecondaryKey(focusNode, contextHeader);
 
-                // Ignore any focus words that are unaccepted by Wordsi.
-                if (!acceptWord(focusNode, contextHeader, wordsi))
-                    continue;
+            // Ignore any focus words that are unaccepted by Wordsi.
+            if (!acceptWord(focusNode, contextHeader, wordsi))
+                continue;
 
-                // Create a new context vector.
-                SparseDoubleVector focusMeaning = generator.generateContext(
-                        nodes, wordIndex);
-                wordsi.handleContextVector(
-                        focusWord, secondarykey, focusMeaning);
-            }
-            document.close();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
+            // Create a new context vector.
+            SparseDoubleVector focusMeaning = generator.generateContext(
+                    nodes, wordIndex);
+            wordsi.handleContextVector(
+                    focusWord, secondarykey, focusMeaning);
         }
     }
 
@@ -171,14 +160,5 @@ public class DependencyContextExtractor implements ContextExtractor {
     protected String getSecondaryKey(DependencyTreeNode focusNode,
                                      String contextHeader) {
         return (contextHeader == null) ? focusNode.word() : contextHeader;
-    }
-
-    /**
-     * Returns the string for the context header.  If {@link readHeader} is
-     * true, this returns the first line, otherwise it returns {@code null}.
-     */
-    protected String handleContextHeader(BufferedReader document)
-            throws IOException {
-        return (readHeader) ? document.readLine().trim() : null;
     }
 }

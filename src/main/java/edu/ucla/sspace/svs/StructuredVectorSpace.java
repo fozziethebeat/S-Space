@@ -36,6 +36,7 @@ import edu.ucla.sspace.dependency.DependencyRelation;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.FilteredDependencyIterator;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.Pair;
@@ -47,8 +48,6 @@ import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.VectorMath;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.Serializable;
 
 import java.util.Collections;
@@ -240,7 +239,7 @@ public class StructuredVectorSpace implements SemanticSpace, Serializable {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void processDocument(Document document) {
         // Local maps to record occurrence counts.
         Map<Pair<String>,Double> localLemmaCounts = 
             new HashMap<Pair<String>,Double>();
@@ -249,83 +248,79 @@ public class StructuredVectorSpace implements SemanticSpace, Serializable {
 
         // Iterate over all of the parseable dependency parsed sentences in the
         // document.
-        for (DependencyTreeNode[] nodes = null;
-                (nodes = parser.readNextTree(document)) != null; ) {
+        DependencyTreeNode[] nodes = document.parseTree();
 
-            // Skip empty documents.
-            if (nodes.length == 0)
+        // Skip empty documents.
+        if (nodes.length == 0)
+            return;
+
+        // Examine the paths for each word in the sentence.
+        for (int i = 0; i < nodes.length; ++i) {
+            // Reject words that are not nouns, verbs, or adjectives.
+            if (!(nodes[i].pos().startsWith("N") ||
+                  nodes[i].pos().startsWith("J") ||
+                  nodes[i].pos().startsWith("V")))
                 continue;
 
-            // Examine the paths for each word in the sentence.
-            for (int i = 0; i < nodes.length; ++i) {
+            String focusWord = nodes[i].word();
+
+            // Skip words that are rejected by the semantic filter.
+            if (!acceptWord(focusWord))
+                continue;
+            int focusIndex = termBasis.getDimension(focusWord);
+
+            // Create the path iterator for all acceptable paths rooted at
+            // the focus word in the sentence.
+            Iterator<DependencyPath> pathIter = 
+                new FilteredDependencyIterator(nodes[i], acceptor, 1);
+
+            while (pathIter.hasNext()) {
+                DependencyPath path = pathIter.next();
+                DependencyTreeNode last = path.last();
+
                 // Reject words that are not nouns, verbs, or adjectives.
-                if (!(nodes[i].pos().startsWith("N") ||
-                      nodes[i].pos().startsWith("J") ||
-                      nodes[i].pos().startsWith("V")))
+                if (!(last.pos().startsWith("N") ||
+                      last.pos().startsWith("J") ||
+                      last.pos().startsWith("V")))
                     continue;
 
-                String focusWord = nodes[i].word();
-
-                // Skip words that are rejected by the semantic filter.
-                if (!acceptWord(focusWord))
+                // Get the feature index for the co-occurring word.
+                String otherTerm = last.word();
+                
+                // Skip any filtered features.
+                if (otherTerm.equals(EMPTY_STRING))
                     continue;
-                int focusIndex = termBasis.getDimension(focusWord);
 
-                // Create the path iterator for all acceptable paths rooted at
-                // the focus word in the sentence.
-                Iterator<DependencyPath> pathIter = 
-                    new FilteredDependencyIterator(nodes[i], acceptor, 1);
+                int featureIndex = termBasis.getDimension(otherTerm);
 
-                while (pathIter.hasNext()) {
-                    DependencyPath path = pathIter.next();
-                    DependencyTreeNode last = path.last();
+                Pair<String> p = new Pair<String>(focusWord, otherTerm);
+                Double curCount = localLemmaCounts.get(p);
+                localLemmaCounts.put(p, (curCount == null)
+                        ? 1 : 1 + curCount);
 
-                    // Reject words that are not nouns, verbs, or adjectives.
-                    if (!(last.pos().startsWith("N") ||
-                          last.pos().startsWith("J") ||
-                          last.pos().startsWith("V")))
-                        continue;
+                // Create a RelationTuple as a local key that records this
+                // relation tuple occurrence.  If there is not a local
+                // relation vector, create it.  Then add an occurrence count
+                // of 1.
+                DependencyRelation relation = path.iterator().next();
 
-                    // Get the feature index for the co-occurring word.
-                    String otherTerm = last.word();
-                    
-                    // Skip any filtered features.
-                    if (otherTerm.equals(EMPTY_STRING))
-                        continue;
+                // Skip relations that do not have the focusWord as the
+                // head word in the relation.  The inverse relation will
+                // eventually be encountered and we'll account for it then.
+                if (!relation.headNode().word().equals(focusWord))
+                    continue;
 
-                    int featureIndex = termBasis.getDimension(otherTerm);
-
-                    Pair<String> p = new Pair<String>(focusWord, otherTerm);
-                    Double curCount = localLemmaCounts.get(p);
-                    localLemmaCounts.put(p, (curCount == null)
-                            ? 1 : 1 + curCount);
-
-                    // Create a RelationTuple as a local key that records this
-                    // relation tuple occurrence.  If there is not a local
-                    // relation vector, create it.  Then add an occurrence count
-                    // of 1.
-                    DependencyRelation relation = path.iterator().next();
-
-                    // Skip relations that do not have the focusWord as the
-                    // head word in the relation.  The inverse relation will
-                    // eventually be encountered and we'll account for it then.
-                    if (!relation.headNode().word().equals(focusWord))
-                        continue;
-
-                    RelationTuple relationKey = new RelationTuple(
-                            focusIndex, relation.relation().intern());
-                    SparseDoubleVector relationVector = localTuples.get(
-                            relationKey);
-                    if (relationVector == null) {
-                        relationVector = new CompactSparseVector();
-                        localTuples.put(relationKey, relationVector);
-                    }
-                    relationVector.add(featureIndex, 1);
+                RelationTuple relationKey = new RelationTuple(
+                        focusIndex, relation.relation().intern());
+                SparseDoubleVector relationVector = localTuples.get(
+                        relationKey);
+                if (relationVector == null) {
+                    relationVector = new CompactSparseVector();
+                    localTuples.put(relationKey, relationVector);
                 }
+                relationVector.add(featureIndex, 1);
             }
         }
-
-        document.close();
 
         // Once the document has been processed, update the co-occurrence matrix
         // accordingly.

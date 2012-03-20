@@ -38,6 +38,7 @@ import edu.ucla.sspace.dependency.UniversalRelationAcceptor;
 import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.Generator;
@@ -50,9 +51,6 @@ import edu.ucla.sspace.vector.SparseIntegerVector;
 import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
-
-import java.io.BufferedReader;
-import java.io.IOException;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -374,55 +372,41 @@ public class DependencyRandomIndexing implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        // Iterate over all of the parseable dependency parsed sentences in the
-        // document.
-        for (DependencyTreeNode[] nodes = null;
-                (nodes = parser.readNextTree(document)) != null; ) {
+    public void processDocument(Document document) {
+        DependencyTreeNode[] nodes = document.parseTree();
 
-            // Skip empty documents.
-            if (nodes.length == 0)
+        // Skip empty documents.
+        if (nodes.length == 0)
+            return;
+
+        // Examine the paths for each word in the sentence.
+        for (int i = 0; i < nodes.length; ++i) {
+            String focusWord = nodes[i].word();
+
+            // Skip words that are rejected by the semantic filter.
+            if (!acceptWord(focusWord))
                 continue;
 
-            // Examine the paths for each word in the sentence.
-            for (int i = 0; i < nodes.length; ++i) {
-                String focusWord = nodes[i].word();
+            // Acquire the semantic vector for the focus word.
+            IntegerVector focusMeaning = getSemanticVector(focusWord);
 
-                // Skip words that are rejected by the semantic filter.
-                if (!acceptWord(focusWord))
-                    continue;
+            // Create the path iterator for all acceptable paths rooted at
+            // the focus word in the sentence.
+            Iterator<DependencyPath> pathIter = 
+                new DependencyIterator(nodes[i], acceptor, pathLength);
 
-                // Acquire the semantic vector for the focus word.
-                IntegerVector focusMeaning = getSemanticVector(focusWord);
-
-                // Create the path iterator for all acceptable paths rooted at
-                // the focus word in the sentence.
-                Iterator<DependencyPath> pathIter = 
-                    new DependencyIterator(nodes[i], acceptor, pathLength);
-
-                // For every path, obtain the index vector of the last word in
-                // the path and add it to the semantic vector for the focus
-                // word.  The index vector is permuted if a permutation
-                // function has been provided based on the contents of the path.
-                while (pathIter.hasNext()) {
-                    DependencyPath path = pathIter.next();
-                    TernaryVector termVector = indexMap.get(path.last().word());
-                    if (permFunc != null)
-                        termVector = permFunc.permute(termVector, path);
-                    add(focusMeaning, termVector);
+            // For every path, obtain the index vector of the last word in
+            // the path and add it to the semantic vector for the focus
+            // word.  The index vector is permuted if a permutation
+            // function has been provided based on the contents of the path.
+            while (pathIter.hasNext()) {
+                DependencyPath path = pathIter.next();
+                TernaryVector termVector = indexMap.get(path.last().word());
+                if (permFunc != null)
+                    termVector = permFunc.permute(termVector, path);
+                add(focusMeaning, termVector);
                 }
-            }
         }
-        document.close();
-    }
-
-    /**
-     * Unsupported.
-     *
-     * @throws UnsupportedOperationException
-     */
-    public void processDocument(Iterable<String> document) {
-        throw new UnsupportedOperationException("Cannot process tokens");
     }
 
     /**

@@ -37,6 +37,7 @@ import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
@@ -49,9 +50,7 @@ import edu.ucla.sspace.vector.SparseHashDoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 
 import java.util.ArrayDeque;
@@ -211,15 +210,7 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenizeOrdered(document)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void  processDocument(Iterable<String> document) {
+    public void  processDocument(Document document) {
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
             

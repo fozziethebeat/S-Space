@@ -28,6 +28,7 @@ import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 import edu.ucla.sspace.index.TernaryPermutationFunction;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.WorkerThread;
@@ -44,7 +45,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -379,18 +379,7 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
      *
      * @param document {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-            IteratorFactory.tokenizeOrdered(document)));
-        document.close();
-    }
-
-    /**
-     * Updates the semantic vectors based on the words in the document.
-     *
-     * @param document {@inheritDoc}
-     */
-    public void processDocument(Iterable<String> document) {
+    public void processDocument(Document document) {
         try {
         int docIndex = documentCounter.getAndIncrement();
 

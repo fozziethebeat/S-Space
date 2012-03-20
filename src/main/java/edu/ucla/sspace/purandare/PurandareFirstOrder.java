@@ -40,6 +40,7 @@ import edu.ucla.sspace.matrix.SparseRowMaskedMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 import edu.ucla.sspace.matrix.SparseOnDiskMatrix;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.SparseArray;
@@ -57,7 +58,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -249,15 +249,7 @@ public class PurandareFirstOrder implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenizeOrdered(document)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void  processDocument(Iterable<String> document) {
+    public void  processDocument(Document document) {
         try {
         documentCounter.getAndIncrement();
         Queue<String> nextWords = new ArrayDeque<String>();

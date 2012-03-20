@@ -3,12 +3,10 @@ package edu.ucla.sspace.wordsi;
 import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.basis.StringBasisMapping;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
-
-import java.io.BufferedReader;
-import java.io.IOError;
-import java.io.IOException;
 
 
 /**
@@ -53,35 +51,27 @@ public class PreComputedContextExtractor implements ContextExtractor {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, Wordsi wordsi) {
-        String line;
-        
-        try {
-            line = document.readLine();
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
-
+    public void processDocument(Document document, Wordsi wordsi) {
         // Split the header from the rest of the context.  The header must be
         // the focus word for this context.
-        String[] headerRest = line.split("\\s+", 2);
+        String header = document.title();
         
         // Reject any words not accepted by wordsi.
-        if (!wordsi.acceptWord(headerRest[0]))
+        if (!wordsi.acceptWord(header))
             return;
 
         SparseDoubleVector context = new CompactSparseVector();
 
         // Iterate through each feature and convert it to a dimension for the
         // context vector.
-        for (String item : headerRest[1].split("\\|")) {
+        for (String item : document) {
             String[] featureScore = item.split(",", 2);
             double score = Double.parseDouble(featureScore[0]);
             int dimension = basis.getDimension(featureScore[1]);
             if (dimension >= 0)
                 context.set(dimension, score);
         }
-        wordsi.handleContextVector(headerRest[0], headerRest[0], context);
+        wordsi.handleContextVector(header, header, context);
     }
 
     /**

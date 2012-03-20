@@ -28,6 +28,8 @@ import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.SparseMatrix;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
@@ -382,17 +384,7 @@ public class StaticSemanticSpace implements SemanticSpace {
      *
      * @throws an {@link UnsupportedOperationException} if called
      */
-    public void processDocument(BufferedReader document) { 
-        throw new UnsupportedOperationException(
-            "StaticSemanticSpace instances cannot be updated");
-    }
-
-    /**
-     * Not supported; throws an {@link UnsupportedOperationException} if called.
-     *
-     * @throws an {@link UnsupportedOperationException} if called
-     */
-    public void processDocument(Iterable<String> document) { 
+    public void processDocument(Document document) { 
         throw new UnsupportedOperationException(
             "StaticSemanticSpace instances cannot be updated");
     }

@@ -28,17 +28,13 @@ import edu.ucla.sspace.common.Similarity;
 
 import edu.ucla.sspace.fft.FastFourierTransform;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.VectorMath;
-import edu.ucla.sspace.vector.VectorMath;
 import edu.ucla.sspace.vector.Vectors;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -201,16 +197,8 @@ public class Beagle implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenizeOrdered(document)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void processDocument(Iterable<String> tokens) {
-        Iterator<String> it = tokens.iterator();
+    public void processDocument(Document document) {
+        Iterator<String> it = document.iterator();
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
 

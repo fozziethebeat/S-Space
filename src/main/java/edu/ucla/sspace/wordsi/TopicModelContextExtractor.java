@@ -21,12 +21,12 @@
 
 package edu.ucla.sspace.wordsi;
 
+import edu.ucla.sspace.text.Document;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 
-import java.io.BufferedReader;
-import java.io.IOError;
-import java.io.IOException;
+import java.util.Iterator;
 
 
 /**
@@ -47,37 +47,28 @@ public class TopicModelContextExtractor implements ContextExtractor {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, Wordsi wordsi) {
-        try {
+    public void processDocument(Document document, Wordsi wordsi) {
             // Split the line into the focus word and each feature value.
             // Feature are recorded with the feature index and the feature
             // value, all separated by spaces.
             String termAndVector;
-            if ((termAndVector = document.readLine()) == null)
-                return;
-            String[] tokens = termAndVector.split("\\s+");
-            String[] termSplit = tokens[0].split("\\.");
+            String header = document.title();
 
-            // Reject topic signatures that are too short.
-            if (tokens.length < 10)
-                return;
+            SparseDoubleVector vector = new CompactSparseVector();
 
-            // Compute the vector length and create the context vector.
-            vectorLength = (tokens.length - 1) / 2;
-            SparseDoubleVector vector = new CompactSparseVector(
-                  (tokens.length - 1) / 2);
-
-            // Read each feature index and value.
-            for (int i = 1; i < tokens.length; i+=2) {
-                int index = Integer.parseInt(tokens[i]);
-                double value = Double.parseDouble(tokens[i+1]);
+            Iterator<String> elements = document.iterator();
+            String secondaryKey = elements.next();
+            while (elements.hasNext()) {
+                int index = Integer.parseInt(elements.next());
+                if (!elements.hasNext())
+                    return;
+                double value = Double.parseDouble(elements.next());
                 vector.set(index, value);
+                if (index > vectorLength)
+                    vectorLength = index;
             }
 
-            wordsi.handleContextVector(termSplit[0], tokens[0], vector);
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+            wordsi.handleContextVector(header, secondaryKey, vector);
     }
 
     /**

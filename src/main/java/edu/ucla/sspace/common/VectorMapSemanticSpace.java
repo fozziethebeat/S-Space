@@ -21,37 +21,15 @@
 
 package edu.ucla.sspace.common;
 
-import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
+import edu.ucla.sspace.text.Document;
 
-import edu.ucla.sspace.matrix.ArrayMatrix;
-import edu.ucla.sspace.matrix.Matrices;
-import edu.ucla.sspace.matrix.Matrix;
-
-import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.Vector;
-import edu.ucla.sspace.vector.Vectors;
 
-import edu.ucla.sspace.util.IntegerMap;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOError;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -139,13 +117,7 @@ public class VectorMapSemanticSpace<T extends Vector>
     /**
      * A no-op
      */
-    public void processDocument(BufferedReader document) { 
-    }
-
-    /**
-     * A no-op
-     */
-    public void processDocument(Iterable<String> document) { 
+    public void processDocument(Document document) { 
     }
 
     /**

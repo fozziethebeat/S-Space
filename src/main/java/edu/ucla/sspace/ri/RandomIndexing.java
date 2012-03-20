@@ -29,6 +29,7 @@ import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 import edu.ucla.sspace.index.TernaryPermutationFunction;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.GeneratorMap;
@@ -39,9 +40,6 @@ import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
-
-import java.io.BufferedReader;
-import java.io.IOException;
 
 import java.lang.reflect.Constructor;
 
@@ -459,18 +457,7 @@ public class RandomIndexing implements SemanticSpace, Filterable {
      *
      * @param document {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable( 
-            IteratorFactory.tokenizeOrdered(document)));
-        document.close();
-    }
-
-    /**
-     * Updates the semantic vectors based on the words in the document.
-     *
-     * @param document {@inheritDoc}
-     */
-    public void processDocument(Iterable<String> document) {
+    public void processDocument(Document document) {
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);
 

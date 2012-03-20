@@ -28,6 +28,7 @@ import edu.ucla.sspace.matrix.AtomicGrowingSparseHashMatrix;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 
+import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
@@ -38,9 +39,6 @@ import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseHashDoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
-
-import java.io.BufferedReader;
-import java.io.IOException;
 
 import java.util.ArrayDeque;
 import java.util.BitSet;
@@ -288,15 +286,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
-        processDocument(IteratorFactory.iterable(
-                    IteratorFactory.tokenizeOrdered(document)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void  processDocument(Iterable<String> document) {
+    public void  processDocument(Document document) {
         Iterator<String> documentTokens = document.iterator();
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
@@ -328,7 +318,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             // If the filter does not accept this word, skip the semantic
             // processing, continue with the next word
             if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
-            // shift the window
+                // shift the window
                 prevWords.offer(focus);
                 if (prevWords.size() > windowSize)
                     prevWords.remove();

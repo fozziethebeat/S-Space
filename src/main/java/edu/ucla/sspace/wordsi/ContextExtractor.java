@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.wordsi;
 
-import java.io.BufferedReader;
+import edu.ucla.sspace.text.Document;
 
 
 /**
@@ -42,7 +42,7 @@ public interface ContextExtractor {
      * Wordsi#handleContextVector} for each context vector that can be extracted
      * from {@code document}.
      */
-    void processDocument(BufferedReader document, Wordsi wordsi);
+    void processDocument(Document document, Wordsi wordsi);
 
     /**
      * Returns the maximum number of dimensions used to represent any given

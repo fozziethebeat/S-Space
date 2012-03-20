@@ -21,11 +21,9 @@
 
 package edu.ucla.sspace.wordsi;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Document;
 
 import edu.ucla.sspace.vector.SparseDoubleVector;
-
-import java.io.BufferedReader;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
@@ -85,11 +83,11 @@ public class GeneralContextExtractor implements ContextExtractor {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, Wordsi wordsi) {
+    public void processDocument(Document document, Wordsi wordsi) {
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
 
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
+        Iterator<String> it = document.iterator();
 
         // Skip empty documents.
         if (!it.hasNext())
