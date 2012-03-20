@@ -74,7 +74,8 @@ public class OneLinePerDocumentIterator implements Iterator<Document> {
      * Returns the next document from the file.
      */
     public synchronized Document next() {
-        Document next = new TokenizedDocument(nextLine);
+        Document next = new TokenizedDocument(
+                IteratorFactory.getFilter().filter(nextLine));
         try {
             nextLine = documentsReader.readLine();
 

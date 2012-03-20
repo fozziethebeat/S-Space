@@ -231,8 +231,8 @@ public class WikipediaCleaner {
     }
 
     /**
-     * Removes any tokens not allowed by the {@link
-     * edu.ucla.sspace.text.TokenFilter} in the article.
+     * Tokenizes the article and reformulates the accepted tokens into a space
+     * separated string.
      */
     private String filterTokens(String article) {
         Iterator<String> filteredTokens = IteratorFactory.tokenize(article);

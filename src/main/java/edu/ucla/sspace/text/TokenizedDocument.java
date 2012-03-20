@@ -22,10 +22,6 @@ public class TokenizedDocument implements Document {
 
     private DependencyTreeNode[] tree;
 
-    public TokenizedDocument(String text) {
-        this(Arrays.asList(text.split("\\s+")));
-    }
-
     public TokenizedDocument(Iterable<String> tokens) {
         this(tokens, "", System.currentTimeMillis());
     }

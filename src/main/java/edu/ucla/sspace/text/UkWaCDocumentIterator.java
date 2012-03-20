@@ -94,7 +94,7 @@ public class UkWaCDocumentIterator implements Iterator<Document> {
             String doc = lineReader.readLine();
             assert doc != null;
             nextDoc = new TokenizedDocument(
-                    Arrays.asList(doc.split("\\s+")), header);
+                    IteratorFactory.getFilter().filter(doc), header);
         }
     }
     

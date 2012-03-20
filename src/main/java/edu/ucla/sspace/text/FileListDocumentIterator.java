@@ -106,7 +106,7 @@ public class FileListDocumentIterator implements Iterator<Document> {
             for (String line = null; (line = br.readLine()) != null; )
                 for (String token : line.split("\\s+"))
                     tokens.add(token);
-            return tokens;
+            return IteratorFactory.getFilter().filter(tokens);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }

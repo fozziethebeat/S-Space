@@ -101,9 +101,12 @@ public abstract class DependencyGenericMain extends GenericMain {
      * command line.
      */
     protected void setupDependencyExtractor() {
-        TokenFilter filter = (argOptions.hasOption("tokenFilter"))
+        TokenFilter filter = null;
+        /*
+        (argOptions.hasOption("tokenFilter"))
             ? TokenFilter.loadFromSpecification(argOptions.getStringOption('F'))
             : null;
+            */
 
         Stemmer stemmer = argOptions.getObjectOption("stemmingAlgorithm", null);
         String format = argOptions.getStringOption(

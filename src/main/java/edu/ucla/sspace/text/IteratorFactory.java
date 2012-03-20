@@ -236,10 +236,66 @@ public class IteratorFactory {
      */
     private static Set<String> compoundTokens = null;
 
+    private static Filter iterableFilter;
+
     /**
      * Uninstantiable
      */
     private IteratorFactory() { }
+
+    public static void setupFilters(Properties props) {
+        iterableFilter = new BaseFilter();
+
+        // Add in the compound word filter.
+        String compoundProp = props.getProperty(COMPOUND_TOKENS_FILE_PROPERTY);
+        if (compoundProp != null) {
+            Set<String> words = StringUtils.loadTermSet(
+                    resourceFinder, compoundProp);
+            iterableFilter = new CompoundWordFilter(words, iterableFilter);
+        }
+
+        // Add in the include or exclude filters.
+        String tokenFilterProp = props.getProperty(TOKEN_FILTER_PROPERTY);
+        if (tokenFilterProp != null) {
+            // Split each token filter specification and load it as a either an
+            // ExcludeFilter or IncludeFilter.
+            for (String s : tokenFilterProp.split(",")) {
+                String[] optionAndFiles = s.split("=");
+                if (optionAndFiles.length != 2)
+                    throw new IllegalArgumentException(
+                        "Invalid number of filter parameters: " + s);
+            
+                // Determine if the filter should exclude or include the words
+                // in the files.
+                String behavior = optionAndFiles[0];
+                boolean exclude = behavior.equals("exclude");
+                // Sanity check that the behavior was include
+                if (!exclude && !behavior.equals("include"))
+                    throw new IllegalArgumentException(
+                        "Invalid filter behavior: " + behavior);
+                
+                // Load the data files.
+                Set<String> words = StringUtils.loadTermSet(
+                        resourceFinder, optionAndFiles[1].split(":"));
+            
+                // Chain the filters on top of each other
+                iterableFilter = (exclude)
+                    ? new ExcludeFilter(words, iterableFilter)
+                    : new IncludeFilter(words, iterableFilter);
+            }
+        }
+
+        // Add in the stemming filter.
+        String stemmerProp = props.getProperty(STEMMER_PROPERTY);
+        if (stemmerProp != null) {
+            Stemmer stemmer = ReflectionUtil.getObjectInstance(stemmerProp);
+            iterableFilter = new StemmingFilter(stemmer, iterableFilter);
+        }
+    }
+
+    public static Filter getFilter() {
+        return iterableFilter;
+    }
 
     /**
      * Reconfigures the type of iterator returned by this factory based on the
@@ -251,9 +307,7 @@ public class IteratorFactory {
 
         String filterProp = 
             props.getProperty(TOKEN_FILTER_PROPERTY);
-        filter = (filterProp != null)
-            ? TokenFilter.loadFromSpecification(filterProp, resourceFinder)
-            : null;
+        filter = null;
         
         // NOTE: future implementations may interpret the value of this property
         // to decide which stemmer to use

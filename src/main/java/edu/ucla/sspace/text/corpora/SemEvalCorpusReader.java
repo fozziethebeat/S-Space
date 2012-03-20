@@ -26,6 +26,7 @@ package edu.ucla.sspace.text.corpora;
 import edu.ucla.sspace.text.CorpusReader;
 import edu.ucla.sspace.text.Document;
 import edu.ucla.sspace.text.Stemmer;
+import edu.ucla.sspace.text.IteratorFactory;
 import edu.ucla.sspace.text.TokenizedDocument;
 import edu.ucla.sspace.text.EnglishStemmer;
 
@@ -209,7 +210,9 @@ public class SemEvalCorpusReader extends DefaultHandler
                     }
                     context.append(tokens[i]).append(" ");
                 }
-                contexts.add(new TokenizedDocument(context.toString()));
+                contexts.add(new TokenizedDocument(
+                            IteratorFactory.getFilter().filter(
+                                context.toString())));
                 context.setLength(0);
             }
         }

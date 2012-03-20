@@ -184,17 +184,17 @@ public class DVWordsiMain extends GenericWordsiMain {
         // If the evaluation type is for semEval, use a
         // SemEvalDependencyContextExtractor.
         if (argOptions.hasOption('E'))
-            return new SemEvalDependencyContextExtractor(parser, generator);
+            return new SemEvalDependencyContextExtractor(generator);
 
         // If the evaluation type is for pseudoWord, use a
         // PseudoWordDependencyContextExtractor.
         if (argOptions.hasOption('P'))
             return new PseudoWordDependencyContextExtractor(
-                    parser, generator, getPseudoWordMap());
+                    generator, getPseudoWordMap());
 
         // Otherwise return the normal extractor.
         return new DependencyContextExtractor(
-                        parser, generator, argOptions.hasOption('h'));
+                        generator, argOptions.hasOption('h'));
     }
 
     /**

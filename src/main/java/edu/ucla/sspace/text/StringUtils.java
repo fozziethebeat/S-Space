@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.text;
 
+import edu.ucla.sspace.util.ResourceFinder;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -218,6 +220,22 @@ public class StringUtils {
         }
     }
     
+    public static Set<String> loadTermSet(ResourceFinder finder,
+                                          String... files) {
+        Set<String> termSet = new HashSet<String>();
+        for (String file : files) {
+            try {
+                BufferedReader br = finder.open(file);
+                for (String line = null; (line = br.readLine()) != null; ) 
+                    termSet.add(line);
+                br.close();
+            } catch (IOException ioe) {
+                throw new IOError(ioe);
+            }
+        }
+        return termSet;
+    }
+
     /**
      * Returns the provided string where all HTML special characters
      * (e.g. <pre>&nbsp;</pre>) have been replaced with their utf8 equivalents.

@@ -25,7 +25,6 @@ import edu.ucla.sspace.wordsi.DependencyContextExtractor;
 import edu.ucla.sspace.wordsi.DependencyContextGenerator;
 import edu.ucla.sspace.wordsi.Wordsi;
 
-import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
 import java.io.BufferedReader;
@@ -48,17 +47,14 @@ public class SemEvalDependencyContextExtractor
     /**
      * Creates a new {@link SemEvalDependencyContextExtractor}.
      *
-     * @param extractor The {@link DependencyExtractor} that parses the document
-     *        and returns a valid dependency tree
      * @param basisMapping A mapping from dependency paths to feature indices
      * @param weighter A weighting function for dependency paths
      * @param acceptor An accepting function that validates dependency paths
      *        which may serve as features
      */
     public SemEvalDependencyContextExtractor(
-            DependencyExtractor extractor,
             DependencyContextGenerator generator) {
-        super(extractor, generator, true);
+        super(generator, true);
     }
 
     /**

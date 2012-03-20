@@ -55,6 +55,7 @@ public class StemmingIterator implements Iterator<String> {
     /**
      * Constructs an iterator to stem all the tokens in the string.
      */
+    @Deprecated
     public StemmingIterator(String str, Stemmer stemmer) {
         this(new WordIterator(str), stemmer);
     }
@@ -62,6 +63,7 @@ public class StemmingIterator implements Iterator<String> {
     /**
      * Constructs an iterator to stem all the tokens in the reader.
      */
+    @Deprecated
     public StemmingIterator(BufferedReader br, Stemmer stemmer) {
         this(new WordIterator(br), stemmer);
     }

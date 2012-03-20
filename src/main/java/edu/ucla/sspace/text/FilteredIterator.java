@@ -21,13 +21,9 @@
 
 package edu.ucla.sspace.text;
 
-import java.io.BufferedReader;
-import java.io.IOError;
-import java.io.IOException;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
+
 
 /**
  * An iterator over all the tokens in a stream that uses a {@link TokenFilter} to
@@ -51,44 +47,25 @@ public class FilteredIterator implements Iterator<String> {
     private String next;
 
     /**
-     * Creates a filtered iterator using the string as a source of tokens
-     */
-    public FilteredIterator(String str, TokenFilter filter) {
-	this(new WordIterator(str), filter);
-    }
-
-    /**
-     * Creates a filtered iterator using the reader as a source of tokens
-     */
-    public FilteredIterator(BufferedReader reader, TokenFilter filter) {
-	this(new WordIterator(reader), filter);
-    }
-
-    /**
      * Creates a filtered iterator using provided iterator as the source of
      * tokens
      */
     public FilteredIterator(Iterator<String> tokens, TokenFilter filter) {
-	tokenizer = tokens;
-	this.filter = filter;
-	next = null;
-	advance();
+        tokenizer = tokens;
+        this.filter = filter;
+        next = advance();
     }
 
     /**
      * Advances to the next word in the token stream.
      */
-    private void advance() {
-	String s = null;
-	while (tokenizer.hasNext()) {
-	    String nextToken = tokenizer.next();
-	    // stop if the word should be returned
-	    if (filter.accept(nextToken)) {
-		s = nextToken;
-		break;
-	    }
-	}
-	next = s;
+    private String advance() {
+        while (tokenizer.hasNext()) {
+            String nextToken = tokenizer.next();
+            if (filter.accept(nextToken))
+                return nextToken;
+        }
+        return null;
     }
 
     /**
@@ -96,26 +73,24 @@ public class FilteredIterator implements Iterator<String> {
      * accepted by the filter
      */
     public boolean hasNext() {
-	return next != null;
+        return next != null;
     }
 
     /**
      * Returns the next word from the reader that has passed the filter.
      */
     public String next() {
-	if (next == null) {
-	    throw new NoSuchElementException();
-	}
-	String s = next;
-	advance();
-	return s;
+        if (next == null)
+            throw new NoSuchElementException();
+        String current = next;
+        next = advance();
+        return current;
     }
 
     /**
      * Throws an {@link UnsupportedOperationException} if called.
      */ 
     public void remove() {
-	throw new UnsupportedOperationException("remove is not supported");
+        throw new UnsupportedOperationException("remove is not supported");
     }
-
 }

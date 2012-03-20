@@ -80,7 +80,8 @@ public class OneLinePerTemporalDocumentIterator implements Iterator<Document> {
         String timeStr = nextLine.substring(0, firstSpace);
         String doc = nextLine.substring(firstSpace);
         Document next = new TokenizedDocument(
-                Arrays.asList(doc.split("\\s+")), "", Long.parseLong(timeStr));
+                IteratorFactory.getFilter().filter(doc),
+                "", Long.parseLong(timeStr));
         try {
             nextLine = documentsReader.readLine();
         } catch (Throwable t) {

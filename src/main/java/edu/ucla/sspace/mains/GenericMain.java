@@ -424,6 +424,7 @@ public abstract class GenericMain {
             props.setProperty(IteratorFactory.TOKEN_COUNT_LIMIT_PROPERTY,
                               argOptions.getStringOption("wordLimit"));
 
+        IteratorFactory.setupFilters(props);
         IteratorFactory.setProperties(props);
 
         // use the System properties in case the user specified them as

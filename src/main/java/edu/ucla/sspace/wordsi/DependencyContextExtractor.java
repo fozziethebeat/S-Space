@@ -21,7 +21,6 @@
 
 package edu.ucla.sspace.wordsi;
 
-import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyPath;
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
@@ -60,28 +59,22 @@ public class DependencyContextExtractor implements ContextExtractor {
     /**
      * Creates a new {@link DependencyContextExtractor}.
      *
-     * @param extractor The {@link DependencyExtractor} that parses the document
-     *        and returns a valid dependency tree
      * @param generator The {@link DependencyContextGenerator} used to created
      *        context vectors based on a {@link DependencyTreeNode}.
      */
-    public DependencyContextExtractor(DependencyExtractor extractor,
-                                      DependencyContextGenerator generator) {
-        this(extractor, generator, false);
+    public DependencyContextExtractor(DependencyContextGenerator generator) {
+        this(generator, false);
     }
 
     /**
      * Creates a new {@link DependencyContextExtractor}.
      *
-     * @param extractor The {@link DependencyExtractor} that parses the document
-     *        and returns a valid dependency tree
      * @param generator The {@link DependencyContextGenerator} used to created
      *        context vectors based on a {@link DependencyTreeNode}.
      * @param readheader If true, the first line in a dependency tree document
      *        will be discarded from the tree and used as a header.
      */
-    public DependencyContextExtractor(DependencyExtractor extractor,
-                                      DependencyContextGenerator generator,
+    public DependencyContextExtractor(DependencyContextGenerator generator,
                                       boolean readHeader) {
         this.generator = generator;
         this.readHeader = readHeader;
