@@ -69,13 +69,15 @@ val parser = new CoNLLDependencyExtractor()
 // sentence from the file.
 for (semevalFile <- args.slice(3, args.length);
      document <- new DependencyFileDocumentIterator(semevalFile)) {
+    val reader = document.reader
+
     // Assume that the first line of every sentence contains meta information
     // and is not part of the sentence, so discard it.
-    document.reader.readLine
+    reader.readLine
 
     // Extract the tokens from the Dependency Parse Tree and transform it into a
     // simple string of works.
-    val tree = parser.readNextTree(document.reader)
+    val tree = parser.readNextTree(reader)
     val wordDoc = tree.map(_.word).mkString(" ")
 
     // Pass the string of tokens to the bigram space for processing.

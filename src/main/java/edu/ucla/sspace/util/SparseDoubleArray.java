@@ -37,16 +37,16 @@ import java.util.NoSuchElementException;
  * types to their {@link Double} equivalents unnecessarily.<p>
  *
  * The {@code get} operation runs in logarithmic time.  The {@code set}
- * operation runs in consant time if setting an existing non-zero value to a
+ * operation runs in logrithmic time if setting an existing non-zero value to a
  * non-zero value.  However, if the {@code set} invocation sets a zero value to
  * non-zero, the operation is linear with the size of the array.<p>
  *
- * Instance offer a space savings of retaining only the non-zero indices and
- * values.  For large array with only a few values set, this offers a huge
- * savings.  However, as the cardinality of the array grows in relation to its
- * size, a dense {@code double[]} array will offer better performance in both
- * space and time.  This is especially true if the sparse array instance
- * approaches a cardinality to size ratio of {@code .5}.<p>
+ * This sparse representation offer a space savings of retaining only the
+ * non-zero indices and values.  For large array with only a few values set,
+ * this offers a huge savings.  However, as the cardinality of the array grows
+ * in relation to its size, a dense {@code double[]} array will offer better
+ * performance in both space and time.  This is especially true if the sparse
+ * array instance approaches a cardinality to size ratio of {@code .5}.<p>
  *
  * This class supports iterating over the non-zero indices and values in the
  * array via the {@link #iterator()} method.  The indices will be returned in
@@ -155,6 +155,12 @@ public class SparseDoubleArray
                     "Indices must be sorted and unique.  Given " +
                     this.indices[i] + " and " + this.indices[i+1]);
         }
+
+        if (length <= this.indices[this.indices.length-1]) 
+            throw new IllegalArgumentException(
+                "Length must be larger than the largest " +
+                "non zero index provided.  " +
+                "Length: " + length + ", index: " + this.indices[this.indices.length-1]);
     }
 
     /**
@@ -324,10 +330,11 @@ public class SparseDoubleArray
      *         the maximum length of the array.
      */
     public double getPrimitive(int index) {
-        if (index < 0 || index >= maxLength) {
+        if (index < 0 || index > maxLength) {
             throw new ArrayIndexOutOfBoundsException(
                     "invalid index: " + index);
         }
+
         int pos = Arrays.binarySearch(indices, index);
         double value = (pos >= 0) ? values[pos] : 0;
         return value;
@@ -515,11 +522,11 @@ public class SparseDoubleArray
         
         int curIndex;
 
-        DoubleEntryImpl e;
+        DoubleEntry e;
 
         public SparseDoubleArrayIterator() {
             curIndex = 0;
-            e = new DoubleEntryImpl(-1, -1); // dummy values
+            e = new DoubleEntry(-1, -1); // dummy values
         }
 
         public boolean hasNext() {
@@ -532,46 +539,13 @@ public class SparseDoubleArray
             // Modify the state of the entry rather than create a new one to cut
             // down on object allocation for faster iterating
             e.index = indices[curIndex];
-            e.val = values[curIndex];
+            e.value = values[curIndex];
             curIndex++;
             return e;
         }
 
         public void remove() {
             throw new UnsupportedOperationException();
-        }
-
-        /**
-         * A mutable {@code DoubleEntry} implementation.
-         */
-        private class DoubleEntryImpl implements DoubleEntry {
-
-            public int index;
-
-            public double val;
-
-            public DoubleEntryImpl(int index, int val) {
-                this.index = index;
-                this.val = val;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public int index() { 
-                return index;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public double value() {
-                return val;
-            }
-
-            public String toString() {
-                return "[" + index + "->" + val + "]";
-            }
         }
     }
 }

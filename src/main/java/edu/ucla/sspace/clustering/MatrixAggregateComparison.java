@@ -23,43 +23,46 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering;
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering.ClusterLink;
+import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.Matrix;
-
-import java.util.Properties;
+import edu.ucla.sspace.matrix.MatrixAggregate;
 
 
 /**
- * A simple wrapper around {@code NeighborChainAgglomerativeClustering} that
- * treats the input matrix as an adjacency matrix connecting data points within
- * a graph.  This method defaults to using the {@link
- * NeighborChainAgglomerativeClustering#MEAN_LINK} {@link
- * NeighborChainAgglomerativeClustering#ClusterLink} method.
+ * A {@link PartitionComparison} that utilizes a {@link
+ * MatrixAggregate} function.  Before calling the {@link MatrixAggregate}
+ * method, {@link #compare} computes a contingency matrix for each data point
+ * appearing in the two compared {@link Partition}s.
  *
- * </p>
- *
- * This method will run in O(N^2) time.
+ * @see MatrixAggregate
  *
  * @author Keith Stevens
  */
-public class GraphHac implements Clustering {
+public abstract class MatrixAggregateComparison implements PartitionComparison {
+
+    /**
+     * The {@link MatrixAggregate} used to compare two {@link Partition}s.
+     */
+    private final MatrixAggregate aggregator;
+
+    /**
+     * Creates a new {@link MatrixAggregateComparison} using the given {@link
+     * MatrixAggregate} function.
+     */
+    public MatrixAggregateComparison(MatrixAggregate aggregator) {
+        this.aggregator = aggregator;
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Assignments cluster(Matrix adj, int k, Properties props) {
-        return NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
-                adj, ClusterLink.MEAN_LINK, k);
-    }
+    public double compare(Partition p1, Partition p2) {
+        // Create the contingency matrix.
+        Matrix contingency = new ArrayMatrix(p1.numClusters(), p2.numClusters());
+        for (int i = 0; i < p1.numPoints(); ++i)
+            contingency.add(p1.assignments()[i], p2.assignments()[i], 1.0);
 
-    /**
-     * Unsupported operation.
-     *
-     * @throws new UnsupportedOperationException
-     */
-    public Assignments cluster(Matrix adj, Properties props) {
-        throw new UnsupportedOperationException(
-                "Cannot cluster without setting the number of clusters");
+        // Aggregate the data.
+        return aggregator.aggregate(contingency);
     }
 }

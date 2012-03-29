@@ -40,8 +40,14 @@ object PrintWordsi extends Wordsi {
         var basis:BasisMapping[String, String] = null
         var depBasis:RelationBasedBasisMapping = null
         if (loadBasis) {
-            if (args(0) == "dep") depBasis = SerializableUtil.load(args(5))
-            else basis = SerializableUtil.load(args(5))
+            if (args(0) == "dep") {
+                depBasis = SerializableUtil.load(args(5))
+                depBasis.setReadOnly(true)
+            }
+            else {
+                basis = SerializableUtil.load(args(5))
+                basis.setReadOnly(true)
+            }
         } else {
             val excludeSet = new HashSet[String]()
             Source.fromFile(args(2)).getLines.foreach { excludeSet.add(_) }

@@ -109,7 +109,7 @@ public class BigramSpace implements SemanticSpace {
 
         Iterator<String> documentTokens = IteratorFactory.tokenize(document);
 
-        for (int i = 0; i < windowSize; ++i) {
+        for (int i = 0; i < windowSize && documentTokens.hasNext(); ++i) {
             String word = documentTokens.next();
             int index = basis.getDimension(word);
             if (index >= 0)

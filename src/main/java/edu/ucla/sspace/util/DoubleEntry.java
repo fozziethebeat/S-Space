@@ -28,15 +28,32 @@ package edu.ucla.sspace.util;
  * access over their indexable values without needing to incur auto-boxing
  * overhead.
  */
-public interface DoubleEntry {
+public class DoubleEntry {
+
+    public int index;
+
+    public double value;
+
+    public DoubleEntry(int index, double value) {
+        this.index = index;
+        this.value = value;
+    }
 
     /**
      * Returns the index position of this entry.
      */
-    int index();
+    public int index() {
+        return index;
+    }
 
     /**
      * Returns the value at this entry's index.
      */
-    double value(); 
+    public double value() {
+        return value;
+    }
+
+    public String toString() {
+        return "[" + index + "->" + value + "]";
+    }
 }

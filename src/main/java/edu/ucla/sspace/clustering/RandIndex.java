@@ -23,22 +23,39 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.matrix.PageRank;
-
 
 /**
- * A {@link HubClustering} implementation that uses {@link PageRank}.
+ * Computes the popular <a
+ * href="http://en.wikipedia.org/wiki/Rand_index">Rand Index</a>, which reports
+ * the number of agreements between two {@link Partition}s.
  *
- * @see HubClustering
- * @see PageRank
  * @author Keith Stevens
  */
-public class PageRankClustering extends HubClustering {
+public class RandIndex extends RandDistance {
+
+    public double compare(Partition p1, Partition p2) {
+        // Compute the raw number of disagreements between p1 and p2.
+        double distance = super.compare(p1, p2);
+
+        // Compute the total number of pairings possible in any partition of
+        // this size.
+        int numPoints = p1.numPoints();
+        int totalPairs = numPoints * (numPoints - 1) / 2;
+        
+        // Compute the number of total agreements, i.e. the number of
+        // co-clustered pairs and number of pairs no co-clustered in both
+        // partitions by subtracting the number of disagreements from the total
+        // number of possible pairs.  
+        double numAgreements = totalPairs - distance;
+
+        // Normalize this by the total number of pairs to make this a metric.
+        return numAgreements / totalPairs;
+    }
 
     /**
-     * Creates a new {@link PageRankClustering} instance.
+     * Returns false.
      */
-    public PageRankClustering() {
-        super(new PageRank());
+    public boolean isDistance() {
+        return false;
     }
 }
