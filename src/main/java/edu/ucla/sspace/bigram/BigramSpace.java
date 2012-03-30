@@ -26,10 +26,11 @@ package edu.ucla.sspace.bigram;
 import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.basis.StringBasisMapping;
 import edu.ucla.sspace.common.SemanticSpace;
-import edu.ucla.sspace.matrix.AtomicGrowingSparseHashMatrix;
+import edu.ucla.sspace.matrix.GrowingSparseMatrix;
 import edu.ucla.sspace.matrix.BaseTransform;
 import edu.ucla.sspace.matrix.FilteredTransform;
 import edu.ucla.sspace.matrix.PointWiseMutualInformationTransform;
+import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.Transform;
 import edu.ucla.sspace.text.IteratorFactory;
 import edu.ucla.sspace.vector.SparseDoubleVector;
@@ -51,7 +52,7 @@ public class BigramSpace implements SemanticSpace {
 
     private final BasisMapping<String, String> basis;
 
-    private final AtomicGrowingSparseHashMatrix bigramMatrix;
+    private final SparseMatrix bigramMatrix;
 
     private final int windowSize;
 
@@ -69,7 +70,7 @@ public class BigramSpace implements SemanticSpace {
         this.basis = basis;
         this.windowSize = windowSize;
         this.filter = new FilteredTransform(base, minValue);
-        this.bigramMatrix = new AtomicGrowingSparseHashMatrix();
+        this.bigramMatrix = new GrowingSparseMatrix();
     }
 
     /**
@@ -109,7 +110,7 @@ public class BigramSpace implements SemanticSpace {
 
         Iterator<String> documentTokens = IteratorFactory.tokenize(document);
 
-        for (int i = 0; i < windowSize; ++i) {
+        for (int i = 0; i < windowSize && documentTokens.hasNext(); ++i) {
             String word = documentTokens.next();
             int index = basis.getDimension(word);
             if (index >= 0)

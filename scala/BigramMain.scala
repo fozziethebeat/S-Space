@@ -25,6 +25,7 @@
 import edu.ucla.sspace.basis.FilteredStringBasisMapping
 import edu.ucla.sspace.bigram.BigramSpace
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor
+import edu.ucla.sspace.matrix.MatlabSparseMatrixWriter
 import edu.ucla.sspace.matrix.Matrices
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
@@ -42,6 +43,7 @@ import scala.collection.JavaConversions.setAsJavaSet
 import scala.io.Source
 
 import java.io.File
+import java.io.FileOutputStream
 import java.util.HashSet
 
 /**
@@ -69,23 +71,27 @@ val parser = new CoNLLDependencyExtractor()
 // sentence from the file.
 for (semevalFile <- args.slice(3, args.length);
      document <- new DependencyFileDocumentIterator(semevalFile)) {
+    val reader = document.reader
     // Assume that the first line of every sentence contains meta information
     // and is not part of the sentence, so discard it.
-    document.reader.readLine
+    val header = reader.readLine
+    printf("%s: %s\n", semevalFile, header)
 
     // Extract the tokens from the Dependency Parse Tree and transform it into a
     // simple string of works.
-    val tree = parser.readNextTree(document.reader)
-    val wordDoc = tree.map(_.word).mkString(" ")
+    val tree = parser.readNextTree(reader)
+    val wordDoc = new StringDocument(tree.map(_.word).mkString(" "))
 
     // Pass the string of tokens to the bigram space for processing.
-    bigramSpace.processDocument(new StringDocument(wordDoc).reader)
+    bigramSpace.processDocument(wordDoc.reader)
 }
 
+println("Processing space");
 // Process the full set of bigram statistics after every document has been
 // processed.
 bigramSpace.processSpace(System.getProperties)
 
+println("Printing space");
 // Extract the the bigram vector for each word observed in the corpus.  Each
 // vector corresponds to the first word in a bigram and records the PMI value
 // between that word and the secondary words in the retained bigrams.  After
@@ -93,8 +99,10 @@ bigramSpace.processSpace(System.getProperties)
 // matrix to a file.
 val matrix = Matrices.asSparseMatrix(
     (for (w <- bigramSpace.getWords) yield bigramSpace.getVector(w)).toList)
-MatrixIO.writeMatrix(matrix, new File(args(1)), Format.SVDLIBC_SPARSE_TEXT)
+val writer = new MatlabSparseMatrixWriter();
+writer.writeMatrix(matrix, new FileOutputStream(args(1)))
 
+println("Printing basis");
 // Save the mapping from a word to it's row/column index in the serialzed matrix
 // file.
 SerializableUtil.save(basis, args(2))

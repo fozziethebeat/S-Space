@@ -89,10 +89,10 @@ public class TreeMultiMap<K,V>
      * Constructs this map using the natural ordering of the keys.
      */
     public TreeMultiMap() {
-	map = new TreeMap<K,Set<V>>();
-	range = 0;
-	recalculateRange = false;
-	parent = null;
+        map = new TreeMap<K,Set<V>>();
+        range = 0;
+        recalculateRange = false;
+        parent = null;
     }
 
     /**
@@ -100,10 +100,10 @@ public class TreeMultiMap<K,V>
      * comparator.
      */
     public TreeMultiMap(Comparator<? super K> c) {
-	map = new TreeMap<K,Set<V>>(c);
-	range = 0;
-	recalculateRange = false;
-	parent = null;
+        map = new TreeMap<K,Set<V>>(c);
+        range = 0;
+        recalculateRange = false;
+        parent = null;
     }
 
     /**
@@ -111,8 +111,8 @@ public class TreeMultiMap<K,V>
      * the provided mappings to this map.
      */
     public TreeMultiMap(Map<? extends K,? extends V> m) {
-	this();
-	putAll(m);
+        this();
+        putAll(m);
     }
 
     /**
@@ -124,13 +124,13 @@ public class TreeMultiMap<K,V>
      * @see #tailMap(Object)
      */
     private TreeMultiMap(SortedMap<K,Set<V>> subMap, TreeMultiMap<K,V> parent) {
-	map = subMap;
-	// need to compute the range, but lazily compute this on demand.
-	// Calculuating it now turns the subMap operations into O(n) instead of
-	// the O(1) call it currently is.
-	range = -1;
-	recalculateRange = true;
-	this.parent = parent;
+        map = subMap;
+        // need to compute the range, but lazily compute this on demand.
+        // Calculuating it now turns the subMap operations into O(n) instead of
+        // the O(1) call it currently is.
+        range = -1;
+        recalculateRange = true;
+        this.parent = parent;
     }
 
     /**
@@ -146,12 +146,12 @@ public class TreeMultiMap<K,V>
      * {@inheritDoc}
      */
     public void clear() {
-	map.clear();
-	if (parent != null) {
-	    int curRange = range();
-	    parent.updateParentRange(-curRange);
-	}
-	range = 0;
+        map.clear();
+        if (parent != null) {
+            int curRange = range();
+            parent.updateParentRange(-curRange);
+        }
+        range = 0;
     }
 
     /**
@@ -159,24 +159,24 @@ public class TreeMultiMap<K,V>
      * if it exists.
      */
     private void updateParentRange(int valueDifference) {
-	range += valueDifference;
-	if (parent != null) {
-	    parent.updateParentRange(valueDifference);
-	}
+        range += valueDifference;
+        if (parent != null) {
+            parent.updateParentRange(valueDifference);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     public Comparator<? super K> comparator() {
-	return map.comparator();
+        return map.comparator();
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean containsKey(Object key) {
-	return map.containsKey(key);
+        return map.containsKey(key);
     }
 
     /**
@@ -191,89 +191,89 @@ public class TreeMultiMap<K,V>
      * {@inheritDoc}
      */
     public boolean containsValue(Object value) {
-	for (Set<V> s : map.values()) {
-	    if (s.contains(value)) {
-		return true;
-	    }
-	}
-	return false;
+        for (Set<V> s : map.values()) {
+            if (s.contains(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<Map.Entry<K,V>> entrySet() {
-	return new EntryView();
+        return new EntryView();
     }
 
     /**
      * {@inheritDoc}
      */
     public K firstKey() {
-	return map.firstKey();
+        return map.firstKey();
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<V> get(Object key) {
-	return map.get(key);
+        return map.get(key);
     }
 
     /**
      * {@inheritDoc}
      */
     public SortedMultiMap<K,V> headMap(K toKey) {
-	return new TreeMultiMap<K,V>(map.headMap(toKey), this);
+        return new TreeMultiMap<K,V>(map.headMap(toKey), this);
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean isEmpty() {
-	return map.isEmpty();
+        return map.isEmpty();
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<K> keySet() {
-	return map.keySet();
+        return map.keySet();
     }
 
     /**
      * {@inheritDoc}
      */
     public K lastKey() {
-	return map.lastKey();
+        return map.lastKey();
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean put(K key, V value) {
-	Set<V> values = map.get(key);
-	if (values == null) {
-	    values = new HashSet<V>();
-	    map.put(key, values);
-	}
-	boolean added = values.add(value);
-	if (added) {
-	    range++;
-	    if (parent != null) {
-		parent.updateParentRange(1);
-	    }
-	}
-	return added;
+        Set<V> values = map.get(key);
+        if (values == null) {
+            values = new HashSet<V>();
+            map.put(key, values);
+        }
+        boolean added = values.add(value);
+        if (added) {
+            range++;
+            if (parent != null) {
+                parent.updateParentRange(1);
+            }
+        }
+        return added;
     }
 
     /**
      * {@inheritDoc}
      */
     public void putAll(Map<? extends K,? extends V> m) {
-	for (Map.Entry<? extends K,? extends V> e : m.entrySet()) {
-	    put(e.getKey(), e.getValue());
-	}
+        for (Map.Entry<? extends K,? extends V> e : m.entrySet()) {
+            put(e.getKey(), e.getValue());
+        }
     }
 
     /**
@@ -293,15 +293,15 @@ public class TreeMultiMap<K,V>
         // empty mapping
         if (values.isEmpty())
             return false;
-	Set<V> vals = map.get(key);
-	if (vals == null) {
-	    vals = new HashSet<V>();
-	    map.put(key, vals);
-	}
-	int oldSize = vals.size();
-	boolean added = vals.addAll(values);
-	range += (vals.size() - oldSize);
-	return added;
+        Set<V> vals = map.get(key);
+        if (vals == null) {
+            vals = new HashSet<V>();
+            map.put(key, vals);
+        }
+        int oldSize = vals.size();
+        boolean added = vals.addAll(values);
+        range += (vals.size() - oldSize);
+        return added;
     }
 
     /**
@@ -310,103 +310,103 @@ public class TreeMultiMap<K,V>
      * values.
      */
     public int range() {
-	// the current range isn't accurate, loop through the values and count
-	if (recalculateRange) {
-	    recalculateRange = false;
-	    range = 0;
-	    for (V v : values()) 
-		range++;
-	}
-	return range;
+        // the current range isn't accurate, loop through the values and count
+        if (recalculateRange) {
+            recalculateRange = false;
+            range = 0;
+            for (V v : values()) 
+                range++;
+        }
+        return range;
     }
 
     /**
      * {@inheritDoc}
      */
     public Set<V> remove(Object key) {
-	Set<V> v = map.remove(key);
-	if (v != null)
-	    range -= v.size();
-	if (parent != null) {
-	    parent.updateParentRange(-(v.size()));
-	}
+        Set<V> v = map.remove(key);
+        if (v != null)
+            range -= v.size();
+        if (parent != null) {
+            parent.updateParentRange(-(v.size()));
+        }
 
-	return v;
+        return v;
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean remove(Object key, Object value) {
-	Set<V> values = map.get(key);
+        Set<V> values = map.get(key);
         // If the key was not mapped to any values
         if (values == null)
             return false;
-	boolean removed = values.remove(value);
-	if (removed) {
-	    range--;
-	    if (parent != null) {
-		parent.updateParentRange(-1);
-	    }
-	}
-	// if this was the last value mapping for this key, remove the
-	// key altogether
-	if (values.size() == 0)
-	    map.remove(key);
-	return removed;
+        boolean removed = values.remove(value);
+        if (removed) {
+            range--;
+            if (parent != null) {
+                parent.updateParentRange(-1);
+            }
+        }
+        // if this was the last value mapping for this key, remove the
+        // key altogether
+        if (values.size() == 0)
+            map.remove(key);
+        return removed;
     }
 
     /**
      * {@inheritDoc}
      */
     public int size() {
-	return map.size();
+        return map.size();
     }
 
     /**
      * {@inheritDoc}
      */
     public SortedMultiMap<K,V> subMap(K fromKey, K toKey) {
-	return new TreeMultiMap<K,V>(map.subMap(fromKey, toKey), this);
+        return new TreeMultiMap<K,V>(map.subMap(fromKey, toKey), this);
     }
 
     /**
      * {@inheritDoc}
      */
     public SortedMultiMap<K,V> tailMap(K fromKey) {
-	return new TreeMultiMap<K,V>(map.tailMap(fromKey), this);
+        return new TreeMultiMap<K,V>(map.tailMap(fromKey), this);
     }
 
     /**
      * Returns the string form of this multi-map
      */
     public String toString() {
-	Iterator<Map.Entry<K,Set<V>>> it = map.entrySet().iterator();
-	if (!it.hasNext()) {
-	    return "{}";
-	}
+        Iterator<Map.Entry<K,Set<V>>> it = map.entrySet().iterator();
+        if (!it.hasNext()) {
+            return "{}";
+        }
    
-	StringBuilder sb = new StringBuilder();
-	sb.append('{');
-	while (true) {
-	    Map.Entry<K,Set<V>> e = it.next();
-	    K key = e.getKey();
-	    Set<V> values = e.getValue();
-	    sb.append(key   == this ? "(this Map)" : key);
-	    sb.append("=[");
-	    Iterator<V> it2 = values.iterator();
-	    while (it2.hasNext()) {
-		V value = it2.next();
-		sb.append(value == this ? "(this Map)" : value);
-		if (it2.hasNext()) {
-		    sb.append(",");
-		}
-	    }
-	    sb.append("]");
-	    if (!it.hasNext())
-		return sb.append('}').toString();
-	    sb.append(", ");
-	}
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        while (true) {
+            Map.Entry<K,Set<V>> e = it.next();
+            K key = e.getKey();
+            Set<V> values = e.getValue();
+            sb.append(key   == this ? "(this Map)" : key);
+            sb.append("=[");
+            Iterator<V> it2 = values.iterator();
+            while (it2.hasNext()) {
+                V value = it2.next();
+                sb.append(value == this ? "(this Map)" : value);
+                if (it2.hasNext()) {
+                    sb.append(",");
+                }
+            }
+            sb.append("]");
+            if (!it.hasNext())
+                return sb.append('}').toString();
+            sb.append(", ");
+        }
     }
 
     /**
@@ -415,7 +415,7 @@ public class TreeMultiMap<K,V>
      * vice-versa.
      */
     public Collection<V> values() {
-	return new ValuesView();
+        return new ValuesView();
     }
 
     /**
@@ -432,47 +432,47 @@ public class TreeMultiMap<K,V>
      */
     class ValuesView extends AbstractCollection<V> implements Serializable {
 
-	private static final long serialVersionUID = 1;
-	
-	public ValuesView() { }
+        private static final long serialVersionUID = 1;
+        
+        public ValuesView() { }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void clear() {
-	    map.clear();
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public void clear() {
+            map.clear();
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public boolean contains(Object o) {
-	    return containsValue(o);
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public Iterator<V> iterator() {
-	    // combine all of the iterators for the entry sets
-	    Collection<Iterator<V>> iterators = 
-		new ArrayList<Iterator<V>>(size());
-	    for (Set<V> s : map.values()) {
-		iterators.add(s.iterator());
-	    }
-	    // NOTE: because the iterators are backed by the internal map and
-	    // because the CombinedIterator class supports remove() if the
-	    // backing class does, calls to remove from this iterator are also
-	    // supported.
-	    return new CombinedIterator<V>(iterators);
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public boolean contains(Object o) {
+            return containsValue(o);
+        }
+        
+        /**
+         * {@inheritDoc}
+         */
+        public Iterator<V> iterator() {
+            // combine all of the iterators for the entry sets
+            Collection<Iterator<V>> iterators = 
+                new ArrayList<Iterator<V>>(size());
+            for (Set<V> s : map.values()) {
+                iterators.add(s.iterator());
+            }
+            // NOTE: because the iterators are backed by the internal map and
+            // because the CombinedIterator class supports remove() if the
+            // backing class does, calls to remove from this iterator are also
+            // supported.
+            return new CombinedIterator<V>(iterators);
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public int size() {
-	    return range();
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public int size() {
+            return range();
+        }
     }    
 
     /**
@@ -481,44 +481,44 @@ public class TreeMultiMap<K,V>
      * @see MultiMap#values()
      */
     class EntryView extends AbstractSet<Map.Entry<K,V>> 
-	    implements Serializable {
+            implements Serializable {
 
-	private static final long serialVersionUID = 1;
-	
-	public EntryView() { }
+        private static final long serialVersionUID = 1;
+        
+        public EntryView() { }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void clear() {
-	    map.clear();
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public void clear() {
+            map.clear();
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public boolean contains(Object o) {
-	    if (o instanceof Map.Entry) {
-		Map.Entry<?,?> e = (Map.Entry<?,?>)o;
-		Set<V> vals = TreeMultiMap.this.get(e.getKey());
-		return vals.contains(e.getValue());
-	    }
-	    return false;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public Iterator<Map.Entry<K,V>> iterator() {
-	    return new EntryIterator();
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public boolean contains(Object o) {
+            if (o instanceof Map.Entry) {
+                Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+                Set<V> vals = TreeMultiMap.this.get(e.getKey());
+                return vals.contains(e.getValue());
+            }
+            return false;
+        }
+        
+        /**
+         * {@inheritDoc}
+         */
+        public Iterator<Map.Entry<K,V>> iterator() {
+            return new EntryIterator();
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public int size() {
-	    return range();
-	}
+        /**
+         * {@inheritDoc}
+         */
+        public int size() {
+            return range();
+        }
     }
 
     /**
@@ -527,87 +527,83 @@ public class TreeMultiMap<K,V>
     class EntryIterator implements Iterator<Map.Entry<K,V>>, Serializable {
 
         private static final long serialVersionUID = 1;
-	
-	K curKey;
-	Iterator<V> curValues;
-	Iterator<Map.Entry<K,Set<V>>> multiMapIterator;
-	
-	Map.Entry<K,V> next;
-	Map.Entry<K,V> previous;
-	
-	public EntryIterator() {
-	    multiMapIterator = map.entrySet().iterator();
-	    if (multiMapIterator.hasNext()) {
-		Map.Entry<K,Set<V>> e = multiMapIterator.next();
-		curKey =  e.getKey();
-		curValues = e.getValue().iterator();
-	    }
+        
+        K curKey;
+        Iterator<V> curValues;
+        Iterator<Map.Entry<K,Set<V>>> multiMapIterator;
+        
+        Map.Entry<K,V> next;
+        Map.Entry<K,V> previous;
+        
+        public EntryIterator() {
+            multiMapIterator = map.entrySet().iterator();
+            if (multiMapIterator.hasNext()) {
+                Map.Entry<K,Set<V>> e = multiMapIterator.next();
+                curKey =  e.getKey();
+                curValues = e.getValue().iterator();
+            }
 
-	    advance();
-	}
-	       
-	private void advance() {
-	    // Check whether the current key has any additional mappings that
-	    // have not been returned
-	    if (curValues != null && curValues.hasNext()) {
-		next = new MultiMapEntry(curKey, curValues.next());
-		//System.out.println("next = " + next);
-	    }
-	    else if (multiMapIterator.hasNext()) {
-		Map.Entry<K,Set<V>> e = multiMapIterator.next();
-		curKey =  e.getKey();
-		curValues = e.getValue().iterator();
-		// Assume that the map correct manages the keys and values such
-		// that no key is ever mapped to an empty set
-		next = new MultiMapEntry(curKey, curValues.next());
-	    } else {
-		next = null;		
-	    }
-	}
+            advance();
+        }
+               
+        private void advance() {
+            // Check whether the current key has any additional mappings that
+            // have not been returned
+            if (curValues != null && curValues.hasNext()) {
+                next = new MultiMapEntry(curKey, curValues.next());
+                //System.out.println("next = " + next);
+            }
+            else if (multiMapIterator.hasNext()) {
+                Map.Entry<K,Set<V>> e = multiMapIterator.next();
+                curKey =  e.getKey();
+                curValues = e.getValue().iterator();
+                // Assume that the map correct manages the keys and values such
+                // that no key is ever mapped to an empty set
+                next = new MultiMapEntry(curKey, curValues.next());
+            } else {
+                next = null;                
+            }
+        }
 
-	public boolean hasNext() {
-	    return next != null;
-	}
+        public boolean hasNext() {
+            return next != null;
+        }
 
-	public Map.Entry<K,V> next() {
-	    Map.Entry<K,V> e = next;
-	    previous = e;
-	    advance();
-	    return e;
-	}
+        public Map.Entry<K,V> next() {
+            Map.Entry<K,V> e = next;
+            previous = e;
+            advance();
+            return e;
+        }
 
-	public void remove() {
-	    if (previous == null) {
+        public void remove() {
+            if (previous == null) {
                 throw new IllegalStateException(
                     "No previous element to remove");
-	    }
-	    TreeMultiMap.this.remove(previous.getKey(), previous.getValue());
-	    previous = null;
-	}
+            }
+            TreeMultiMap.this.remove(previous.getKey(), previous.getValue());
+            previous = null;
+        }
 
-	/**
-	 * A {@link Map.Entry} implementation that handles {@link MultiMap}
-	 * semantics for {@code setValue}.
-	 */
-	private class MultiMapEntry extends AbstractMap.SimpleEntry<K,V> 
-	        implements Serializable {
-	    
-	    private static final long serialVersionUID = 1;
-	    
-	    public MultiMapEntry(K key, V value) {
-		super(key, value);
-	    }
+        /**
+         * A {@link Map.Entry} implementation that handles {@link MultiMap}
+         * semantics for {@code setValue}.
+         */
+        private class MultiMapEntry extends AbstractMap.SimpleEntry<K,V> 
+                implements Serializable {
+            
+            private static final long serialVersionUID = 1;
+            
+            public MultiMapEntry(K key, V value) {
+                super(key, value);
+            }
 
-	    public V setValue(V value) {
-		Set<V> values = TreeMultiMap.this.get(getKey());
-		values.remove(getValue());
-		values.add(value);
-		return super.setValue(value);
-	    }
-	}
+            public V setValue(V value) {
+                Set<V> values = TreeMultiMap.this.get(getKey());
+                values.remove(getValue());
+                values.add(value);
+                return super.setValue(value);
+            }
+        }
     }
-
-
-
-
 }
