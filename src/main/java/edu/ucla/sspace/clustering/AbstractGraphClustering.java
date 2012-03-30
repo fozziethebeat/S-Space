@@ -30,6 +30,13 @@ import java.util.Properties;
 
 
 /**
+ * A generic class for clustering graphs stored as adjacency matrices.  This
+ * base provides method for algorithms that do not cluster using a fixed number
+ * of clusters but may need to in some cases.  For those algorithms, calls to
+ * {@link cluster(Matrix, int, Properties)} will call {@link cluster(Matrix,
+ * Properties)} and then merge the returned clusters using {@link
+ * HierarchicalAgglomerativeClustering}.
+ *
  * @author Keith Stevens
  */
 public abstract class AbstractGraphClustering implements Clustering {

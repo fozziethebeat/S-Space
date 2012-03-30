@@ -23,43 +23,41 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering;
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering.ClusterLink;
-import edu.ucla.sspace.matrix.Matrix;
-
-import java.util.Properties;
-
 
 /**
- * A simple wrapper around {@code NeighborChainAgglomerativeClustering} that
- * treats the input matrix as an adjacency matrix connecting data points within
- * a graph.  This method defaults to using the {@link
- * NeighborChainAgglomerativeClustering#MEAN_LINK} {@link
- * NeighborChainAgglomerativeClustering#ClusterLink} method.
- *
- * </p>
- *
- * This method will run in O(N^2) time.
+ * Computes a distance version of the popular <a
+ * href="http://en.wikipedia.org/wiki/Rand_index">Rand Index</a>.  Instead of
+ * computing the number of agreements between two {@link Partition}s, this
+ * computes the number of disagreements between two {@link Partition}s.
  *
  * @author Keith Stevens
  */
-public class GraphHac implements Clustering {
+public class RandDistance extends PartitionOverlapComparison {
 
     /**
      * {@inheritDoc}
      */
-    public Assignments cluster(Matrix adj, int k, Properties props) {
-        return NeighborChainAgglomerativeClustering.clusterAdjacencyMatrix(
-                adj, ClusterLink.MEAN_LINK, k);
+    public double compare(Partition p1, Partition p2) {
+        // Compute the number of co-clustered elements in p1 and p2.  This runs
+        // in O(n log n) time where n in the number of elements in p1.
+        double overlap = super.compare(p1, p2);
+
+        // Compute the number of co-clustered elements in each partition.  This
+        // runs in O(numClusters) for both p1 and p2.
+        int p1Pairs = p1.numPairs();
+        int p2Pairs = p2.numPairs();
+
+        // The sum of co-clustered elements in p1 and p2 account for the
+        // pairings where each partition disagree AND they each account for the
+        // overlapping co-clustered pairs.  So sum the two sums and subtract the
+        // overlap count twice to compute the final distance.
+        return p1Pairs + p2Pairs - 2*overlap;
     }
 
     /**
-     * Unsupported operation.
-     *
-     * @throws new UnsupportedOperationException
+     * Returns true.
      */
-    public Assignments cluster(Matrix adj, Properties props) {
-        throw new UnsupportedOperationException(
-                "Cannot cluster without setting the number of clusters");
+    public boolean isDistance() {
+        return true;
     }
 }

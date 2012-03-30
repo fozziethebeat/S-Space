@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2010, Lawrence Livermore National Security, LLC. Produced at
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
- * This file is part of the C-Cat package and is covered under the terms and
+ * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
  *
  * The S-Space package is free software: you can redistribute it and/or modify
@@ -21,24 +21,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.vector;
+package edu.ucla.sspace.clustering;
 
 
 /**
+ * Computes the Paired F-score value between two clustering solutions.  The
+ * Paired F-Score is similar to the F-Score except that intead of operating over
+ * single instances, it considers pairings of instances.  
+ *
  * @author Keith Stevens
  */
-public class DenseDynamicMagnitudeVectorTest
-        extends AbstractTestDenseDoubleVector {
+public class PairedFScoreComparison extends PartitionOverlapComparison {
 
-    protected DoubleVector newLengthVector(int length) {
-        return new DenseDynamicMagnitudeVector(length);
-    }
-
-    protected DoubleVector newFromArray(double[] values) {
-        return new DenseDynamicMagnitudeVector(values);
-    }
-
-    protected DoubleVector newCopy(DoubleVector other) {
-        return new DenseDynamicMagnitudeVector(other);
+    /**
+     * {@inheritDoc}
+     */
+    public double compare(Partition solution, Partition gold) {
+        double overlap = super.compare(solution, gold);
+        double numGuesses = solution.numPairs();
+        double numTrue = gold.numPairs();
+        double precision = overlap / numGuesses;
+        double recall = overlap / numTrue;
+        return 2 * precision * recall / (precision + recall);
     }
 }

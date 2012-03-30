@@ -1,24 +1,28 @@
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
-import edu.ucla.sspace.sim.CosineSimilarity
+import edu.ucla.sspace.similarity.CosineSimilarity
 import edu.ucla.sspace.vector.CompactSparseVector
 import edu.ucla.sspace.vector.VectorMath
 
 import scala.io.Source
 
 // Read in the feature representation of the contexts.
-val contexts = MatrixIO.readMatrix(args(2), Format.SVDLIBC_SPARSE_TEXT)
+val contexts = MatrixIO.readSparseMatrix(args(2), Format.SVDLIBC_SPARSE_TEXT)
 
 // Read in the clustering solutions and form the cluster centers using the rows
 // from the training context matrix.
-val trainContexts = MatrixIO.readMatrix(args(0), Format.SVDLIBC_SPARSE_TEXT)
+val trainContexts = MatrixIO.readSparseMatrix(args(0), Format.SVDLIBC_SPARSE_TEXT)
 val solutionFile = Source.fromFile(args(1)).getLines
 val Array(numPoints, numClusters) = solutionFile.next.split("\\s+").map(_.toInt)
-val clusters = Array.fill(numClusters)(new CompactSparseVector(contexts.columns))
+val clusters = Array.fill(numClusters)(new CompactSparseVector(trainContexts.columns))
 for ( (clusterLine, id) <- solutionFile.zipWithIndex; 
       if clusterLine != "";
-      point <- clusterLine.split("\\s+") )
-    VectorMath.add(clusters(id), trainContexts.getRowVector(point.toInt))
+      point <- clusterLine.split("\\s+") ) {
+    val rv = trainContexts.getRowVector(point.toInt)
+    val cent = clusters(id)
+    for (i <- rv.getNonZeroIndices)
+        cent.add(i, rv.get(i))
+}
 
 // Read in the headers.  These must be in the same order as the rows in
 // contexts.

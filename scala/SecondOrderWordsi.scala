@@ -24,8 +24,9 @@ basis.setReadOnly(true)
 val parser = new CoNLLDependencyExtractor()
 val docIter = new DependencyFileDocumentIterator(args(2))
 val contexts = for (document <- docIter) yield {
-    val header = document.reader.readLine
-    val tree = parser.readNextTree(document.reader)
+    val reader = document.reader
+    val header = reader.readLine
+    val tree = parser.readNextTree(reader)
     val context = new CompactSparseVector(bigrams.columns)
     tree.map(n => basis.getDimension(n.word)).filter(_>=0).foreach(
         n => VectorMath.add(context,bigrams.getRowVector(n)))

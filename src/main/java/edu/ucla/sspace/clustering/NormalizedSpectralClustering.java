@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.clustering;
 
 import edu.ucla.sspace.matrix.ArrayMatrix;
@@ -13,10 +36,27 @@ import java.util.Properties;
 
 
 /**
+ * An implementation of Normalized Spectral Clustering, a stable method for
+ * computing the minimum conductance over a graph by using the normalized graph
+ * laplacian.  This implementation is based on 
+ *
+ * <ul>
+ *   <li>
+ *    <li style="font-family:Garamond, Georgia, serif">Andrew Ng, Michael
+ *    Jordan, and Yair Weiss.  On Spectral Clustering: Analysis and an
+ *    Algorithm. <i>Advances in Neural Information Processing Systems</i>.
+ *    Available <a
+ *    href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100">here</a>
+ *    </li>
+ * </ul>
+ *
  * @author Keith Stevens
  */
 public class NormalizedSpectralClustering implements Clustering {
 
+    /**
+     * {@inheritDoc}
+     */
     public Assignments cluster(Matrix m, int k, Properties props) {
         assert m.rows() == m.columns();
 
@@ -69,7 +109,11 @@ public class NormalizedSpectralClustering implements Clustering {
         return DirectClustering.cluster(spectral, k, 20);
     }
 
+    /**
+     * Unsupported.
+     */
     public Assignments cluster(Matrix m, Properties props) {
-        return null;
+        throw new UnsupportedOperationException(
+                "Cannot cluster without a fixed number of clusters");
     }
 }

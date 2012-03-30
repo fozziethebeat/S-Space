@@ -81,7 +81,6 @@ for (semevalFile <- args.slice(3, args.length);
     // simple string of works.
     val tree = parser.readNextTree(reader)
     val wordDoc = new StringDocument(tree.map(_.word).mkString(" "))
-
     // Pass the string of tokens to the bigram space for processing.
     bigramSpace.processDocument(wordDoc.reader)
 }

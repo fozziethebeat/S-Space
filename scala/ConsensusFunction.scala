@@ -326,6 +326,7 @@ class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) 
                 count = 1
             }
         }
+        a+= chooseTwo(count)
 
         return b + c - 2 * a
     }

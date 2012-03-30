@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Lawrence Livermore National Security, LLC. Produced at
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
@@ -27,18 +27,27 @@ package edu.ucla.sspace.vector;
 /**
  * @author Keith Stevens
  */
-public class DenseDynamicMagnitudeVectorTest
-        extends AbstractTestDenseDoubleVector {
+public class CompactSparseVectorTest extends AbstractTestSparseDoubleVector {
 
-    protected DoubleVector newLengthVector(int length) {
-        return new DenseDynamicMagnitudeVector(length);
+    protected SparseDoubleVector newNoLengthVector() {
+        return new CompactSparseVector();
     }
 
-    protected DoubleVector newFromArray(double[] values) {
-        return new DenseDynamicMagnitudeVector(values);
+    protected SparseDoubleVector newLengthVector(int length) {
+        return new CompactSparseVector(length);
     }
 
-    protected DoubleVector newCopy(DoubleVector other) {
-        return new DenseDynamicMagnitudeVector(other);
+    protected SparseDoubleVector newCopy(SparseDoubleVector other) {
+        return new CompactSparseVector(other);
+    }
+
+    protected SparseDoubleVector newFromArray(double[] values) {
+        return new CompactSparseVector(values);
+    }
+
+    protected SparseDoubleVector newFromValues(int[] nonZeros, 
+                                               double[] values,
+                                               int length) {
+        return new CompactSparseVector(nonZeros, values, length);
     }
 }

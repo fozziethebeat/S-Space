@@ -24,6 +24,7 @@ package edu.ucla.sspace.vector;
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.ObjectEntry;
 
+import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
@@ -34,18 +35,15 @@ import java.util.Iterator;
 
 
 /**
- * A {@code SparseVector} implementation backed by a {@code Map}.  This
- * provides amoritized constant time access to all get and set operations, while
- * using more space than the {@link CompactSparseVector} or {@link
+ * A {@code SparseVector} implementation backed by a {@code Map}.  This provides
+ * amoritized constant time access to all get and set operations, while using
+ * more space than the {@link CompactSparseVector} or {@link
  * AmortizedSparseVector} classes.
- *
- * <p> See {@see SparseHashArray} for implementation details.
  *
  * @author David Jurgens
  */
 public class SparseHashDoubleVector 
-    //extends SparseHashVector<Double>
-        implements SparseDoubleVector, Serializable { //Iterable<DoubleEntry>, Serializable {
+        implements SparseDoubleVector, Serializable, Iterable<DoubleEntry> {
 
     private static final long serialVersionUID = 1L;
 
@@ -56,6 +54,14 @@ public class SparseHashDoubleVector
     private int maxLength;
 
     private double magnitude;
+
+    /**
+     * Creates a new vector with the maximum possible length.
+     */
+    public SparseHashDoubleVector() {
+        this(Integer.MAX_VALUE);
+    }
+
     /**
      * Creates a new vector of the specified length
      *
@@ -84,6 +90,43 @@ public class SparseHashDoubleVector
                 magnitude += values[i] * values[i];
                 vector.put(i, values[i]);
             }
+        }
+        magnitude = Math.sqrt(magnitude);
+    }
+
+    /**
+     * Create a {@code CompactSparseVector} using the indices and their
+     * respecitve values.
+     *
+     * @param indices an sorted array of positive values representing the
+     *        non-zero indices of the array
+     * @param values an array of values that correspond their respective indices
+     * @param length the total length of the array
+     *
+     * @throw IllegalArgumentException if {@code nonZeros} and {@code values}
+     *        have different lengths or if {@code length} is less than any index
+     *        found in {@code nonZeros}.
+     */
+    public SparseHashDoubleVector(int[] nonZeros, double[] values, int length) {
+        if (nonZeros.length != values.length)
+            throw new IllegalArgumentException(
+                    "Length of the given nonZeros and values arrays must " +
+                    "match.  Given: " + 
+                    nonZeros.length + " and " + values.length);
+
+        this.maxLength = length;
+        this.vector = new TIntDoubleHashMap();
+        this.nonZeroIndices = nonZeros;
+        this.magnitude = 0;
+        for (int i = 0; i < nonZeros.length; ++i) {
+            if (nonZeros[i] >= maxLength)
+                throw new IllegalArgumentException(
+                    "Length must be larger than the largest " +
+                    "non zero index provided.  " +
+                    "Length: " + length + ", index: " + nonZeros[i]);
+
+            magnitude += values[i] * values[i];
+            vector.put(nonZeros[i], values[i]);
         }
         magnitude = Math.sqrt(magnitude);
     }
@@ -133,10 +176,10 @@ public class SparseHashDoubleVector
      * Returns an iterator over the non-{@code 0} values in this vector.  This
      * method makes no guarantee about the order in which the indices are
      * returned.
+     */
     public Iterator<DoubleEntry> iterator() {
         return new DoubleIterator();
     }
-     */
 
     /**
      * {@inheritDoc}
@@ -149,7 +192,10 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public void set(int index, double value) {
-        vector.put(index, value);
+        if (value == 0d)
+            vector.remove(index);
+        else
+            vector.put(index, value);
         magnitude = -1;
         nonZeroIndices = null;
     }
@@ -188,22 +234,23 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        if (nonZeroIndices == null) {
+        if (nonZeroIndices == null)
             nonZeroIndices = vector.keys();
-            Arrays.sort(nonZeroIndices);
-        }
         return nonZeroIndices;
     }
 
     /**
      * An iterator over the {@code double} values in the vector, wrapping the
      * backing {@code SparseHashArray}'s own iterator.
+     */
     class DoubleIterator implements Iterator<DoubleEntry> {
 
-        Iterator<ObjectEntry<Number>> it;
+        TIntDoubleIterator it;
+        DoubleEntry entry;
 
         public DoubleIterator() {
             it = vector.iterator();
+            entry = new DoubleEntry(0, 0);
         }
 
         public boolean hasNext() {
@@ -211,11 +258,10 @@ public class SparseHashDoubleVector
         }
 
         public DoubleEntry next() {
-            final ObjectEntry<Number> e = it.next();
-            return new DoubleEntry() {
-                public int index() { return e.index(); }
-                public double value() { return e.value().doubleValue(); }
-            };
+            it.advance();
+            entry.index = it.key();
+            entry.value = it.value();
+            return entry;
         }
 
         public void remove() {
@@ -223,5 +269,4 @@ public class SparseHashDoubleVector
                 "Cannot remove from vector");
         }
     }
-     */
 }

@@ -112,8 +112,9 @@ public class CompactSparseVector extends AbstractDoubleVector
      * @param length the total length of the array
      *
      * @throw IllegalArgumentException if {@code indices} and {@code values}
-     *        have different lengths or if {@code indices} contains duplicate
-     *        elements or those not in sorted order
+     *        have different lengths, if {@code indices} contains duplicate
+     *        elements or those not in sorted order, or if {@code length} is
+     *        less than any index found in {@code nonZeros}.
      */
     public CompactSparseVector(int[] nonZeroIndices, double[] values, 
                                int length) {

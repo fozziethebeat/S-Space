@@ -120,7 +120,7 @@ object AdjustedMutualInformation {
      * sum} is the total sum of all values in {@code sums}.
      */
     def entropy(sums:Array[Int], sum:Int) = {
-        val total = (sums.map{ s => s / sum.toDouble * log(s/sum.toDouble) }).sum
+        val total = (sums.filter(_ != 0d).map( s => s / sum.toDouble * log(s/sum.toDouble) )).sum
         -1.0 * total
     }
 
@@ -236,13 +236,12 @@ object AdjustedMutualInformation {
         var emi = 0.0
         var mi = 0.0
         for (r <- 0 until rows; c <- 0 until columns) {
+            // Create a small helper function to compute the pointwise mutual
+            // information.
+            def pmi(n:Double) = if (n == 0d) 0.0
+                                else n/sum.toDouble * log(sum*n/(a(r)*b(c) + .000000001))
             // Update the mi for this class and cluster.
-            val pij = matches(r)(c)/sum.toDouble
-            val pi = a(r)/sum.toDouble
-            val pj = b(c)/sum.toDouble
-            val i = if (pij == 0.0 || pi*pj == 0.0) 0.0 
-                    else pij * log(pij/(pi*pj))
-            mi += i
+            mi += pmi(matches(r)(c))
 
             // Update the expectation of mi.
             val nij = max(1, a(r)+b(c) - sum)
@@ -269,9 +268,6 @@ object AdjustedMutualInformation {
 
             // Create a small helper function to adjust the score.
             def adjustment(n:Int) = (a(r)-n) * (b(c)-n) / (n+1.0) / (sum-a(r)-b(c)+n+1.0)
-            // Create a small helper function to compute the pointwise mutual
-            // information.
-            def pmi(n:Int) = n/sum.toDouble * log(sum*n/(a(r)*b(c)).toDouble)
 
             // Create the first value in the factorial computation.
             var factorialSum = pmi(nij) * factorialPowers

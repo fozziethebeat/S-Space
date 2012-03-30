@@ -23,19 +23,29 @@ package edu.ucla.sspace.vector;
 
 
 /**
- * Tests for the {@link DenseVector} class.
+ * Tests for the {@link SparseHashDoubleVector} class.
  */
-public class DenseVectorTests extends AbstractTestDenseDoubleVector {
+public class SparseHashDoubleVectorTest extends AbstractTestSparseDoubleVector {
 
-    protected DoubleVector newLengthVector(int length) {
-        return new DenseVector(length);
+    protected SparseDoubleVector newNoLengthVector() {
+        return new SparseHashDoubleVector();
     }
 
-    protected DoubleVector newFromArray(double[] values) {
-        return new DenseVector(values);
+    protected SparseDoubleVector newLengthVector(int length) {
+        return new SparseHashDoubleVector(length);
     }
 
-    protected DoubleVector newCopy(DoubleVector other) {
-        return new DenseVector(other);
+    protected SparseDoubleVector newCopy(SparseDoubleVector other) {
+        return new SparseHashDoubleVector(other);
+    }
+
+    protected SparseDoubleVector newFromArray(double[] values) {
+        return new SparseHashDoubleVector(values);
+    }
+
+    protected SparseDoubleVector newFromValues(int[] nonZeros, 
+                                               double[] values,
+                                               int length) {
+        return new SparseHashDoubleVector(nonZeros, values, length);
     }
 }

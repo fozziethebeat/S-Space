@@ -23,22 +23,35 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.matrix.PageRank;
+import edu.ucla.sspace.matrix.AdjustedMutualInformation;
 
 
 /**
- * A {@link HubClustering} implementation that uses {@link PageRank}.
+ * A {@link PartitionComparison} that depends on the <a
+ * href="http://en.wikipedia.org/wiki/Adjusted_mutual_information">Adjusted
+ * Mutual Information</a> similarity measure.  Values range from 0 to 1
+ * inclusive and are symmetric.  A score of 1 indicates that two {@link
+ * {Partition}s match perfectly while a score of 0 indicates that they share no
+ * information.
+ * 
+ * @see AdjustedMutualInformation
  *
- * @see HubClustering
- * @see PageRank
  * @author Keith Stevens
  */
-public class PageRankClustering extends HubClustering {
+public class AdjustedMutualInformationComparison 
+        extends MatrixAggregateComparison {
 
     /**
-     * Creates a new {@link PageRankClustering} instance.
+     * Creates a new {@link AdjustedMutualInformationComparison}.
      */
-    public PageRankClustering() {
-        super(new PageRank());
+    public AdjustedMutualInformationComparison() {
+        super(new AdjustedMutualInformation());
+    }
+
+    /**
+     * Returns false.
+     */
+    public boolean isDistance() {
+        return false;
     }
 }

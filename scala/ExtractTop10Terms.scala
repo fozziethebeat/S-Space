@@ -42,10 +42,11 @@ val parser = new CoNLLDependencyExtractor()
 // Iterate through each dependency document.
 val docIter = new DependencyFileDocumentIterator(args(2))
 for ( (document, id) <- docIter.zipWithIndex ) {
+    val reader = document.reader
     // read the header.
-    val header = document.reader.readLine
+    val header = reader.readLine
     // Parse the document into a dependency tree
-    val tree = parser.readNextTree(document.reader)
+    val tree = parser.readNextTree(reader)
     // Get the centroid for the data point.
     val center = clusters(assignments(id))
     // Iterate for each word in the tree and add counts for those words to the
