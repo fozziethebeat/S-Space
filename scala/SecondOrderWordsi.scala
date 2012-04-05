@@ -3,6 +3,7 @@ import edu.ucla.sspace.dependency.CoNLLDependencyExtractor
 import edu.ucla.sspace.matrix.Matrices
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
+import edu.ucla.sspace.matrix.SvdlibcSparseTextMatrixWriter
 import edu.ucla.sspace.text.DependencyFileDocumentIterator
 import edu.ucla.sspace.util.SerializableUtil
 import edu.ucla.sspace.vector.CompactSparseVector
@@ -11,14 +12,14 @@ import edu.ucla.sspace.vector.VectorMath
 import scala.collection.JavaConversions.asScalaIterator
 import scala.collection.JavaConversions.seqAsJavaList
 
-import java.io.File
+import java.io.FileOutputStream
+
 
 /**
  * Creates feature vectors using the second order wordsi model from a Bigram
  * matrix.
  */
-
-val bigrams = MatrixIO.readSparseMatrix(args(0), Format.SVDLIBC_SPARSE_TEXT)
+val bigrams = MatrixIO.readSparseMatrix(args(0), Format.MATLAB_SPARSE)
 val basis:BasisMapping[String, String] = SerializableUtil.load(args(1))
 basis.setReadOnly(true)
 val parser = new CoNLLDependencyExtractor()
@@ -33,5 +34,6 @@ val contexts = for (document <- docIter) yield {
     context
 }
 
-MatrixIO.writeMatrix(Matrices.asSparseMatrix(contexts.toList),
-                     new File(args(3)), Format.SVDLIBC_SPARSE_TEXT)
+val writer = new SvdlibcSparseTextMatrixWriter()
+writer.writeMatrix(Matrices.asSparseMatrix(contexts.toList), 
+                   new FileOutputStream(args(3)))
