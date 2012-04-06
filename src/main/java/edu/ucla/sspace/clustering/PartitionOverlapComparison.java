@@ -52,7 +52,9 @@ public class PartitionOverlapComparison implements PartitionComparison {
             int prevPoint = indices[i-1];
             int currPoint = indices[i];
             if (p1.assignments()[prevPoint] == p1.assignments()[currPoint] &&
-                p2.assignments()[prevPoint] == p2.assignments()[currPoint])
+                p2.assignments()[prevPoint] == p2.assignments()[currPoint] &&
+                p1.assignments()[currPoint] != -1 &&
+                p2.assignments()[currPoint] != -1)
                 clusterSize++;
             else {
                 overlap += clusterSize * (clusterSize - 1) / 2;
