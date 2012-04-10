@@ -60,7 +60,7 @@ public class ClusterMatrix {
             for (int i = start; i < end; ++i)
                 l.add(i);
             Collections.shuffle(l);
-            for (int i = 0; i < l.size(); ++i)
+            for (int i = 0; i < sampleSize; ++i)
                 r[i] = l.get(i);
         } else {
             Random rand = new Random();
@@ -97,8 +97,8 @@ public class ClusterMatrix {
                           true, "FLOAT", "Optional");
         String[] args = options.parseOptions(vargs);
         if (args.length != 5) {
-            System.err.printf("Error, gave $d arguments, expected 5\n", args.length);
-            System.out.println("usage: Java ClusterMatrix [options] <matrixFile> <format> <clusterAlg> <numClusters> <outfile>\n" +
+            System.err.printf("Given %d arguments, requires 5\n", args.length);
+            System.err.println("usage: Java ClusterMatrix [options] <matrixFile> <format> <clusterAlg> <numClusters> <outfile>\n" +
                                options.prettyPrint());
             System.exit(1);
         }
@@ -125,7 +125,7 @@ public class ClusterMatrix {
                                      options.hasOption('r'));
                 colOrdering = (options.hasOption('g'))
                     ? rowOrdering
-                    : range(0, matrix.rows());
+                    : range(0, matrix.columns());
             }
 
             if (matrix instanceof SparseMatrix)

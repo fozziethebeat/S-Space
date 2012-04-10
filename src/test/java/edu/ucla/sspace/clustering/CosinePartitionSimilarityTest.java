@@ -18,12 +18,8 @@ public class CosinePartitionSimilarityTest {
         int[][] a2 = {
             {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
         };
-        Partition p1 = PartitionTest.loadFromArray(a1);
-        Partition p2 = PartitionTest.loadFromArray(a2);
-
-        PartitionComparison comp = new CosinePartitionSimilarity();
-
-        assertEquals(1, comp.compare(p1, p2), .000001);
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(), 1);
     }
 
     @Test public void testNoOverlap() {
@@ -38,13 +34,8 @@ public class CosinePartitionSimilarityTest {
             {2, 6},
             {3, 7},
         };
-
-        Partition p1 = PartitionTest.loadFromArray(a1);
-        Partition p2 = PartitionTest.loadFromArray(a2);
-
-        PartitionComparison comp = new CosinePartitionSimilarity();
-
-        assertEquals(0, comp.compare(p1, p2), .000001);
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(), 0);
     }
 
     @Test public void testPartialOverlap() {
@@ -59,11 +50,52 @@ public class CosinePartitionSimilarityTest {
             {8, 9},
             {3, 1},
         };
-        Partition p1 = PartitionTest.loadFromArray(a1);
-        Partition p2 = PartitionTest.loadFromArray(a2);
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(),
+                6 / Math.sqrt(13*8));
+    }
 
-        PartitionComparison comp = new CosinePartitionSimilarity();
+    @Test public void testPartialPartition() {
+        int[][] a1 = {
+            {0, 1, 2, 3, 14, 5, 6, 7, 18, 9},
+        };
+        int[][] a2 = {
+            {0, 1, 2, 3, 14, 5, 6, 7, 18, 9},
+        };
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(), 1);
+    }
 
-        assertEquals(6 / Math.sqrt(13*8), comp.compare(p1, p2), .000001);
+    @Test public void testNoOverlapPartialPartition() {
+        int[][] a1 = {
+            {0, 1, 12, 3},
+            {4, 5, 6, 7},
+            {18, 9},
+        };
+        int[][] a2 = {
+            {0, 4, 18},
+            {1, 5, 9},
+            {12, 6},
+            {3, 7},
+        };
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(), 0);
+    }
+
+    @Test public void testPartialOverlapPartialPartition() {
+        int[][] a1 = {
+            {0, 11, 2, 3},
+            {4, 15, 6, 7},
+            {8, 9},
+        };
+        int[][] a2 = {
+            {0, 4, 2},
+            {7, 15, 6},
+            {8, 9},
+            {3, 11},
+        };
+        PartitionOverlapComparisonTest.testComparison(
+                a1, a2, new CosinePartitionSimilarity(), 
+                6 / Math.sqrt(13*8));
     }
 }

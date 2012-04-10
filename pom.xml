@@ -95,6 +95,16 @@
       <version>4.8</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.googlecode.netlib-java</groupId>
+      <artifactId>netlib-java</artifactId>
+      <version>0.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.f2j</groupId>
+      <artifactId>arpack_combined_all</artifactId>
+      <version>0.1</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -34,10 +34,11 @@ public class PartitionTest {
         int size = 0;
         int numPairs = 0;
         for (int[] points : assignments) {
-            size += points.length;
+            for (int point : points)
+                size = Math.max(point, size);
             numPairs += points.length * (points.length - 1) / 2;
         }
-        assertEquals(size, partition.assignments().length);
+        assertEquals(size+1, partition.assignments().length);
         assertEquals(numPairs, partition.numPairs());
 
         for (int[] points : assignments)
@@ -56,7 +57,7 @@ public class PartitionTest {
                     }
     }
 
-    @Test public void testCreateNewPartition() {
+    @Test public void testCreateNewFullPartition() {
         int[][] assignments = {
             {1, 2, 3, 4},
             {0, 5, 10, 8},
@@ -64,6 +65,20 @@ public class PartitionTest {
         };
         Partition partition = loadFromArray(assignments);
         validate(partition, assignments);
+    }
+
+    @Test public void testCreateNewPartialPartition() {
+        int[][] assignments = {
+            {1, 2, 3, 4},
+            {0, 5, 20, 8},
+            {6, 7, 9},
+        };
+        Partition partition = loadFromArray(assignments);
+        validate(partition, assignments);
+        for (int i = 0; i < 10; ++i)
+            assertTrue(-1 != partition.assignments()[i]);
+        for (int i = 10; i < 20; ++i)
+            assertEquals(-1, partition.assignments()[i]);
     }
 
     @Test public void testMove() {

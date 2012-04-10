@@ -23,14 +23,13 @@
 
 package edu.ucla.sspace.clustering;
 
+import edu.ucla.sspace.matrix.MatrixIO;
+import edu.ucla.sspace.matrix.MatrixIO.Format;
+
 import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.Matrix;
-
-import org.apache.commons.math.linear.EigenDecomposition;
-import org.apache.commons.math.linear.EigenDecompositionImpl;
-import org.apache.commons.math.linear.OpenMapRealMatrix;
-import org.apache.commons.math.linear.RealMatrix;
-import org.apache.commons.math.linear.RealVector;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.factorization.EigenDecomposition;
 
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -81,15 +80,11 @@ public class NormalizedSpectralClustering implements Clustering {
 
         LOG.fine("Computing Graph Laplacian");
         // Now create the normalized symmetric graph laplacian:
-        RealMatrix L = new OpenMapRealMatrix(m.rows(), m.columns());
+        Matrix L = new ArrayMatrix(m.rows(), m.columns());
         for (int r = 0; r < m.rows(); ++r)
-            for (int c = 0; c < m.columns(); ++c) {
-                double v = degrees[r] * m.get(r,c) * degrees[c];
-                if (r == c)
-                    L.setEntry(r,c, 1 - v);
-                else if (v != 0)
-                    L.setEntry(r,c, v);
-            }
+            for (int c = 0; c < m.columns(); ++c)
+                L.set(r,c, ((r == c) ? 1 : 0) -
+                           degrees[r] * m.get(r,c) * degrees[c]);
         
         LOG.fine("Computing Eigenvector Decomposition");
         // Extract the top k eigen vectors and set them as the columns of our
@@ -97,17 +92,17 @@ public class NormalizedSpectralClustering implements Clustering {
         // the squared sum of rows.
         EigenDecomposition eigenDecomp = new EigenDecompositionImpl(L, 0);
 
-        for (double evalue : eigenDecomp.getRealEigenvalues())
-            System.out.printf("%f ", evalue);
-        System.out.println();
-
         LOG.fine("Extracting Normalized Spectral Representation");
+        EigenDecomposition eigen = new EigenDecomposition();
+        eigen.factorize(L, k);
+        Matrix eigenValues = eigen.dataClasses();
+
+        Matrix eigenVectors = eigen.classFeatures();
         Matrix spectral = new ArrayMatrix(m.rows(), k);
         double[] rowNorms = new double[m.rows()];
         for (int c = 0; c < k; ++c) {
-            RealVector eigenVec = eigenDecomp.getEigenvector(c);
             for (int r = 0; r < m.rows(); ++r) {
-                double value = eigenVec.getEntry(r);
+                double value = eigenVectors.get(c, k);
                 rowNorms[r] += Math.pow(value, 2);
                 spectral.set(r, c, value);
             }

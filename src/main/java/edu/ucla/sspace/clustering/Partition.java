@@ -144,8 +144,11 @@ public class Partition {
         this.clusters = clusters;
         int numPoints = 0;
         for (Set<Integer> cluster : clusters)
-            numPoints += cluster.size();
+            for (int point : cluster)
+                numPoints = Math.max(numPoints, point);
+        numPoints++;
         this.assignments = new int[numPoints];
+        Arrays.fill(assignments, -1);
         int clusterId = 0;
         for (Set<Integer> cluster : clusters) {
             for (int point : cluster)
