@@ -28,11 +28,12 @@ import edu.ucla.sspace.matrix.Matrix;
 
 import org.apache.commons.math.linear.EigenDecomposition;
 import org.apache.commons.math.linear.EigenDecompositionImpl;
-import org.apache.commons.math.linear.Array2DRowRealMatrix;
+import org.apache.commons.math.linear.OpenMapRealMatrix;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.RealVector;
 
 import java.util.Properties;
+import java.util.logging.Logger;
 
 
 /**
@@ -54,12 +55,16 @@ import java.util.Properties;
  */
 public class NormalizedSpectralClustering implements Clustering {
 
+    private static final Logger LOG =
+        Logger.getLogger(NormalizedSpectralClustering.class.getName());
+
     /**
      * {@inheritDoc}
      */
     public Assignments cluster(Matrix m, int k, Properties props) {
         assert m.rows() == m.columns();
 
+        LOG.fine("Computing Degree of Adjacency Matrix");
         // Assume that the matrix m is symmetric.  Now compute the degrees:
         double[] degrees = new double[m.rows()];
         for (int r = 0; r < m.rows(); ++r) {
@@ -74,17 +79,29 @@ public class NormalizedSpectralClustering implements Clustering {
         for (int r = 0; r < m.rows(); ++r)
             degrees[r] = Math.pow(degrees[r], -.5);
 
+        LOG.fine("Computing Graph Laplacian");
         // Now create the normalized symmetric graph laplacian:
-        RealMatrix L = new Array2DRowRealMatrix(m.rows(), m.columns());
+        RealMatrix L = new OpenMapRealMatrix(m.rows(), m.columns());
         for (int r = 0; r < m.rows(); ++r)
-            for (int c = 0; c < m.columns(); ++c)
-                L.setEntry(r,c, ((r == c) ? 1 : 0) -
-                                degrees[r] * m.get(r,c) * degrees[c]);
+            for (int c = 0; c < m.columns(); ++c) {
+                double v = degrees[r] * m.get(r,c) * degrees[c];
+                if (r == c)
+                    L.setEntry(r,c, 1 - v);
+                else if (v != 0)
+                    L.setEntry(r,c, v);
+            }
         
+        LOG.fine("Computing Eigenvector Decomposition");
         // Extract the top k eigen vectors and set them as the columns of our
         // new spectral decomposition matrix.  While doing this, also compute
         // the squared sum of rows.
         EigenDecomposition eigenDecomp = new EigenDecompositionImpl(L, 0);
+
+        for (double evalue : eigenDecomp.getRealEigenvalues())
+            System.out.printf("%f ", evalue);
+        System.out.println();
+
+        LOG.fine("Extracting Normalized Spectral Representation");
         Matrix spectral = new ArrayMatrix(m.rows(), k);
         double[] rowNorms = new double[m.rows()];
         for (int c = 0; c < k; ++c) {
@@ -104,6 +121,7 @@ public class NormalizedSpectralClustering implements Clustering {
                     spectral.set(r,c, spectral.get(r,c) / norm);
         }
 
+        LOG.fine("Clustering with K-Means");
         // Now cluster the data points with K-Means clustering and return the
         // assignments.
         return DirectClustering.cluster(spectral, k, 20);

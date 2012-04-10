@@ -9,6 +9,7 @@ import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SparseMatrix;
+import edu.ucla.sspace.util.LoggerUtil;
 import edu.ucla.sspace.util.ReflectionUtil;
 
 import java.io.File;
@@ -18,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -37,6 +40,9 @@ import java.util.Set;
  * @author Keith Stevens
  */
 public class ClusterMatrix {
+
+    private static final Logger LOG =
+        Logger.getLogger(ClusterMatrix.class.getName());
 
     public static int[] range(int start, int end) {
         int[] r = new int[end-start];
@@ -65,6 +71,8 @@ public class ClusterMatrix {
     }
 
     public static void main(String[] vargs) throws Exception {
+        LoggerUtil.setLevel(Level.FINE);
+
         ArgOptions options = new ArgOptions();
         options.addOption('f', "sampleFeatures",
                           "If true, sampling will be done over the feature " +
@@ -89,11 +97,13 @@ public class ClusterMatrix {
                           true, "FLOAT", "Optional");
         String[] args = options.parseOptions(vargs);
         if (args.length != 5) {
+            System.err.printf("Error, gave $d arguments, expected 5\n", args.length);
             System.out.println("usage: Java ClusterMatrix [options] <matrixFile> <format> <clusterAlg> <numClusters> <outfile>\n" +
                                options.prettyPrint());
             System.exit(1);
         }
 
+        LOG.fine("Loading data matrix");
         File matrixFile = new File(args[0]);
         Format format = Format.valueOf(args[1]);
         Matrix matrix = MatrixIO.readMatrix(matrixFile, format);
@@ -101,6 +111,7 @@ public class ClusterMatrix {
         int[] rowOrdering = null;
         int[] colOrdering = null;
         if (options.hasOption('s')) {
+            LOG.fine("Sampling data matrix");
             if (options.hasOption('f')) {
                 int sampleSize = (int) Math.ceil(matrix.columns() *
                                  options.getDoubleOption('s'));
@@ -124,11 +135,13 @@ public class ClusterMatrix {
                 matrix = new CellMaskedMatrix(matrix, rowOrdering, colOrdering);
         }
 
+        LOG.fine("Clustering data matrix");
         Clustering alg = ReflectionUtil.getObjectInstance(args[2]);
         int numClusters = Integer.parseInt(args[3]);
         Partition p = Partition.fromAssignments(
                 alg.cluster(matrix, numClusters, System.getProperties()));
 
+        LOG.fine("Outputing Cluster Assignments");
         PrintWriter w = new PrintWriter(args[4]);
         w.printf("%d %d\n", numRows, p.numClusters());
         for (Set<Integer> points : p.clusters()) {
