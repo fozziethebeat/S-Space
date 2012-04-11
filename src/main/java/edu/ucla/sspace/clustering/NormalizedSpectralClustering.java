@@ -23,9 +23,6 @@
 
 package edu.ucla.sspace.clustering;
 
-import edu.ucla.sspace.matrix.MatrixIO;
-import edu.ucla.sspace.matrix.MatrixIO.Format;
-
 import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFactorization;
@@ -99,7 +96,7 @@ public class NormalizedSpectralClustering implements Clustering {
         double[] rowNorms = new double[m.rows()];
         for (int c = 0; c < k; ++c) {
             for (int r = 0; r < m.rows(); ++r) {
-                double value = eigenVectors.get(c, k);
+                double value = eigenVectors.get(c, r);
                 rowNorms[r] += Math.pow(value, 2);
                 spectral.set(r, c, value);
             }
