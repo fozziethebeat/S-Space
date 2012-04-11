@@ -86,17 +86,14 @@ public class NormalizedSpectralClustering implements Clustering {
                 L.set(r,c, ((r == c) ? 1 : 0) -
                            degrees[r] * m.get(r,c) * degrees[c]);
         
-        LOG.fine("Computing Eigenvector Decomposition");
         // Extract the top k eigen vectors and set them as the columns of our
         // new spectral decomposition matrix.  While doing this, also compute
         // the squared sum of rows.
-        EigenDecomposition eigenDecomp = new EigenDecompositionImpl(L, 0);
-
-        LOG.fine("Extracting Normalized Spectral Representation");
+        LOG.fine("Computing Eigenvector Decomposition");
         EigenDecomposition eigen = new EigenDecomposition();
         eigen.factorize(L, k);
-        Matrix eigenValues = eigen.dataClasses();
 
+        LOG.fine("Extracting Normalized Spectral Representation");
         Matrix eigenVectors = eigen.classFeatures();
         Matrix spectral = new ArrayMatrix(m.rows(), k);
         double[] rowNorms = new double[m.rows()];
