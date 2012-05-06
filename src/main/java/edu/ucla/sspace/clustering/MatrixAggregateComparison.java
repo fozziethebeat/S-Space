@@ -59,8 +59,12 @@ public abstract class MatrixAggregateComparison implements PartitionComparison {
     public double compare(Partition p1, Partition p2) {
         // Create the contingency matrix.
         Matrix contingency = new ArrayMatrix(p1.numClusters(), p2.numClusters());
-        for (int i = 0; i < p1.numPoints(); ++i)
-            contingency.add(p1.assignments()[i], p2.assignments()[i], 1.0);
+        for (int i = 0; i < p1.numPoints(); ++i) {
+            int x = p1.assignments()[i];
+            int y = p2.assignments()[i];
+            if (x >= 0 && y >= 0)
+                contingency.add(x, y, 1d);
+        }
 
         // Aggregate the data.
         return aggregator.aggregate(contingency);

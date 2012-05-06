@@ -17,7 +17,7 @@ for ( (mapFile,evalFile) <- allMappings zip allEvaluations) {
     // Iterate through each word and instance set in the solution set.
     var correct =  0
     var total = 0
-    for ( (word, instances) <- solutionSet ) {
+    for ( (word, instances) <- solutionSet.filter(x => mappingSet.contains(x._1)) ) {
         // Turn the instance set into a mapping from instance ids to assignments.
         val solutionMap = instanceSet(instances)
         val clusterIndexer = new HashMap[String, Int]() with Indexer

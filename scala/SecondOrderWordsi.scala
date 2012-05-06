@@ -19,7 +19,7 @@ import java.io.FileOutputStream
  * Creates feature vectors using the second order wordsi model from a Bigram
  * matrix.
  */
-val bigrams = MatrixIO.readSparseMatrix(args(0), Format.MATLAB_SPARSE)
+val bigrams = MatrixIO.readSparseMatrix(args(0), Format.SVDLIBC_SPARSE_TEXT)
 val basis:BasisMapping[String, String] = SerializableUtil.load(args(1))
 basis.setReadOnly(true)
 val parser = new CoNLLDependencyExtractor()
