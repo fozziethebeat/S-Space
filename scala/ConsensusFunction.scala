@@ -1,18 +1,12 @@
-import edu.ucla.sspace.clustering.Assignments
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering
-import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering.ClusterLink
-import edu.ucla.sspace.matrix.ArrayMatrix
-import edu.ucla.sspace.matrix.Matrix
-import edu.ucla.sspace.matrix.SymmetricMatrix
-import edu.ucla.sspace.matrix.SymmetricIntMatrix
+import edu.ucla.sspace.clustering.AgglomerativeConsensusFunction
+import edu.ucla.sspace.clustering.BestOfKConsensusFunction
+import edu.ucla.sspace.clustering.BestOneElementMoveConsensusFunction
+import edu.ucla.sspace.clustering.Partition
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.JavaConversions.iterableAsScalaIterable
-import scala.collection.mutable.HashSet
+import scala.collection.JavaConversions.seqAsJavaList
 import scala.io.Source
-import scala.math.Ordering
-import scala.util.Random
-
 import java.io.PrintWriter
 
 val numClusters = args(0).toInt
@@ -20,20 +14,23 @@ val mergeType = args(1)
 val outFile = args(2)
 
 System.err.println("reporter:status:Loading partitions")
-val partitions = args.slice(3, args.size).map(Partition(_)).toArray
+val partitions = args.slice(3, args.size).map(Partition.read(_)).toList
 
-System.err.println("reporter:status:Finding BOEM")
-val best = mergeType match {
-    case "fsboem" => filteredBoem(partitions, numClusters)
-    case "boem" => boem(partitions, numClusters)
-    case "agglo" => agglo(partitions, numClusters)
-    case "bok" => bestOfK(partitions, numClusters)
+System.err.println("reporter:status:Finding Consensus Partition")
+val func = mergeType match {
+    case "boem" => new BestOneElementMoveConsensusFunction()
+    case "agglo" => new AgglomerativeConsensusFunction()
+    case "bok" => new BestOfKConsensusFunction()
 }
+val best = func.consensus(partitions, numClusters)
+
 System.err.println("reporter:status:Done")
 val writer = new PrintWriter(outFile)
-writer.println(best)
+writer.println("%d %d".format(best.numPoints, best.numClusters))
+writer.println(best.clusters.filter(_.size > 0).map(_.mkString(" ")).mkString("\n"))
 writer.close
     
+    /*
 def addPairsToMatrix(points: Set[Int], matrix: Matrix) {
     for ( Array(x,y) <- points.subsets(2).map(_.toArray))
         matrix.add(x,y,1)
@@ -246,9 +243,6 @@ object Partition {
         new Partition(clusters, assignments)
     }
 
-    /**
-     * Create a new Partition from a cluster assignment file.
-     */
     def apply(clusterSolution: String) = {
         val lines = Source.fromFile(clusterSolution).getLines
         val Array(n, c) = lines.next.split("\\s+").map(_.toInt)
@@ -269,25 +263,12 @@ object Partition {
 
 class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) {
 
-    /**
-     * Returns the value of n choose 2.
-     */
     def chooseTwo(n : Int) = n * (n - 1) / 2
 
-    /**
-     * Returns the number of pairs co-clusters in this partition.
-     */
     def numPairs = clusters.foldLeft(0)( (s,c) => s + chooseTwo(c.size))
 
-    /**
-     * Returns true if two data points are assigned to the same cluster.
-     */
     def coClustered(i: Int, j:Int) = assignments(i) == assignments(j)
 
-    /**
-     * Moves an element to a new cluster.  Returns true if the point was moved
-     * to a new cluster and false if the point was not moved at all.
-     */
     def move(element: Int, newCluster:Int): Boolean = {
         val oldCluster = assignments(element)
         if (oldCluster == newCluster) return false
@@ -335,3 +316,4 @@ class Partition(val clusters: Array[HashSet[Int]], val assignments: Array[Int]) 
         "%d %d\n".format(assignments.size, clusters.size) +
         clusters.filter(_.size > 0).map(_.mkString(" ")).mkString("\n")
 }
+*/

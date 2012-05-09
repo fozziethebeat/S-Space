@@ -1,5 +1,7 @@
 /*
- * Copyright 2010 Keith Stevens
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,17 +23,17 @@
 
 package edu.ucla.sspace.matrix;
 
-import edu.ucla.sspace.common.statistics.PointwiseMutualInformationTest;
+import edu.ucla.sspace.common.statistics.GTest;
 
 
 /**
- * Computes the <a
- * href="http://en.wikipedia.org/wiki/Pointwise_mutual_information">Pointwise
- * Mutual Information</a> for every joint event stored in a contingency matrix.  
+ * Computes the <a href="http://en.wikipedia.org/wiki/G-test">G-Test</a> value
+ * for each joint event stored in a contingency matrix.
+ *
  * @author Keith Stevens
  */
-public class PointWiseMutualInformationTransform extends SignificanceMatrixTransform {
-    public PointWiseMutualInformationTransform() {
-        super(new PointwiseMutualInformationTest());
+public class GTestTransform extends SignificanceMatrixTransform {
+    public GTestTransform() {
+        super(new GTest());
     }
 }

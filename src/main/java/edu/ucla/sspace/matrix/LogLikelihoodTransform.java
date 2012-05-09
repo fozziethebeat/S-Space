@@ -21,10 +21,7 @@
 
 package edu.ucla.sspace.matrix;
 
-import edu.ucla.sspace.matrix.MatrixIO.Format;
-import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
-
-import java.io.File;
+import edu.ucla.sspace.common.statistics.LogLikelihoodTest;
 
 
 /**
@@ -37,104 +34,14 @@ import java.io.File;
  * See the following papers for details and analysis:
  *
  * </li style="font-family:Garamond, Georgia, serif"> Pado, S. and Lapata, M.
- * (2007) Dependnecy-Based COnstruction of Semantic Space Models.
+ * (2007) Dependnecy-Based Construction of Semantic Space Models.
  * <i>Association of Computational Linguistics</i>, <b>33</b>.
  
  * @author Keith Stevens
  */
-public class LogLikelihoodTransform extends BaseTransform {
+public class LogLikelihoodTransform extends SignificanceMatrixTransform {
 
-    /**
-     * {@inheritDoc}
-     */
-    protected GlobalTransform getTransform(Matrix matrix) {
-        return new LogLikelihoodGlobalTransform(matrix);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected GlobalTransform getTransform(File inputMatrixFile,
-                                           MatrixIO.Format format) {
-        return new LogLikelihoodGlobalTransform(
-                inputMatrixFile, format);
-    }
-
-    /**
-     * Returns the name of this transform.
-     */
-    public String toString() {
-        return "LogLikelihood";
-    }
-
-    public class LogLikelihoodGlobalTransform
-            implements GlobalTransform {
-
-        /**
-         * The total sum of occurances for each row (row).
-         */
-        private double[] rowCounts;
-
-        /**
-         * The total sum of occurances for each col (column).
-         */
-        private double[] colCounts;
-
-        /**
-         * The total sum of all values in the matrix.
-         */
-        private double matrixSum;
-
-        /**
-         * Creates an instance of {@code LogLikelihoodTransform} from a given
-         * {@link Matrix}.
-         */
-        public LogLikelihoodGlobalTransform(Matrix matrix) {
-            MatrixStatistics stats =
-                TransformStatistics.extractStatistics(matrix);
-            rowCounts = stats.rowSums;
-            colCounts = stats.columnSums;
-            matrixSum = stats.matrixSum;
-        }
-
-        /**
-         * Creates an instance of {@code LogLikelihoodTransform}
-         * from a matrix {@code File} of format {@code format}.
-         */
-        public LogLikelihoodGlobalTransform(
-                File inputMatrixFile,
-                MatrixIO.Format format) {
-            MatrixStatistics stats =
-                TransformStatistics.extractStatistics(inputMatrixFile, format);
-            rowCounts = stats.rowSums;
-            colCounts = stats.columnSums;
-            matrixSum = stats.matrixSum;
-        }
-
-        /**
-         * Computes the Log Likelihood information between the {@code row}
-         * and {@code col} with {@code value} specifying the number of
-         * occurances of {@code row} with {@code col}.   This is
-         * approximated based on the occurance counts for each {@code row} and
-         * {@code col}.
-         *
-         * @param row The index specifying the row being observed
-         * @param col The index specifying the col being observed
-         * @param value The number of ocurrances of row and col together
-         */
-        public double transform(int row, int col, double value) {
-            double l = colCounts[col] - value;
-            double m = rowCounts[row] - value;
-            double n = matrixSum - (value + l + m);
-            double likelihood = value * Math.log(value) + l * Math.log(l) +
-                                m * Math.log(m) + n * Math.log(n);
-            likelihood -= ((value + l) * Math.log(value+l) - 
-                           (value + m) * Math.log(value+m));
-            likelihood -= ((l + n) * Math.log(l + n) - 
-                           (m + n) * Math.log(m + n));
-            likelihood += ((value + l + m + n) * Math.log(value + l + m + n));
-            return 2 * likelihood;
-        }
+    public LogLikelihoodTransform() {
+        super(new LogLikelihoodTest());
     }
 }
-

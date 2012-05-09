@@ -38,6 +38,8 @@ public class PairedFScoreComparison extends PartitionOverlapComparison {
      */
     public double compare(Partition solution, Partition gold) {
         double overlap = super.compare(solution, gold);
+        if (overlap == 0d)
+            return 0d;
         double numGuesses = solution.numPairs();
         double numTrue = gold.numPairs();
         double precision = overlap / numGuesses;
