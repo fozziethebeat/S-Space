@@ -28,12 +28,15 @@ import cc.mallet.pipe.Pipe
 import cc.mallet.pipe.SerialPipes
 import cc.mallet.pipe.CharSequence2TokenSequence
 import cc.mallet.pipe.TokenSequence2FeatureSequence
+import cc.mallet.pipe.TokenSequenceRemoveStopwords
 import cc.mallet.topics.ParallelTopicModel
 
 // Import some handy code for managing matrices from the S-Space package.
+import edu.ucla.sspace.basis.StringBasisMapping
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
+import edu.ucla.sspace.util.SerializableUtil
 
 // Other standard imports from scala and java libraries.
 import scala.collection.JavaConversions.asJavaCollection
@@ -72,8 +75,11 @@ object Schisel {
      * Instance} and added to the {@link InstanceList}.  Tokens in each document
      * will be tokenized based on whitespace.
      */
-    def buildInstanceList(path: String, skip: Int) = {
+    def buildInstanceList(path: String,
+                          skip: Int, 
+                          stopWordFilter: TokenSequenceRemoveStopwords) = {
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
+                                         stopWordFilter,
                                          new TokenSequence2FeatureSequence()))
         val instanceList = new InstanceList(pipes)
         var count = 0
@@ -152,6 +158,12 @@ object Schisel {
         MatrixIO.writeMatrix(documentSpace, outFile, Format.DENSE_TEXT)
     }
 
+    def printBasis(outFile:String, alphabet:String) {
+        val writer = new PrintWriter(outFile)
+        writer.print(alphabet)
+        writer.close
+    }
+
     /**
      * Prints the word by topic probabilities as a dense matrix with each
      * word as a row and each topic as a column.
@@ -174,15 +186,25 @@ object Schisel {
             wordSpace.set(row, col.toInt, score.toDouble)
             rowSums(row) += score.toDouble
         }
+        /*
         for (r <- 0 until wordSpace.rows; c <- 0 until wordSpace.columns)
             wordSpace.set(r, c, wordSpace.get(r, c) / rowSums(r))
+            */
 
         MatrixIO.writeMatrix(wordSpace, outFile, Format.DENSE_TEXT)
     }
 
     def main(args:Array[String]) {
+        if (args.size != 4) {
+            printf("usage: Schisel <stopwords.txt> <docs.txt> <nTopics> <out_name>\n")
+            System.exit(1);
+        }
+
+        val stopWordPipe = new TokenSequenceRemoveStopwords().addStopWords(
+            Source.fromFile(args(0)).getLines.toArray)
+
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(0), args(4).toInt)
+        val instances = buildInstanceList(args(1), 0, stopWordPipe)
 
         // Extract the number of desired topics and number of documents.
         val numTopics = args(2).toInt
@@ -190,12 +212,12 @@ object Schisel {
         System.err.println("Training model")
 
         // Run LDA.
-        val topicModel = runLDA(instances, numTopics=numTopics,
-                                optimizationInterval=args(3).toInt)
+        val topicModel = runLDA(instances, numTopics=numTopics)
 
         // Print out the top words, the word by topic probabilities, and
         // document by topic probabilities as dense matrices.
-        val outBase = args(1)
+        val outBase = args(3)
+        printBasis(outBase + ".basis", topicModel.alphabet.toString())
         printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
         printDocumentSpace(outBase+"-ds.dat.transpose", 
                            topicModel, numDocuments, numTopics)
