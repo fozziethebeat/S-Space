@@ -116,6 +116,15 @@
         -->
       </plugin>
 
+      <!-- Plugin for being able to debug the unit tests from a file -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+        </configuration>
+      </plugin>
+
       <!-- Plugin for building the github site. -->
       <plugin>
         <groupId>com.github.github</groupId>
