@@ -162,7 +162,6 @@ public class TypedIsomorphicGraphCounter<T,G extends Multigraph<T,? extends Type
      *
      * @throws IllegalArgumentException if {@code count} is not a positive value.
      */
-    @SuppressWarnings("unchecked")
     public int count(G g, int count) {
         if (count < 1)
             throw new IllegalArgumentException("Count must be positive");
@@ -172,9 +171,13 @@ public class TypedIsomorphicGraphCounter<T,G extends Multigraph<T,? extends Type
         // canonical, packed form.  Therefore, do this once ahead of time so
         // that we don't do it for each graph it is compared with
         //
-        // NOTE: for some reason, we can't suppress the warning for just this
-        // line, so I had to put the annotation on the whole method... -jurgens
-        g = (G)(Graphs.pack(g));
+        // NOTE: This awkward casting code is a work-around for a type-erasure
+        // issue.  I don't see the compilation issue on OS X, but the linux Java
+        // implementations seem to have it. -jurgens
+        Multigraph<T,? extends TypedEdge<T>> g2 = 
+            (Multigraph<T,? extends TypedEdge<T>>)g;
+        g2 = (Multigraph<T,? extends TypedEdge<T>>)(Graphs.pack(g2));
+        g = (G)g2;
 
         // Use the flat type distribution as a rough filter for avoiding
         // unnecessary isomorphic tests
