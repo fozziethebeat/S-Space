@@ -21,7 +21,6 @@ edu.ucla.sspace.gws
 edu.ucla.sspace.hal
 edu.ucla.sspace.index
 edu.ucla.sspace.isa
-edu.ucla.sspace.lra
 edu.ucla.sspace.lsa
 edu.ucla.sspace.mains
 edu.ucla.sspace.matrix

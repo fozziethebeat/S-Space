@@ -32,7 +32,6 @@ edu.ucla.sspace.graph.io
 edu.ucla.sspace.graph.isomorphism
 edu.ucla.sspace.nonlinear
 edu.ucla.sspace.vector
-edu.ucla.sspace.lra
 edu.ucla.sspace.text
 edu.ucla.sspace.text.corpora
 edu.ucla.sspace.gws

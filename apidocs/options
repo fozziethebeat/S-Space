@@ -1,5 +1,5 @@
 -classpath
-'/home/keith/devel/S-Space/target/classes:/home/keith/.m2/repository/jama/jama/1.0/jama-1.0.jar:/home/keith/.m2/repository/org/apache/lucene/lucene-core/2.4.1/lucene-core-2.4.1.jar:/home/keith/.m2/repository/net/sf/trove4j/trove4j/3.0.2/trove4j-3.0.2.jar:/home/keith/.m2/repository/jaws/jaws/1.2/jaws-1.2.jar'
+'/home/keith/devel/S-Space/target/classes:/home/keith/.m2/repository/net/sf/trove4j/trove4j/3.0.2/trove4j-3.0.2.jar'
 -encoding
 'UTF-8'
 -protected
@@ -15,11 +15,11 @@
 -docencoding
 'UTF-8'
 -doctitle
-'S-Space Package 2.0 API'
+'S-Space Package 2.0.1 API'
 -linkoffline
 'http://download.oracle.com/javase/6/docs/api' '/home/keith/devel/S-Space/target/javadoc-bundle-options'
 -splitindex
 -use
 -version
 -windowtitle
-'S-Space Package 2.0 API'
+'S-Space Package 2.0.1 API'
