@@ -282,7 +282,7 @@
         <version>2.12</version>
         <configuration>
           <includes>
-            <include>%regex[.*Tests?.class]</include>
+            <include>**/*Test*.java</include>
           </includes>
         </configuration>
       </plugin>
