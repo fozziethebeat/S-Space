@@ -693,10 +693,4 @@ public class TreeMultiMapTest {
 	assertEquals(3, m.size());
 	assertEquals(3, m.range());
     }
-    
-
-    public static void main(String args[]) {
-	org.junit.runner.JUnitCore.main(TreeMultiMapTests.class.getName());
-    }
-
 }

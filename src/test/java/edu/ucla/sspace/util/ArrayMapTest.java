@@ -107,9 +107,4 @@ public class ArrayMapTest {
         assertEquals(3, i);
         assertEquals(3, control.size());
     }
-
-    public static void main(String args[]) {
-        org.junit.runner.JUnitCore.main(IntegerMapTests.class.getName());
-    }
-
 }

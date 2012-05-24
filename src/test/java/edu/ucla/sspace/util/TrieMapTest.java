@@ -665,9 +665,4 @@ public class TrieMapTest {
 	
 	assertEquals(it2.hasNext(), it1.hasNext());
     }
-
-    public static void main(String args[]) {
-	org.junit.runner.JUnitCore.main(TrieMapTests.class.getName());
-    }
-
 }

@@ -588,9 +588,4 @@ public class HashMultiMapTest {
         assertFalse(m.containsKey("category"));
         assertFalse(m.containsKey("catamaran"));
     }
-
-    public static void main(String args[]) {
-        org.junit.runner.JUnitCore.main(HashMultiMapTests.class.getName());
-    }
-
 }

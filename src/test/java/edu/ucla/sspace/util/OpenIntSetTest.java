@@ -249,10 +249,4 @@ public class OpenIntSetTest {
         it.remove();
         it.remove();
     }
-
-
-    public static void main(String args[]) {
-        org.junit.runner.JUnitCore.main(IntegerMapTests.class.getName());
-    }
-
 }

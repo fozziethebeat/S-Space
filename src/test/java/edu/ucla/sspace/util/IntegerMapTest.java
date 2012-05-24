@@ -391,9 +391,4 @@ public class IntegerMapTest {
 	assertFalse(m.containsKey(1));
 	assertFalse(m.containsKey(2));
     }
-
-    public static void main(String args[]) {
-	org.junit.runner.JUnitCore.main(IntegerMapTests.class.getName());
-    }
-
 }
