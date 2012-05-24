@@ -55,47 +55,4 @@ public class LogLikelihoodTest implements SignificanceTest {
         result += (d == 0) ? 0 : d * (Math.log(d) / sum);
         return -result;
     }
-       
-        /*
-
-        double ll = 2 *
-            both    * Math.log( (both / (double)row1sum) / (col1sum / sum)) +
-            justA   * Math.log( (justA / (double)row1sum) / (col2sum / sum)) +
-            justB   * Math.log( (justB / (double)row2sum) / (col1sum / sum)) +
-            neither * Math.log( (neither / (double)row2sum) / (col2sum / sum));
-
-        System.out.printf("%d\t%d%n%d\t%d%n  = 2 * (%f + %f + %f + %f)%n",
-                          both, justA, justB, neither, 
-                          both    * Math.log( (both / (double)row1sum) / (col1sum / sum)),
-                          justA   * Math.log( (justA / (double)row1sum) / (col2sum / sum)),
-                          justB   * Math.log( (justB / (double)row2sum) / (col1sum / sum)),
-                          neither * Math.log( (neither / (double)row2sum) / (col2sum / sum)));
-                                                    
-
-
-        return ll;        
-        */    
-
-        /*
-        int col1sum = both + justA;    // t[0] + t[2];
-        int col2sum = justB + neither; // t[1] + t[3];
-        int row1sum = both + justB;    // t[0] + t[1];
-        int row2sum = justA + neither; // t[2] + t[3];
-        double sum = row1sum + row2sum;
-        
-        // Calculate the expected values for a, b, c, d
-        double aExp = (row1sum / sum) * col1sum;
-        double bExp = (row1sum / sum) * col2sum;
-        double cExp = (row2sum / sum) * col1sum;
-        double dExp = (row2sum / sum) * col2sum;
-
-        return 2 *
-            ((both * Math.log(both - aExp))  +
-             (justB * Math.log(justB - bExp))  +
-             (justA * Math.log(justA - cExp))  +
-             (neither * Math.log(neither - dExp)));
-        */
-
-        
-
 }

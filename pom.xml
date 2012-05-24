@@ -50,7 +50,7 @@
     <developer>
       <id>davidjurgens</id>
       <name>David Jurgens</name>
-      <email>jurgens@gmail.com</email>
+      <email>jurgens@cs.ucla.edu</email>
       <url>http://cs.ucla.edu/~jurgens</url>
       <organization>University of California, Los Angeles</organization>
       <organizationUrl>http://cs.ucla.edu</organizationUrl>
@@ -122,6 +122,10 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <includes>
+            <!-- Make sure the both the Test/Tests.java files are included -->
+            <include>**/*Test*.java</include>
+          </includes>
         </configuration>
       </plugin>
 
