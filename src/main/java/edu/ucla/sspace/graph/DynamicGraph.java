@@ -25,9 +25,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
+import edu.ucla.sspace.util.primitive.IntSet;
+
 
 /**
- *
+ * A stub interface for {@link Graph} instances that encode time on their
+ * vertices and edges.
  *
  * @author David Jurgens
  */
@@ -109,14 +112,14 @@ public interface DynamicGraph extends Graph {
      * @throws IllegalArgumentException if {@code vertices} contains vertices
      *         not present in this graph
      */
-    Graph subgraph(Set<Integer> vertices);
+    Graph subgraph(IntSet vertices);
 
-    Graph subgraph(Set<Integer> vertices, Calendar atTime);
-    Graph subgraph(Set<Integer> vertices, Date atTime);
-    Graph subgraph(Set<Integer> vertices, long atTime);
+    Graph subgraph(IntSet vertices, Calendar atTime);
+    Graph subgraph(IntSet vertices, Date atTime);
+    Graph subgraph(IntSet vertices, long atTime);
 
-    Graph subgraph(Set<Integer> vertices, Calendar startTime, Calendar endTime);
-    Graph subgraph(Set<Integer> vertices, Date startTime, Date endTime);
-    Graph subgraph(Set<Integer> vertices, long startTime, long endTime);
+    Graph subgraph(IntSet vertices, Calendar startTime, Calendar endTime);
+    Graph subgraph(IntSet vertices, Date startTime, Date endTime);
+    Graph subgraph(IntSet vertices, long startTime, long endTime);
     
 }
