@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link ArrayMap} 
  */
-public class ArrayMapTests {
+public class ArrayMapTest {
    
     @Test public void testCreate() {
         Map<Integer,String> map = new ArrayMap<String>(new String[] { "foo", "bar", "baz" });

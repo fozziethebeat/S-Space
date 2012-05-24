@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link HashMultiMap} 
  */
-public class HashMultiMapTests {
+public class HashMultiMapTest {
 
     
     @Test public void testConstructor() {

@@ -27,11 +27,18 @@ import java.util.Set;
 
 
 /**
- * A wrapper around an existing {@link Set} implementation that allows classes
- * to extend the functionality of a set by overriding some of its methods.  For
- * example, a subclass could enforce a size capacity on an existing set by
- * overriding {@code add} and {@code addAll} to not add elements beyond a
- * certain number.
+ * A wrapper around an existing {@link Set} implementation that allows
+ * subclasses to modify or extend the functionality of am existing {@code Set}
+ * instance by overriding some of its methods.  For example, a subclass could
+ * enforce a size capacity on an existing set by overriding {@code add} and
+ * {@code addAll} to not add elements beyond a certain number.
+ *
+ * <p> Instances of this class support all the optional operations supported by
+ * their contained set.  All methods calls are passed through to the original
+ * set.
+ *
+ * <p> Subclasses must override methods of this class to change existing
+ * functionality.
  */
 public class SetDecorator<T> implements Set<T>, java.io.Serializable {
 

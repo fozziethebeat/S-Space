@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 /**
  * Tests for the {@link TimeSpan} class.
  */
-public class TimeSpanTests {
+public class TimeSpanTest {
    
     @Test public void testStringConstructor() {
 	TimeSpan ts = new TimeSpan("1y");

@@ -1763,9 +1763,14 @@ public class Similarity {
                 double aValue = a.get(i);
                 double bValue = b.get(i);
 
+                if (bValue == 0)
+                    throw new IllegalArgumentException(
+                        "The KL-divergence is not defined when a[i] > 0 and " +
+                        "b[i] == 0.");
+
                 // Ignore values from b that are zero, since they would cause a
                 // divide by zero error.
-                if (aValue != 0d && bValue != 0d)
+                else if (aValue != 0d)
                     divergence += aValue * Math.log(aValue / bValue);
             }
         }
@@ -1803,9 +1808,14 @@ public class Similarity {
                 double aValue = a.get(index);
                 double bValue = b.get(index);
 
+                if (bValue == 0)
+                    throw new IllegalArgumentException(
+                        "The KL-divergence is not defined when a[i] > 0 and " +
+                        "b[i] == 0.");
+
                 // Ignore values from b that are zero, since they would cause a
                 // divide by zero error.
-                if (bValue != 0d)
+                else if (aValue != 0d)
                     divergence += aValue * Math.log(aValue / bValue);
             }
         }
@@ -1815,9 +1825,14 @@ public class Similarity {
                 double aValue = a.get(i);
                 double bValue = b.get(i);
 
+                if (bValue == 0)
+                    throw new IllegalArgumentException(
+                        "The KL-divergence is not defined when a[i] > 0 and " +
+                        "b[i] == 0.");
+
                 // Ignore values from b that are zero, since they would cause a
                 // divide by zero error.
-                if (aValue != 0d && bValue != 0d)
+                else if (aValue != 0d)
                     divergence += aValue * Math.log(aValue / bValue);
             }
         }
@@ -1855,9 +1870,14 @@ public class Similarity {
                 double aValue = a.getValue(index).doubleValue();
                 double bValue = b.getValue(index).doubleValue();
 
+                if (bValue == 0)
+                    throw new IllegalArgumentException(
+                        "The KL-divergence is not defined when a[i] > 0 and " +
+                        "b[i] == 0.");
+
                 // Ignore values from b that are zero, since they would cause a
                 // divide by zero error.
-                if (bValue != 0d)
+                else if (aValue != 0d)
                     divergence += aValue * Math.log(aValue / bValue);
             }
         }
@@ -1866,10 +1886,13 @@ public class Similarity {
             for (int i = 0; i < a.length(); ++i) {
                 double aValue = a.getValue(i).doubleValue();
                 double bValue = b.getValue(i).doubleValue();
-
-                // Ignore values from b that are zero, since they would cause a
+                if (bValue == 0)
+                    throw new IllegalArgumentException(
+                        "The KL-divergence is not defined when a[i] > 0 and " +
+                        "b[i] == 0.");
+                // Ignore values from a that are zero, since they would cause a
                 // divide by zero error.
-                if (aValue != 0d && bValue != 0d)
+                else if (aValue != 0d)
                     divergence += aValue * Math.log(aValue / bValue);
             }
         }
@@ -1900,9 +1923,13 @@ public class Similarity {
 
         // Iterate over all values and ignore any that are zero.
         for (int i = 0; i < a.length; ++i) {
-            // Ignore values from b that are zero, since they would cause a
+            // Ignore values from a that are zero, since they would cause a
             // divide by zero error.
-            if (a[i] != 0d && b[i] != 0d)
+            if (b[i] == 0d) 
+                throw new IllegalArgumentException(
+                    "The KL-divergence is not defined when a[i] > 0 and " +
+                    "b[i] == 0.");
+            else if (a[i] != 0d)
                 divergence += a[i] * Math.log(a[i]/ b[i]);
         }
 
@@ -1932,10 +1959,14 @@ public class Similarity {
 
         // Iterate over all values and ignore any that are zero.
         for (int i = 0; i < a.length; ++i) {
-            // Ignore values from b that are zero, since they would cause a
+            // Ignore values from a that are zero, since they would cause a
             // divide by zero error.
-            if (a[i] != 0d && b[i] != 0d)
-                divergence += a[i] * Math.log(a[i]/ (double)(b[i]));
+            if (b[i] == 0d) 
+                throw new IllegalArgumentException(
+                    "The KL-divergence is not defined when a[i] > 0 and " +
+                    "b[i] == 0.");
+            else if (a[i] != 0d)
+                divergence += a[i] * Math.log(a[i]/ b[i]);
         }
 
         return divergence;
@@ -2148,6 +2179,56 @@ public class Similarity {
         else 
             return n / d;
     }
+
+
+    /**
+     * Computes the <a
+     * href="http://www.unesco.org/webworld/idams/advguide/Chapt4_2.htm">Goodman-Kruskal
+     * Gamma coefficient</a>, which is preferrable to Kendall's &tau; and
+     * Spearman's &rho; when there are many ties in the data.
+     *
+     * @throws IllegalArgumentException when the length of the two vectors are
+     *                                   not the same.
+     */
+    public static double goodmanKruskalGamma(DoubleVector a, DoubleVector b) {
+        check(a, b);
+        // NOTE: slow n^2 version.  Needs to be replaced at some point with the
+        // n-log-n method and to take into account sparse vectors. -jurgens
+        int length = a.length();
+        double numerator = 0;
+        
+        int concordant = 0;
+        int discordant = 0;
+
+        // For all pairs, track how many pairs satisfy the ordering
+        for (int i = 0; i < length; ++i) {
+            for (int j = i+1; j < length; ++j) {
+                // NOTE: this value will be 1 if there exists an match or
+                // "concordance" in the ordering of the two pairs.  Otherwise
+                // it, will be a -1 of the pairs are not matched or are
+                // "discordant.
+                double ai = a.get(i);
+                double aj = a.get(j);
+                double bi = b.get(i);
+                double bj = b.get(j);
+
+                // If there was a tied rank, don't count the comparisons towards
+                // the concordance totals
+                if (ai != aj && bi != bj) {
+                    if ((ai < aj && bi < bj) || (ai > aj && bi > bj))
+                        concordant++;
+                    else
+                        discordant++;
+                }
+            }
+        }
+        
+        int cd = concordant + discordant;
+        return (cd == 0) 
+            ? 0
+            : ((double)(concordant - discordant)) / cd;
+    }
+
 
     /**
      * Returns the Tanimoto coefficient of the two {@code double} array instances.

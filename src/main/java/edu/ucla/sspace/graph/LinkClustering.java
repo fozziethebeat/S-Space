@@ -122,7 +122,7 @@ public class LinkClustering implements java.io.Serializable {
      * The work used by all {@code LinkClustering} instances to perform
      * multi-threaded operations.
      */
-    private static final WorkQueue WORK_QUEUE = WorkQueue.getWorkQueue(8);    
+    private static final WorkQueue WORK_QUEUE = WorkQueue.getWorkQueue();    
 
     /**
      * Instantiates a new {@code LinkClustering} instance.

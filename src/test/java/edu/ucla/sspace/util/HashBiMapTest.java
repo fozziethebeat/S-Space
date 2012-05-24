@@ -44,67 +44,57 @@ import static org.junit.Assert.*;
 
 
 /**
- * A collection of unit tests for {@link HashIndexer} 
+ * A collection of unit tests for {@link HashBiMap} 
  */
-public class HashIndexerTests {
+public class HashBiMapTest {
 
-    @Test public void testIndex() {
-        HashIndexer<Integer> h = new HashIndexer<Integer>();
-        assertEquals(0, h.size());
+    @Test public void testPut() {
+        BiMap<Integer,Integer> m = new HashBiMap<Integer,Integer>();
         for (int i = 0; i < 10; ++i) {
-            h.index(i);
-            assertEquals(i + 1, h.size());
-            assertEquals(i, h.index(i));
+            m.put(i, 10-i);
+        }
+        for (int i = 0; i < 10; ++i) {
+            assertEquals(Integer.valueOf(10 - i), m.get(i));
         }
     }
 
-    @Test public void testFind() {
-        HashIndexer<Integer> h = new HashIndexer<Integer>();
-        assertEquals(0, h.size());
+    @Test public void testInverse() {
+        BiMap<Integer,Integer> m = new HashBiMap<Integer,Integer>();
         for (int i = 0; i < 10; ++i) {
-            h.index(i);
-            assertEquals(i + 1, h.size());
-            assertEquals(i, h.index(i));
+            m.put(i, 10-i);
         }
-        assertTrue(h.find(10) < 0);
-        assertEquals(10, h.size());        
+        m = m.inverse();
+        for (int i = 0; i < 10; ++i) {
+            assertEquals(Integer.valueOf(i), m.get(10 - i));
+        }
     }
 
-    @Test public void testLookup() {
-        HashIndexer<Integer> h = new HashIndexer<Integer>();
-        assertEquals(0, h.size());
+    @Test public void testSerialize() throws Exception {
+        BiMap<Integer,Integer> m = new HashBiMap<Integer,Integer>();
         for (int i = 0; i < 10; ++i) {
-            h.index(i);
-            assertEquals(i + 1, h.size());
-            assertEquals(i, h.index(i));
+            m.put(i, 10-i);
         }
         
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(m);
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        @SuppressWarnings("unchecked")
+        BiMap<Integer,Integer> test =
+            (BiMap<Integer,Integer>)(ois.readObject());
+
+        assertEquals(10, m.size());
+
         for (int i = 0; i < 10; ++i) {
-            assertEquals(i, h.lookup(i).intValue());
+            assertEquals(Integer.valueOf(10 - i), m.get(i));
+        }
+        m = m.inverse();
+
+        for (int i = 0; i < 10; ++i) {
+            assertEquals(Integer.valueOf(i), m.get(10 - i));
         }
     }
 
-    @Test public void testLookupRecomputed() {
-        HashIndexer<Integer> h = new HashIndexer<Integer>();
-        assertEquals(0, h.size());
-        for (int i = 0; i < 5; ++i) {
-            h.index(i);
-            assertEquals(i + 1, h.size());
-            assertEquals(i, h.index(i));
-        }
-        
-        for (int i = 0; i < 5; ++i) {
-            assertEquals(i, h.lookup(i).intValue());
-        }
-
-        for (int i = 5; i < 10; ++i) {
-            h.index(i);
-            assertEquals(i + 1, h.size());
-            assertEquals(i, h.index(i));
-        }
-        
-        for (int i = 0; i < 5; ++i) {
-            assertEquals(i, h.lookup(i).intValue());
-        }
-    }
 }

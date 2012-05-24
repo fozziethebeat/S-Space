@@ -47,7 +47,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link WorkQueue} 
  */
-public class WorkQueueTests {
+public class WorkQueueTest {
     
     @Test public void testSingleOp() {
         WorkQueue w = new WorkQueue(4);

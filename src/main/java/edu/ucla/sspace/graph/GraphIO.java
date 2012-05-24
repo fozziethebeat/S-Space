@@ -214,7 +214,8 @@ public class GraphIO {
                 g.add(new SimpleEdge(v1, v2));
 
             if (lineNo % 100000 == 0)
-                veryVerbose(LOGGER, "Read %d lines from %s", lineNo, f);
+                veryVerbose(LOGGER, "Read %d lines from %s, kept %d edges", 
+                            lineNo, f, g.size());
         }
         verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 
                 g.order(), g.size());

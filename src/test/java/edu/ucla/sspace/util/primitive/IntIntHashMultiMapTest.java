@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link CompactIntSet} 
  */
-public class IntIntHashMultiMapTests {
+public class IntIntHashMultiMapTest {
 
     @Test public void testAsMap() {
         IntIntMultiMap m = new IntIntHashMultiMap();

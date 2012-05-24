@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link CompactIntSet} 
  */
-public class CompactIntSetTests {
+public class CompactIntSetTest {
    
     @Test public void testAdd() {
         Set<Integer> test = new CompactIntSet();

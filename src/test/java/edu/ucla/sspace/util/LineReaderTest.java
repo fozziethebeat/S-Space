@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 David Jurgens
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.util;
 
+import java.io.*;
+
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +37,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -42,47 +47,35 @@ import static org.junit.Assert.*;
 
 
 /**
- * A collection of unit tests for {@link TrieSet} 
+ * A collection of unit tests for {@link LineReader} 
  */
-public class TrieSetTests {
-
-    @Test public void testConstructor() {
- 	Set<String> m = new TrieSet();
+public class LineReaderTest {
+    
+    @Test public void testLine() throws Exception {
+        File f = File.createTempFile("tmp",".txt");
+        PrintWriter pw = new PrintWriter(f);
+        pw.println("this");
+        pw.println("is");
+        pw.println("a");
+        pw.println("sentence");
+        pw.close();
+        
+        Iterator<String> lines = new LineReader(f).iterator();
+        assertEquals("this", lines.next());
+        assertEquals("is", lines.next());
+        assertEquals("a", lines.next());
+        assertEquals("sentence", lines.next());
+        assertFalse(lines.hasNext());
+        f.delete();
     }
 
-    @Test public void testCollectionConstructor() {
-        Set<String> control = new HashSet<String>();
-        for (int i = 0; i < 10; ++i)
-            control.add(String.valueOf(i));
- 	Set<String> m = new TrieSet(control);
-        assertTrue(control.equals(m));
+    @Test public void testEmptyFile() throws Exception {
+        File f = File.createTempFile("tmp",".txt");
+        PrintWriter pw = new PrintWriter(f);
+        pw.close();
+        
+        Iterator<String> lines = new LineReader(f).iterator();
+        assertFalse(lines.hasNext());
+        f.delete();
     }
-
-    @Test public void testAdd() {
- 	Set<String> m = new TrieSet();
-        assertFalse(m.contains("foo"));
-        m.add("foo");
-        assertTrue(m.contains("foo"));
-    }
-
-    @Test public void testRemove() {
- 	Set<String> m = new TrieSet();
-        assertFalse(m.contains("foo"));
-        m.add("foo");
-        assertTrue(m.contains("foo"));
-        m.remove("foo");
-        assertFalse(m.contains("foo"));
-    }
-
-    @Test public void testIterator() {
-        Set<String> control = new HashSet<String>();
- 	Set<String> test = new TrieSet();
-        for (int i = 0; i < 10; ++i)
-            test.add(String.valueOf(i));
-        for (String s : test)
-            control.add(s);
-        assertTrue(control.equals(test));
-    }
-
-
 }

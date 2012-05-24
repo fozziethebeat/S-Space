@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens
+ * Copyright 2009 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -19,36 +19,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.util;
+package edu.ucla.sspace.text;
 
-import java.util.*;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
+import java.util.Iterator;
 
 /**
- * A collection of unit tests for {@link ObjectCounter} 
+ * An abstraction for a document that allows document processors to access text
+ * in a uniform manner.
  */
-public class ObjectCounterTests {
-   
-    @Test public void testCount() {
-        Counter<Integer> c = new ObjectCounter<Integer>();
-        c.count(1);
-        assertEquals(1, c.sum());
-        assertEquals(1, c.items().size());
-        assertEquals(1, c.getCount(1));
+public interface AnnotatedDocument extends Document {
+    
+    /**
+     * Returns the timestamp when this document was created
+     */
+    long creationDate();
 
-        c.count(1);
-        assertEquals(2, c.sum());
-        assertEquals(1, c.items().size());
-        assertEquals(2, c.getCount(1));
-
-        c.count(2);
-        assertEquals(3, c.sum());
-        assertEquals(2, c.items().size());
-        assertEquals(1, c.getCount(2));
-    }
+    /**
+     * Returns a label associated with this particular document.  The label is
+     * intended to provide information on the source of the document or the
+     * contents therein.
+     */
+    String label();    
 }

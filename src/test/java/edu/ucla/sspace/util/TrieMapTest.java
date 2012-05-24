@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,13 +42,13 @@ import static org.junit.Assert.*;
 
 
 /**
- * A collection of unit tests for {@link TreeMultiMap} 
+ * A collection of unit tests for {@link TrieMap} 
  */
-public class TreeMultiMapTests {
+public class TrieMapTest {
 
     
     @Test public void testConstructor() {
- 	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+ 	TrieMap<String> m = new TrieMap<String>();
     }
 
     @Test public void testMapConstructor() {
@@ -61,121 +60,190 @@ public class TreeMultiMapTests {
 	    control.put(s, s);
 	}
 
-	TreeMultiMap<String,String> test = new TreeMultiMap<String,String>(control);
+	TrieMap<String> test = new TrieMap<String>(control);
 
 	assertEquals(control.size(), test.size());
 	assertTrue(control.keySet().containsAll(test.keySet()));
 	assertTrue(control.values().containsAll(test.values()));
     }    
 
-    // no exception
-    public void testComparatorConstructorNull() {
-	TreeMultiMap<String,String> m = 
-	    new TreeMultiMap<String,String>((Comparator<String>)null);
-    }
-
     @Test(expected=NullPointerException.class) 
     public void testMapConstructorNull() {
-	TreeMultiMap<String,String> m = 
-	    new TreeMultiMap<String,String>((Map<String,String>)null);
+	TrieMap<String> m = new TrieMap<String>(null);
     }
 
     @Test public void testPut() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("a", "1");
-	Set<String> s = m.get("a");
-	assertTrue(s.contains("1"));
+	String s = m.get("a");
+	assertEquals("1", s);
     }
 
-    @Test public void testPutMany() {
-        HashMultiMap<String,String> m = new HashMultiMap<String,String>();
-        Set<String> vals = new HashSet<String>();
-        vals.add("1");
-        vals.add("2");
-        m.putMany("a", vals);
-        Set<String> s = m.get("a");
-        assertTrue(s.contains("1"));
-        assertTrue(s.contains("2"));
-        assertEquals(2, s.size());
-        assertEquals(2, m.range());
-        assertEquals(1, m.size());
+    @Test(expected=NullPointerException.class) 
+    public void testPutNullKey() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put(null, "value");
+    }
 
-        // empty values
-        m.putMany("b", new HashSet<String>());
-        assertFalse(m.containsKey("b"));
+    @Test(expected=NullPointerException.class) 
+    public void testPutNullValue() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("key", null);
     }
 
     @Test public void testPutEmptyString() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("", "empty");
-	assertTrue(m.get("").contains("empty"));
+	assertEquals("empty", m.get(""));
     }
 
     @Test public void testPutDifferentFirstChars() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("a", "1");
 	m.put("ac", "2");
 	m.put("b", "3");
 	m.put("bd", "4");
 
-	assertTrue(m.get("a").contains("1"));
-	assertTrue(m.get("ac").contains("2"));
-	assertTrue(m.get("b").contains("3"));
-	assertTrue(m.get("bd").contains("4"));
+	assertEquals("1", m.get("a"));
+	assertEquals("2", m.get("ac"));
+	assertEquals("3", m.get("b"));
+	assertEquals("4", m.get("bd"));
     }
 
     @Test public void testPutConflict() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("a", "1");
 	m.put("a", "2");
-	Set<String> s = m.get("a");
-	assertTrue(s.contains("2"));
+	String s = m.get("a");
+	assertEquals("2", s);
     }
 
     @Test public void testPutSubstringOfKey() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("catapult", "1");
 	m.put("cat", "2");
 
-	assertTrue(m.get("catapult").contains("1"));
-	assertTrue(m.get("cat").contains("2"));
+	assertEquals("1", m.get("catapult"));
+	assertEquals("2", m.get("cat"));
     }
 
     @Test public void testPutKeyIsLonger() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "1");
 	m.put("catapult", "2");
 
-	assertTrue(m.get("catapult").contains("2"));
-	assertTrue(m.get("cat").contains("1"));
+	assertEquals("1", m.get("cat"));
+	assertEquals("2", m.get("catapult"));
     }
     
     @Test public void testPutKeyIsLongerByOne() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "1");
 	m.put("cats", "2");
 
-	assertTrue(m.get("cats").contains("2"));
-	assertTrue(m.get("cat").contains("1"));
+	assertEquals("1", m.get("cat"));
+	assertEquals("2", m.get("cats"));
     }
 
     @Test public void testPutKeysLongerByOne() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "1");
-	assertTrue(m.get("cat").contains("1"));
+	assertEquals("1", m.get("cat"));
 	m.put("catx", "2");
-	assertTrue(m.get("catx").contains("2"));
+	assertEquals("2", m.get("catx"));
 	m.put("catxy", "3");
-	assertTrue(m.get("catxy").contains("3"));
+	assertEquals("3", m.get("catxy"));
 	m.put("catxyz", "4");
-	assertTrue(m.get("catxyz").contains("4"));
+
+	assertEquals("1", m.get("cat"));
+	assertEquals("2", m.get("catx"));
+	assertEquals("3", m.get("catxy"));
+	assertEquals("4", m.get("catxyz"));
     }
 
 
+    @Test public void testPutKeysShorterByOne() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("catxyz", "4");
+	assertEquals("4", m.get("catxyz"));
+	m.put("catxy", "3");
+	assertEquals("3", m.get("catxy"));
+	m.put("catx", "2");
+	assertEquals("2", m.get("catx"));
+	m.put("cat", "1");
+	assertEquals("1", m.get("cat"));
+	
+	assertEquals("2", m.get("catx"));
+	assertEquals("3", m.get("catxy"));
+	assertEquals("4", m.get("catxyz"));
+    }
+
+    @Test public void testPutKeysDiverge() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("category", "1");
+	m.put("catamaran", "2");
+
+	assertEquals("1", m.get("category"));
+	assertEquals("2", m.get("catamaran"));
+    }
+
+    @Test public void testPutKeysConflictAndDiverge() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("cat", "0");
+	m.put("category", "1");
+	m.put("catamaran", "2");
+
+	assertEquals("0", m.get("cat"));
+	assertEquals("1", m.get("category"));
+	assertEquals("2", m.get("catamaran"));
+    }
+
+
+    @Test public void testPutWithSubstringAndDiverge() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("cat", "0");
+	m.put("category", "1");
+	m.put("catamaran", "2");
+
+	m.put("cat", "cat");
+	m.put("category", "category");
+	m.put("catamaran", "catamaran");
+	
+	assertEquals("cat", m.get("cat"));
+	assertEquals("category", m.get("category"));
+	assertEquals("catamaran", m.get("catamaran"));
+    }
+
+
+    @Test public void testPutKeysReverseOrdering() {
+	TrieMap<String> m = new TrieMap<String>();
+
+	m.put("coconut", "2");
+	m.put("banana", "1");
+	m.put("apple", "0");
+
+	assertEquals(3, m.size());
+    }
+
+    @Test public void testPutStringKeysRandomOrder() {
+	TrieMap<String> m = new TrieMap<String>();
+
+	String[] arr = new String[] {"apple", "banana", "coconut", "daffodol",
+				     "edamame", "fig", "hummus", "grapes" };
+	Collections.shuffle(Arrays.asList(arr));
+
+	for (String s : arr) {
+	    m.put(s, s);
+	}
+	    	
+	assertEquals(arr.length, m.size());
+    }
+
     @Test public void testPutLotsOfRandomPrefixes() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertEquals(0, m.size());
 	int size = 10240;
+	//int[] a = new int[size];
 	Set<Integer> s = new HashSet<Integer>();
 	while (s.size() < size) {
 	    s.add((int)(Math.random() * Integer.MAX_VALUE));
@@ -196,7 +264,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testPutLotsOfOrderedPrefixes() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertEquals(0, m.size());
 
 	for (int i = 0; i < 10240; ++i) {
@@ -212,7 +280,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testPutNumberKeysRandomOrder() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	Set<String> control = new HashSet<String>();
 	
 	ArrayList<String> list = new ArrayList<String>();
@@ -230,10 +298,23 @@ public class TreeMultiMapTests {
 	assertEquals(control.size(), m.size());
 	assertTrue(control.containsAll(m.keySet()));
     }    
+
+    @Test public void testUnknown() {
+	TrieMap<String> m = new TrieMap<String>();
+	String[] arr = new String[] { "1cd", "1c", "1" };	
+	Set<String> control = new HashSet<String>();
+	for (String s : arr) {
+	    m.put(s, s);
+	    control.add(s);
+	}
+
+	assertEquals(control.size(), m.size());
+	assertTrue(control.containsAll(m.keySet()));
+    }
     
 
     @Test public void testContainsKey() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("catapult", "1");
 	m.put("cat", "2");
 
@@ -242,7 +323,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testContainsKeyFalse() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("catapult", "1");
 	m.put("cat", "2");
 
@@ -254,7 +335,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testContainsValue() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("catapult", "1");
 	m.put("cat", "2");
 
@@ -263,7 +344,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testContainsValueFalse() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("catapult", "1");
 	m.put("cat", "2");
 
@@ -273,7 +354,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testKeySet() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 
 	m.put("cat", "0");
 	m.put("category", "1");
@@ -291,7 +372,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testEntrySetValue() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	m.put("category", "1");
 	m.put("catamaran", "2");
@@ -300,34 +381,30 @@ public class TreeMultiMapTests {
 
 	Set<Map.Entry<String,String>> test = m.entrySet();
 
-	System.out.println(m);
-	System.out.println(m.entrySet());
 	for (Map.Entry<String,String> e : m.entrySet()) {
-	    String key = e.getKey().toString();
-	    System.out.println(key);
-	    e.setValue(key);
+	    e.setValue(e.getKey().toString());
 	}
 	
-	System.out.println(m);
+	assertEquals("cat", m.get("cat"));
+	assertEquals("category", m.get("category"));
+	assertEquals("catamaran", m.get("catamaran"));
+	assertEquals("apple", m.get("apple"));
+	assertEquals("banana", m.get("banana"));
+    }
 
-	assertTrue(m.get("cat").contains("cat"));
-	assertEquals(1, m.get("cat").size());
-
-	assertTrue(m.get("category").contains("category"));
-	assertEquals(1, m.get("category").size());
-
-	assertTrue(m.get("catamaran").contains("catamaran"));
-	assertEquals(1, m.get("catamaran").size());
-
-	assertTrue(m.get("apple").contains("apple"));
-	assertEquals(1, m.get("apple").size());
-
-	assertTrue(m.get("banana").contains("banana"));
-	assertEquals(1, m.get("banana").size());
+    @Test(expected=NullPointerException.class) 
+    public void testEntrySetNullValue() {
+	TrieMap<String> m = new TrieMap<String>();
+	m.put("key", "value");
+	Set<Map.Entry<String,String>> test = m.entrySet();
+	for (Map.Entry<String,String> e : test) {
+	    e.setValue(null);
+	}
+	
     }
 
     @Test public void testKeyIterator() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	m.put("category", "1");
 	m.put("catamaran", "2");
@@ -344,7 +421,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testValueIterator() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	m.put("category", "1");
 	m.put("catamaran", "2");
@@ -364,7 +441,7 @@ public class TreeMultiMapTests {
 
     @Test public void testIteratorHasNext() {
 	
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	Iterator<String> it = m.keySet().iterator();
 	assertFalse(it.hasNext());
 
@@ -389,7 +466,7 @@ public class TreeMultiMapTests {
     @Test(expected=NoSuchElementException.class)
     public void testIteratorNextError() {
 	
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 
 	Iterator<String> it = m.keySet().iterator();
@@ -398,9 +475,9 @@ public class TreeMultiMapTests {
     }
 
     @Test(expected=NoSuchElementException.class)
-    public void testEmptyIteratorNextError() {
+    public void testEmptyTrieIteratorNextError() {
 	
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 
 	Iterator<String> it = m.keySet().iterator();
 	it.next(); // error
@@ -408,7 +485,7 @@ public class TreeMultiMapTests {
 
     @Test public void testIteratorRemove() {
 	
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	assertTrue(m.containsKey("cat"));
 
@@ -421,7 +498,7 @@ public class TreeMultiMapTests {
     @Test(expected=IllegalStateException.class) 
     public void testIteratorRemoveTwice() {
 	
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	assertTrue(m.containsKey("cat"));
 
@@ -432,7 +509,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testRemove() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	assertTrue(m.containsKey("cat"));
 
@@ -442,15 +519,15 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testRemoveEmptyString() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("", "empty");
-	assertTrue(m.get("").contains("empty"));
+	assertEquals("empty", m.get(""));
 	m.remove("");
 	assertFalse(m.containsKey(""));
     }
 
     @Test public void testRemoveIntermediate() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "cat");
 	m.put("cats", "cats");
 	assertTrue(m.containsKey("cat"));
@@ -462,7 +539,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testRemoveTerminal() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "cat");
 	m.put("cats", "cats");
 	assertTrue(m.containsKey("cats"));
@@ -474,7 +551,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testMultipleRemoves() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	Set<String> control = new HashSet<String>();
 	
 	LinkedList<String> list = new LinkedList<String>();
@@ -504,7 +581,7 @@ public class TreeMultiMapTests {
     }    
 
     @Test public void testSize() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertEquals(0, m.size());
 	m.put("cat", "0");
 	assertEquals(1, m.size());
@@ -515,7 +592,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testSizeLotsOfPrefixes() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertEquals(0, m.size());
 	for (int i = 0; i < 10240; ++i) {
 	    String s = String.valueOf(i);
@@ -525,7 +602,7 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testSizeLotsOfRandomPrefixes() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertEquals(0, m.size());
 	int size = 10240;
 	//int[] a = new int[size];
@@ -543,26 +620,8 @@ public class TreeMultiMapTests {
 	}
     }
 
-    @Test public void testRange() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
-	assertEquals(0, m.range());
-	m.put("1","1");
-	assertEquals(1, m.range());
-    }
-
-    @Test public void testRangeIncreasing() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
-
-	for (int i = 0; i < 10240; ++i) {
-	    String s = String.valueOf(i);
-	    m.put("1",s);
- 	    assertEquals(i+1, m.range());
-	    assertEquals(1, m.size());
-	}
-    }
-   
     @Test public void testIsEmpty() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	assertTrue(m.isEmpty());
 
 	m.put("cat", "0");
@@ -573,27 +632,20 @@ public class TreeMultiMapTests {
     }
 
     @Test public void testClear() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("cat", "0");
 	m.put("category", "1");
 	m.put("catamaran", "2");
 
 	m.clear();
 	assertEquals(0, m.size());
-	assertEquals(0, m.range());
 	assertFalse(m.containsKey("cat"));
 	assertFalse(m.containsKey("category"));
 	assertFalse(m.containsKey("catamaran"));
     }
 
-    /*
-     *
-     * SortedMap tests
-     *
-     */
-
     @Test public void testOrder() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
+	TrieMap<String> m = new TrieMap<String>();
 	m.put("a", "0");
 	m.put("apple", "1");
 	m.put("be", "2");
@@ -601,7 +653,8 @@ public class TreeMultiMapTests {
 	m.put("boy", "4");
 	m.put("cat", "5");
 	
-	SortedSet<String> control = new TreeSet<String>(m.keySet());
+	SortedSet<String> control = 
+	    new TreeSet<String>(m.keySet());
 	
 	Iterator<String> it1 = m.keySet().iterator();
 	Iterator<String> it2 = control.iterator();
@@ -613,90 +666,8 @@ public class TreeMultiMapTests {
 	assertEquals(it2.hasNext(), it1.hasNext());
     }
 
-    @Test public void testHeadMap() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
-	m.put("d","d");
-	m.put("e","e");
-	m.put("f","f");
-	
-	SortedMultiMap<String,String> head = m.headMap("d");
-	assertEquals(0, head.size());
-	assertEquals(0, head.range());
-	
-	head = m.headMap("e");
-	assertEquals(1, head.size());
-	assertEquals(1, head.range());
-	assertTrue(head.containsKey("d"));
-	assertFalse(head.containsKey("e"));
-	
-	head.clear();
-	assertEquals(2, m.size());
-	assertEquals(2, m.range());
-	assertEquals(0, head.range());
-
-	head.put("c","c");
-	assertEquals(1, head.size());
-	assertEquals(3, m.size());
-	assertEquals(3, m.range());
-    }
-
-    @Test public void testTailMap() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
-	m.put("d","d");
-	m.put("e","e");
-	m.put("f","f");
-	
-	SortedMultiMap<String,String> tail = m.tailMap("g");
-	assertEquals(0, tail.size());
-	assertEquals(0, tail.range());
-	
-	tail = m.tailMap("f");
-	assertEquals(1, tail.size());
-	assertEquals(1, tail.range());
-	assertTrue(tail.containsKey("f"));
-	assertFalse(tail.containsKey("e"));
-	
-	tail.clear();
-	assertEquals(2, m.size());
-	assertEquals(2, m.range());
-	assertEquals(0, tail.range());
-
-	tail.put("g","g");
-	assertEquals(1, tail.size());
-	assertEquals(3, m.size());
-	assertEquals(3, m.range());
-    }
-
-    @Test public void testSubMap() {
-	TreeMultiMap<String,String> m = new TreeMultiMap<String,String>();
-	m.put("d","d");
-	m.put("e","e");
-	m.put("f","f");
-	
-	SortedMultiMap<String,String> sub = m.subMap("c","d");
-	assertEquals(0, sub.size());
-	assertEquals(0, sub.range());
-	
-	sub = m.subMap("e","f");
-	assertEquals(1, sub.size());
-	assertEquals(1, sub.range());
-	assertTrue(sub.containsKey("e"));
-	assertFalse(sub.containsKey("f"));
-	
-	sub.clear();
-	assertEquals(2, m.size());
-	assertEquals(2, m.range());
-	assertEquals(0, sub.range());
-
-	sub.put("e","e");
-	assertEquals(1, sub.size());
-	assertEquals(3, m.size());
-	assertEquals(3, m.range());
-    }
-    
-
     public static void main(String args[]) {
-	org.junit.runner.JUnitCore.main(TreeMultiMapTests.class.getName());
+	org.junit.runner.JUnitCore.main(TrieMapTests.class.getName());
     }
 
 }

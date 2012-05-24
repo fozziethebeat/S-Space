@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link IntegerMap} 
  */
-public class IntegerMapTests {
+public class IntegerMapTest {
 
     
     @Test public void testConstructor() {

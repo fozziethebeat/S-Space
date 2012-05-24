@@ -133,7 +133,7 @@ public class CombinedIterator<T> implements Iterator<T> {
      */
     public synchronized void remove() {
 	if (toRemoveFrom == null) {
-	    throw new NoSuchElementException();
+	    throw new IllegalStateException();
 	}	
 	toRemoveFrom.remove();
     }

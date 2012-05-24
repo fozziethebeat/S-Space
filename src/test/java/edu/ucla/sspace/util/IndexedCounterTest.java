@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link HashIndexer} 
  */
-public class IndexedCounterTests {
+public class IndexedCounterTest {
 
     @Test public void testCount() {
         HashIndexer<Integer> h = new HashIndexer<Integer>();

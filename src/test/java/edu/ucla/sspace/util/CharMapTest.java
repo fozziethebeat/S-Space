@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link CharMap} 
  */
-public class CharMapTests {
+public class CharMapTest {
 
     
     @Test public void testConstructor() {

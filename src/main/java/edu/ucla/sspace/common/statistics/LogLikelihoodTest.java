@@ -27,6 +27,56 @@ public class LogLikelihoodTest implements SignificanceTest {
      * Returns the log-likelihood test statistic
      */
     public double score (int both, int justA, int justB, int neither) {
+       
+        double rowEntropy = entropy(both, justA) + entropy(justB, neither);
+        double columnEntropy = entropy(both, justB) + entropy(justA, neither);
+        double matrixEntropy = entropy(both, justA, justB, neither);
+        return 2 * (matrixEntropy - rowEntropy - columnEntropy);
+    }             
+
+    private static double entropy(int x, int y) {
+        assert x >= 0 && y >= 0 : "negative counts";
+        double sum = x + y;
+
+        double result = 0.0;        
+        result += (x == 0) ? 0 : x * (Math.log(x) / sum);
+        result += (y == 0) ? 0 : y * (Math.log(y) / sum);
+        return -result;
+    }
+
+    private static double entropy(int a, int b, int c, int d) {
+        assert a >= 0 && b >= 0 && c >= 0 && d >= 0 : "negative counts";
+        double sum = a + b + c + d;
+
+        double result = 0.0;        
+        result += (a == 0) ? 0 : a * (Math.log(a) / sum);
+        result += (b == 0) ? 0 : b * (Math.log(b) / sum);
+        result += (c == 0) ? 0 : c * (Math.log(c) / sum);
+        result += (d == 0) ? 0 : d * (Math.log(d) / sum);
+        return -result;
+    }
+       
+        /*
+
+        double ll = 2 *
+            both    * Math.log( (both / (double)row1sum) / (col1sum / sum)) +
+            justA   * Math.log( (justA / (double)row1sum) / (col2sum / sum)) +
+            justB   * Math.log( (justB / (double)row2sum) / (col1sum / sum)) +
+            neither * Math.log( (neither / (double)row2sum) / (col2sum / sum));
+
+        System.out.printf("%d\t%d%n%d\t%d%n  = 2 * (%f + %f + %f + %f)%n",
+                          both, justA, justB, neither, 
+                          both    * Math.log( (both / (double)row1sum) / (col1sum / sum)),
+                          justA   * Math.log( (justA / (double)row1sum) / (col2sum / sum)),
+                          justB   * Math.log( (justB / (double)row2sum) / (col1sum / sum)),
+                          neither * Math.log( (neither / (double)row2sum) / (col2sum / sum)));
+                                                    
+
+
+        return ll;        
+        */    
+
+        /*
         int col1sum = both + justA;    // t[0] + t[2];
         int col2sum = justB + neither; // t[1] + t[3];
         int row1sum = both + justB;    // t[0] + t[1];
@@ -44,5 +94,8 @@ public class LogLikelihoodTest implements SignificanceTest {
              (justB * Math.log(justB - bExp))  +
              (justA * Math.log(justA - cExp))  +
              (neither * Math.log(neither - dExp)));
-    }
+        */
+
+        
+
 }

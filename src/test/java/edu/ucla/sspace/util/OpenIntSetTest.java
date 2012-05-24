@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link OpenIntSet} 
  */
-public class OpenIntSetTests {
+public class OpenIntSetTest {
    
     @Test public void testAdd() {
         Set<Integer> test = new OpenIntSet();

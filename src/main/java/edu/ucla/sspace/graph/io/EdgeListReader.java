@@ -128,10 +128,8 @@ public class EdgeListReader extends GraphReaderAdapter implements GraphReader {
             int v2 = vertexIndexer.index(arr[1]);
             double weight = Double.parseDouble(arr[2]);
             g.add(new SimpleWeightedEdge(v1, v2, weight));
-            if (lineNo % 1000 == 0)
-                System.out.printf("Read %d lines from %s%n", lineNo, f);
 
-            if (lineNo % 100000 == 0)
+            if (lineNo % 10000 == 0)
                 veryVerbose(LOGGER, "Read %d lines from %s", lineNo, f);
         }
         verbose(LOGGER, "Read directed graph with %d vertices and %d edges", 

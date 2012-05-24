@@ -42,107 +42,119 @@ import static org.junit.Assert.*;
 
 
 /**
- * A collection of unit tests for {@link IntegerMap} 
+ * A collection of unit tests for {@link SparseDoubleArray} 
  */
-public class SparseIntArrayTests {
+public class SparseDoubleArrayTest {
 
     @Test public void testConstructor() {
-	new SparseIntArray();
+	new SparseDoubleArray();
     }
 
     @Test public void testArgConstructor() {
-	new SparseIntArray(100);
-	new SparseIntArray(0);
-	new SparseIntArray(1);
+	new SparseDoubleArray(100);
+	new SparseDoubleArray(0);
+	new SparseDoubleArray(1);
     }
 
     @Test(expected=IllegalArgumentException.class) 
     public void testIllegalConstructor() {
-	new SparseIntArray(-1);
+	new SparseDoubleArray(-1);
+    }
+
+    @Test public void testAdd() {
+	SparseDoubleArray arr = new SparseDoubleArray(100);
+        arr.addPrimitive(5, 5);
+        assertEquals(5, arr.get(5), 0.01d);
+        arr.addPrimitive(5, 5);
+        assertEquals(10, arr.get(5), 0.01d);
+        arr.addPrimitive(5, -5);
+        assertEquals(5, arr.get(5), 0.01d);
+        arr.addPrimitive(5, -5);
+        assertEquals(0, arr.get(5), 0.01d);
+        arr.addPrimitive(5, -5);
+        assertEquals(-5, arr.get(5), 0.01d);
     }
 
     @Test public void testGet() {
 	int size = 1024;
-	int[] control = new int[size];
+	double[] control = new double[size];
 	for (int i = 0; i < size; ++i) {
-	    control[i] = (int)(Math.random() * Integer.MAX_VALUE);	    
+	    control[i] = Math.random() * Integer.MAX_VALUE;
 	}
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 0; i < size; ++i) {
-	    arr.set(control[i], i);
+	    arr.set(i * 100, control[i]);
 	}
 
 	for (int i = 0; i < size; ++i) {
-	    int v = arr.get(control[i]);
-	    assertEquals(i, v);
+	    double v = arr.get(i * 100);
+	    assertEquals(control[i], v, 0.001d);
 	}
     }
 
     @Test public void testGetWithReZero() {
 	int size = 1033;
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 1; i < size; ++i) {
-	    arr.set(i, i);
+	    arr.set(i, Double.valueOf(i));
 	    assertEquals(i, arr.cardinality());
 	}
 
 	int original = arr.cardinality();
 
 	for (int i = 1; i < size; i+=2) {
-	    arr.set(i, 0);
+	    arr.set(i, 0d);
 	    assertEquals(--original, arr.cardinality());
-	    assertEquals(0, arr.getPrimitive(i));
+	    assertEquals(0d, arr.getPrimitive(i), 0.00d);
 	}	
     }
 
     @Test public void toArray() {
 	int size = 1024;
-	Integer[] control = new Integer[size];
+	Double[] control = new Double[size];
 	for (int i = 0; i < size; ++i) {
-	    control[i] = i;
+	    control[i] = Double.valueOf(i);
 	}
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 0; i < size; ++i) {
-	    arr.set(control[i], i);
+	    arr.set(i, control[i]);
 	}
 	
-	Integer[] test = new Integer[size];
+	Double[] test = new Double[size];
 	arr.toArray(test);
 	assertTrue(Arrays.equals(control, test));
     }
 
     @Test public void toArrayWithZeros() {
 	int size = 10;
-	Integer[] control = new Integer[size];
+	Double[] control = new Double[size];
 	for (int i = 0; i < size; i++) {
-	    control[i] = (i % 2 == 0) ? i : 0;
+	    control[i] = (i % 2 == 0) ? (double)i : 0d;
 	}
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 0; i < size; i += 2) {
-	    arr.set(control[i], i);
+	    arr.set(i, (double)i);
 	}
 	
-	Integer[] test = new Integer[size];
+	Double[] test = new Double[size];
 	arr.toArray(test);
-	System.out.println(Arrays.toString(control));
-	System.out.println(Arrays.toString(test));
 	assertTrue(Arrays.equals(control, test));
     }
 
     @Test public void toArraySubclass() {
 	int size = 1024;
-	Integer[] control = new Integer[size];
+	Double[] control = new Double[size];
 	for (int i = 0; i < size; ++i) {
-	    control[i] = i;
+	    control[i] = Double.valueOf(i);
 	}
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 0; i < size; ++i) {
-	    arr.set(control[i], i);
+	    arr.set(i, control[i]);
 	}
 	
 	Number[] test = new Number[size];
@@ -153,11 +165,27 @@ public class SparseIntArrayTests {
     @Test public void testCardinality() {
 	int size = 1033;
 
-	SparseIntArray arr = new SparseIntArray();
+	SparseDoubleArray arr = new SparseDoubleArray();
 	for (int i = 1; i < size; ++i) {
-	    arr.set(i, i);
+	    arr.set(i, Double.valueOf(i));
 	    assertEquals(i, arr.cardinality());
 	}
     }
-    
+
+    @Test public void testIterator() {
+        int size = 100;
+	SparseDoubleArray arr = new SparseDoubleArray();
+	for (int i = 0; i < size; ++i) {
+	    arr.set(i, (double)i);
+	}
+        
+        // NOTE: start at 1 since the zero'th position has a 0 value
+        int i = 1;
+        for (DoubleEntry e : arr) {            
+            assertEquals(i, e.index());
+            assertEquals(i, e.value(), 0.001);
+            i++;
+        }
+        assertEquals(i, size);
+    }
 }

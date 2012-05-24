@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 /**
  * Tests for the {@link CombinedSet} class
  */
-public class CombinedSetTests { 
+public class CombinedSetTest { 
 
     @Test public void testConstructor() {
         Set<Integer> set1 = new HashSet<Integer>();

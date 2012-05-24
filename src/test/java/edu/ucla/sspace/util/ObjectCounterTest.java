@@ -19,24 +19,36 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.graph;
+package edu.ucla.sspace.util;
+
+import java.util.*;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
 /**
- * An interface for weigthed, directed edges in multigraphs.  This interface
- * does not refine the {@link #equals(Object) equals} method of {@link
- * DirectedTypedEdge}, i.e. two {@code WeightedDirectedTypedEdge} are equivalent
- * independent of their edge weights.
- *
- * @see Multigraph
+ * A collection of unit tests for {@link ObjectCounter} 
  */
-public interface WeightedDirectedTypedEdge<T> 
-       extends DirectedTypedEdge<T>, WeightedDirectedEdge {
+public class ObjectCounterTest {
+   
+    @Test public void testCount() {
+        Counter<Integer> c = new ObjectCounter<Integer>();
+        c.count(1);
+        assertEquals(1, c.sum());
+        assertEquals(1, c.items().size());
+        assertEquals(1, c.getCount(1));
 
-    /**
-     * Returns {@code true} if {@code o} connects the same vertices, has the
-     * same edge orientation, and has edge type information that is equivalent.
-     */
-    boolean equals(Object o);
+        c.count(1);
+        assertEquals(2, c.sum());
+        assertEquals(1, c.items().size());
+        assertEquals(2, c.getCount(1));
 
+        c.count(2);
+        assertEquals(3, c.sum());
+        assertEquals(2, c.items().size());
+        assertEquals(1, c.getCount(2));
+    }
 }

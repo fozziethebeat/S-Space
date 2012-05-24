@@ -186,16 +186,15 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * arbitrarily broken.
      */
     public T max() {
-        throw new Error();
-//         int maxCount = -1;
-//         T max = null;
-//         for (Map.Entry<T,Integer> e : counts.entrySet()) {
-//             if (e.getValue() > maxCount) {
-//                 maxCount = e.getValue();
-//                 max = e.getKey();
-//             }
-//         }
-//         return max;
+        TObjectIntIterator<T> iter = counts.iterator();
+        int maxCount = -1;
+        T max = null;
+        while (iter.hasNext()) {
+            iter.advance();
+            if (iter.value() > maxCount)
+                max = iter.key();
+        }
+        return max;
     }
 
     /**
@@ -204,16 +203,15 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * arbitrarily broken.
      */
     public T min() {
-        throw new Error();
-//         int minCount = Integer.MAX_VALUE;
-//         T min = null;
-//         for (Map.Entry<T,Integer> e : counts.entrySet()) {
-//             if (e.getValue() < minCount) {
-//                 minCount = e.getValue();
-//                 min = e.getKey();
-//             }
-//         }
-//         return min;
+        TObjectIntIterator<T> iter = counts.iterator();
+        int minCount = Integer.MAX_VALUE;
+        T min = null;
+        while (iter.hasNext()) {
+            iter.advance();
+            if (iter.value() < minCount)
+                min = iter.key();
+        }
+        return min;
     }
 
     /**

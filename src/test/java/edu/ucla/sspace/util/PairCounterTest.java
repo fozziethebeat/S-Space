@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 /**
  * A collection of unit tests for {@link PairCounter} 
  */
-public class PairCounterTests {
+public class PairCounterTest {
    
     @Test public void testCount() {
         PairCounter<Integer> c = new PairCounter<Integer>();

@@ -120,7 +120,11 @@ public interface MultiMap<K,V> {
     boolean putMany(K key, Collection<V> values);
 
     /**
-     * Removes the mapping for a key from this multi-map if it is present
+     * Removes the mapping for a key from this multi-map if it is present,
+     * returning any mapped values to that key
+     *
+     * @return the set of values mapped to the key or the empty set if the key
+     *         was not present
      */
     Set<V> remove(K key);
 
