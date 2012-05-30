@@ -11,6 +11,7 @@ import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.SerializableUtil;
 
 import java.io.File;
+import java.io.PrintWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +38,13 @@ public class SelectTopKWords {
                 topTerms.get(c).put(m.get(r, c), term);
         }
 
+        PrintWriter pw = new PrintWriter(args[2]);
         for (MultiMap<Double, String> topicTerms : topTerms) {
             for (String term : topicTerms.values())
-                System.out.printf("%s ", term);
-            System.out.println();
+                pw.printf("%s ", term);
+            pw.println();
         }
+        pw.close();
     }
 }
 

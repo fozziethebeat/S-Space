@@ -713,7 +713,7 @@ public class MatrixIO {
      */
     public static SparseMatrix readSparseMatrix(String matrix, Format format)
              throws IOException {
-        return readSparseMatrix(new File(matrix), format);
+        return readSparseMatrix(new File(matrix), format, false);
     }
  
     /**
@@ -733,17 +733,27 @@ public class MatrixIO {
      */
     public static SparseMatrix readSparseMatrix(File matrix, Format format)
              throws IOException {
+       return readSparseMatrix(matrix, format, false);
+    }
+
+    public static SparseMatrix readSparseMatrix(String matrix, Format format, boolean transposeOnRead)
+             throws IOException {
+         return readSparseMatrix(new File(matrix), format, transposeOnRead);
+    }
+
+    public static SparseMatrix readSparseMatrix(File matrix, Format format, boolean transposeOnRead)
+             throws IOException {
         Type type = Type.SPARSE_IN_MEMORY;
         switch (format) {
             // Assume all sparse formats will fit in memory.
             case MATLAB_SPARSE:
-                return readMatlabSparse(matrix, type, false);
+                return readMatlabSparse(matrix, type, transposeOnRead);
             case CLUTO_SPARSE:
-                return readClutoSparse(matrix, type, false);
+                return readClutoSparse(matrix, type, transposeOnRead);
             case SVDLIBC_SPARSE_TEXT:
-                return readSparseSVDLIBCtext(matrix, type, false);
+                return readSparseSVDLIBCtext(matrix, type, transposeOnRead);
             case SVDLIBC_SPARSE_BINARY:
-                return readSparseSVDLIBCbinary(matrix, type, false);
+                return readSparseSVDLIBCbinary(matrix, type, transposeOnRead);
             default:
                 throw new Error(
                          format + " is not a a supproted sparse format");
