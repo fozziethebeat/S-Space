@@ -77,11 +77,15 @@ object Schisel {
      */
     def buildInstanceList(path: String,
                           skip: Int, 
-                          stopWordFilter: TokenSequenceRemoveStopwords) = {
+                          validTokens: List[String]) = {
+        val tokenAlphabet = new Alphabet(validTokens.size())
+        validTokens.foreach(w => tokenAlphabet.lookupIndex(w))
+        val instanceList = new InstanceList(tokenAlphabet, null)
+
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
-                                         stopWordFilter,
                                          new TokenSequence2FeatureSequence()))
-        val instanceList = new InstanceList(pipes)
+        instanceList.setPipe(pipes)
+
         var count = 0
         for (line <- Source.fromFile(path).getLines)
             // Try to create the instance object from the line.  If no instance
@@ -187,15 +191,14 @@ object Schisel {
 
     def main(args:Array[String]) {
         if (args.size != 4) {
-            printf("usage: Schisel <stopwords.txt> <docs.txt> <nTopics> <out_name>\n")
+            printf("usage: Schisel <contentWords.txt> <docs.txt> <nTopics> <out_name>\n")
             System.exit(1);
         }
 
-        val stopWordPipe = new TokenSequenceRemoveStopwords().addStopWords(
-            Source.fromFile(args(0)).getLines.toArray)
+        val contentWords = Source.fromFile(args(0)).getLines.toList
 
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(1), 0, stopWordPipe)
+        val instances = buildInstanceList(args(1), 0, contentWords)
 
         // Extract the number of desired topics and number of documents.
         val numTopics = args(2).toInt
