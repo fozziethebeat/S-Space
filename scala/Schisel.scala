@@ -22,6 +22,7 @@
  */
 
 // Import the required Mallet code.
+import cc.mallet.types.Alphabet
 import cc.mallet.types.Instance
 import cc.mallet.types.InstanceList
 import cc.mallet.pipe.Pipe
@@ -67,7 +68,7 @@ object Schisel {
         new Instance(document, "noLabel", docId.toString, null)
 
     def filter(text:String, validWords:Set[String]) = 
-        text.split("\\s+").filter(w=>validWords.contains(w)).mkString(" ")
+        text.split("\\s+").filter(validWords.contains).mkString(" ")
 
     /**
      * Returns a mallet {@link InstanceList} built from a corpus file with one
@@ -75,18 +76,21 @@ object Schisel {
      * Instance} and added to the {@link InstanceList}.  Tokens in each document
      * will be tokenized based on whitespace.
      */
-    def buildInstanceList(path: String, validTokens: List[String]) = {
-        val tokenAlphabet = new Alphabet(validTokens.size())
-        validTokens.foreach(w => tokenAlphabet.lookupIndex(w))
+    def buildInstanceList(path: String, validWords: List[String]) = {
+        val tokenAlphabet = new Alphabet(validWords.size())
+        validWords.foreach(w => tokenAlphabet.lookupIndex(w))
         val instanceList = new InstanceList(tokenAlphabet, null)
 
+        val validTokens = validWords.toSet
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
-                                         new TokenSequence2FeatureSequence()))
+                                         new TokenSequence2FeatureSequence(tokenAlphabet)))
+        instanceList.setPipe(pipes)
+
         // Try to create the instance object from the line.  If no instance
         // was returned, just ignore it and don't add it to the instance
         // list.
         for ((line, i) <- Source.fromFile(path, "ISO-8859-1").getLines.zipWithIndex)
-            instanceList.addThruPipe(makeInstance(filter(line, validWords), i))
+            instanceList.addThruPipe(makeInstance(filter(line, validTokens), i))
         instanceList
     }
 
@@ -179,14 +183,14 @@ object Schisel {
 
     def main(args:Array[String]) {
         if (args.size != 4) {
-            printf("usage: Schisel <contentWords.txt> <docs.txt> <nTopics> <out_name>\n")
+            printf("usage: Schisel <contentWords.txt> <nTopics> <docs.txt> <out_name>\n")
             System.exit(1);
         }
 
         val contentWords = Source.fromFile(args(0)).getLines.toList
 
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(1), contentWords)
+        val instances = buildInstanceList(args(2), contentWords)
 
         // Extract the number of desired topics and number of documents.
         val numTopics = args(1).toInt
