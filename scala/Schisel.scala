@@ -63,11 +63,11 @@ object Schisel {
      * remaining text.  This returns an empty {@link AnyVal} when the text is
      * empty.
      */
-    def makeInstance(document: String) = {
-        val Array(docId, text) = document.split("\\s+", 2)
-        if (text != "")
-            new Instance(text, "noLabel", docId, null)
-    }
+    def makeInstance(document: String, docId:Int) =
+        new Instance(document, "noLabel", docId.toString, null)
+
+    def filter(text:String, validWords:Set[String]) = 
+        text.split("\\s+").filter(w=>validWords.contains(w)).mkString(" ")
 
     /**
      * Returns a mallet {@link InstanceList} built from a corpus file with one
@@ -75,30 +75,18 @@ object Schisel {
      * Instance} and added to the {@link InstanceList}.  Tokens in each document
      * will be tokenized based on whitespace.
      */
-    def buildInstanceList(path: String,
-                          skip: Int, 
-                          validTokens: List[String]) = {
+    def buildInstanceList(path: String, validTokens: List[String]) = {
         val tokenAlphabet = new Alphabet(validTokens.size())
         validTokens.foreach(w => tokenAlphabet.lookupIndex(w))
         val instanceList = new InstanceList(tokenAlphabet, null)
 
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
                                          new TokenSequence2FeatureSequence()))
-        instanceList.setPipe(pipes)
-
-        var count = 0
-        for (line <- Source.fromFile(path).getLines)
-            // Try to create the instance object from the line.  If no instance
-            // was returned, just ignore it and don't add it to the instance
-            // list.
-            makeInstance(line) match {
-                case inst:Instance => {
-                    count += 1
-                    if (count >= skip)
-                        instanceList.addThruPipe(inst)
-                }
-                case _ =>
-            }
+        // Try to create the instance object from the line.  If no instance
+        // was returned, just ignore it and don't add it to the instance
+        // list.
+        for ((line, i) <- Source.fromFile(path, "ISO-8859-1").getLines.zipWithIndex)
+            instanceList.addThruPipe(makeInstance(filter(line, validWords), i))
         instanceList
     }
 
@@ -198,10 +186,10 @@ object Schisel {
         val contentWords = Source.fromFile(args(0)).getLines.toList
 
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(1), 0, contentWords)
+        val instances = buildInstanceList(args(1), contentWords)
 
         // Extract the number of desired topics and number of documents.
-        val numTopics = args(2).toInt
+        val numTopics = args(1).toInt
         val numDocuments = instances.size
         System.err.println("Training model")
 
@@ -213,9 +201,8 @@ object Schisel {
         val outBase = args(3)
         printBasis(outBase + ".basis", topicModel.alphabet.toString())
         printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
-        printDocumentSpace(outBase+"-ds.dat.transpose", 
+        printDocumentSpace(outBase+"-ds.dat", 
                            topicModel, numDocuments, numTopics)
-        printTopWords(outBase + "-ws.dat.top10", topicModel, 10)
         System.err.println("Done")
     }
 }
