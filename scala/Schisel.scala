@@ -60,11 +60,12 @@ object Schisel {
      * remaining text.  This returns an empty {@link AnyVal} when the text is
      * empty.
      */
-    def makeInstance(document: String) = {
-        val Array(docId, text) = document.split("\\s+", 2)
-        if (text != "")
-            new Instance(text, "noLabel", docId, null)
+    def makeInstance(document: String, validWords: Set[String], docId:Int) = {
+        new Instance(filter(document, validWords), "noLabel", docId.toString, null)
     }
+
+    def filter(text:String, validWords:Set[String]) = 
+        text.split("\\s+").filter(w=>validWords.contains(w)).mkString(" ")
 
     /**
      * Returns a mallet {@link InstanceList} built from a corpus file with one
@@ -72,21 +73,16 @@ object Schisel {
      * Instance} and added to the {@link InstanceList}.  Tokens in each document
      * will be tokenized based on whitespace.
      */
-    def buildInstanceList(path: String, skip: Int) = {
+    def buildInstanceList(path: String, validWords: Set[String]) = {
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
                                          new TokenSequence2FeatureSequence()))
         val instanceList = new InstanceList(pipes)
-        var count = 0
-        for (line <- Source.fromFile(path).getLines)
+        for ((line, i) <- Source.fromFile(path, "ISO-8859-1").getLines.zipWithIndex)
             // Try to create the instance object from the line.  If no instance
             // was returned, just ignore it and don't add it to the instance
             // list.
-            makeInstance(line) match {
-                case inst:Instance => {
-                    count += 1
-                    if (count >= skip)
-                        instanceList.addThruPipe(inst)
-                }
+            makeInstance(line, validWords, i) match {
+                case inst:Instance => instanceList.addThruPipe(inst)
                 case _ =>
             }
         instanceList
@@ -139,17 +135,29 @@ object Schisel {
     def printDocumentSpace(outFile:String, topicModel:ParallelTopicModel,
                            numDocuments:Int, numTopics:Int) {
         System.err.println("Printing Document Space")
-        val tFile = File.createTempFile("ldaTheta", "dat")
-        tFile.deleteOnExit
-        topicModel.printDocumentTopics(tFile)
+        val tFile = File.createTempFile("ldaPhi", "dat")
+        val pw = new PrintWriter(tFile)
+        //tFile.deleteOnExit
+        topicModel.printDocumentTopics(pw)
+        pw.flush
+        pw.close
+
         val documentSpace = new ArrayMatrix(numDocuments, numTopics)
-        for ((line, row) <- Source.fromFile(tFile).getLines.zipWithIndex;
-             if row > 0) {
+        val lines = Source.fromFile(tFile).getLines
+        lines.next
+        for (line <- lines) {
             val tokens = line.split("\\s+")
+            val row = tokens(0).toInt
             for (Array(col, score) <- tokens.slice(2, tokens.length).sliding(2, 2))
-                documentSpace.set(row-1, col.toInt, score.toDouble)
+                documentSpace.set(row, col.toInt, score.toDouble)
         }
         MatrixIO.writeMatrix(documentSpace, outFile, Format.DENSE_TEXT)
+    }
+
+    def printBasis(outFile:String, alphabet:String) {
+        val writer = new PrintWriter(outFile)
+        writer.print(alphabet)
+        writer.close
     }
 
     /**
@@ -160,8 +168,11 @@ object Schisel {
                        numTopics:Int) {
         System.err.println("Printing Word Space")
         val tFile = File.createTempFile("ldaTheta", "dat")
-        tFile.deleteOnExit
-        topicModel.printTopicWordWeights(tFile)
+        val pw = new PrintWriter(tFile)
+        //tFile.deleteOnExit
+        topicModel.printTopicWordWeights(pw)
+        pw.flush
+        pw.close
 
         val wordMap = (Source.fromFile(tFile).getLines.takeWhile { 
             line => line(0) == '0' } map {
@@ -174,32 +185,41 @@ object Schisel {
             wordSpace.set(row, col.toInt, score.toDouble)
             rowSums(row) += score.toDouble
         }
+        /*
         for (r <- 0 until wordSpace.rows; c <- 0 until wordSpace.columns)
             wordSpace.set(r, c, wordSpace.get(r, c) / rowSums(r))
+            */
 
         MatrixIO.writeMatrix(wordSpace, outFile, Format.DENSE_TEXT)
     }
 
     def main(args:Array[String]) {
+        if (args.size != 4) {
+            println("Schisel <valid_words.txt> <numTopics> <train.docs.txt> <outfileBase>")
+            System.exit(1)
+        }
+
+        val validWords = Source.fromFile(args(0)).getLines.toSet
+
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(0), args(4).toInt)
+        val instances = buildInstanceList(args(2), validWords)
 
         // Extract the number of desired topics and number of documents.
-        val numTopics = args(2).toInt
+        val numTopics = args(1).toInt
         val numDocuments = instances.size
         System.err.println("Training model")
 
         // Run LDA.
-        val topicModel = runLDA(instances, numTopics=numTopics,
-                                optimizationInterval=args(3).toInt)
+        val topicModel = runLDA(instances, numTopics=numTopics)
 
         // Print out the top words, the word by topic probabilities, and
         // document by topic probabilities as dense matrices.
-        val outBase = args(1)
+        val outBase = args(3)
         printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
-        printDocumentSpace(outBase+"-ds.dat.transpose", 
+        printDocumentSpace(outBase+"-ds.dat", 
                            topicModel, numDocuments, numTopics)
-        printTopWords(outBase + "-ws.dat.top10", topicModel, 10)
+        printBasis(outBase + ".basis", topicModel.alphabet.toString())
+        //printTopWords(outBase + "-ws.dat.top10", topicModel, 10)
         System.err.println("Done")
     }
 }
