@@ -28,12 +28,15 @@ import cc.mallet.pipe.Pipe
 import cc.mallet.pipe.SerialPipes
 import cc.mallet.pipe.CharSequence2TokenSequence
 import cc.mallet.pipe.TokenSequence2FeatureSequence
+import cc.mallet.pipe.TokenSequenceRemoveStopwords
 import cc.mallet.topics.ParallelTopicModel
 
 // Import some handy code for managing matrices from the S-Space package.
+import edu.ucla.sspace.basis.StringBasisMapping
 import edu.ucla.sspace.matrix.ArrayMatrix
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
+import edu.ucla.sspace.util.SerializableUtil
 
 // Other standard imports from scala and java libraries.
 import scala.collection.JavaConversions.asJavaCollection
@@ -73,8 +76,11 @@ object Schisel {
      * Instance} and added to the {@link InstanceList}.  Tokens in each document
      * will be tokenized based on whitespace.
      */
-    def buildInstanceList(path: String, validWords: Set[String]) = {
+    def buildInstanceList(path: String,
+                          skip: Int, 
+                          stopWordFilter: TokenSequenceRemoveStopwords) = {
         val pipes = new SerialPipes(List(new CharSequence2TokenSequence("\\S+"),
+                                         stopWordFilter,
                                          new TokenSequence2FeatureSequence()))
         val instanceList = new InstanceList(pipes)
         for ((line, i) <- Source.fromFile(path, "ISO-8859-1").getLines.zipWithIndex)
@@ -135,22 +141,11 @@ object Schisel {
     def printDocumentSpace(outFile:String, topicModel:ParallelTopicModel,
                            numDocuments:Int, numTopics:Int) {
         System.err.println("Printing Document Space")
-        val tFile = File.createTempFile("ldaPhi", "dat")
-        val pw = new PrintWriter(tFile)
-        //tFile.deleteOnExit
-        topicModel.printDocumentTopics(pw)
-        pw.flush
-        pw.close
-
+        val alpha = topicModel.alpha
         val documentSpace = new ArrayMatrix(numDocuments, numTopics)
-        val lines = Source.fromFile(tFile).getLines
-        lines.next
-        for (line <- lines) {
-            val tokens = line.split("\\s+")
-            val row = tokens(0).toInt
-            for (Array(col, score) <- tokens.slice(2, tokens.length).sliding(2, 2))
-                documentSpace.set(row, col.toInt, score.toDouble)
-        }
+        for (r<- 0 until documentSpace.rows;
+             (weight, c) <- topicModel.getTopicProbabilities(r).zipWithIndex)
+            documentSpace.set(r, c, weight)
         MatrixIO.writeMatrix(documentSpace, outFile, Format.DENSE_TEXT)
     }
 
@@ -166,43 +161,37 @@ object Schisel {
      */
     def printWordSpace(outFile:String, topicModel:ParallelTopicModel,
                        numTopics:Int) {
-        System.err.println("Printing Word Space")
-        val tFile = File.createTempFile("ldaTheta", "dat")
-        val pw = new PrintWriter(tFile)
-        //tFile.deleteOnExit
-        topicModel.printTopicWordWeights(pw)
-        pw.flush
-        pw.close
+        val beta = topicModel.beta
+        val topicMask = topicModel.topicMask
+        val topicBits = topicModel.topicBits
 
-        val wordMap = (Source.fromFile(tFile).getLines.takeWhile { 
-            line => line(0) == '0' } map {
-            line => line.split("\\s+")(1) }).zipWithIndex.toMap
-        val wordSpace = new ArrayMatrix(wordMap.size, numTopics)
-        val rowSums = new Array[Double](wordMap.size)
-        for (line <- Source.fromFile(tFile).getLines) {
-            val Array(col, word, score) = line.split("\\s+")
-            val row = wordMap(word)
-            wordSpace.set(row, col.toInt, score.toDouble)
-            rowSums(row) += score.toDouble
-        }
-        /*
+        val wordSpace = new ArrayMatrix(topicModel.numTypes, topicModel.numTopics)
+        // Initialize the matrix so that every entry has the beta smoothing parameter.
         for (r <- 0 until wordSpace.rows; c <- 0 until wordSpace.columns)
-            wordSpace.set(r, c, wordSpace.get(r, c) / rowSums(r))
-            */
+            wordSpace.set(r, c, beta)
+
+        // Iterate through the real topic counts when they exist.  Mallet seems to make this as impossible as possible, each entry in the
+        // matrix encodes the topic id and the count for the pairing, in no particular order (it's probably sorted by frequency).  The
+        // actual indexes in each row of the typeTopicCount are meaningless, and many entries are 0, hency why we have to preset the beta
+        // value as above, it's a pain in the bum to know when we've set a wordXtopic count or not with their data structure.
+        for ((topicCounts, row) <- topicModel.typeTopicCounts.zipWithIndex;
+             count <- topicCounts; if count > 0)
+            wordSpace.add(row, count & topicMask, count >> topicBits)
 
         MatrixIO.writeMatrix(wordSpace, outFile, Format.DENSE_TEXT)
     }
 
     def main(args:Array[String]) {
         if (args.size != 4) {
-            println("Schisel <valid_words.txt> <numTopics> <train.docs.txt> <outfileBase>")
-            System.exit(1)
+            printf("usage: Schisel <stopwords.txt> <docs.txt> <nTopics> <out_name>\n")
+            System.exit(1);
         }
 
-        val validWords = Source.fromFile(args(0)).getLines.toSet
+        val stopWordPipe = new TokenSequenceRemoveStopwords().addStopWords(
+            Source.fromFile(args(0)).getLines.toArray)
 
         // Load up the instances for LDA to process.
-        val instances = buildInstanceList(args(2), validWords)
+        val instances = buildInstanceList(args(1), 0, stopWordPipe)
 
         // Extract the number of desired topics and number of documents.
         val numTopics = args(1).toInt
@@ -215,11 +204,10 @@ object Schisel {
         // Print out the top words, the word by topic probabilities, and
         // document by topic probabilities as dense matrices.
         val outBase = args(3)
+        printBasis(outBase + ".basis", topicModel.alphabet.toString())
         printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
         printDocumentSpace(outBase+"-ds.dat", 
                            topicModel, numDocuments, numTopics)
-        printBasis(outBase + ".basis", topicModel.alphabet.toString())
-        //printTopWords(outBase + "-ws.dat.top10", topicModel, 10)
         System.err.println("Done")
     }
 }
