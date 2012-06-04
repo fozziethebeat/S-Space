@@ -99,7 +99,10 @@ object AdjustedMutualInformation {
                       referenceMap:HashMap[String, HashMap[Int, String]]) = {
         def acceptLabel(word: String, id: Int) =
             if (referenceMap == null) true
-            else referenceMap.get(word).get.contains(id)
+            else referenceMap.get(word) match {
+                case Some(wordMap) => wordMap.contains(id)
+                case None => false
+            }
 
         val classLabels = new HashMap[String, HashMap[Int, String]]()
         for (line <- Source.fromFile(answerFile).getLines) {
@@ -191,6 +194,8 @@ object AdjustedMutualInformation {
         val filter = if (args.size == 3 && args(2) != "all") args(2) else ""
         val classLabels = extractLabels(args(1), filter, null)
         val clusterLabels = extractLabels(args(0), filter, classLabels)
+        println(classLabels.size)
+        println(clusterLabels.size)
         var totalAmi = 0.0
 
         // Compute the AMI for each individual word.  If a word did not have any

@@ -2,6 +2,7 @@ package edu.ucla.sspace.tools;
 
 import edu.ucla.sspace.common.ArgOptions;
 
+import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.MatrixFile;
@@ -56,7 +57,7 @@ public class ReductionEval {
             format = Format.MATLAB_SPARSE;
             */
         } else if (options.getStringOption('a').equals("SVD")) {
-            reducer = new SingularValueDecompositionMatlab();
+            reducer = new SingularValueDecompositionLibC();
             format = Format.SVDLIBC_SPARSE_BINARY;
         } else
             System.exit(1);
@@ -72,12 +73,8 @@ public class ReductionEval {
                              Format.DENSE_TEXT);
 
         File docSpaceFile = new File(options.getStringOption('d'));
-        MatrixIO.writeMatrix(reducer.classFeatures(), docSpaceFile,
+        MatrixIO.writeMatrix(Matrices.transpose(reducer.classFeatures()), 
+                             docSpaceFile,
                              Format.DENSE_TEXT);
-
-        PrintWriter writer = new PrintWriter(options.getPositionalArg(1));
-        for (double singularValue : reducer.singularValues())
-            writer.printf("%f\n", singularValue);
-        writer.close();
     }
 }

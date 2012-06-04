@@ -1,7 +1,7 @@
 import edu.ucla.sspace.basis.BasisMapping
 import edu.ucla.sspace.matrix.MatrixIO
 import edu.ucla.sspace.matrix.MatrixIO.Format
-import edu.ucla.sspace.sim.JaccardIndex
+import edu.ucla.sspace.similarity.JaccardIndex
 import edu.ucla.sspace.text.DependencyFileDocumentIterator
 import edu.ucla.sspace.util.SerializableUtil
 import edu.ucla.sspace.vector.CompactSparseVector
