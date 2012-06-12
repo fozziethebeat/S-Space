@@ -26,6 +26,11 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.io.PrintStream;
+import java.io.Reader;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -40,6 +45,80 @@ public class VectorIO {
      * Uninstantiable
      */
     private VectorIO() { }
+
+    public static List<SparseDoubleVector> readSparseVectors(
+            Reader reader) throws IOException {
+        BufferedReader br = new BufferedReader(reader);
+
+        String line = br.readLine();
+        String[] numRowColumns = line.split("\\s+");
+        int numRows = Integer.parseInt(numRowColumns[0]);
+        int numCols = Integer.parseInt(numRowColumns[1]);
+
+        List<SparseDoubleVector> vectors =
+            new ArrayList<SparseDoubleVector>(numRows);
+        for (line = null; (line = br.readLine()) != null; ) {
+            SparseDoubleVector sv = new CompactSparseVector(numCols);
+            for (String entry : line.trim().split("\\s+")) {
+                String[] colValue = entry.split(":");
+                int col = Integer.parseInt(colValue[0]);
+                double val = Double.parseDouble(colValue[1]);
+                sv.set(col, val);
+            }
+            vectors.add(sv);
+        }
+
+        return vectors;
+    }
+
+    public static void writeVectors(List<SparseDoubleVector> vectors,
+                                    String outputFile) throws IOException {
+        PrintStream ps = new PrintStream(outputFile);
+        writeVectors(vectors, ps);
+        ps.close();
+    }
+
+    public static void writeVectors(List<SparseDoubleVector> vectors,
+                                    File outputFile) throws IOException {
+        PrintStream ps = new PrintStream(outputFile);
+        writeVectors(vectors, ps);
+        ps.close();
+    }
+
+    public static void writeVectors(List<SparseDoubleVector> vectors,
+                                    PrintStream stream) {
+        int numData = vectors.size();
+        int numFeatures = vectors.get(0).length();
+
+        stream.printf("%d %d\n", numData, numFeatures);
+        for (SparseDoubleVector v : vectors) {
+            if (v.length() != numFeatures)
+                throw new IllegalArgumentException(
+                        "All vectors in the list must be of the same size");
+            writeVector(v, stream);
+        }
+    }
+
+    public static void writeVector(SparseDoubleVector vector, 
+                                   String outputFile) throws IOException {
+        PrintStream ps = new PrintStream(outputFile);
+        writeVector(vector, ps);
+        ps.close();
+    }
+
+    public static void writeVector(SparseDoubleVector vector, 
+                                   File outputFile) throws IOException {
+        PrintStream ps = new PrintStream(outputFile);
+        writeVector(vector, ps);
+        ps.close();
+    }
+
+    public static void writeVector(SparseDoubleVector vector, 
+                                   PrintStream stream) {
+        for (int i : vector.getNonZeroIndices())
+            stream.printf("%d:%f ", i, vector.get(i));
+        stream.println();
+    }
 
     /**
      * Read a double array from the specified file.  {@f} is interpreted as a

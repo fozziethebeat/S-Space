@@ -49,8 +49,6 @@ public class SparseHashDoubleVector
 
     private TIntDoubleHashMap vector;
 
-    private int[] nonZeroIndices;
-
     private int maxLength;
 
     private double magnitude;
@@ -70,7 +68,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(int length) {
         maxLength = length;
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
     }
 
     /**
@@ -83,7 +80,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(double[] values) {
         maxLength = values.length;
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
         magnitude = 0;
         for (int i = 0; i < values.length; ++i) {
             if (values[i] != 0) {
@@ -116,7 +112,6 @@ public class SparseHashDoubleVector
 
         this.maxLength = length;
         this.vector = new TIntDoubleHashMap();
-        this.nonZeroIndices = nonZeros;
         this.magnitude = 0;
         for (int i = 0; i < nonZeros.length; ++i) {
             if (nonZeros[i] >= maxLength)
@@ -134,7 +129,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(DoubleVector values) {
         maxLength = values.length();
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
         magnitude = values.magnitude();
         if (values instanceof SparseVector) {
             int[] nonZeros = ((SparseVector) values).getNonZeroIndices();
@@ -197,7 +191,6 @@ public class SparseHashDoubleVector
         else
             vector.put(index, value);
         magnitude = -1;
-        nonZeroIndices = null;
     }
 
     /**
@@ -234,9 +227,7 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        if (nonZeroIndices == null)
-            nonZeroIndices = vector.keys();
-        return nonZeroIndices;
+        return vector.keys();
     }
 
     /**
