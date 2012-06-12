@@ -37,7 +37,9 @@ import java.util.Set;
  *
  * @author Keith Stevens
  */
-public class CellMaskedMatrix implements Matrix {
+public class CellMaskedMatrix implements Matrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
      * The mapping for rows from new indices to old indices.

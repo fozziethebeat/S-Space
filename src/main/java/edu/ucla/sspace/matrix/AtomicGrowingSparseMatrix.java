@@ -46,10 +46,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author David Jurgens
  */
-public class AtomicGrowingSparseMatrix implements AtomicMatrix, SparseMatrix {
+public class AtomicGrowingSparseMatrix 
+        implements AtomicMatrix, SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
-     * The read lock for reading rows from this {@code AtomicGrowingSparseMatrix}.
+     * The read lock for reading rows from this {@code
+     * AtomicGrowingSparseMatrix}.
      */
     private Lock rowReadLock;
 

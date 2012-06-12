@@ -38,8 +38,10 @@ import java.util.List;
  * @author Keith Stevens
  */
 class SparseListMatrix<T extends SparseDoubleVector> extends ListMatrix<T>
-                                                     implements SparseMatrix {
+        implements SparseMatrix, java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Creates a new {@code SparseListMatrix} from a list of {@link
      * SparseDoubleVectors}.  Immutable versions of each vector are stored.

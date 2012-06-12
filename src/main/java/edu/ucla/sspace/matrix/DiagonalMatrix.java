@@ -33,7 +33,9 @@ import edu.ucla.sspace.vector.SparseHashDoubleVector;
  *
  * @author Keith Stevens 
  */
-public class DiagonalMatrix implements SparseMatrix {
+public class DiagonalMatrix implements SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
         
     /**
      * The number diagonal values in this {@code Matrix}.

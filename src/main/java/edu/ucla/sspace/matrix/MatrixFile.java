@@ -34,7 +34,9 @@ import java.util.Iterator;
  * that operate on matrices to more easily handle matrix files as parameters and
  * return arguments.
  */
-public class MatrixFile implements Iterable<MatrixEntry> {
+public class MatrixFile implements Iterable<MatrixEntry>, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The file containing the matrix data.

@@ -61,7 +61,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 
 /**
- * A directed multigraph implementation.  
+ * An undirected {@link Multigraph} implementation.  
  *
  * @param T a class type whose values are used to distinguish between edge types
  * 

@@ -57,7 +57,9 @@ import java.util.Set;
  * @see RowMaskedMatrix
  */
 public class SparseRowMaskedMatrix extends RowMaskedMatrix 
-        implements SparseMatrix {
+        implements SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final SparseMatrix matrix;
 

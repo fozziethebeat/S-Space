@@ -53,7 +53,9 @@ import java.util.Set;
  *
  * @author David Jurgens
  */
-public class RowMaskedMatrix implements Matrix {
+public class RowMaskedMatrix implements Matrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The matrix that contains the actual data for this instance

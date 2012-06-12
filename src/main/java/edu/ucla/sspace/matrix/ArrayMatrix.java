@@ -25,10 +25,7 @@ import edu.ucla.sspace.vector.AbstractDoubleVector;
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 
-import java.io.File;
-import java.io.IOError;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.Serializable;
 
 import java.util.Arrays;
 
@@ -43,8 +40,10 @@ import java.util.Arrays;
  *
  * @author David Jurgens
  */
-public class ArrayMatrix implements Matrix {
+public class ArrayMatrix implements Matrix, Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     /**
      * The number of rows stored in this {@code ArrayMatrix}.
      */
@@ -282,7 +281,9 @@ public class ArrayMatrix implements Matrix {
      * A matrix-internal view of a row vector that exposes is contents as a
      * {@link DoubleVector} without duplicating the data
      */
-    class RowVector extends AbstractDoubleVector {
+    class RowVector extends AbstractDoubleVector implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         /**
          * The index into the {@linke ArrayMatrix#matrix} array where the data

@@ -31,6 +31,7 @@ import edu.ucla.sspace.text.WordIterator;
 
 import edu.ucla.sspace.util.NearestNeighborFinder;
 import edu.ucla.sspace.util.PartitioningNearestNeighborFinder;
+import edu.ucla.sspace.util.SimpleNearestNeighborFinder;
 
 import edu.ucla.sspace.vector.SparseVector;
 import edu.ucla.sspace.vector.Vector;
@@ -46,12 +47,16 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A utility class that operates as a command-line tool for interacting with
@@ -311,6 +316,7 @@ public class SemanticSpaceExplorer {
                 return false;
             }
             String focusWord = commandTokens.next();
+
             int neighbors = 10;
             if (commandTokens.hasNext()) {
                 String countStr = commandTokens.next();
@@ -715,13 +721,32 @@ public class SemanticSpaceExplorer {
         boolean suppressPrompt = options.hasOption("executeFile");
 
         SemanticSpaceExplorer explorer = new SemanticSpaceExplorer();
+        Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
         try {
             if (!suppressPrompt)
                 System.out.print("> ");
             for (String command = null; 
                      (command = commandsToExecute.readLine()) != null; ) {
-                Iterator<String> commandTokens = new WordIterator(command);
-                if (explorer.execute(commandTokens) && recordFile != null) {
+
+                // Break the string, but recognize compound tokens as encoded
+                // with "" characters
+                List<String> tokens = new ArrayList<String>();
+                Matcher regexMatcher = regex.matcher(command);
+                while (regexMatcher.find()) {
+                    if (regexMatcher.group(1) != null) {
+                        // Add double-quoted string without the quotes
+                        tokens.add(regexMatcher.group(1));
+                    } else if (regexMatcher.group(2) != null) {
+                        // Add single-quoted string without the quotes
+                        tokens.add(regexMatcher.group(2));
+                    } else {
+                        // Add unquoted word
+                        tokens.add(regexMatcher.group());
+                    }
+                }                 
+
+                // Iterator<String> commandTokens = new WordIterator(command);
+                if (explorer.execute(tokens.iterator()) && recordFile != null) {
                     recordFile.println(command);
                 }
                 if (!suppressPrompt)

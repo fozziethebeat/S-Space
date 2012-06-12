@@ -27,7 +27,9 @@ package edu.ucla.sspace.matrix;
  *
  * @see MatrixIO#getIterator(File,MatrixIO.Format)
  */
-class SimpleEntry implements MatrixEntry {
+class SimpleEntry implements MatrixEntry, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final int row;
     private final int column;

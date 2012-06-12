@@ -38,7 +38,9 @@ import java.util.Map;
  * @author Keith Stevens
  */
 public class CellMaskedSparseMatrix extends CellMaskedMatrix
-                                    implements SparseMatrix {
+        implements SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The original underlying matrix.
