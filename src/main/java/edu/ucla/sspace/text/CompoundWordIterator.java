@@ -75,17 +75,29 @@ public class CompoundWordIterator implements Iterator<String> {
      */
     private BufferedIterator tokenizer;
 
+    /**
+     * Constructs an iterator over the white-space delimited tokens in the
+     * {@code String}, returning all compound words as a single {@code String}.
+     */
     public CompoundWordIterator(String str, Set<String> compoundWords) {
 	this(new BufferedReader(new StringReader(str)), compoundWords);
     }
 
+    /**
+     * Constructs an iterator over the white-space delimited tokens in the text
+     * content of the reader, returning all compound words as a single {@code
+     * String}.
+     */
     public CompoundWordIterator(BufferedReader br, Set<String> compoundWords) {
 	tokenizer = new BufferedIterator(br);
 	compoundTokens = new LinkedHashMap<String,CompoundTokens>();
 	initializeMapping(compoundWords);
     }
 
-
+    /**
+     * Wraps the existing iterator as a new iterator that returns any compound
+     * tokens in the {@code tokens} {@link Iterator} as a single {@code String}.
+     */
     public CompoundWordIterator(Iterator<String> tokens, 
                                 Set<String> compoundWords) {
 	tokenizer = new BufferedIterator(tokens);
@@ -240,7 +252,15 @@ public class CompoundWordIterator implements Iterator<String> {
 	    String match = null;
 	    int num = -1;
 	    for (Map.Entry<List<String>,String> e : compounds.entrySet()) {
-		if (e.getKey().equals(tokens)) {
+                
+                if (tokens.size() < e.getKey().size())
+                    continue;
+
+                List<String> ngram = e.getKey();
+                List<String> toCompare = tokens.subList(0, ngram.size());
+
+                if (ngram.equals(toCompare)) {
+
 		    // Perform a greedy match for the longest possible compound
 		    if (match == null || match.length() < e.getValue().length()) {
 			match = e.getValue();
@@ -251,6 +271,5 @@ public class CompoundWordIterator implements Iterator<String> {
 	    return (match == null) 
 		? null : new Duple<Integer,String>(num, match);
 	}
-    }
-    
+    }    
 }
