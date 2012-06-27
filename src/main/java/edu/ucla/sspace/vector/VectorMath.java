@@ -103,6 +103,25 @@ public class VectorMath {
     }
 
     /**
+     * Adds the second {@code SparseDoubleVector} to the first {@code
+     * SparseDoubleVector} and returns the result.
+     *
+     * @param vector1 The destination vector to be summed onto.
+     * @param vector2 The source vector to sum from.
+     * @return The summation of {code vector1} and {@code vector2}.
+     */
+    public static SparseDoubleVector add(SparseDoubleVector vector1,
+                                   SparseDoubleVector vector2) {
+        if (vector2.length() != vector1.length())
+            throw new IllegalArgumentException(
+                    "Vectors of different sizes cannot be added.  " +
+                    "Lengths are: vector1: " + vector1.length() +
+                    ", vector2: " + vector2.length());
+        addSparseValues(vector1, vector2);
+        return vector1;
+    }
+
+    /**
      * Adds the second {@code IntegerVector} to the first {@code IntegerVector}
      * and returns the result.
      *
