@@ -25,11 +25,15 @@ object ComparePrototypes {
             case "max" => maximum _
         }
 
-        val prototypes1 = VectorIO.readSparseVectors(new FileReader(args(2)))
-        val prototypes2 = VectorIO.readSparseVectors(new FileReader(args(3)))
+        try {
+            val prototypes1 = VectorIO.readSparseVectors(new FileReader(args(2)))
+            val prototypes2 = VectorIO.readSparseVectors(new FileReader(args(3)))
 
-        val scores = for (p1 <- prototypes1; p2 <- prototypes2) yield simFunc.sim(p1, p2)
-        println(matchFunc(scores))
+            val scores = for (p1 <- prototypes1; p2 <- prototypes2) yield simFunc.sim(p1, p2)
+            println(matchFunc(scores))
+        } catch {
+            case _ => println(0d)
+        }
     }
 
     def maximum(scores: Iterable[Double]) = scores.max

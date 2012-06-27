@@ -1,10 +1,11 @@
 #!/bin/bash
 
-baseDir=$HOME/devel/S-Space/WordSimEvaluation/
+baseDir=$HOME/devel/S-Space/WordSimEvaluation/data
 stopWordFile=$HOME/devel/S-Space/data/english-stop-words-large.txt 
 
 wordSimFile=$baseDir/wordSim65pairs.tab
 wordSimKeyWordsFile=$baseDir/wordsim.keywords.txt
+wordSimComparisonFile=$baseDir/wordsim.induced.comparison.dat
 wackyFile=$baseDir/ukwac.sample.xml
 oneDocFile=$baseDir/ukwac.sample.one-doc.txt
 topWordFile=$baseDir/top.50k.words.ukwac.txt
@@ -90,6 +91,9 @@ for partition in $contextDir/*.partition; do
     #$run $base.FormPrototypes $partition $mat $prototypeMat
 done
 
+echo "Computing word similarity scores for each word pair in $wordSimFile"
+function genereteSimilarityScores() {
+echo "Model Clusters Word1 Word2 Known Computed" 
 for m in $clusterAlgsList $consensusAlgList; do
     for k in $numClustersList; do
         tail -n +2 $wordSimFile | grep -v "^#" | while read pairLine; do
@@ -101,6 +105,10 @@ for m in $clusterAlgsList $consensusAlgList; do
                 $contextDir/${contextFilePrefix}${w1}.$m.$k.prototype \
                 $contextDir/${contextFilePrefix}${w2}.$m.$k.prototype`
             echo "$m $k $w1 $w2 $goldScore $computedScore"
-        done
+        done 
     done
-done
+done 
+}
+#genereteSimilarityScores > $wordSimComparisonFile
+
+R CMD BATCH src/main/R/plotCorrelations.R
