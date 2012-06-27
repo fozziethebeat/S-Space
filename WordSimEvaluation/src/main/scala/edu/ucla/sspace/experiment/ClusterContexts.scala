@@ -5,9 +5,12 @@ import edu.ucla.sspace.clustering.DirectClustering
 import edu.ucla.sspace.clustering.NeighborChainAgglomerativeClustering
 import edu.ucla.sspace.clustering.Partition
 import edu.ucla.sspace.matrix.Matrices
+import edu.ucla.sspace.vector.SparseDoubleVector
 import edu.ucla.sspace.vector.VectorIO
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
+import scala.collection.JavaConversions.seqAsJavaList
+import scala.util.Random
 
 import java.io.FileReader
 
@@ -21,9 +24,11 @@ object ClusterContexts {
         }
 
         val numClusters = args(1).toInt
+        val maxVectors = 25000
+        def sample(v: Iterable[SparseDoubleVector]) = Random.shuffle(v).take(maxVectors).toList
 
-        val data = Matrices.asSparseMatrix(
-            VectorIO.readSparseVectors(new FileReader(args(2))))
+        val vectors = VectorIO.readSparseVectors(new FileReader(args(2)))
+        val data = Matrices.asSparseMatrix((if (args(0) == "hac") sample(vectors) else vectors))
 
         val assignments = alg.cluster(data, numClusters, System.getProperties())
         val partition = Partition.fromAssignments(assignments)
