@@ -78,8 +78,8 @@ public class BestOfKConsensusFunction implements ConsensusFunction {
             for (int j = 0; j < partitions.size(); ++j)
                 if (i != j) 
                     totalScore += comp.compare(curr, partitions.get(j));
-            if ((comp.isDistance() && totalScore < bestScore) ||
-                (!comp.isDistance() && totalScore > bestScore)) {
+            if ((comp.isDistance() && totalScore <= bestScore) ||
+                (!comp.isDistance() && totalScore >= bestScore)) {
                 best = curr;
                 bestScore = totalScore;
             }
