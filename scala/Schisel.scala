@@ -142,11 +142,14 @@ object Schisel {
                            numDocuments:Int, numTopics:Int) {
         System.err.println("Printing Document Space")
         val alpha = topicModel.alpha
-        val documentSpace = new ArrayMatrix(numDocuments, numTopics)
-        for (r<- 0 until documentSpace.rows;
-             (weight, c) <- topicModel.getTopicProbabilities(r).zipWithIndex)
-            documentSpace.set(r, c, weight)
-        MatrixIO.writeMatrix(documentSpace, outFile, Format.DENSE_TEXT)
+        val writer = new PrintWriter(outFile)
+        for (d <- 0 until numDocuments)
+            writer.println(topicModel.getTopicProbabilities(d).zipWithIndex
+                                                              .map(_.swap)
+                                                              .sorted
+                                                              .map(_._2)
+                                                              .mkString(" "))
+        writer.close
     }
 
     def printBasis(outFile:String, alphabet:String) {
@@ -166,14 +169,19 @@ object Schisel {
         val topicBits = topicModel.topicBits
 
         val wordSpace = new ArrayMatrix(topicModel.numTypes, topicModel.numTopics)
-        // Initialize the matrix so that every entry has the beta smoothing parameter.
+        // Initialize the matrix so that every entry has the beta smoothing
+        // parameter.
         for (r <- 0 until wordSpace.rows; c <- 0 until wordSpace.columns)
             wordSpace.set(r, c, beta)
 
-        // Iterate through the real topic counts when they exist.  Mallet seems to make this as impossible as possible, each entry in the
-        // matrix encodes the topic id and the count for the pairing, in no particular order (it's probably sorted by frequency).  The
-        // actual indexes in each row of the typeTopicCount are meaningless, and many entries are 0, hency why we have to preset the beta
-        // value as above, it's a pain in the bum to know when we've set a wordXtopic count or not with their data structure.
+        // Iterate through the real topic counts when they exist.  Mallet seems
+        // to make this as impossible as possible, each entry in the matrix
+        // encodes the topic id and the count for the pairing, in no particular
+        // order (it's probably sorted by frequency).  The actual indexes in
+        // each row of the typeTopicCount are meaningless, and many entries are
+        // 0, hency why we have to preset the beta value as above, it's a pain
+        // in the bum to know when we've set a wordXtopic count or not with
+        // their data structure.
         for ((topicCounts, row) <- topicModel.typeTopicCounts.zipWithIndex;
              count <- topicCounts; if count > 0)
             wordSpace.add(row, count & topicMask, count >> topicBits)
@@ -182,8 +190,8 @@ object Schisel {
     }
 
     def main(args:Array[String]) {
-        if (args.size != 4) {
-            printf("usage: Schisel <contentWords.txt> <nTopics> <docs.txt> <out_name>\n")
+        if (args.size != 5) {
+            printf("usage: Schisel <contentWords.txt> <nTopics> <docs.txt> <out_name> <serializedName>\n")
             System.exit(1);
         }
 
@@ -207,6 +215,7 @@ object Schisel {
         printWordSpace(outBase+"-ws.dat", topicModel, numTopics)
         printDocumentSpace(outBase+"-ds.dat", 
                            topicModel, numDocuments, numTopics)
+        topicModel.write(new File(args(4)))
         System.err.println("Done")
     }
 }
