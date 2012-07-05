@@ -12,7 +12,7 @@ object ExtractParsedWackyCopora {
         // Read each document as parsed by the corpus reader and print out  the
         // text.
         val reader = new PukWacCorpusReader()
-        for (doc <- reader.read(new File(args(0))) )
+        for (corpusFile <- args; doc <- reader.read(new File(corpusFile)))
             println(doc.reader.readLine.toLowerCase)
     }
 }

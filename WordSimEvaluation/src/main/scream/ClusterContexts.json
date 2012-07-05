@@ -1,0 +1,37 @@
+{
+  "title" : "ClusterContexts",
+  "timeout" : 600000000,
+  "inputFile" : "screamInput/wordsim-contexts",
+  "inputDir" : "/user/stevens35/input/",
+  "outputDir" : "/user/stevens35/output/",
+  "runFile": "edu.ucla.sspace.experiment.ClusterContexts",
+  "jars": [
+      "target/wordsim-experiment-1.0-jar-with-dependencies.jar",
+  ],
+  "lineParts": [
+     "inputMat",
+     "outputName",
+     "alg",
+     "k",
+     "sourceLocation",
+     "outputLocation",
+  ],
+  "downloads" : [
+    {
+      "location" : "$sourceLocation",
+      "name": "$inputMat"
+    },
+  ],
+  "uploads" : [
+    {
+      "location" : "$outputLocation",
+      "name" : "$outputName",
+    },
+  ],
+  "arguments" : [
+    "$alg",
+    "$k",
+    "$inputMat",
+    "$outputName",
+  ],
+}

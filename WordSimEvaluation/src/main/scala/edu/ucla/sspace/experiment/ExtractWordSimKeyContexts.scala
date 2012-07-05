@@ -20,7 +20,6 @@ object ExtractWordSimContexts {
         docs.map(_.split("\\s+").filter(acceptToken))
             .flatMap(_.sliding(windowSize))
             .filter(acceptWindow)
-            .toList
             .foreach( context => {
                 val keyWord = context(mid)
                 val writer = writerMap.get(keyWord) match {
