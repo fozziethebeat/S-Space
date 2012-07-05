@@ -1,15 +1,16 @@
+package edu.ucla.sspace.experiment
+
 import edu.ucla.sspace.basis.BasisMapping
 import edu.ucla.sspace.basis.FilteredStringBasisMapping
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor
 import edu.ucla.sspace.dependency.DependencyTreeNode
 import edu.ucla.sspace.hal.EvenWeighting
 import edu.ucla.sspace.matrix.Matrices
-import edu.ucla.sspace.matrix.MatrixIO
-import edu.ucla.sspace.matrix.MatrixIO.Format
 import edu.ucla.sspace.text.DependencyFileDocumentIterator
 import edu.ucla.sspace.util.SerializableUtil
 import edu.ucla.sspace.vector.SparseDoubleVector
 import edu.ucla.sspace.vector.Vectors
+import edu.ucla.sspace.vector.VectorIO
 import edu.ucla.sspace.wordsi.DependencyContextGenerator
 import edu.ucla.sspace.wordsi.Wordsi
 import edu.ucla.sspace.wordsi.WordOccrrenceContextGenerator
@@ -94,9 +95,8 @@ object MorphAnalysisWordsi extends Wordsi {
     }
 
     def printVectors(outFile: File, numDim: Int) {
-        val matrix = Matrices.asMatrix(
-            for (v <- vectors) yield Vectors.subview(v, 0, numDim) )
-        MatrixIO.writeMatrix(matrix, outFile, Format.SVDLIBC_SPARSE_TEXT)
+        val sizedData = vectors.map(Vectors.subview(_, 0, numDim))
+        VectorIO.writeVectors(sizedData, outFile)
     }
 
     class MorphDependencyContextGenerator(val basis:BasisMapping[String, String],

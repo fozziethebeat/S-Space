@@ -1,3 +1,5 @@
+package edu.ucla.sspace.experiment
+
 import edu.ucla.sspace.basis.BasisMapping
 import edu.ucla.sspace.basis.FilteredStringBasisMapping
 import edu.ucla.sspace.dependency.CoNLLDependencyExtractor

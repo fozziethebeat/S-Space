@@ -60,6 +60,8 @@ public class VectorIO {
         for (line = null; (line = br.readLine()) != null; ) {
             SparseDoubleVector sv = new CompactSparseVector(numCols);
             for (String entry : line.trim().split("\\s+")) {
+                if (entry.equals(""))
+                    continue;
                 String[] colValue = entry.split(":");
                 int col = Integer.parseInt(colValue[0]);
                 double val = Double.parseDouble(colValue[1]);
