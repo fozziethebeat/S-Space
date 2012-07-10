@@ -15,6 +15,8 @@ wackyFiles="$hfs/wackypedia/wikipedia-1.xml $hfs/wackypedia/wikipedia-2.xml $hfs
 oneDocFile=$hfs/wackypedia/wiki.full.one-doc.txt
 contextDir=$hfs/contexts/wiki
 contextFilePrefix=wiki-contexts-
+hdfsOutputDir=/user/stevens35/wordsim-contexts
+hdfsInputDir=/data/wackypedia/wiki-contexts
 
 numTopWords=50000
 windowSize=20
@@ -73,12 +75,12 @@ for mat in $contextDir/*.mat; do
         for k in $numClustersList; do
             mat=`echo $mat | sed "s/.*$contextFilePrefix/$contextFilePrefix/"`
             newName=`echo $mat | sed "s/sparse_vector.mat/$m.$k.partition/"`
-            echo $mat $newName $m $k /data/wackypedia/wiki-contexts /user/stevens35/wordsim-contexts
+            echo $mat $newName $m $k $hdfsInputDir $hdfsOutputDir
             #$run $base.ClusterContexts $m $k $mat $newName
         done
     done
 done > screamInput/wordsim-contexts
-scream src/main/scream/ClusterContexts.json screamInput/wordsim-contexts
+#scream src/main/scream/ClusterContexts.json screamInput/wordsim-contexts
 
 # Iterate over every word and construct multiple consensus functions over the
 # component solutions computed above.
@@ -94,6 +96,11 @@ for txt in $contextDir/*.txt; do
         done
     done
 done
+for w in `cat $wordSimKeyWordsFile`; do
+    for k in $numClustersList; do
+        inputPartitions=`for c in $clusterAlgsList; do echo $contextFilePrefix.$w.$c.$k.partition; done | tr "\n" ";"`
+        for c in $consensusAlgList; do
+            echo $c $k $hdfsOutputDir 
 
 # Iterate over all of the partitions and form them into prototype vectors for
 # easy comparison in semantic similarity tests
