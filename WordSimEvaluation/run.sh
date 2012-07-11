@@ -100,7 +100,11 @@ for w in `cat $wordSimKeyWordsFile`; do
     for k in $numClustersList; do
         inputPartitions=`for c in $clusterAlgsList; do echo $contextFilePrefix.$w.$c.$k.partition; done | tr "\n" ";"`
         for c in $consensusAlgList; do
-            echo $c $k $hdfsOutputDir 
+            echo $c $k $hdfsOutputDir $inputPartitions $contextFilePrefix.$w.$c.$k.partition
+        done
+    done
+done > screamInput/ConsensusRun
+scream src/main/scream/ConsensusRun.json screamInput/ConsensusRun
 
 # Iterate over all of the partitions and form them into prototype vectors for
 # easy comparison in semantic similarity tests
