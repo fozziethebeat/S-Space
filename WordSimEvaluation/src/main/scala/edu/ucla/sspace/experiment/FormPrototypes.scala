@@ -6,6 +6,7 @@ import edu.ucla.sspace.vector.SparseDoubleVector
 import edu.ucla.sspace.vector.VectorIO
 import edu.ucla.sspace.vector.VectorMath
 
+import scala.collection.mutable.Buffer
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.iterableAsScalaIterable
 import scala.collection.JavaConversions.seqAsJavaList
