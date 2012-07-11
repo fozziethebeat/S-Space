@@ -61,7 +61,7 @@ public class AgglomerativeConsensusFunction implements ConsensusFunction {
         // Create the consensus matrix and an indicator matrix tracking the
         // number of times each data pairing was observed.
         Matrix consensusMatrix = new SymmetricMatrix(numPoints, numPoints);
-        Matrix indicatorMatrix = new SymmetricIntMatrix(numPoints, numPoints);
+        //Matrix indicatorMatrix = new SymmetricIntMatrix(numPoints, numPoints);
         for (Partition partition : partitions) {
             // Throw an error if any partition reports a different number of
             // data points.  Note that not all partitions must report
@@ -88,9 +88,9 @@ public class AgglomerativeConsensusFunction implements ConsensusFunction {
 
             // Update the indicator matrix to note all possible pairings in the
             // partition.
-            for (int i = 0; i < allPoints.size(); ++i)
-                for (int j = i+1; j < allPoints.size(); ++j)
-                    indicatorMatrix.add(allPoints.get(i), allPoints.get(j), 1);
+            //for (int i = 0; i < allPoints.size(); ++i)
+            //    for (int j = i+1; j < allPoints.size(); ++j)
+            //        indicatorMatrix.add(allPoints.get(i), allPoints.get(j), 1);
         }
 
         // Normalize the consensus matrix such that every value is between 0 and
@@ -98,7 +98,7 @@ public class AgglomerativeConsensusFunction implements ConsensusFunction {
         for (int r = 0; r < consensusMatrix.rows(); ++r)
             for (int c = 0; c < r; ++c)
                 consensusMatrix.set(
-                        r, c, consensusMatrix.get(r, c) / indicatorMatrix.get(r, c));
+                        r, c, consensusMatrix.get(r, c) / partitions.size()); //indicatorMatrix.get(r, c));
 
         // Cluster the consensus matrix using agglomerative clustering and
         // return the result as a partition.
