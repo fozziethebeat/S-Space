@@ -14,5 +14,5 @@ See the [Getting Started](/fozziethebeat/S-Space/wiki/GettingStarted/) page for
 a quick introduction on how to use the S-Space package, see the [Package
 Overview] (/fozziethebeat/S-Space/wiki/PackageStructure) for information on the
 code and available features, or dive right into the
-[Javadoc](http://fozziethebeat.github.com/S-Space/javadoc/) to see what's
+[Javadoc](http://fozziethebeat.github.com/S-Space/apidocs/) to see what's
 available now.

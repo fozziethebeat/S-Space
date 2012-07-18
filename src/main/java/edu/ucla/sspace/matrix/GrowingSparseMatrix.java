@@ -50,7 +50,9 @@ import java.util.Map;
  *
  * @author Keith Stevens 
  */
-public class GrowingSparseMatrix implements SparseMatrix {
+public class GrowingSparseMatrix implements SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The current number of rows in this {@code GrowingSparseMatrix}.

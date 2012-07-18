@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 /**
  * A generic permutation function.  This class precomputes the permutations as
@@ -54,13 +56,13 @@ public class DefaultPermutationFunction
     /**
      * A mapping from a distance to a corresponding permutation.
      */
-    private final Map<Integer, Function> permutationToReordering;
+    private final TIntObjectMap<Function> permutationToReordering;
     
     /**
      * Creates an empty {@code DefaultPermutationFunction}.
      */
     public DefaultPermutationFunction() {
-        permutationToReordering = new HashMap<Integer,Function>();
+        permutationToReordering = new TIntObjectHashMap<Function>();
     }
 
     /**
@@ -119,6 +121,10 @@ public class DefaultPermutationFunction
                         forwardMapping[i] = objFunc[i].intValue();
                         backwardMapping[objFunc[i].intValue()] = i;
                     }            
+                    System.out.printf("Forward: %s%nBackward: %s%n", 
+                                      Arrays.toString(forwardMapping),
+                                      Arrays.toString(backwardMapping));
+
                     function = new Function(forwardMapping, backwardMapping);
                     // store it in the function map for later usee
                     permutationToReordering.put(exponent, function);
@@ -148,12 +154,16 @@ public class DefaultPermutationFunction
                 dimensions[i] = i;
         }
 
+        System.out.printf("input: %s%ninitial result: %s%n", v, result);
+
         boolean isInverse = numPermutations < 0;
         
         // NB: because we use the signum and !=, this loop will work for both
         // positive and negative numbers of permutations
         int totalPermutations = Math.abs(numPermutations);
 
+        // Loop through the number of permutation that we have to do and keep
+        // updating which indices are being assigned to which
         for (int count = 1; count <= totalPermutations; ++count) {            
             // load the reordering funcion for this iteration of the permutation
             Function function = getFunction(count, v.length());
@@ -171,8 +181,9 @@ public class DefaultPermutationFunction
         }
 
         for (int d : dimensions)
-            result.set(d, v.getValue(d));
+            result.set(dimensions[d], v.getValue(d));
 
+        System.out.printf("input: %s%nfinal permuted result: %s%n", v, result);
         return result;
     }
 

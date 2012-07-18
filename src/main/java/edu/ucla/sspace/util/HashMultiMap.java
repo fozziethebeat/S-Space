@@ -29,6 +29,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -134,7 +135,9 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
      */
     public Set<V> get(Object key) {
         Set<V> vals = map.get(key);
-        return (vals == null) ? Collections.<V>emptySet() : vals;
+        return (vals == null) 
+            ? Collections.<V>emptySet() 
+            : Collections.<V>unmodifiableSet(vals);
     }
 
     /**
@@ -148,7 +151,7 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
      * {@inheritDoc}
      */
     public Set<K> keySet() {
-        return map.keySet();
+        return new KeySet();
     }
 
     /**
@@ -218,7 +221,7 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
         Set<V> v = map.remove(key);
         if (v != null)
             range -= v.size();
-        return v;
+        return (v == null) ? Collections.<V>emptySet() : v;
     }
 
     /**
@@ -292,6 +295,48 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
      */
     public Collection<Set<V>> valueSets() {
         return map.values();
+    }
+
+    class KeySet extends SetDecorator<K> implements Serializable {
+
+        private static final long serialVersionUID = 1;
+
+        public KeySet() {
+            super(map.keySet());
+        }
+
+        public boolean add(K key) {
+            throw new UnsupportedOperationException(
+                "Cannot add key to a MultiMap without an associated value");
+        }
+        
+        public Iterator<K> iterator() {
+            return new KeyIter();
+        }
+
+        private Iterator<K> iterator_() {
+            return super.iterator();
+        }
+
+        public boolean remove(Object key) {
+            return !HashMultiMap.this.remove(key).isEmpty();
+        }
+
+        class KeyIter extends IteratorDecorator<K> {
+                       
+            public KeyIter() {
+                super(iterator_());
+            }
+
+            public void remove() {
+                Set<V> valsForCurKey = map.get(cur);
+                // Null check in case of remove twice, in which case the remove
+                // line after will throw the exception
+                if (valsForCurKey != null)
+                    range -= valsForCurKey.size();
+                super.remove();
+            }
+        }
     }
 
     /**
@@ -470,7 +515,14 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
             }
 
             public V setValue(V value) {
-                Set<V> values = HashMultiMap.this.get(getKey());
+                Set<V> values = HashMultiMap.this.map.get(getKey());
+                // For either of these conditions to exist, the backing set
+                // would have to have been concurrently modified, since we
+                // wouldn't normally iterate over a key that isn't mapped to a
+                // value
+                if (values == null || values.size() == 0)
+                    throw new ConcurrentModificationException(
+                        "Expected at least one value mapped to " + getKey());
                 values.remove(getValue());
                 values.add(value);
                 return super.setValue(value);

@@ -159,7 +159,7 @@ public class PartitioningNearestNeighborFinder
 
         // Group all of the sspace's vectors into a Matrix so that we can
         // cluster them
-        int numTerms = sspace.getWords().size();
+        final int numTerms = sspace.getWords().size();
         final List<DoubleVector> termVectors = 
             new ArrayList<DoubleVector>(numTerms);
         String[] termAssignments = new String[numTerms];
@@ -196,13 +196,11 @@ public class PartitioningNearestNeighborFinder
 
             // Reassign each element to the centroid to which it is closest
             clusterAssignment.clear();
-            int vectorsPerThread = numTerms / workQueue.availableThreads() + 1;
-            
-            Object key = workQueue
-                .registerTaskGroup(workQueue.availableThreads());
-            for (int start = 0; start < numTerms; start += vectorsPerThread) {
-                final int sta = start;
-                final int end = Math.min(numTerms, start + vectorsPerThread);
+            final int numThreads = workQueue.availableThreads();
+            Object key = workQueue.registerTaskGroup(numThreads);
+
+            for (int threadId_ = 0; threadId_ < numThreads; ++threadId_) {
+                final int threadId = threadId_;
                 workQueue.add(key, new Runnable() {
                         public void run() {
                             // Thread local cache of all the cluster assignments
@@ -211,7 +209,7 @@ public class PartitioningNearestNeighborFinder
                             // For each of the vectors that this thread is
                             // responsible for, find the principle vector to
                             // which it is closest
-                            for (int i = sta; i < end; ++i) {
+                            for (int i = threadId; i < numTerms; i += numThreads) {
                                 DoubleVector v = termVectors.get(i);
                                 double highestSim = -Double.MAX_VALUE;
                                 int pVec = -1;
@@ -320,11 +318,16 @@ public class PartitioningNearestNeighborFinder
         SortedMultiMap<Double,String> mostSim = 
             getMostSimilar(mean, numberOfSimilarWords + terms.size());
         Iterator<Map.Entry<Double,String>> iter = mostSim.entrySet().iterator();
+        Set<Map.Entry<Double,String>> toRemove = 
+            new HashSet<Map.Entry<Double,String>>();
         while (iter.hasNext()) {
             Map.Entry<Double,String> e = iter.next();
             if (terms.contains(e.getValue()))
-                iter.remove();
+                toRemove.add(e);
         }
+        for (Map.Entry<Double,String> e : toRemove)
+            mostSim.remove(e.getKey(), e.getValue());
+
         // If we still have more words that were asked for, then prune out the
         // least similar
         while (mostSim.size() > numberOfSimilarWords) 
@@ -362,7 +365,8 @@ public class PartitioningNearestNeighborFinder
         
         // Register a task group to process similarity each of the principle
         // component's terms in parallel.
-        Object taskId = workQueue.registerTaskGroup(k);
+        Object taskId = workQueue.registerTaskGroup(
+            mostSimilarPrincipleVectors.values().size());
         int termsCompared = 0;
         int i =0;
         for (Map.Entry<DoubleVector,Set<String>> e : 

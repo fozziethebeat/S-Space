@@ -8,7 +8,7 @@
   <artifactId>sspace-wordsi</artifactId>
   <packaging>jar</packaging>
   <name>S-Space Package</name>
-  <version>2.0</version>
+  <version>2.0.3</version>
 
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -20,11 +20,11 @@
     Semantic Spaces as well as a highly-scalable library for designing new
     distributional semantics algorithms. Distributional algorithms process text
     corpora and represent the semantic for words as high dimensional feature
-    vectors. This package also includes matrices, vectors, and numerous
+    vectors. This package also includes matrices, vectors, graphs, and numerous
     clustering algorithms. These approaches are known by many names, such as
     word spaces, semantic spaces, or distributed semantics and rest upon the
     Distributional Hypothesis: words that appear in similar contexts have
-    similar meanings.</description> 
+    similar meanings.</description>
   <url>http://fozziethebeat.github.com/S-Space</url>
 
   <licenses>
@@ -50,7 +50,7 @@
     <developer>
       <id>davidjurgens</id>
       <name>David Jurgens</name>
-      <email>jurgens@gmail.com</email>
+      <email>jurgens@cs.ucla.edu</email>
       <url>http://cs.ucla.edu/~jurgens</url>
       <organization>University of California, Los Angeles</organization>
       <organizationUrl>http://cs.ucla.edu</organizationUrl>
@@ -129,6 +129,19 @@
           </execution>
         </executions>
         -->
+      </plugin>
+
+      <!-- Plugin for being able to debug the unit tests from a file -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <includes>
+            <!-- Make sure the both the Test/Tests.java files are included -->
+            <include>**/*Test*.java</include>
+          </includes>
+        </configuration>
       </plugin>
 
       <!-- Plugin for building the github site. -->
@@ -278,7 +291,17 @@
           </execution>
         </executions>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.12</version>
+        <configuration>
+          <includes>
+            <include>**/*Test*.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+ 
     </plugins>
   </build>
   <reporting>

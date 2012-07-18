@@ -39,7 +39,10 @@ import edu.ucla.sspace.vector.Vectors;
  *
  * @author David Jurgens
  */
-public class SparseHashMatrix extends AbstractMatrix implements SparseMatrix {
+public class SparseHashMatrix extends AbstractMatrix 
+        implements SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The number of rows contained in this {@code SparseMatrix}.

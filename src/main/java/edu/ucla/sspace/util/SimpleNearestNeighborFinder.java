@@ -38,6 +38,7 @@ import edu.ucla.sspace.vector.Vectors;
 import edu.ucla.sspace.vector.VectorMath;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -180,11 +181,16 @@ public class SimpleNearestNeighborFinder implements NearestNeighborFinder {
         SortedMultiMap<Double,String> mostSim = 
             getMostSimilar(mean, numberOfSimilarWords + terms.size());
         Iterator<Map.Entry<Double,String>> iter = mostSim.entrySet().iterator();
+        Set<Map.Entry<Double,String>> toRemove = 
+            new HashSet<Map.Entry<Double,String>>();
         while (iter.hasNext()) {
             Map.Entry<Double,String> e = iter.next();
             if (terms.contains(e.getValue()))
-                iter.remove();
+                toRemove.add(e);
         }
+        for (Map.Entry<Double,String> e : toRemove)
+            mostSim.remove(e.getKey(), e.getValue());
+
         // If we still have more words that were asked for, then prune out the
         // least similar
         while (mostSim.size() > numberOfSimilarWords) 
