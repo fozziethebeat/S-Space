@@ -19,6 +19,11 @@ object ConfounderTest {
                                .map(_.split("\\s+"))
                                .toList
                                .groupBy(_(2))
+
+        // If the test labels apply only one sense, then this testing framework does not apply.  So exit early and avoid any crashes.
+        if (testLabels.size == 1)
+            System.exit(0)
+
         // Read the context vectors for the test set.
         val contexts = VectorIO.readSparseVectors(new FileReader(args(1)))
         // Read the headers that map to the matching index in the context list.
@@ -69,12 +74,13 @@ object ConfounderTest {
                     if (bestBgSim > bestZgSim) 
                         numGood += 1
                     numBelligs += 1
-
                 }
             }
         }
-        printf("%s zellig %f\n", args(4), numValid/numPairs.toDouble)
-        printf("%s bellig %f\n", args(4), numGood/numBelligs.toDouble)
+        val zScore = if (numPairs > 0) numValid/numPairs.toDouble else 1d
+        printf("%s zellig %f %d %d\n", args(4), zScore, numValid, numPairs)
+        val bScore = if (numBelligs > 0) numGood/numBelligs.toDouble else 1d
+        printf("%s bellig %f %d %d\n", args(4), bScore, numGood, numBelligs)
     }
 
     def mixContexts(initial: SparseDoubleVector, mixin: SparseDoubleVector) = {

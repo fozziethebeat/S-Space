@@ -63,6 +63,12 @@
       <groupId>gov.llnl.ontology</groupId>
       <artifactId>extendOntology-util</artifactId>
       <version>1.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>gov.llnl.ontology</groupId>
+          <artifactId>extendOntology-data</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
