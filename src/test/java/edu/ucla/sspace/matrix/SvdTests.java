@@ -32,41 +32,6 @@ import static org.junit.Assert.*;
 
 public class SvdTests {
     
-    @Test public void testSvdlibj() throws Exception {
-        Matrix m = new YaleSparseMatrix(4,2);
-        m.set(0,0,2);
-        m.set(0,1,4);
-        m.set(1,0,1);
-        m.set(1,1,3);
-        Matrix[] arr = SVD.svd(m, SVD.Algorithm.SVDLIBJ, 2);
-
-        // Test the U matrix
-        Matrix u = arr[0];
-        assertEquals(4, u.rows());
-        assertEquals(2, u.columns());
-        assertEquals(.82, u.get(0,0), .01);
-        assertEquals(-.58, u.get(0,1), .01);
-        assertEquals(.58, u.get(1,0), .01);
-        assertEquals(.82, u.get(1,1), .01);
-
-        // Test the S matrix
-        Matrix s = arr[1];
-        assertEquals(2, s.rows());
-        assertEquals(2, s.columns());
-        assertEquals(5.47, s.get(0,0), .01);
-        assertEquals(.37, s.get(1,1), .01);
-
-
-        // Test the V matrix
-        Matrix v = arr[2];        
-        assertEquals(2, v.rows());
-        assertEquals(2, v.columns());
-        assertEquals(.40, v.get(0,0), .01);
-        assertEquals(.91, v.get(0,1), .01);
-        assertEquals(-.91, v.get(1,0), .01);
-        assertEquals(.40, v.get(1,1), .01);
-    }
-
     private static File getTestMatrixFile() throws Exception {
         String matrixContents =
             "5 7\n" +
