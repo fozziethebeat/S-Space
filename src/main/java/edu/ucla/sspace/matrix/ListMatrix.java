@@ -34,7 +34,10 @@ import java.util.List;
  *
  * @author Keith Stevens
  */
-class ListMatrix<T extends DoubleVector> implements Matrix {
+class ListMatrix<T extends DoubleVector> 
+        implements Matrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The list of {@code DoubleVector}s providing the values for the {@code

@@ -2,7 +2,7 @@
 
 # Set the directory locations for data files and for new generated files.
 # Set the base directory for most of the generated data files
-baseDir=data
+baseDir=results
 # Set the directory for the semeval data
 semEval07Dir=$baseDir/SemEval/2007
 # Set the corpus name.
@@ -31,5 +31,5 @@ fullKey=$semEval07Dir/key/keys/senseinduction.key
 
 # Assignments useful for running jobs.
 jar="target/semeval-experiment-1.0-jar-with-dependencies.jar"
-run="scala -J-Xmx4g -cp $jar"
+run="scala -J-Xmx2g -cp $jar"
 base="edu.ucla.sspace.experiment"

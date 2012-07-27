@@ -266,5 +266,33 @@ public class SimilarityTest {
         double spCorr = Similarity.spearmanRankCorrelationCoefficient(a,b);
         assertEquals(-0.175758, spCorr, 0.01);
     }
+    
+    /** 
+     * Example from http://www2.warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/rank_correlations
+     */
+    @Test public void testSpearman2() {
+        double[] x = new double[] { 5.05, 6.75, 3.21, 2.66 };
+        double[] y = new double[] { 1.65, 26.5, -5.93, 7.96 };
+        double[] z = new double[] { 1.65, 2.64, 2.64, 6.95 };
+        double rho = Similarity.spearmanRankCorrelationCoefficient(x,y);
+        assertEquals(0.4, rho, 0.001);
+        rho = Similarity.spearmanRankCorrelationCoefficient(x,z);
+        // NOTE: with tie correction, this should be -0.632455532034, but the
+        // current method doesn't account for ties correctly either
+        assertEquals(-0.55, rho, 0.001);
+    }
+
+    /** 
+     * Example from http://www2.warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/rank_correlations
+     */
+    @Test public void testKendallTau2() {
+        double[] x = new double[] { 5.05, 6.75, 3.21, 2.66 };
+        double[] y = new double[] { 1.65, 26.5, -5.93, 7.96 };
+        double[] z = new double[] { 1.65, 2.64, 2.64, 6.95 };
+        double tau = Similarity.kendallsTau(x,y);
+        assertEquals(0.33333333, tau, 0.001);
+        tau = Similarity.kendallsTau(x,z);
+        assertEquals(-0.547722557505, tau, 0.001);
+    }
 
 }

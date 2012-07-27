@@ -23,6 +23,7 @@ package edu.ucla.sspace.index;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.DenseVector;
+import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.VectorMath;
 
 import java.io.Serializable;

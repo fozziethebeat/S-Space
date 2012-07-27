@@ -22,8 +22,14 @@
 package edu.ucla.sspace.text;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.IOError;
 import java.io.IOException;
+import java.io.StringReader;
+
+import edu.ucla.sspace.util.LineReader;
+
 
 /**
  * A {@code Document} implementation backed by a {@code File} whose contents are
@@ -32,12 +38,19 @@ import java.io.IOException;
 public class FileDocument implements Document {
 	
     /**
-     * The reader for the backing file.
+     * The name of the file whose contents are this document.
      */
-    private final BufferedReader reader;
+    private final String fileName;
+
+    /**
+     * The optionally cached contents of the file or {@code null} if the
+     * contents were not cached.
+     */
+    private final String contents;
     
     /**
-     * Constructs a {@code Document} based on the contents of the provide file.
+     * Constructs a {@code Document} based on the contents of the provide file,
+     * where the contests are read from disk.
      *
      * @param fileName the name of a file whose contents will be used as a
      *        document
@@ -45,20 +58,42 @@ public class FileDocument implements Document {
      * @throws IOException if any error occurred while reading {@code fileName}.
      */
     public FileDocument(String fileName) throws IOException {
-	BufferedReader r = null;
-	try {
-	    r = new BufferedReader(new FileReader(fileName));
-	} catch (Throwable t) {
-	    t.printStackTrace();
-	}
-	reader = r;
+        this(fileName, false);
+    }
+
+    /**
+     * Constructs a {@code Document} based on the contents of the provide file,
+     * optionally caching those contents in memory to allow reading the file
+     * multiple times.
+     *
+     * @param fileName the name of a file whose contents will be used as a
+     *        document
+     */
+    public FileDocument(String fileName, boolean cacheContents) 
+            throws IOException {
+        this.fileName = fileName;
+        if (cacheContents) {
+            StringBuilder sb = new StringBuilder();
+            for (String line : new LineReader(new File(fileName))) 
+                sb.append(line).append('\n');
+            contents = sb.toString();
+        }
+        else
+            contents = null;
+        
     }
 
     /**
      * {@inheritDoc}
      */
     public BufferedReader reader() {
-	return reader;
+        try {
+            return (contents == null) 
+                ? new BufferedReader(new FileReader(fileName))
+                : new BufferedReader(new StringReader(contents));
+        } catch (IOException ioe) {
+            throw new IOError(ioe);
+        }
     }
     
 }

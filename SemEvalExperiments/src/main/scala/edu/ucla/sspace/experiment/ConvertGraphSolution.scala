@@ -2,7 +2,7 @@ package edu.ucla.sspace.experiment
 
 import edu.ucla.sspace.basis.BasisMapping
 import edu.ucla.sspace.clustering.Partition
-import edu.ucla.sspace.similarity.JaccardIndex
+import edu.ucla.sspace.common.Similarity.jaccardIndex
 import edu.ucla.sspace.text.DependencyFileDocumentIterator
 import edu.ucla.sspace.util.SerializableUtil
 import edu.ucla.sspace.vector.CompactSparseVector
@@ -43,10 +43,9 @@ object ConvertGraphSolution {
 
         // Iterate through each document in the corpus and determine which cluster has
         // the highset jaccard similarity to it.
-        val sim = new JaccardIndex()
         val finalClusters = Array.fill(numClusters)(new HashSet[Int]())
         for ( (id, v) <- readContextMatrix(args(3), basis)) {
-            val label = clusters.zipWithIndex.map(x=>(sim.sim(x._1, v), x._2)).max._2
+            val label = clusters.zipWithIndex.map(x=>(jaccardIndex(x._1, v), x._2)).max._2
             finalClusters(label).add(id)
         }
 

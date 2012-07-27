@@ -25,7 +25,9 @@ package edu.ucla.sspace.util;
 /**
  * A utility class for holding two of the same type of object.
  */
-public class Pair<T> {
+public class Pair<T> implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The first object in the pair

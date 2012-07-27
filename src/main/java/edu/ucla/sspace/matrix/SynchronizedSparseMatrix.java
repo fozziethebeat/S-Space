@@ -29,8 +29,11 @@ import edu.ucla.sspace.vector.SparseDoubleVector;
  * A {@code SparseMatrix} decorator class that provides thread safe access to a
  * backing {@code SparseMatrix} instance.
  */
-public class SynchronizedSparseMatrix implements SparseMatrix, AtomicMatrix {
+public class SynchronizedSparseMatrix 
+    implements SparseMatrix, AtomicMatrix, java.io.Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     /**
      * The backing instance of the matrix.
      */

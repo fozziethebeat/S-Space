@@ -44,7 +44,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author David Jurgens
  */
-public class AtomicGrowingMatrix implements AtomicMatrix {
+public class AtomicGrowingMatrix implements AtomicMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
      * The read lock for reading rows from this {@code AtomicGrowingMatrix}.

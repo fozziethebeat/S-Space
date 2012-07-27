@@ -75,7 +75,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see Matrices#synchronizedMatrix(Matrix)
  */
 public class AtomicGrowingSparseHashMatrix 
-        implements AtomicMatrix, SparseMatrix {
+        implements AtomicMatrix, SparseMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
      * The matrix entries that are currently being write-locked by some thread.

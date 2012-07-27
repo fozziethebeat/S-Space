@@ -29,7 +29,10 @@ import edu.ucla.sspace.vector.DoubleVector;
  * backing {@code Matrix} instance.
  */
 
-public class SynchronizedMatrix implements Matrix, AtomicMatrix {
+public class SynchronizedMatrix
+    implements Matrix, AtomicMatrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
     
     /**
      * The backing instance of the matrix.

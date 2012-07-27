@@ -14,11 +14,11 @@ for conll in `ls $semEval07Dir/semeval07.*.{n,v}.conll`; do
     newName=`echo $conll | sed "s/conll$/headers/"`
     cat $conll | grep "^[a-z]" > $newName
     trainName=`echo $conll | sed "s/conll$/train.conll/"`
-    #$run $base.ExtractTrainContexts $conll $trainKey > $trainName
+    $run $base.ExtractTrainContexts $conll $trainKey > $trainName
 done
 
 # Extract the number of word senses for each word based on the gold label key
-#cut -d " " -f 3 $fullKey | sort -u | cut -d "." -f 1,2 | uniq -c | awk '{ print $2 " " $1 }' > $wordAndSenseList
+cut -d " " -f 3 $fullKey | sort -u | cut -d "." -f 1,2 | uniq -c | awk '{ print $2 " " $1 }' > $wordAndSenseList
 
 # Define two functions, one for converting the training contexts into feature
 # vectors and then projecting the full dataset into that feature space and a
@@ -130,3 +130,11 @@ done
 
 extractTestTrainSplit
 extractFullSplits
+
+$run $base.SplitKey $testKey $semEval07Dir/semeval07 test
+$run $base.SplitKey $fullKey $semEval07Dir/semeval07 full
+cat $fullKey | cut -d " " -f 3 | \
+               sort -u | \
+               cut -d "." -f 1,2 | \
+               uniq -c | \
+               awk '{ print $2 " " $1}' > $wordAndSenseList

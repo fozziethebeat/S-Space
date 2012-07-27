@@ -36,8 +36,10 @@ import edu.ucla.sspace.vector.SparseDoubleVector;
  * @author Keith Stevens
  */
 public class RowScaledSparseMatrix extends RowScaledMatrix
-                                   implements SparseMatrix {
+        implements SparseMatrix, java.io.Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     /**
      * The backing instance of the matrix.
      */

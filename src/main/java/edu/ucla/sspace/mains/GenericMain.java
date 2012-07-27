@@ -179,7 +179,7 @@ public abstract class GenericMain {
     }
 
     /**
-     * Returns the {@link SemanticSpaceIO.SSpaceFormat format} in which the
+     * Returns the {@link SemanticSpaceIO#SSpaceFormat sspace} in which the
      * finished {@code SemanticSpace} should be saved.  Subclasses should
      * override this function if they want to specify a specific format that is
      * most suited for their space, when one is not manually specified by the

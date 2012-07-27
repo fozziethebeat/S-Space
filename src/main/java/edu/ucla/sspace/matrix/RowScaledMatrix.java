@@ -34,7 +34,9 @@ import edu.ucla.sspace.vector.ScaledDoubleVector;
  *
  * @author Keith Stevens
  */
-public class RowScaledMatrix implements Matrix {
+public class RowScaledMatrix implements Matrix, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The backing instance of the matrix.

@@ -125,7 +125,7 @@ public class StringUtils {
 	HTML_CODES.put("&lt;","<");
 	HTML_CODES.put("&gt;",">");
 	HTML_CODES.put("&quot;","\"");
-	HTML_CODES.put("&amp;","&");
+	HTML_CODES.put("&amp;","&");        
 
 	LATIN1_CODES.put("&#039;", "'");
 	LATIN1_CODES.put("&#160;", " ");
