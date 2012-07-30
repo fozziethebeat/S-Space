@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.matrix;
 
+
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,46 +34,21 @@ import java.nio.channels.FileChannel;
 /**
  * Performs no transform on the input matrix.
  */
-public class NoTransform implements Transform {
+public class NoTransform extends BaseTransform implements Transform {
 
     /**
      * {@inheritDoc}
      */
-    public File transform(File inputMatrixFile, MatrixIO.Format format) 
-            throws IOException {
-        return inputMatrixFile;
+    protected GlobalTransform getTransform(File inputMatrixFile,
+                                           MatrixIO.Format format) {
+        return new NoOpTransform();
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void transform(File inputMatrixFile, MatrixIO.Format inputFormat, 
-                          File outputMatrixFile) 
-            throws IOException {
-        FileChannel original =
-            new FileInputStream(inputMatrixFile).getChannel();
-        FileChannel copy = new FileOutputStream(outputMatrixFile).getChannel();
     
-        // Duplicate the contents of the input matrix in the provided file
-        copy.transferFrom(original, 0, original.size());
-    
-        original.close();
-        copy.close();
-    }
-
     /**
      * {@inheritDoc}
      */
-    public Matrix transform(Matrix input) {
-        return input;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix transform(Matrix input, Matrix output) {
-        Matrices.copyTo(input, output);
-        return output;
+    protected GlobalTransform getTransform(Matrix matrix) {
+        return new NoOpTransform();
     }
 
     /**
@@ -79,4 +57,15 @@ public class NoTransform implements Transform {
     public String toString() {
         return "no";
     }    
+
+    static class NoOpTransform implements GlobalTransform {
+
+        public double transform(int row, int column, double value) {
+            return value;
+        }
+
+        public double transform(int row, DoubleVector column) {
+            return column.get(row);
+        }        
+    }
 }

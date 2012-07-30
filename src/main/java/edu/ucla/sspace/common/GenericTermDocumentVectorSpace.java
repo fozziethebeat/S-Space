@@ -35,9 +35,12 @@ import edu.ucla.sspace.matrix.Transform;
 
 import edu.ucla.sspace.text.IteratorFactory;
 
+import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.LoggerUtil;
+import edu.ucla.sspace.util.ObjectCounter;
 import edu.ucla.sspace.util.SparseArray;
 import edu.ucla.sspace.util.SparseIntHashArray;
+
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vector;
@@ -102,7 +105,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      * A mapping from a word to the row index in the that word-document matrix
      * that contains occurrence counts for that word.
      */
-    private final BasisMapping<String, String> termToIndex;
+    protected final BasisMapping<String, String> termToIndex;
 
     /**
      * The counter for recording the current number of documents observed.
@@ -190,7 +193,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // incur an additional performance hit since each word would have to be
         // converted to its index form for each occurrence, which results in a
         // double Map look-up.
-        Map<String,Integer> termCounts = new HashMap<String,Integer>(1000);
+        Counter<String> termCounts = new ObjectCounter<String>();
         Iterator<String> documentTokens = IteratorFactory.tokenize(document);
 
         // Increaes the count of documents observed so far.
@@ -203,7 +206,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // If the document is empty, skip it
         if (!documentTokens.hasNext())
             return;
-
+        
         // For each word in the text document, keep a count of how many times it
         // has occurred
         while (documentTokens.hasNext()) {
@@ -216,12 +219,8 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
             // Add the term to the total list of terms to ensure it has a proper
             // index.  If the term was already added, this method is a no-op
             termToIndex.getDimension(word);
-            Integer termCount = termCounts.get(word);
 
-            // update the term count
-            termCounts.put(word, (termCount == null) 
-                           ? 1
-                           : 1 + termCount.intValue());
+            termCounts.count(word);
         }
 
         document.close();
@@ -230,7 +229,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // documentIndex. This is done after increasing the document count since
         // some configurations may need the document order preserved, for
         // example, if each document corresponds to some cluster assignment.
-        if (termCounts.isEmpty())
+        if (termCounts.size() == 0)
             return;
 
         // Get the total number of terms encountered so far, including any new
@@ -240,7 +239,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
         // Convert the Map count to a SparseArray
         SparseArray<Integer> documentColumn = 
             new SparseIntHashArray(totalNumberOfUniqueWords);
-        for (Map.Entry<String,Integer> e : termCounts.entrySet())
+        for (Map.Entry<String,Integer> e : termCounts)
             documentColumn.set(
                     termToIndex.getDimension(e.getKey()), e.getValue());
 

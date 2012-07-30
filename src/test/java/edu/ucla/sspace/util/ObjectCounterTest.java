@@ -51,4 +51,12 @@ public class ObjectCounterTest {
         assertEquals(2, c.items().size());
         assertEquals(1, c.getCount(2));
     }
+
+    @Test public void testMax() {
+        Counter<Integer> c = new ObjectCounter<Integer>();
+        c.count(5);
+        c.count(5);
+        c.count(3);
+        assertEquals(5, c.max().intValue());
+    }
 }

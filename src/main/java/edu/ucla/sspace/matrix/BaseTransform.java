@@ -21,7 +21,10 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
+import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.Vectors;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +37,30 @@ import java.io.IOException;
  * adhere to the standard {@link Transform} interface.
  */
 public abstract class BaseTransform implements Transform {
+
+    private GlobalTransform transform;
+
+    public BaseTransform() {
+        transform = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DoubleVector transform(DoubleVector column) {
+        if (transform == null)
+            throw new IllegalStateException(
+                "the initial matrix has not been transformed yet");
+        // Create a new instance of that vector's type, which will contain the
+        // updated values
+        DoubleVector transformed = Vectors.instanceOf(column);
+        int length = column.length();
+        for (int row = 0; row < length; ++row) {
+            double newValue = transform.transform(row, column);
+            transformed.set(row, newValue);
+        }
+        return transformed;
+    }
 
     /**
      * {@inheritDoc}
@@ -52,7 +79,7 @@ public abstract class BaseTransform implements Transform {
      */
     public void transform(File inputMatrixFile, MatrixIO.Format format, 
                           File outputMatrixFile) throws IOException {
-        GlobalTransform transform = getTransform(inputMatrixFile, format);
+        transform = getTransform(inputMatrixFile, format);
         FileTransformer transformer = MatrixIO.fileTransformer(format);
         transformer.transform(inputMatrixFile, outputMatrixFile, transform);
     }
@@ -76,7 +103,7 @@ public abstract class BaseTransform implements Transform {
                     "Dimensions of the transformed matrix must match the " +
                     "input matrix");
 
-        GlobalTransform transform = getTransform(matrix);
+        transform = getTransform(matrix);
 
         if (matrix instanceof SparseMatrix) {
             SparseMatrix smatrix = (SparseMatrix) matrix;

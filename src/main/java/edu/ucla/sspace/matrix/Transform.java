@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -36,6 +38,11 @@ import java.io.IOException;
  * @author David Jurgens
  */
 public interface Transform {
+
+    /**
+     * TODO
+     */
+    DoubleVector transform(DoubleVector column);
 
     /**
      * Transforms the matrix in the file using the an implemented method and

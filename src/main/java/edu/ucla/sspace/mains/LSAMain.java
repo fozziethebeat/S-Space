@@ -31,10 +31,11 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 import edu.ucla.sspace.lsa.LatentSemanticAnalysis;
 
 import edu.ucla.sspace.matrix.LogEntropyTransform;
-import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.Transform;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.SVD.Algorithm;
+
+import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.SerializableUtil;
@@ -174,7 +175,7 @@ public class LSAMain extends GenericMain {
                 transform = ReflectionUtil.getObjectInstance(
                         argOptions.getStringOption("preprocess"));
             String algName = argOptions.getStringOption("svdAlgorithm", "ANY");
-            MatrixFactorization factorization = SVD.getFactorization(
+            SingularValueDecomposition factorization = SVD.getFactorization(
                     Algorithm.valueOf(algName.toUpperCase()));
             basis = new StringBasisMapping();
 

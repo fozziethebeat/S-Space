@@ -24,6 +24,8 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 
 
@@ -94,6 +96,16 @@ public class RowMagnitudeTransform extends BaseTransform {
          * @return the TF-IDF of the observed value
          */
         public double transform(int row, int column, double value) {
+            return value / rowMagnitudes[row];
+        }
+
+        /**
+         * Computes the Term Frequency-Inverse Document Frequency for a given
+         * value where the value is the observed frequency of term {@code
+         * row} in document {@code column}.
+         */
+        public double transform(int row, DoubleVector column) {
+            double value = column.get(row);
             return value / rowMagnitudes[row];
         }
     }

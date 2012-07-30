@@ -29,10 +29,11 @@ import edu.ucla.sspace.vector.Vectors;
 
 /**
  * An abstract {@link Matrix} class that provides common implementations for
- * generic matrix operations.  This class assumes that all subclasses are
- * row-based and will therefore call {@link #getRowVector(int) getRowVector} for
- * all operations.  At a minimum subclasses must define the following three
- * operations to be an immutable matrix:
+ * generic matrix operations.  This class assumes that all subclasses are (1)
+ * row-based and (2) any changes to the row vectors will be propagated to the
+ * backing matrix. Therefore all operations will call {@link #getRowVector(int)
+ * getRowVector} to perform their functions.  At a minimum subclasses must
+ * define the following three operations to be an immutable matrix:
  *
  * <ul>
  *  <li> {@link #getRowVector(int) getRowVector}
@@ -60,12 +61,28 @@ public abstract class AbstractMatrix implements Matrix {
     public boolean equals(Object o) {
         if (o instanceof Matrix) {
             Matrix m = (Matrix)o;
+            int rows = rows();
+            if (m.rows() != rows)
+                return false;
+            int cols = columns();
+            if (m.columns() != cols)
+                return false;
+            for (int r = 0; r < rows; ++r) {
+                for (int c = 0; c < cols; ++c) {
+                    if (m.get(r, c) != get(r, c))
+                        return false;
+                }
+            }
+            return true;
+            /*
+              
             if (m.rows() == rows() && m.columns() == columns()) {
                 for (int row = 0; row < rows(); ++row) {
                     if (!getRowVector(row).equals(m.getRowVector(row))) 
                         return false;
                 }
             }
+            */
         }
         return false;
     }
@@ -186,5 +203,21 @@ public abstract class AbstractMatrix implements Matrix {
             m[r] = getRowVector(r).toArray();
         }
         return m;
+    }
+
+    public String toString() {
+        int rows = rows();
+        int columns = columns();
+        StringBuilder sb = new StringBuilder(rows * columns * 2);
+        for (int r = 0; r < rows; ++r) {
+            sb.append('[');
+            for (int c = 0; c < columns; ++c) {
+                sb.append(get(r, c));
+                if (c + 1 < columns)
+                    sb.append(", ");
+            }
+            sb.append("]\n");
+        }
+        return sb.toString();
     }
 }

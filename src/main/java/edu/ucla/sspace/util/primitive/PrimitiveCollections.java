@@ -23,6 +23,7 @@ package edu.ucla.sspace.util.primitive;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -31,6 +32,11 @@ import java.util.Set;
  * collections.  This class is analogous to {@link Collections}.
  */
 public final class PrimitiveCollections {
+    
+    /**
+     * A class local source of randomness, if one is not provided by the caller.
+     */
+    private static final Random RANDOM = new Random();
 
     // FIXME
     private static final IntSet EMPTY_INT_SET = 
@@ -41,6 +47,32 @@ public final class PrimitiveCollections {
      */
     public static IntSet emptyIntSet() {
         return EMPTY_INT_SET;
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(int[] arr) {
+        int size = arr.length;
+        for (int i = size; i > 1; i--) {
+            int tmp = arr[i-1];
+            int r = RANDOM.nextInt(i);
+            arr[i-1] = arr[r];
+            arr[r] = tmp;
+        }
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(int[] arr, Random rand) {
+        int size = arr.length;
+        for (int i = size; i > 1; i--) {
+            int tmp = arr[i-1];
+            int r = rand.nextInt(i);
+            arr[i-1] = arr[r];
+            arr[r] = tmp;
+        }
     }
     
     /**

@@ -23,6 +23,8 @@ package edu.ucla.sspace.matrix;
 
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Matrix.Type;
+
+import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibJ;
 
@@ -143,7 +145,8 @@ public class SVD {
      * Singular Value Decomposition available, or {@code null} if no
      * implementation is available.
      */
-    public static MatrixFactorization getFastestAvailableFactorization() {
+    public static SingularValueDecomposition 
+            getFastestAvailableFactorization() {
         if (isSVDLIBCavailable())
             return new SingularValueDecompositionLibC();
         else 
@@ -151,10 +154,10 @@ public class SVD {
     }
 
     /**
-     * Returns the {@link MatrixFactorization} implementation corresponding to
+     * Returns the {@link SingularValueDecomposition} implementation corresponding to
      * the {@link Algorithm} name.
      */
-    public static MatrixFactorization getFactorization(Algorithm alg) {
+    public static SingularValueDecomposition getFactorization(Algorithm alg) {
         switch (alg)  {
             case SVDLIBJ:
                 return new SingularValueDecompositionLibJ();

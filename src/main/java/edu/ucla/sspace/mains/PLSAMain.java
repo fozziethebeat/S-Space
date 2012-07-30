@@ -10,12 +10,13 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 import edu.ucla.sspace.lsa.LatentSemanticAnalysis;
 
 import edu.ucla.sspace.matrix.LogEntropyTransform;
-import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.MatrixBuilder;
+import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.MatlabSparseMatrixBuilder;
 import edu.ucla.sspace.matrix.Transform;
 
 import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 import edu.ucla.sspace.util.SerializableUtil;
@@ -61,8 +62,9 @@ public class PLSAMain extends GenericMain {
                 new NonNegativeMatrixFactorizationMultiplicative();
             basis = new StringBasisMapping();
 
-            return new LatentSemanticAnalysis(
-                true, dimensions, transform, factorization, false, basis);
+            throw new IOException("Not sure what to do");
+//             return new LatentSemanticAnalysis(
+//                 true, dimensions, transform, factorization, false, basis);
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }

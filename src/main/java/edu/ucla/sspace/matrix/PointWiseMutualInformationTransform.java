@@ -24,6 +24,9 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.SparseVector;
+
 import java.io.File;
 
 
@@ -115,6 +118,34 @@ public class PointWiseMutualInformationTransform extends BaseTransform {
         public double transform(int row, int col, double value) {
             return Math.log(value * matrixSum /
                             (rowCounts[row] * colCounts[col] ));
+        }
+
+        /**
+         * Computes the point wise-mutual information for a given value where
+         * the value is the observed frequency of term {@code row} in document
+         * {@code column}.
+         *
+         * @param row The index speicifying the term being observed
+         * @param column The column vector specifying the document being observed
+         *
+         * @return the PMI of the observed value
+         */
+        public double transform(int row, DoubleVector column) {
+            // Calcuate the term frequencies in this new document
+            double sum = 0;
+            if (column instanceof SparseVector) {
+                SparseVector sv = (SparseVector)column;
+                for (int nz : sv.getNonZeroIndices())
+                    sum += column.get(nz);
+            }
+            else {
+                int length = column.length();
+                for (int i = 0; i < length; ++i)
+                    sum += column.get(i);
+            }
+            double value = column.get(row);
+            return Math.log(value * matrixSum /
+                            (rowCounts[row] * sum));
         }
     }
 }

@@ -24,6 +24,9 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.SparseVector;
+
 import java.io.File;
 
 
@@ -124,6 +127,45 @@ public class LogLikelihoodTransform extends BaseTransform {
          */
         public double transform(int row, int col, double value) {
             double l = colCounts[col] - value;
+            double m = rowCounts[row] - value;
+            double n = matrixSum - (value + l + m);
+            double likelihood = value * Math.log(value) + l * Math.log(l) +
+                                m * Math.log(m) + n * Math.log(n);
+            likelihood -= ((value + l) * Math.log(value+l) - 
+                           (value + m) * Math.log(value+m));
+            likelihood -= ((l + n) * Math.log(l + n) - 
+                           (m + n) * Math.log(m + n));
+            likelihood += ((value + l + m + n) * Math.log(value + l + m + n));
+            return 2 * likelihood;
+        }
+
+        /**
+         * Computes the Log Likelihood information between the {@code row}
+         * and {@code column}'s value at the specified row.   This is
+         * approximated based on the occurance counts for each {@code row} and
+         * {@code col}.
+         *
+         * @param row The index specifying the row being observed
+         * @param col The index specifying the col being observed
+         * @param value The number of ocurrances of row and col together
+         */
+        public double transform(int row, DoubleVector column) {
+            double value = column.get(row);
+
+            // Calcuate the term frequencies in this new document
+            double colSum = 0;
+            if (column instanceof SparseVector) {
+                SparseVector sv = (SparseVector)column;
+                for (int nz : sv.getNonZeroIndices())
+                    colSum += column.get(nz);
+            }
+            else {
+                int length = column.length();
+                for (int i = 0; i < length; ++i)
+                    colSum += column.get(i);
+            }
+
+            double l = colSum - value;
             double m = rowCounts[row] - value;
             double n = matrixSum - (value + l + m);
             double likelihood = value * Math.log(value) + l * Math.log(l) +

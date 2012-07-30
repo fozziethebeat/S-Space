@@ -26,21 +26,37 @@ import edu.ucla.sspace.basis.StringBasisMapping;
 
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
 
+import edu.ucla.sspace.matrix.ArrayMatrix;
+import edu.ucla.sspace.matrix.DiagonalMatrix;
 import edu.ucla.sspace.matrix.LogEntropyTransform;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
-import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
 
+import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
+
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.IteratorFactory;
+
+import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.LoggerUtil;
+import edu.ucla.sspace.util.ObjectCounter;
 
 import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.SparseDoubleVector;
+import edu.ucla.sspace.vector.SparseHashDoubleVector;
 
 import java.io.IOException;
 
+import java.lang.ref.WeakReference;
+
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,7 +169,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * called.
  *
  * @see Transform
- * @see SVD
+ * @see SingularValueDecomposition
  * 
  * @author David Jurgens
  */
@@ -212,13 +228,35 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
      * processSpace} method has been called.
      */
     private Matrix documentSpace;
+
+    /**
+     * The diagonal matrix of the singular values
+     */
+    private Matrix sigma;
+
+    
+    /** 
+     * The precomputed result of Sigma^-1 * U^t, which is used to project new
+     * document vectors into the latent document space.  Since this matrix is
+     * potentially large and its use only depends on the number of calls to
+     * {@link #project(Document)}, we cache the results with a {@code
+     * WeakReference}, letting the result be garbage collected if memory
+     * pressure gets too high.
+     */
+    private WeakReference<Matrix> UTransposedTimesSigmaInvRef;
+
+    /**
+     * The left factor matrix of the SVD operation, which is the word space
+     * prior to be multiplied by the singular values.
+     */
+    private Matrix U;
     
     /**
-     * The {@link MatrixFactorization} algorithm that will decompose the word by
+     * The {@link SingularValueDecomposition} algorithm that will decompose the word by
      * document feature space into two smaller feature spaces: a word by class
      * feature space and a class by feature space.
      */
-    private final MatrixFactorization reducer;
+    private final SingularValueDecomposition reducer;
 
     /**
      * The {@link Transform} applied to the term document matrix prior to being
@@ -240,10 +278,44 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     /**
      * Creates a new {@link LatentSemanticAnalysis} instance.  This intializes
      * {@Link LatentSemanticAnalysis} with the default parameters set in the
-     * original paper.
+     * original paper.  This construct initializes this instance such that the
+     * document space is <i>not</i> retained.
      */
     public LatentSemanticAnalysis() throws IOException {
         this(false, 300, new LogEntropyTransform(),
+             SVD.getFastestAvailableFactorization(), 
+             false, new StringBasisMapping());
+    }
+
+    /**
+     * Creates a new {@link LatentSemanticAnalysis} instance with the specified
+     * number of dimensions.  This intializes {@Link LatentSemanticAnalysis}
+     * with the default parameters set in the original paper for all other
+     * parameter values.  This construct initializes this instance such that the
+     * document space is <i>not</i> retained.
+     * 
+     * @param dimensions The number of dimensions to retain in the reduced space
+     */
+    public LatentSemanticAnalysis(int numDimensions) throws IOException {
+        this(false, numDimensions, new LogEntropyTransform(),
+             SVD.getFastestAvailableFactorization(), 
+             false, new StringBasisMapping());
+    }
+
+    /**
+     * Creates a new {@link LatentSemanticAnalysis} instance with the specified
+     * number of dimensions, which optionally retains both the word and document
+     * spaces.  This intializes {@Link LatentSemanticAnalysis} with the default
+     * parameters set in the original paper for all other parameter values.
+     * 
+     * @param dimensions The number of dimensions to retain in the reduced space
+     * @param retainDocumentSpace If true, the document space will be made
+     *        accessible
+     */
+    public LatentSemanticAnalysis(int numDimensions, 
+                                  boolean retainDocumentSpace) 
+            throws IOException {
+        this(retainDocumentSpace, numDimensions, new LogEntropyTransform(),
              SVD.getFastestAvailableFactorization(), 
              false, new StringBasisMapping());
     }
@@ -256,7 +328,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
      *        accessible
      * @param dimensions The number of dimensions to retain in the reduced space
      * @param transform The {@link Transform} to apply before reduction
-     * @param MatrixFactorization The {@link MatrixFactorization} algorithm to
+     * @param reducer The {@link SingularValueDecomposition} algorithm to
      *        apply to reduce the transformed term document matrix
      * @param readHeaderToken If true, the first token of each document will be
      *        read and passed to {@link #handleDocumentHeader(int, String)
@@ -270,7 +342,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
     public LatentSemanticAnalysis(boolean retainDocumentSpace,
                                   int dimensions,
                                   Transform transform,
-                                  MatrixFactorization reducer,
+                                  SingularValueDecomposition reducer,
                                   boolean readHeaderToken,
                                   BasisMapping<String, String> termToIndex)
             throws IOException {
@@ -353,14 +425,20 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
      *        properties.
      */
     public void processSpace(Properties properties) {
+        // Perform any optional transformations (e.g., tf-idf) on the
+        // term-document matrix
         MatrixFile processedSpace = processSpace(transform);
 
         LoggerUtil.info(LOG, "reducing to %d dimensions", dimensions);
 
+        // Compute the SVD on the term-document space
         reducer.factorize(processedSpace, dimensions);
 
         wordSpace = reducer.dataClasses();
 
+        U = reducer.getLeftVectors();
+        sigma = reducer.getSingularValues();
+        
         // Save the reduced document space if requested.
         if (retainDocumentSpace) {
             LoggerUtil.verbose(LOG, "loading in document space");
@@ -370,5 +448,128 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
             // the columns.
             documentSpace = Matrices.transpose(reducer.classFeatures());
         }
+    }
+
+    /**
+     * Projects this document into the latent document space based on the
+     * distirbution of terms contained within it
+     *
+     * @param doc A document whose contents are to be mapped into the latent
+     *        document space of this instance.  The contents of this document
+     *        are tokenized using the existing {@link IteratorFactory} settings.
+     *        Note that tokens that are not in the word space of this {@link
+     *        LatentSemanticAnalysis} instance will be ignored, so documents
+     *        that consist mostly of unseen terms will likely not be represented
+     *        well.
+     *
+     * @return the projected version of {@code doc} in this instances latent
+     *         document space, using the recognized terms in the document
+     *
+     * @throws IllegalStateException if {@link #processSpace(Properties)} has
+     *         not yet been called (that is, no latent document space exists
+     *         yet).
+     */
+    public DoubleVector project(Document doc) {
+        // Check that we can actually project the document
+        if (wordSpace == null) 
+            throw new IllegalStateException(
+                "processSpace has not been called, so the latent document " +
+                "space does not yet exist");
+
+        // Tokenize the document using the existing tokenization rules
+        Iterator<String> documentTokens = 
+            IteratorFactory.tokenize(doc.reader());
+        Counter<String> tokenCounts = new ObjectCounter<String>();
+
+        // Keep track of the set of terms that exist in the word space
+        Set<String> knownTerms = termToIndex.keySet();
+
+        // For each word in the text document, keep a count of how many times it
+        // has occurred
+        while (documentTokens.hasNext()) {
+            String token = documentTokens.next();
+            
+            // Skip added empty tokens for words that have been filtered out
+            if (token.equals(IteratorFactory.EMPTY_TOKEN)
+                    || !knownTerms.contains(token))
+                continue;
+            
+            tokenCounts.count(token);
+        }
+        
+
+        int numDims = termToIndex.numDimensions();
+        SparseDoubleVector docVec = new SparseHashDoubleVector(numDims);
+        for (Map.Entry<String,Integer> e : tokenCounts)
+            docVec.set(termToIndex.getDimension(e.getKey()), e.getValue());
+        
+        // Transform the vector according to this instance's transform's state,
+        // which should normalize the vector as the original vectors were.
+        DoubleVector transformed = transform.transform(docVec);
+
+        // Represent the document as a 1-column matrix        
+        Matrix queryAsMatrix = new ArrayMatrix(1, numDims);
+        for (int nz : docVec.getNonZeroIndices())
+            queryAsMatrix.set(0, nz, docVec.get(nz));
+
+//         System.out.printf("Counted %d items (%d total) in the new doc (%d doc length)%n",
+//                           tokenCounts.items().size(), tokenCounts.sum(),
+//                           queryAsMatrix.rows());
+        
+        // Project the new document vector, d, by using
+        //
+        //   Sigma_k^-1 * U_k^T * d
+        //
+        // where k is the dimensionality of the LSA space
+        
+        Matrix UTransposedTimesSigmaInv = null;
+            
+        // We lazily precompute the 
+        while (UTransposedTimesSigmaInv == null) {
+            if (UTransposedTimesSigmaInvRef != null
+                && ((UTransposedTimesSigmaInv
+                     = UTransposedTimesSigmaInvRef.get()) != null))
+                break;
+            
+            int rows = sigma.rows();
+            double[] sigmaInv = new double[rows];
+            for (int i = 0; i < rows; ++i)
+                sigmaInv[i] = 1d / sigma.get(i, i);
+            DiagonalMatrix sigmaInvMatrix = new DiagonalMatrix(sigmaInv);
+//             System.out.println("sigma:\n" + sigma);
+//             System.out.println("sigma^-1:\n" + sigmaInvMatrix);
+            Matrix Utransposed = U;// Matrices.transpose(U);
+//             System.out.println("U:\n" + U);
+//             System.out.println("U^t:\n" + Utransposed);
+//             System.out.printf("S: %d x %d, Ut: %d x %d%n",
+//                               sigmaInvMatrix.rows(), sigmaInvMatrix.columns(),
+//                               Utransposed.rows(), Utransposed.columns());
+
+            UTransposedTimesSigmaInv =
+                Matrices.multiply(Utransposed, sigmaInvMatrix);
+            // Update the field with the new reference to the precomputed matrix
+            UTransposedTimesSigmaInvRef = 
+                new WeakReference<Matrix>(UTransposedTimesSigmaInv);
+            
+//             System.out.printf("Sinv*Ut: %d x %d%n",
+//                               UTransposedTimesSigmaInv.rows(), 
+//                               UTransposedTimesSigmaInv.columns());
+        }
+
+//         System.out.printf("Doc: %d x %d%n",
+//                           queryAsMatrix.rows(), 
+//                           queryAsMatrix.columns());
+
+        // Compute the resulting projected vector as a matrix
+        Matrix result = Matrices.multiply(queryAsMatrix, UTransposedTimesSigmaInv);
+//         System.out.println("result: " + result);
+        // The resulting matrix is dense (unfortunately), so we perform an extra
+        // operation to compact the result, which is expected to be sparse.
+        int cols = result.columns();
+        DoubleVector projected = 
+            new SparseHashDoubleVector(result.columns());
+        for (int i = 0; i < cols; ++i)
+            projected.set(i, result.get(0, i));
+        return projected;
     }
 }

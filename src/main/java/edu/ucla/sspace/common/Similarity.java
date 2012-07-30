@@ -1012,49 +1012,33 @@ public class Similarity {
     public static double spearmanRankCorrelationCoefficient(double[] a, 
                                                             double[] b) {
         check(a, b);
-        SortedMap<Double,Double> ranking = new TreeMap<Double,Double>();
-        for (int i = 0; i < a.length; ++i) {
-            ranking.put(a[i], b[i]);
-        }
-        
-        double[] sortedB = Arrays.copyOf(b, b.length);
-        Arrays.sort(sortedB);
-        Map<Double,Integer> otherRanking = new HashMap<Double,Integer>();
-        for (int i = 0; i < b.length; ++i) {
-            otherRanking.put(sortedB[i], i);
-        }
-        
-        // keep track of the last value we saw in the key set so we can check
-        // for ties.  If there are ties then the Pearson's product-moment
-        // coefficient should be returned instead.
-        Double last = null;
+        int N = a.length;
+        int NcubedMinusN = (N * N * N) - N;
 
-        // sum of the differences in rank
-        double diff = 0d;
-
-        // the current rank of the element in a that we are looking at
-        int curRank = 0;
-
-        for (Map.Entry<Double,Double> e : ranking.entrySet()) {
-            Double x = e.getKey();
-            Double y = e.getValue();
-            // check that there are no tied rankings
-            if (last == null)
-                last = x;
-            else if (last.equals(x))
-                // if there was a tie, return the correlation instead.
-                return correlation(a,b);
-            else 
-                last = x;
-
-            // determine the difference in the ranks for both values
-            int rankDiff = curRank - otherRanking.get(y).intValue();
-            diff += rankDiff * rankDiff;
-
-            curRank++;
+        // Convert a and b into rankings.  The last value of this array is the
+        // correction factor for computing the correlation based on the number
+        // of ties.  (Eq. 9.6; p. 239).  Note that the ranks are not integers
+        // beacused tied values are assigned the average of their ranks (e.g.,
+        // a tie at positions 1 and 2 would be be assigned a rank of 1.5).
+        double[] rankedA = rank(a);
+        double[] rankedB = rank(b);
+    
+        double sumDiffs = 0;
+        for (int i = 0; i < rankedA.length - 1; ++i) {
+            double diff = rankedA[i] - rankedB[i];
+            sumDiffs += diff * diff;
         }
 
-        return 1 - ((6 * diff) / (a.length * ((a.length * a.length) - 1)));
+        double aCorrectionFactor = rankedA[rankedA.length - 1];
+        double bCorrectionFactor = rankedB[rankedB.length - 1];
+
+        double tiesSum = aCorrectionFactor + bCorrectionFactor;
+                
+        // Compute Spearman's rho using Eq. 9.7 (p. 239)
+        return (NcubedMinusN - (6 * sumDiffs) - ((tiesSum) / 2d))
+            / Math.sqrt((NcubedMinusN * NcubedMinusN)
+                        - (tiesSum * NcubedMinusN)
+                        + (aCorrectionFactor * bCorrectionFactor));
     }
 
     /**
@@ -1068,48 +1052,185 @@ public class Similarity {
     public static double spearmanRankCorrelationCoefficient(int[] a, int[] b) {
         check(a,b);
 
-        SortedMap<Integer,Integer> ranking = new TreeMap<Integer,Integer>();
-        for (int i = 0; i < a.length; ++i) {
-            ranking.put(a[i], b[i]);
-        }
-        
-        int[] sortedB = Arrays.copyOf(b, b.length);
-        Arrays.sort(sortedB);
-        Map<Integer,Integer> otherRanking = new HashMap<Integer,Integer>();
-        for (int i = 0; i < b.length; ++i)
-            otherRanking.put(sortedB[i], i);
-        
-        // keep track of the last value we saw in the key set so we can check
-        // for ties.  If there are ties then the Pearson's product-moment
-        // coefficient should be returned instead.
-        Integer last = null;
+        int N = a.length;
+        int NcubedMinusN = (N * N * N) - N;
 
-        // sum of the differences in rank
-        double diff = 0d;
+        // Convert a and b into rankings.  The last value of this array is the
+        // correction factor for computing the correlation based on the number
+        // of ties.  (Eq. 9.6; p. 239).  Note that the ranks are not integers
+        // beacused tied values are assigned the average of their ranks (e.g.,
+        // a tie at positions 1 and 2 would be be assigned a rank of 1.5).
+        double[] rankedA = rank(a);
+        double[] rankedB = rank(b);
 
-        // the current rank of the element in a that we are looking at
-        int curRank = 0;
-
-        for (Map.Entry<Integer,Integer> e : ranking.entrySet()) {
-            Integer x = e.getKey();
-            Integer y = e.getValue();
-            // check that there are no tied rankings
-            if (last == null)
-                last = x;
-            else if (last.equals(x))
-                // if there was a tie, return the correlation instead.
-                return correlation(a,b);
-            else
-                last = x;
-
-            // determine the difference in the ranks for both values
-            int rankDiff = curRank - otherRanking.get(y).intValue();
-            diff += rankDiff * rankDiff;
-
-            curRank++;
+        System.out.println("a ranks: " + Arrays.toString(rankedA));
+        System.out.println("b ranks: " + Arrays.toString(rankedB));
+    
+        double sumDiffs = 0;
+        for (int i = 0; i < rankedA.length - 1; ++i) {
+            double diff = rankedA[i] - rankedB[i];
+            sumDiffs += diff * diff;
         }
 
-        return 1 - ((6d * diff) / (a.length * ((a.length * a.length) - 1)));
+        System.out.printf("Sum diffs: %f%n", sumDiffs);
+
+        double aCorrectionFactor = rankedA[rankedA.length - 1];
+        double bCorrectionFactor = rankedB[rankedB.length - 1];
+
+        double tiesSum = aCorrectionFactor + bCorrectionFactor;
+                
+        // Compute Spearman's rho using Eq. 9.7 (p. 239)
+        return (NcubedMinusN - (6 * sumDiffs) - ((tiesSum) / 2d))
+            / Math.sqrt((NcubedMinusN * NcubedMinusN)
+                        - (tiesSum * NcubedMinusN)
+                        + (aCorrectionFactor * bCorrectionFactor));
+    }
+
+    /**
+     * Computes the ranks of the values of {@code vals}, returning their ranks
+     * plus an addition array index representing the correction value when using
+     * the ranks to compute the correlation (see Eq. 9.6; p. 239).
+     */
+    static double[] rank(int[] vals) {
+        IntRank[] ranked = new IntRank[vals.length];
+        for (int i = 0; i < vals.length; ++i)
+            ranked[i] = new IntRank(vals[i], i);
+        Arrays.sort(ranked);
+        System.out.println("ranked vals: " + Arrays.toString(ranked));
+            
+        double[] ranks = new double[vals.length + 1];
+        int correctionFactor = 0;
+        
+        for (int i = 0; i < ranked.length; ++i) {
+            System.out.printf("Determining rank of %s at %d%n", ranked[i], i);
+            // Determine how many ties (if any) occur at this rank
+            int ties = 0;
+            for (int j = i + 1; j < ranked.length
+                     && ranked[i].val == ranked[j].val; ++j, ++ties) 
+                ;
+            if (ties == 0)
+                ranks[ranked[i].index] = i+1;
+            else {
+                System.out.printf("Found %d ties starting at index %d%n", ties, i);
+                // Each tie is computed as the average of the ties' ranks, e.g.,
+                // two tie at rank 2 would be averaged as rank (2 + 3) / 2 = 2.5
+                double rank = i + 1 + (ties / 2d);
+                for (int j = i; j < i + ties + 1; ++j)
+                    ranks[ranked[j].index] = rank;
+                // Skip to next non-tied value
+                i += ties;
+
+                // Change ties from the number of *additional* tied elements to
+                // the *total* number of tied elements when computing the
+                // correction factor.
+                ties += 1; 
+                correctionFactor += ((ties * ties * ties) - ties);
+            }
+        }
+        ranks[ranks.length - 1] = correctionFactor;
+        return ranks;
+    }
+
+
+    static class IntRank implements Comparable<IntRank> {
+
+        int index;
+        int val;
+
+        public IntRank(int val, int index) { 
+            this.val = val; 
+            this.index = index;
+        }
+
+        public int compareTo(IntRank r) { return val - r.val; }
+        
+        public boolean equals(Object o) {
+            if (o instanceof IntRank) {
+                IntRank r = (IntRank)o;
+                return r.val == val && r.index == index;
+            }
+            return false;
+        }
+
+        public int hashCode() { return val; }
+
+        public String toString() { 
+            return "(v:" + val +")[" + index + "]";
+        }
+    }
+
+
+    /**
+     * Computes the ranks of the values of {@code vals}, returning their ranks
+     * plus an addition array index representing the correction value when using
+     * the ranks to compute the correlation (see Eq. 9.6; p. 239).
+     */
+    static double[] rank(double[] vals) {
+        DoubleRank[] ranked = new DoubleRank[vals.length];
+        for (int i = 0; i < vals.length; ++i)
+            ranked[i] = new DoubleRank(vals[i], i);
+        Arrays.sort(ranked);
+        System.out.println("ranked vals: " + Arrays.toString(ranked));
+            
+        double[] ranks = new double[vals.length + 1];
+        int correctionFactor = 0;
+        
+        for (int i = 0; i < ranked.length; ++i) {
+            System.out.printf("Determining rank of %s at %d%n", ranked[i], i);
+            // Determine how many ties (if any) occur at this rank
+            int ties = 0;
+            for (int j = i + 1; j < ranked.length
+                     && ranked[i].val == ranked[j].val; ++j, ++ties) 
+                ;
+            if (ties == 0)
+                ranks[ranked[i].index] = i+1;
+            else {
+                System.out.printf("Found %d ties starting at index %d%n", ties, i);
+                // Each tie is computed as the average of the ties' ranks, e.g.,
+                // two tie at rank 2 would be averaged as rank (2 + 3) / 2 = 2.5
+                double rank = i + 1 + (ties / 2d);
+                for (int j = i; j < i + ties + 1; ++j)
+                    ranks[ranked[j].index] = rank;
+                // Skip to next non-tied value
+                i += ties;
+
+                // Change ties from the number of *additional* tied elements to
+                // the *total* number of tied elements when computing the
+                // correction factor.
+                ties += 1; 
+                correctionFactor += ((ties * ties * ties) - ties);
+            }
+        }
+        ranks[ranks.length - 1] = correctionFactor;
+        return ranks;
+    }
+
+
+    static class DoubleRank implements Comparable<DoubleRank> {
+
+        int index;
+        double val;
+
+        public DoubleRank(double val, int index) { 
+            this.val = val; 
+            this.index = index;
+        }
+
+        public int compareTo(DoubleRank r) { return Double.compare(val, r.val); }
+        
+        public boolean equals(Object o) {
+            if (o instanceof DoubleRank) {
+                DoubleRank r = (DoubleRank)o;
+                return r.val == val && r.index == index;
+            }
+            return false;
+        }
+
+        public int hashCode() { return index; }
+
+        public String toString() { 
+            return "(v:" + val +")[" + index + "]";
+        }
     }
 
     /**

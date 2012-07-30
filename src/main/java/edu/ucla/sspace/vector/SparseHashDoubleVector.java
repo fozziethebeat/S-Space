@@ -44,7 +44,7 @@ import java.util.Iterator;
  * @author David Jurgens
  */
 public class SparseHashDoubleVector 
-    //extends SparseHashVector<Double>
+        extends AbstractDoubleVector
         implements SparseDoubleVector, Serializable { //Iterable<DoubleEntry>, Serializable {
 
     private static final long serialVersionUID = 1L;

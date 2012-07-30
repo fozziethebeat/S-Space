@@ -23,6 +23,8 @@
 
 package edu.ucla.sspace.matrix.factorization;
 
+import edu.ucla.sspace.matrix.ArrayMatrix;
+import edu.ucla.sspace.matrix.DiagonalMatrix;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.MatrixFactorization;
 import edu.ucla.sspace.matrix.SparseMatrix;
@@ -43,12 +45,22 @@ import edu.ucla.sspace.matrix.SparseMatrix;
  *
  * @author Keith Stevens
  */
-public abstract class AbstractSvd implements MatrixFactorization {
+public abstract class AbstractSvd implements SingularValueDecomposition {
 
     /**
      * The class by feature type matrix.
      */
     protected Matrix classFeatures;
+
+    /**
+     * The left vectors of the SVD decomposition
+     */
+    protected Matrix U;
+
+    /**
+     * The right vectors of the SVD decomposition
+     */
+    protected Matrix V;
 
     /**
      * Set to true when {@code classFeatures} has been accessed the first time
@@ -80,6 +92,7 @@ public abstract class AbstractSvd implements MatrixFactorization {
     public Matrix dataClasses() {
         if (!scaledDataClasses) {
             scaledDataClasses = true;
+            dataClasses = new ArrayMatrix(U.rows(), U.columns());
             // Weight the values in the data point space by the singular
             // values.
             //
@@ -87,7 +100,7 @@ public abstract class AbstractSvd implements MatrixFactorization {
             // the trunk, this code should be replaced.
             for (int r = 0; r < dataClasses.rows(); ++r)
                 for (int c = 0; c < dataClasses.columns(); ++c)
-                    dataClasses.set(r, c, dataClasses.get(r, c) * 
+                    dataClasses.set(r, c, U.get(r, c) * 
                                           singularValues[c]);
         }
 
@@ -100,6 +113,7 @@ public abstract class AbstractSvd implements MatrixFactorization {
     public Matrix classFeatures() {
         if (!scaledClassFeatures) {
             scaledClassFeatures = true;
+            classFeatures = new ArrayMatrix(V.rows(), V.columns());
             // Weight the values in the document space by the singular
             // values.
             //
@@ -107,11 +121,45 @@ public abstract class AbstractSvd implements MatrixFactorization {
             // the trunk, this code should be replaced.
             for (int r = 0; r < classFeatures.rows(); ++r)
                 for (int c = 0; c < classFeatures.columns(); ++c)
-                    classFeatures.set(r, c, classFeatures.get(r, c) * 
+                    classFeatures.set(r, c, V.get(r, c) * 
                                             singularValues[r]);
         }
 
         return classFeatures;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getLeftVectors() {
+        if (U == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return U;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getRightVectors() {
+        if (V == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return V;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getSingularValues() {
+        if (singularValues == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return new DiagonalMatrix(singularValues);
     }
 
     /**
@@ -120,5 +168,4 @@ public abstract class AbstractSvd implements MatrixFactorization {
     public double[] singularValues() {
         return singularValues;
     }
-
 }

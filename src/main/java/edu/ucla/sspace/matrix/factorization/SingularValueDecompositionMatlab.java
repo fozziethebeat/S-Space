@@ -126,7 +126,7 @@ public class SingularValueDecompositionMatlab extends AbstractSvd {
             if (exitStatus == 0) {
                 // load U in memory, since that is what most algorithms will be
                 // using (i.e. it is the word space)
-                dataClasses = MatrixIO.readMatrix(uOutput, Format.DENSE_TEXT, 
+                U = MatrixIO.readMatrix(uOutput, Format.DENSE_TEXT, 
                                                   Type.DENSE_IN_MEMORY);
                 scaledDataClasses = false;
 
@@ -137,10 +137,9 @@ public class SingularValueDecompositionMatlab extends AbstractSvd {
                 for (int s = 0; s < dimensions; ++s)
                     singularValues[s] = S.get(s, s);
 
-                // V could be large, so just keep it on disk.  Furthermore,
                 // Octave does not transpose V, so transpose it
-                classFeatures = MatrixIO.readMatrix(vOutput, Format.DENSE_TEXT,
-                                                    Type.DENSE_ON_DISK, true);
+                V = MatrixIO.readMatrix(vOutput, Format.DENSE_TEXT,
+                                        Type.DENSE_ON_DISK, true);
                 scaledDataClasses = false;
             }
         } catch (IOException ioe) {

@@ -40,7 +40,7 @@ import java.util.Arrays;
  *
  * @author David Jurgens
  */
-public class ArrayMatrix implements Matrix, Serializable {
+public class ArrayMatrix extends AbstractMatrix implements Serializable {
     
     private static final long serialVersionUID = 1L;
 

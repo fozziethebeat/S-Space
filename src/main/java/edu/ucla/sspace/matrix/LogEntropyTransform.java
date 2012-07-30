@@ -23,6 +23,7 @@ package edu.ucla.sspace.matrix;
 
 import edu.ucla.sspace.util.IntegerMap;
 
+import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 
 import java.io.IOError;
@@ -239,6 +240,27 @@ public class LogEntropyTransform extends BaseTransform {
          * @return log(value) * item_entropy(row)
          */
         public double transform(int row, int column, double value) {
+            return log2_1p(value) * rowEntropy[row];
+        }
+
+        /**
+         * Calculates the entropy (information gain) of the {@code row}'s
+         * associated term, scaled by the frequency of the row's value in the
+         * provided {@code column}.  The item entropy is defined as:
+         *
+         * </p>   1 + entropy(item) / log(numberOfFeatures)
+         * </p>
+         * with entropy defined as:
+         * </p>  sum_features(p(item, feature) * log(p(item, feature)))
+         *
+         * @param row The index specifying the observed item
+         * @param column The index specifying the observed feature 
+         * @param value The number occurances of the item and the feature
+         *
+         * @return log(value) * item_entropy(row)
+         */
+        public double transform(int row, DoubleVector column) {
+            double value = column.get(row);
             return log2_1p(value) * rowEntropy[row];
         }
     }

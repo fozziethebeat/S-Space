@@ -59,10 +59,10 @@ public class SingularValueDecompositionLibJ extends AbstractSvd {
     public void factorize(SparseMatrix matrix, int dimensions) {
         Matrix[] SVD = SvdlibjDriver.svd(matrix, dimensions);
 
-        dataClasses = SVD[0];
+        U = SVD[0];
         scaledDataClasses = false;
 
-        classFeatures = SVD[2];
+        V = SVD[2];
         scaledClassFeatures = false;
 
         singularValues = new double[dimensions];
@@ -78,10 +78,10 @@ public class SingularValueDecompositionLibJ extends AbstractSvd {
             Matrix[] SVD = SvdlibjDriver.svd(
                     mFile.getFile(), mFile.getFormat(), dimensions);
 
-            dataClasses = SVD[0];
+            U = SVD[0];
             scaledDataClasses = false;
 
-            classFeatures = SVD[2];
+            V = SVD[2];
             scaledClassFeatures = false;
 
             singularValues = new double[dimensions];

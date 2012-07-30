@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.common;
 
+import java.util.Arrays;
+
 import edu.ucla.sspace.matrix.*;
 import edu.ucla.sspace.text.*; 
 import edu.ucla.sspace.util.*;
@@ -266,11 +268,49 @@ public class SimilarityTest {
         double spCorr = Similarity.spearmanRankCorrelationCoefficient(a,b);
         assertEquals(-0.175758, spCorr, 0.01);
     }
+
+    /**
+     * Example from Nonparametric Statistics (2nd Ed.) page 240.
+     */
+    @Test public void testSpearmanIntTies() {
+        int[] a = 
+            new int[] { 0, 0, 1, 1, 3, 4, 5, 6, 7, 8, 8, 12 };
+        int[] b =
+            new int[] { 42, 46, 39, 37, 65, 88, 86, 56, 62, 92, 54, 81 };
+
+        // First test that the ranks are correct.  Note the last value isn't a
+        // rank, but instead is the correction factor based on the number of ties.
+        double[] aRanks = new double[]
+            { 1.5, 1.5, 3.5, 3.5, 5, 6, 7, 8, 9, 10.5, 10.5, 12, 18};
+        double[] bRanks = new double[]
+            { 3, 4, 2, 1, 8, 11, 10, 6, 7, 12, 5, 9, 0};
+        
+        double[] aRanks2 = Similarity.rank(a);
+        double[] bRanks2 = Similarity.rank(b);
+        boolean equals = Arrays.equals(aRanks, aRanks2);
+        if (!equals) {
+            System.out.printf("Found %s, but expected %s%n", 
+                              Arrays.toString(aRanks2),
+                              Arrays.toString(aRanks));
+        }
+        assertTrue(equals);
+
+        equals = Arrays.equals(bRanks, bRanks2);
+        if (!equals) {
+            System.out.printf("Found %s, but expected %s%n", 
+                              Arrays.toString(bRanks2),
+                              Arrays.toString(bRanks));
+        }
+        assertTrue(equals);
+
+        double spCorr = Similarity.spearmanRankCorrelationCoefficient(a,b);
+        assertEquals(0.615, spCorr, 0.0002);
+    }
     
     /** 
      * Example from http://www2.warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/rank_correlations
      */
-    @Test public void testSpearman2() {
+    @Test public void testSpearmanDoubleTies() {
         double[] x = new double[] { 5.05, 6.75, 3.21, 2.66 };
         double[] y = new double[] { 1.65, 26.5, -5.93, 7.96 };
         double[] z = new double[] { 1.65, 2.64, 2.64, 6.95 };

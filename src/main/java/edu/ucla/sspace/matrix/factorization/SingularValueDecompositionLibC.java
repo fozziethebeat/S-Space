@@ -23,6 +23,7 @@
 
 package edu.ucla.sspace.matrix.factorization;
 
+import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.DiagonalMatrix;
 import edu.ucla.sspace.matrix.Matrix;
 import edu.ucla.sspace.matrix.Matrix.Type;
@@ -49,7 +50,8 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibC implements MatrixFactorization {
+public class SingularValueDecompositionLibC
+        implements SingularValueDecomposition {
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionLibC.class.getName());
@@ -58,6 +60,16 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
      * The class by feature type matrix.
      */
     private Matrix classFeatures;
+
+    /**
+     * The left vectors of the SVD decomposition
+     */
+    private Matrix U;
+
+    /**
+     * The right vectors of the SVD decomposition
+     */
+    private Matrix V;
 
     /**
      * Set to true when {@code classFeatures} has been accessed the first time
@@ -99,8 +111,21 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
 
     /**
      * {@inheritDoc}
+     *
+     * @throws IllegalStateException if the <a
+     *         href="http://tedlab.mit.edu/~dr/SVDLIBC/">SVDLIBC</a> command
+     *         line executable is not able to be found.
      */
     public void factorize(MatrixFile mFile, int dimensions) {
+        if (!isSVDLIBCavailable()) {
+            throw new IllegalStateException(
+                "Use of this class requires the SVDLIBC command line program, " +
+                "which is either not installed on this system or is not " +
+                "available to be executed from the command line.  Check that " +
+                "your PATH settings are correct or see " + 
+                "http://tedlab.mit.edu/~dr/SVDLIBC/ to download and install " +
+                "the program.");
+        }
         try {
             String formatString = "";
             switch (mFile.getFormat()) {
@@ -157,13 +182,12 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
                 // be using (i.e. it is the word space).  SVDLIBC returns
                 // this as U transpose, so correct it by indicating that the
                 // read operation should transpose the matrix as it is built
-                dataClasses = MatrixIO.readMatrix(
+                U = MatrixIO.readMatrix(
                         Ut, Format.SVDLIBC_DENSE_TEXT, 
                         Type.DENSE_IN_MEMORY, true);
                 scaledDataClasses = false;
-
-                // V could be large, so just keep it on disk.  
-                classFeatures = MatrixIO.readMatrix(
+                
+                V = MatrixIO.readMatrix(
                         Vt, Format.SVDLIBC_DENSE_TEXT,
                         Type.DENSE_IN_MEMORY);
                 scaledClassFeatures = false;
@@ -192,13 +216,13 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
      */
     public Matrix dataClasses() {
         if (!scaledDataClasses) {
+            dataClasses = new ArrayMatrix(U.rows(), U.columns());
             scaledDataClasses = true;
             // Weight the values in the data point space by the singular
             // values.
             for (int r = 0; r < dataClasses.rows(); ++r) {
                 for (int c = 0; c < dataClasses.columns(); ++c) {
-                    dataClasses.set(r, c, dataClasses.get(r, c) * 
-                                          singularValues[c]);
+                    dataClasses.set(r, c, U.get(r, c) * singularValues[c]);
                 }
             }
         }
@@ -212,17 +236,50 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
     public Matrix classFeatures() {
         if (!scaledClassFeatures) {
             scaledClassFeatures = true;
+            classFeatures = new ArrayMatrix(V.rows(), V.columns());
             // Weight the values in the document space by the singular
             // values.
             // REMINDER: when the RowScaledMatrix class is merged in with
             // the trunk, this code should be replaced.
             for (int r = 0; r < classFeatures.rows(); ++r)
                 for (int c = 0; c < classFeatures.columns(); ++c)
-                    classFeatures.set(r, c, classFeatures.get(r, c) * 
-                                            singularValues[r]);
+                    classFeatures.set(r, c, V.get(r, c) * singularValues[r]);
         }
 
         return classFeatures;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getLeftVectors() {
+        if (U == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return U;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getRightVectors() {
+        if (V == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return V;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Matrix getSingularValues() {
+        if (singularValues == null)
+            throw new IllegalStateException(
+                "The matrix has not been factorized yet");
+        // NOTE: make this read-only?
+        return new DiagonalMatrix(singularValues);
     }
 
     /**
@@ -262,5 +319,18 @@ public class SingularValueDecompositionLibC implements MatrixFactorization {
         for (String line = null; (line = br.readLine()) != null; )
             m[i++] = Double.parseDouble(line);
         return m;
+    }
+
+    /**
+     * Returns {@code true} if the SVDLIBC library is available
+     */
+    public static boolean isSVDLIBCavailable() {
+        try {
+            Process svdlibc = Runtime.getRuntime().exec("svd");
+            svdlibc.waitFor();
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 }

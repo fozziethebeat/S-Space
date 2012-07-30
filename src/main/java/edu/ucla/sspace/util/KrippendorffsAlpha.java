@@ -52,6 +52,16 @@ public class KrippendorffsAlpha {
     }
 
     public double compute(Matrix ratings, DifferenceFunction diffFunc) {
+        switch (diffFunc) {
+        case ORDINAL:
+            return computeOrdinal(ratings);
+        case INTERVAL:
+            return computeInterval(ratings);
+        }
+        throw new IllegalArgumentException("unssuported DifferenceFunction: " + diffFunc);
+    }
+
+    private double computeOrdinal(Matrix ratings) {
         Set<Double> values = new TreeSet<Double>();
         int numCoders = ratings.rows();
         int numItems = ratings.columns();
@@ -209,6 +219,161 @@ public class KrippendorffsAlpha {
 
          return 1d - (numObservedRatings - 1) * (numerator / denominator);
     }
+
+
+    private double computeInterval(Matrix ratings) {
+        Set<Double> values = new TreeSet<Double>();
+        int numCoders = ratings.rows();
+        int numItems = ratings.columns();
+        int numObservedRatings = 0;
+        for (int item = 0; item < numItems; ++item) {
+            int itemRatings = 0;
+            for (int coder = 0; coder < numCoders; ++coder) {
+                double rating = ratings.get(coder, item);
+                if (!Double.isNaN(rating)) {
+                    values.add(rating);
+                    itemRatings++;
+                }
+            }
+            if (itemRatings > 1)
+                numObservedRatings += itemRatings;
+        }
+
+        Matrix coincidenceMatrix = 
+            new ArrayMatrix(values.size(), values.size());
+
+        double[] valuesArr = new double[values.size()];
+        double[] valueCounts = new double[values.size()];
+        int i = 0;
+        for (Double d : values)
+            valuesArr[i++] = d;
+
+        for (i = 0; i < valuesArr.length; ++i) {
+            for (int j = i; j < valuesArr.length; ++j) {
+
+                double rating1 = valuesArr[i];
+                double rating2 = valuesArr[j];
+
+                // For each rating pair, find out how many times this pair
+                // occurred together across all of the annotated items
+                for (int item = 0; item < numItems; ++item) {
+                    
+                    // How many coders answered this item
+                    int numResponses = 0;
+
+                    // How many pairs were found in this item that matched the
+                    // target
+                    int numPairsFound = 0;
+
+                    for (int coder = 0; coder < numCoders; ++coder) {
+                        double response = ratings.get(coder, item);
+                        if (Double.isNaN(response))
+                            continue;
+                        numResponses++;
+
+                        // Re-iterate through the responses again and find out
+                        // how many pairs (i=rating1,j) can be constructed where
+                        // j=rating2.
+                        if (rating1 == response) {
+                            for (int c = 0; c < numCoders; ++c) {
+                                if (c == coder)
+                                    continue;
+                                double r2 = ratings.get(c, item);
+                                if (Double.isNaN(r2))
+                                    continue;
+                                if (r2 == rating2) {
+//                                     System.out.printf(" (coder-%d,coder-%d)%n",
+//                                                       coder, c);
+                                    numPairsFound++;
+                                }
+                            }
+                        }
+                    }
+                                       
+                    double coincidence =  (numResponses == 1)
+                        ? 0 
+                        : numPairsFound / (numResponses - 1d);
+                    double curCoincidence = coincidenceMatrix.get(i, j);
+
+//                     System.out.printf("Found %d pairs of (%f, %f) in item " +
+//                                       "%d (with %d responses), co-incidence " +
+//                                       "is now: %f%n", numPairsFound, 
+//                                       rating1, rating2, item, numResponses,
+//                                       curCoincidence + coincidence);
+
+                    coincidenceMatrix.set(i, j, curCoincidence + coincidence);
+                    coincidenceMatrix.set(j, i, curCoincidence + coincidence);
+                }
+            }
+        }
+
+        for (i = 0; i < valuesArr.length; ++i) {
+            for (int j = 0; j < valuesArr.length; ++j) {
+                valueCounts[i] += coincidenceMatrix.get(i, j);
+            }
+        }
+
+//         System.out.print(" ");
+//         for (i = 0; i < valuesArr.length; ++i) 
+//             System.out.print("\t" + valuesArr[i]);
+//         System.out.println();
+
+//         for (i = 0; i < valuesArr.length; ++i) {
+//             System.out.print(valuesArr[i]);
+//             for (int j = 0; j < valuesArr.length; ++j) {
+//                 System.out.printf("\t%.2f", coincidenceMatrix.get(i, j));
+//             }
+//             System.out.println();
+//         }
+
+//         System.out.println(java.util.Arrays.toString(valueCounts));
+        
+        Matrix differenceFunctionMatrix = 
+            new ArrayMatrix(valuesArr.length, valuesArr.length); 
+        for (i = 0; i < valuesArr.length; ++i) {
+            for (int j = i+1; j < valuesArr.length; ++j) {
+         
+                double v1 = valuesArr[i];
+                double v2 = valuesArr[j];
+                double diff = (v1 - v2) * (v1 - v2);
+
+                differenceFunctionMatrix.set(i, j, diff);
+                differenceFunctionMatrix.set(j, i, diff);
+            }
+        }
+                
+//         System.out.print(" ");
+//         for (i = 0; i < valuesArr.length; ++i) 
+//             System.out.print("\t" + valuesArr[i]);
+//         System.out.println();
+
+//         for (i = 0; i < valuesArr.length; ++i) {
+//             System.out.print(valuesArr[i]);
+//             for (int j = 0; j < valuesArr.length; ++j) {
+//                 System.out.printf("\t%.2f", differenceFunctionMatrix.get(i, j));
+//             }
+//             System.out.println();
+//         }
+        
+        
+
+        double numerator = 0;
+        double denominator = 0;
+
+//         System.out.println("n: " + numObservedRatings);
+
+         for (i = 0; i < valuesArr.length; ++i) {
+             for (int j = i+1; j < valuesArr.length; ++j) {
+                 double coincidence = coincidenceMatrix.get(i, j);
+                 double difference = differenceFunctionMatrix.get(i, j);
+                 numerator += coincidence * difference;
+                 denominator += valueCounts[i] * valueCounts[j] * difference;
+             }
+         }
+
+         return 1d - (numObservedRatings - 1) * (numerator / denominator);
+    }
+
     
 //     static double compute(DifferenceFunction d, double value1, double value2) {
 //         switch (d) {

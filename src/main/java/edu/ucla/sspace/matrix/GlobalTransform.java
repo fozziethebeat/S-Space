@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
+
 /**
  * An interface for matrix transformations.  Transformations that can be done
  * with either no knowledge of the given matrix or with only global knowledge,
@@ -58,4 +61,17 @@ public interface GlobalTransform {
      * @return The new value of the entry located at {@code row}, {@code column}
      */
     double transform(int row, int column, double value);
+
+    /**
+     * Returns the transformed value for a given row in a new column that is
+     * <i>not<i> in the original matrix.
+     *
+     * @param column The new column not in the original matrix whose values are to be
+     *        used to compute the transformed value
+     * @param column The row of the specified to be transformed
+     *
+     * @return The new value of the entry located in the provided {@code column}
+     *         at the specified {@code row}
+     */
+    double transform(int row, DoubleVector column);
 }
