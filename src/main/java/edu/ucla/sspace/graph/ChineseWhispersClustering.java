@@ -190,9 +190,6 @@ public class ChineseWhispersClustering implements java.io.Serializable {
                 ties.add(clazz);
         }
 
-        System.out.printf("The top classes for %d are %s, which " +
-                          "all had count %d%n", v, ties, max);
-
         int[] options = ties.toArray(new int[ties.size()]);
         return (options.length == 1)
             ? options[0]

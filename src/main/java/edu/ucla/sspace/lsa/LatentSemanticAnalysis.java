@@ -236,14 +236,14 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
 
     
     /** 
-     * The precomputed result of Sigma^-1 * U^t, which is used to project new
+     * The precomputed result of U * Sigma^-1, which is used to project new
      * document vectors into the latent document space.  Since this matrix is
      * potentially large and its use only depends on the number of calls to
      * {@link #project(Document)}, we cache the results with a {@code
      * WeakReference}, letting the result be garbage collected if memory
      * pressure gets too high.
      */
-    private WeakReference<Matrix> UTransposedTimesSigmaInvRef;
+    private WeakReference<Matrix> UtimesSigmaInvRef;
 
     /**
      * The left factor matrix of the SVD operation, which is the word space
@@ -511,24 +511,20 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
         Matrix queryAsMatrix = new ArrayMatrix(1, numDims);
         for (int nz : docVec.getNonZeroIndices())
             queryAsMatrix.set(0, nz, docVec.get(nz));
-
-//         System.out.printf("Counted %d items (%d total) in the new doc (%d doc length)%n",
-//                           tokenCounts.items().size(), tokenCounts.sum(),
-//                           queryAsMatrix.rows());
         
         // Project the new document vector, d, by using
         //
-        //   Sigma_k^-1 * U_k^T * d
+        //   d * U_k * Sigma_k^-1
         //
         // where k is the dimensionality of the LSA space
         
-        Matrix UTransposedTimesSigmaInv = null;
+        Matrix UtimesSigmaInv = null;
             
-        // We lazily precompute the 
-        while (UTransposedTimesSigmaInv == null) {
-            if (UTransposedTimesSigmaInvRef != null
-                && ((UTransposedTimesSigmaInv
-                     = UTransposedTimesSigmaInvRef.get()) != null))
+        // We cache the reuslts of the U_k * Sigma_k^-1 multiplication since
+        // this will be the same for all projections.
+        while (UtimesSigmaInv == null) {
+            if (UtimesSigmaInvRef != null
+                    && ((UtimesSigmaInv = UtimesSigmaInvRef.get()) != null))
                 break;
             
             int rows = sigma.rows();
@@ -536,33 +532,16 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
             for (int i = 0; i < rows; ++i)
                 sigmaInv[i] = 1d / sigma.get(i, i);
             DiagonalMatrix sigmaInvMatrix = new DiagonalMatrix(sigmaInv);
-//             System.out.println("sigma:\n" + sigma);
-//             System.out.println("sigma^-1:\n" + sigmaInvMatrix);
-            Matrix Utransposed = U;// Matrices.transpose(U);
-//             System.out.println("U:\n" + U);
-//             System.out.println("U^t:\n" + Utransposed);
-//             System.out.printf("S: %d x %d, Ut: %d x %d%n",
-//                               sigmaInvMatrix.rows(), sigmaInvMatrix.columns(),
-//                               Utransposed.rows(), Utransposed.columns());
 
-            UTransposedTimesSigmaInv =
-                Matrices.multiply(Utransposed, sigmaInvMatrix);
+            UtimesSigmaInv =
+                Matrices.multiply(U, sigmaInvMatrix);
             // Update the field with the new reference to the precomputed matrix
-            UTransposedTimesSigmaInvRef = 
-                new WeakReference<Matrix>(UTransposedTimesSigmaInv);
-            
-//             System.out.printf("Sinv*Ut: %d x %d%n",
-//                               UTransposedTimesSigmaInv.rows(), 
-//                               UTransposedTimesSigmaInv.columns());
+            UtimesSigmaInvRef = new WeakReference<Matrix>(UtimesSigmaInv);
         }
 
-//         System.out.printf("Doc: %d x %d%n",
-//                           queryAsMatrix.rows(), 
-//                           queryAsMatrix.columns());
-
         // Compute the resulting projected vector as a matrix
-        Matrix result = Matrices.multiply(queryAsMatrix, UTransposedTimesSigmaInv);
-//         System.out.println("result: " + result);
+        Matrix result = Matrices.multiply(queryAsMatrix, UtimesSigmaInv);
+
         // The resulting matrix is dense (unfortunately), so we perform an extra
         // operation to compact the result, which is expected to be sparse.
         int cols = result.columns();
