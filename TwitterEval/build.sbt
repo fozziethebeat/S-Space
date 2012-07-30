@@ -1,3 +1,5 @@
+import AssemblyKeys._ // put this at the top of the file
+
 name := "TwitterEval"
 
 version := "1.0.0"
@@ -16,8 +18,9 @@ libraryDependencies ++= Seq(
   "org.scalanlp" %% "breeze-learn" % "0.1-SNAPSHOT",
   "org.apache.opennlp" % "opennlp-tools" % "1.5.2-incubating",
   "edu.ucla.sspace" %% "scalda" % "0.0.1",
-  "edu.stanford.nlp" % "stanford-corenlp" % "1.3.3",
   "edu.ucla.sspace" % "sspace-wordsi" % "2.0"
 )
 
 scalacOptions += "-deprecation"
+
+assemblySettings

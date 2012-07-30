@@ -32,7 +32,9 @@ object ParticleFilterTweets {
     // Create a similarity method for comparing feature representations of tweets.
     val simFunc = new CosineSimilarity()
     // Create a set of weights for the tweet similarity function.  These should sum to 1.
-    val w = (1.0, .0, .0)
+    val w = (0.45, 0.45, .1)
+    var uniformTokenVector:CompactSparseVector = null
+    var uniformNeVector:CompactSparseVector = null
 
     def main(args: Array[String]) {
         val config = Config(args(0))
@@ -66,7 +68,7 @@ object ParticleFilterTweets {
         // Process each data point by comparing it to each particle.  For each particle, determine if the point should be assigned to the
         // most recently created component or be allocated a new component.
         for (point <- tweetIter) {
-            particleList = particleList.map(p => selectComponent(point, p._2))
+            particleList = particleList.map(p => selectComponent(point, p._2, converter))
             /*
             val particleWeights = new DenseVector[Double](newParticleList.map(_._1))
             val particleDist = new Multinomial(particleWeights / particleWeights.sum)
@@ -124,11 +126,13 @@ object ParticleFilterTweets {
         m.close
     }
 
-    def selectComponent(point: Tweet, particle: Particle) = {
+    def selectComponent(point: Tweet, particle: Particle, converter: TweetModeler) = {
         val (z, n, t, lambda, beta, alpha) = particle
+        val noiseTweet = converter.uniformTweet(point.timestamp)
         val existingLikelihood = n / (n + alpha) * // Chinese Restaurant Process
                                  Tweet.sim(point, t.last, lambda, beta, w, simFunc)
-        val newLikelihood = alpha / (n + alpha) * 1
+        val newLikelihood = alpha / (n + alpha) * // Chinese Restaurant Process
+                            Tweet.sim(point, noiseTweet, lambda, beta, w, simFunc)
         val total = existingLikelihood + newLikelihood
         val existingProb = existingLikelihood / total
         val newProb = newLikelihood / total

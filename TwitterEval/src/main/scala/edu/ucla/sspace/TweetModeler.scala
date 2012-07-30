@@ -18,6 +18,8 @@ trait TweetModeler {
 
     def namedEntity(index: Int) : String
 
+    def uniformTweet(time: Long) : Tweet
+
     def tweetIterator(tweetList: Iterator[String]) : Iterator[Tweet] = {
         tweetList.map(line => {
             val Array(timestamp, tweet) = line.split("\\s+", 2)
@@ -39,11 +41,14 @@ class JointNGramTweetModeler(ngramList: Iterator[String],
 
     val basis = TweetModeler.loadBasis(ngramList ++ tokenList)
     val ONE_VECTOR = new CompactSparseVector(1)
+    val uniformVector = new CompactSparseVector(Array.fill(basis.numDimensions)(1d))
 
     def emptyTweet() = new Tweet(0,
                                  new CompactSparseVector(basis.numDimensions),
                                  ONE_VECTOR,
                                  "")
+
+    def uniformTweet(time: Long) = new Tweet(time, uniformVector, ONE_VECTOR, "")
 
     def token(index: Int) = basis.getDimensionDescription(index)
 
@@ -70,7 +75,9 @@ class SplitFeatureTweetModeler(tokenList: Iterator[String],
                                namedEntityList: Iterator[String]) extends TweetModeler {
 
     val tokenBasis = TweetModeler.loadBasis(tokenList)
+    val uniformTokenVector = new CompactSparseVector(Array.fill(tokenBasis.numDimensions)(1d))
     val neBasis = TweetModeler.loadBasis(namedEntityList)
+    val uniformNeVector = new CompactSparseVector(Array.fill(neBasis.numDimensions)(1d))
 
     def emptyTweet() = new Tweet(0,
                                  new CompactSparseVector(tokenBasis.numDimensions),
@@ -80,6 +87,8 @@ class SplitFeatureTweetModeler(tokenList: Iterator[String],
     def token(index: Int) = tokenBasis.getDimensionDescription(index)
 
     def namedEntity(index: Int) = neBasis.getDimensionDescription(index)
+
+    def uniformTweet(time: Long) = new Tweet(time, uniformTokenVector, uniformNeVector, "")
 
     def formTweet(timestamp: String, tweet: String) = {
         val tweetXml = XML.loadString(tweet)

@@ -32,6 +32,6 @@ object Tweet {
             lambda: Double, beta: Double, weights: (Double, Double, Double),
             simFunc: SimilarityFunction) =
         weights._1*pow(lambda, abs(t1.timestamp - t2.timestamp)/beta) + // Time
-        weights._2*simFunc.sim(t1.tokenVector, t2.tokenVector) + // Topic
-        weights._3*simFunc.sim(t1.neVector, t2.neVector) // Named Entities
+        (if (weights._2 != 0d) weights._2*simFunc.sim(t1.tokenVector, t2.tokenVector) else 0d) + // Topic
+        (if (weights._3 != 0d) weights._3*simFunc.sim(t1.neVector, t2.neVector) else 0d) // Named Entities
 }

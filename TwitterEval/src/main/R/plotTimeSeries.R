@@ -1,11 +1,11 @@
 library(ggplot2)
 
-#sData <- data.frame(read.table("tweet.archery.split.dat", header=TRUE))
+sData <- data.frame(read.table("tweet.archery.particle.split.dat", header=TRUE))
 tData <- data.frame(read.table("tweet.archery.particle.groups.dat", header=TRUE))
 
 p <- ggplot(tData, aes(x=Time, group=Group, colour=Group)) + 
      geom_histogram(binwidth=100) + 
-     #geom_vline(xintercept=as.numeric(sData$Time)) +
+     geom_vline(xintercept=as.numeric(sData$Time)) +
      theme_bw()
 ggsave("tweet.archery.particle.partitioned.eps")
 
