@@ -32,19 +32,19 @@ object ParticleFilterTweets {
     // Create a similarity method for comparing feature representations of tweets.
     val simFunc = new CosineSimilarity()
     // Create a set of weights for the tweet similarity function.  These should sum to 1.
-    val w = (.7, .2, .1)
+    val w = (1.0, .0, .0)
 
     def main(args: Array[String]) {
-        if (args.size != 7) {
-            System.err.println("Arguments: <tweets.txt> <tokenBasis> <neBasis> <labeled.out> <slices.out> <summaries.out> <topFeatures.out>")
-            System.exit(1)
-        }
+        val config = Config(args(0))
 
         // Specify the number of particles to create.
         val nParticles = 50
 
-        val converter = TweetModeler.joint(args(1), args(2), 4)
-        val tweets = converter.tweetIterator(Source.fromFile(args(0)).getLines).toList
+        val converter = config.featureModel.get match {
+            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
+            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
+        }
+        val tweets = converter.tweetIterator(config.taggedFile.get).toList
         val tweetIter = tweets.iterator
 
         // Read in the first point to initialize each particle.
@@ -66,19 +66,21 @@ object ParticleFilterTweets {
         // Process each data point by comparing it to each particle.  For each particle, determine if the point should be assigned to the
         // most recently created component or be allocated a new component.
         for (point <- tweetIter) {
-            val newParticleList = particleList.map(p => selectComponent(point, p._2))
+            particleList = particleList.map(p => selectComponent(point, p._2))
+            /*
             val particleWeights = new DenseVector[Double](newParticleList.map(_._1))
             val particleDist = new Multinomial(particleWeights / particleWeights.sum)
             particleList = Array.fill(nParticles)(newParticleList(particleDist.sample))
+            */
         }
 
         val bestParticle = particleList.sortWith(_._1 > _._1).head
-        val p = new PrintWriter(args(3))
+        val p = new PrintWriter(config.groupOutput.get)
         p.println("Time Group")
         bestParticle._2._1.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
-        val t = new PrintWriter(args(4))
+        val t = new PrintWriter(config.splitOutput.get)
         t.println("Time")
         bestParticle._2._3.map(_.timestamp).foreach(t.println)
         t.close
@@ -97,7 +99,7 @@ object ParticleFilterTweets {
             points(bestMedian)
         }}.toList.sortWith(_.timestamp < _.timestamp).map(_.text)
 
-        val s = new PrintWriter(args(5))
+        val s = new PrintWriter(config.summaryOutput.get)
         s.println("Summary")
         summaryList.foreach(s.println)
         s.close
@@ -108,7 +110,7 @@ object ParticleFilterTweets {
         val clusterMatrix = Matrices.asSparseMatrix(bestParticle._2._3.map(_.tokenVector))
         val weightedMatrix = transform.transform(clusterMatrix)
 
-        val m = new PrintWriter(args(6))
+        val m = new PrintWriter(config.featureOutput.get)
         m.println("Top Words")
         times.map(_.tokenVector).map(v => v.getNonZeroIndices
                                                         .map(i => (v.get(i), i))
