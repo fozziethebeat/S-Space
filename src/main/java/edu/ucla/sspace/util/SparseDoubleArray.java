@@ -148,6 +148,10 @@ public class SparseDoubleArray
         maxLength = length;
         this.indices = indices;
         this.values = values;
+
+        if (indices.length == 0)
+            return;
+
         // Ensure that no duplicate indices, or unsorted exist
         for (int i = 0; i < this.indices.length - 1; ++i) {
             if (this.indices[i] >= this.indices[i+1])
