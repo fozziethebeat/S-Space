@@ -14,6 +14,7 @@ import edu.ucla.sspace.vector.VectorMath
 
 import scala.collection.JavaConversions.seqAsJavaList
 import scala.io.Source
+import scala.math.pow
 import scala.util.Random
 
 import java.io.PrintWriter
@@ -21,7 +22,15 @@ import java.io.PrintWriter
 
 object ParticleFilterTweets {
 
-    type Particle = (List[Int], Int, List[Tweet], Double, Double, Double)
+    type Particle = (List[Int], // A list of cluster assignments for each point.
+                     List[Int], // Number of points assigned to each cluster.
+                     List[Tweet], // List of centroid tweets.
+                     Double, // The current sum similarities between points and their centers.
+                     Double, // The total objective score.
+                     Double, // The lambda parameter in the time comparison.
+                     Double, // The beta parameter in the time comparison.
+                     Double // The alpha parameter in the dirichlet process.
+                     )
 
     // Create a distribution for sampling lambda parameters for each particle.
     val lambda_dist = new Beta(2, 2)
@@ -33,6 +42,7 @@ object ParticleFilterTweets {
     val simFunc = new CosineSimilarity()
     // Create a set of weights for the tweet similarity function.  These should sum to 1.
     val w = (0.45, 0.45, .1)
+    val ws = (0.45, 0.40, 0.05)
     var uniformTokenVector:CompactSparseVector = null
     var uniformNeVector:CompactSparseVector = null
 
@@ -62,18 +72,17 @@ object ParticleFilterTweets {
         //     6) alpha: smoothing parameter given to a new mixture in a Dirichlet Process.
         // Initially each particle has the first data point assigned to the first group
         var particleList:Array[(Double, Particle)] = Array.fill(nParticles)((1/nParticles.toDouble,
-                                                                            (List(0), 1, List(firstPoint),
+                                                                            (List(0), List(1), List(firstPoint),
+                                                                            0d, 0d,
                                                                             lambda_dist.sample, beta_dist.sample*100, alpha_dist.sample)))
 
         // Process each data point by comparing it to each particle.  For each particle, determine if the point should be assigned to the
         // most recently created component or be allocated a new component.
         for (point <- tweetIter) {
-            particleList = particleList.map(p => selectComponent(point, p._2, converter))
-            /*
+            val newParticleList = particleList.map(p => selectComponent(point, p._2, converter))
             val particleWeights = new DenseVector[Double](newParticleList.map(_._1))
             val particleDist = new Multinomial(particleWeights / particleWeights.sum)
             particleList = Array.fill(nParticles)(newParticleList(particleDist.sample))
-            */
         }
 
         val bestParticle = particleList.sortWith(_._1 > _._1).head
@@ -90,7 +99,7 @@ object ParticleFilterTweets {
         // For each group, compute the best median within the group.  This will simply be the tweet that maximizes the internal similarity
         // within the group.
 
-        val (z, n, times, lambda, beta, alpha) = bestParticle._2 
+        val (z, n, times, _, _, lambda, beta, alpha) = bestParticle._2 
         val summaryList = z.zip(tweets)
                            .groupBy(_._1)
                            .map{ case (groupId, group) => {
@@ -126,30 +135,40 @@ object ParticleFilterTweets {
         m.close
     }
 
+    def weightGen(n: Int) = 
+        normedWeights(
+        (w._1 + ws._1 * pow(.9, n),
+         w._2 - ws._2 * pow(.9, n),
+         w._3 - ws._3 * pow(.9, n)))
+
+    def normedWeights(w: (Double, Double, Double)) = {
+        val total = w._1 + w._2 + w._3
+        (w._1 / total, w._2 / total, w._3 / total)
+    }
+
     def selectComponent(point: Tweet, particle: Particle, converter: TweetModeler) = {
-        val (z, n, t, lambda, beta, alpha) = particle
+        val (z, n_list, t_list, simSum, objectiveScore, lambda, beta, alpha) = particle
+        val (n, n_rest) = (n_list.head, n_list.tail)
+        val (t, t_rest) = (t_list.head, t_list.tail)
         val noiseTweet = converter.uniformTweet(point.timestamp)
+        val currWeights = weightGen(n)
         val existingLikelihood = n / (n + alpha) * // Chinese Restaurant Process
-                                 Tweet.sim(point, t.last, lambda, beta, w, simFunc)
+                                 Tweet.sim(point, t.avgTime(n), lambda, beta, currWeights, simFunc)
         val newLikelihood = alpha / (n + alpha) * // Chinese Restaurant Process
-                            Tweet.sim(point, noiseTweet, lambda, beta, w, simFunc)
+                            Tweet.sim(point, noiseTweet, lambda, beta, currWeights, simFunc)
         val total = existingLikelihood + newLikelihood
         val existingProb = existingLikelihood / total
         val newProb = newLikelihood / total
         if (Random.nextDouble <= existingProb) {
-            val newId = t.size -1 
-            VectorMath.add(t.last.tokenVector, point.tokenVector)
-            VectorMath.add(t.last.neVector, point.neVector)
-            (existingProb, (z :+ newId, n+1, t, lambda, beta, alpha))
+            val newId = t_list.size -1 
+            (existingProb, (z :+ newId, (n+1) :: n_rest, (t+point) :: t_rest, simSum, objectiveScore, lambda, beta, alpha))
         } else {
-            val newId = t.size
-            val newTweet = new Tweet(point.timestamp, 
+            val newId = t_list.size
+            val newTweet = (new Tweet(point.timestamp, 
                                      new CompactSparseVector(point.tokenVector.length),
                                      new CompactSparseVector(point.neVector.length),
-                                     point.text)
-            VectorMath.add(newTweet.tokenVector, point.tokenVector)
-            VectorMath.add(newTweet.neVector, point.neVector)
-            (newProb, (z :+ newId, 1, t :+ newTweet, lambda, beta, alpha))
+                                     point.text) + point).avgTime(2)
+            (newProb, (z :+ newId, 1 :: n_list, newTweet :: t_list, simSum, objectiveScore, lambda, beta, alpha))
         }
     }
 }
