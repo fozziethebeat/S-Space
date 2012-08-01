@@ -43,15 +43,16 @@ object ParticleFilterTweets {
     // Create a set of weights for the tweet similarity function.  These should sum to 1.
     val w = (0.45, 0.45, .1)
     val ws = (0.45, 0.40, 0.05)
+
+    // Specify the number of particles to create.
+    val nParticles = 100
     var uniformTokenVector:CompactSparseVector = null
     var uniformNeVector:CompactSparseVector = null
 
     def main(args: Array[String]) {
         val config = Config(args(0))
 
-        // Specify the number of particles to create.
-        val nParticles = 50
-
+        println("Loading configurations")
         val converter = config.featureModel.get match {
             case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
             case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
@@ -62,6 +63,7 @@ object ParticleFilterTweets {
         // Read in the first point to initialize each particle.
         val firstPoint = tweetIter.next
 
+        println("Initializing Particles")
         // Create a list of particles.  Each particle will have the following parameters and a weight:
         //   paramters:
         //     1) z: assignments for each data point to a component id.  Note that these will be contiguous.
@@ -76,45 +78,52 @@ object ParticleFilterTweets {
                                                                             0d, 0d,
                                                                             lambda_dist.sample, beta_dist.sample*100, alpha_dist.sample)))
 
+        println("Processing Tweets")
         // Process each data point by comparing it to each particle.  For each particle, determine if the point should be assigned to the
         // most recently created component or be allocated a new component.
-        for (point <- tweetIter) {
+        for ((point, i) <- tweetIter.zipWithIndex) {
+            if (i % 100 == 0)
+                printf("Processing Tweet [%d]\n", i)
             val newParticleList = particleList.map(p => selectComponent(point, p._2, converter))
-            val particleWeights = new DenseVector[Double](newParticleList.map(_._1))
+            val particleWeights = new DenseVector[Double](newParticleList.map(_._1).map(p=> if (p < 0) .0001 else p))
             val particleDist = new Multinomial(particleWeights / particleWeights.sum)
             particleList = Array.fill(nParticles)(newParticleList(particleDist.sample))
         }
 
-        val bestParticle = particleList.sortWith(_._1 > _._1).head
+        println("Printing Assignments for each tweet")
+        val bestParticle = particleList.sortWith(_._1 > _._1).head._2
+        val (assignments, clustersizes, meanTweets, _, _, lambda, beta, alpha) = bestParticle
         val p = new PrintWriter(config.groupOutput.get)
         p.println("Time Group")
-        bestParticle._2._1.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
+        assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
-
-        val t = new PrintWriter(config.splitOutput.get)
-        t.println("Time")
-        bestParticle._2._3.map(_.timestamp).foreach(t.println)
-        t.close
 
         // For each group, compute the best median within the group.  This will simply be the tweet that maximizes the internal similarity
         // within the group.
-
-        val (z, n, times, _, _, lambda, beta, alpha) = bestParticle._2 
-        val summaryList = z.zip(tweets)
-                           .groupBy(_._1)
-                           .map{ case (groupId, group) => {
+        val summaryList = assignments.zip(tweets)
+                                     .groupBy(_._1)
+                                     .map{ case (groupId, group) => {
             val points = group.map(_._2)
             val bestMedian = points.map(pmedian => points.map(point => Tweet.sim(pmedian, point, lambda, beta, w, simFunc)).sum)
                                    .zipWithIndex
                                    .max._2
-            points(bestMedian)
-        }}.toList.sortWith(_.timestamp < _.timestamp).map(_.text)
+            (groupId, points(bestMedian))
+        }}.toMap
 
-        val s = new PrintWriter(config.summaryOutput.get)
-        s.println("Summary")
-        summaryList.foreach(s.println)
-        s.close
+        println("Printing summaries and time stamps for each group")
+        val t = new PrintWriter(config.splitOutput.get)
+        t.println("StartTime MeanTime Group Summary")
+        meanTweets.zipWithIndex.foreach{ case(meanTweet, groupId) => {
+            val medianTweet = summaryList(groupId)
+            val startTime = meanTweet.timestamp
+            val meanTime = medianTweet.timestamp
+            val summary = medianTweet.text
+            t.println("%d %d %d \"%s\"".format(startTime, meanTime, groupId, summary))
+        }}
+        t.close
 
+        println("Done!")
+        /*
         // Weight the features using PMI so that we select the most saliently interesting features per group as opposed to just the most
         // frequent.
         val transform = new PointWiseMutualInformationTransform()
@@ -133,6 +142,7 @@ object ParticleFilterTweets {
                                                         .mkString(" "))
                                              .foreach(m.println)
         m.close
+        */
     }
 
     def weightGen(n: Int) = 
@@ -153,7 +163,7 @@ object ParticleFilterTweets {
         val noiseTweet = converter.uniformTweet(point.timestamp)
         val currWeights = weightGen(n)
         val existingLikelihood = n / (n + alpha) * // Chinese Restaurant Process
-                                 Tweet.sim(point, t.avgTime(n), lambda, beta, currWeights, simFunc)
+                                 Tweet.sim(point, t, lambda, beta, currWeights, simFunc)
         val newLikelihood = alpha / (n + alpha) * // Chinese Restaurant Process
                             Tweet.sim(point, noiseTweet, lambda, beta, currWeights, simFunc)
         val total = existingLikelihood + newLikelihood
@@ -161,14 +171,15 @@ object ParticleFilterTweets {
         val newProb = newLikelihood / total
         if (Random.nextDouble <= existingProb) {
             val newId = t_list.size -1 
-            (existingProb, (z :+ newId, (n+1) :: n_rest, (t+point) :: t_rest, simSum, objectiveScore, lambda, beta, alpha))
+            val newMean = t +? point
+            val objective = simSum + Tweet.sim(point, newMean, lambda, beta, currWeights, simFunc)
+            (objective, (z :+ newId, (n+1) :: n_rest, newMean :: t_rest, objective, objectiveScore, lambda, beta, alpha))
         } else {
             val newId = t_list.size
-            val newTweet = (new Tweet(point.timestamp, 
-                                     new CompactSparseVector(point.tokenVector.length),
-                                     new CompactSparseVector(point.neVector.length),
-                                     point.text) + point).avgTime(2)
-            (newProb, (z :+ newId, 1 :: n_list, newTweet :: t_list, simSum, objectiveScore, lambda, beta, alpha))
+            val newTweet = Tweet(point)
+            val penalty = t_rest.map(Tweet.sim(_, t, lambda, beta, w, simFunc)).sum
+            val objective = simSum + 1 - 0.5 * penalty
+            (objective, (z :+ newId, 1 :: n_list, newTweet :: t_list, objective, objectiveScore, lambda, beta, alpha))
         }
     }
 }

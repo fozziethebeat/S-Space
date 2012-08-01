@@ -36,7 +36,7 @@ object ExtractBasisLists {
         for ((line,i) <- data.zipWithIndex) {
             val Array(timestamp, tweet) = line.split("\\s+", 2)
             try {
-                val tweetXml = XML.loadString(tweet)
+                val tweetXml = XML.loadString(tweet.substring(1, tweet.length-1))
                 for (token <- tokenizer.tokenize(tweetXml.child
                                                          .filter(_.label!="PERSON")
                                                          .map(_.text)

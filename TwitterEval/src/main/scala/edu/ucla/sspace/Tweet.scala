@@ -20,6 +20,12 @@ class Tweet(val timestamp: Long,
         Tweet(timestamp + t.timestamp, tokenVector, neVector, text)
     }
 
+    def +?(t: Tweet) = {
+        VectorMath.add(tokenVector, t.tokenVector)
+        VectorMath.add(neVector, t.neVector)
+        Tweet(timestamp, tokenVector, neVector, text)
+    }
+
     def avgTime(n: Int) =
         Tweet(timestamp / n, tokenVector, neVector, text)
 }
@@ -30,6 +36,14 @@ object Tweet {
 
     def apply(ts: Long, tVec: SparseDoubleVector, neVec: SparseDoubleVector, text: String) =
         new Tweet(ts, tVec, neVec, text)
+
+    def apply(t: Tweet) = {
+        val tv = new CompactSparseVector(t.tokenVector.length)
+        VectorMath.add(tv, t.tokenVector)
+        val nv = new CompactSparseVector(t.neVector.length)
+        VectorMath.add(nv, t.neVector)
+        new Tweet(t.timestamp, tv, nv, t.text)
+    }
 
     def sumsim(t1: Tweet, t2: Tweet,
                lambda: Double, beta: Double, weights: (Double, Double, Double),

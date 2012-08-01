@@ -24,7 +24,7 @@ trait TweetModeler {
         tweetList.map(line => {
             val Array(timestamp, tweet) = line.split("\\s+", 2)
             try {
-                formTweet(timestamp, tweet)
+                formTweet(timestamp, tweet.substring(1, tweet.length-1))
             } catch {
                 case _ => new Tweet(-1, null, null, "")
             }
