@@ -54,13 +54,13 @@ public class KrippendorffsAlphaTest {
    
     @Test public void testOrdinal() {
         double alpha = new KrippendorffsAlpha().compute(testMatrix, 
-            KrippendorffsAlpha.DifferenceFunction.ORDINAL);
+            KrippendorffsAlpha.LevelOfMeasurement.ORDINAL);
         assertEquals(0.815, alpha, 0.001);
     }
 
     @Test public void testInterval() {
         double alpha = new KrippendorffsAlpha().compute(testMatrix, 
-            KrippendorffsAlpha.DifferenceFunction.INTERVAL);
+            KrippendorffsAlpha.LevelOfMeasurement.INTERVAL);
         assertEquals(0.849, alpha, 0.001);
     }
 
