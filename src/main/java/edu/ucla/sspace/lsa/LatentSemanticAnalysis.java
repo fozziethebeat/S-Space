@@ -479,29 +479,20 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
         // Tokenize the document using the existing tokenization rules
         Iterator<String> documentTokens = 
             IteratorFactory.tokenize(doc.reader());
-        Counter<String> tokenCounts = new ObjectCounter<String>();
-
-        // Keep track of the set of terms that exist in the word space
-        Set<String> knownTerms = termToIndex.keySet();
-
-        // For each word in the text document, keep a count of how many times it
-        // has occurred
-        while (documentTokens.hasNext()) {
-            String token = documentTokens.next();
-            
-            // Skip added empty tokens for words that have been filtered out
-            if (token.equals(IteratorFactory.EMPTY_TOKEN)
-                    || !knownTerms.contains(token))
-                continue;
-            
-            tokenCounts.count(token);
-        }
         
+        // Ensure that when we are projecting the new document that we do not
+        // add any new terms to this space's basis.
+        termToindex.setReadOnly(true);
 
-        int numDims = termToIndex.numDimensions();
+        // Iterate through the document's tokens and build the document
+        // representation for those terms that have an existing basis in the
+        // space
         SparseDoubleVector docVec = new SparseHashDoubleVector(numDims);
-        for (Map.Entry<String,Integer> e : tokenCounts)
-            docVec.set(termToIndex.getDimension(e.getKey()), e.getValue());
+        while (docTokens.hasNext()) {
+            int dim = termToindex.getDimension(docTokens.next());
+            if (dim >= 0)
+                docVec.add(dim, 1d);
+        }        
         
         // Transform the vector according to this instance's transform's state,
         // which should normalize the vector as the original vectors were.

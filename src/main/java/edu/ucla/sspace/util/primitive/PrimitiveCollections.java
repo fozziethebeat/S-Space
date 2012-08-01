@@ -53,13 +53,7 @@ public final class PrimitiveCollections {
      * Randomly shuffles the contents of the provided array
      */
     public static void shuffle(int[] arr) {
-        int size = arr.length;
-        for (int i = size; i > 1; i--) {
-            int tmp = arr[i-1];
-            int r = RANDOM.nextInt(i);
-            arr[i-1] = arr[r];
-            arr[r] = tmp;
-        }
+        shuffle(arr, RANDOM);
     }
 
     /**
@@ -69,6 +63,46 @@ public final class PrimitiveCollections {
         int size = arr.length;
         for (int i = size; i > 1; i--) {
             int tmp = arr[i-1];
+            int r = rand.nextInt(i);
+            arr[i-1] = arr[r];
+            arr[r] = tmp;
+        }
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(double[] arr) {
+        shuffle(arr, RANDOM);
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(double[] arr, Random rand) {
+        int size = arr.length;
+        for (int i = size; i > 1; i--) {
+            double tmp = arr[i-1];
+            int r = rand.nextInt(i);
+            arr[i-1] = arr[r];
+            arr[r] = tmp;
+        }
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(long[] arr) {
+        shuffle(arr, RANDOM);
+    }
+
+    /**
+     * Randomly shuffles the contents of the provided array
+     */
+    public static void shuffle(long[] arr, Random rand) {
+        int size = arr.length;
+        for (int i = size; i > 1; i--) {
+            long tmp = arr[i-1];
             int r = rand.nextInt(i);
             arr[i-1] = arr[r];
             arr[r] = tmp;

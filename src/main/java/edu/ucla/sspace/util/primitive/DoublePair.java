@@ -41,8 +41,8 @@ public class DoublePair {
      * Creates a pair out of {@code x} and {@code y}
      */
     public DoublePair(double x, double y) {
-	this.x = x;
-	this.y = y;
+        this.x = x;
+        this.y = y;
     }
 
     /**
@@ -51,19 +51,19 @@ public class DoublePair {
      * is specific to the ordering of {@code x} and {@code y}.
      */
     public boolean equals(Object o) {
-	if (!(o instanceof DoublePair))
-	    return false;
-	DoublePair p = (DoublePair)o;
-	return x == p.x && y == p.y;
+        if (!(o instanceof DoublePair))
+            return false;
+        DoublePair p = (DoublePair)o;
+        return x == p.x && y == p.y;
     }
     
     public int hashCode() {
         long v1 = Double.doubleToLongBits(x);
         long v2 = Double.doubleToLongBits(y);
-	return (int)(v1 ^ (v2 >>> 32)) ^ (int)(v2 ^ (v2 >>> 32));
+        return (int)(v1 ^ (v2 >>> 32)) ^ (int)(v2 ^ (v2 >>> 32));
     }
 
     public String toString() {
-	return "{" + x + ", " + y + "}";
+        return "{" + x + ", " + y + "}";
     }
 }

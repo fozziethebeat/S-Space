@@ -35,14 +35,25 @@ import java.util.TreeSet;
 
 
 /**
+ * A (partial) implementation of computing <a
+ * href="http://en.wikipedia.org/wiki/Krippendorff%27s_alpha">Krippendorff's
+ * alpha</a>, which measures the level of annotator agreement.  Alpha can be
+ * computed across arbitrary numbers of annotators (with missing values) as well
+ * as with different <a
+ * href="http://en.wikipedia.org/wiki/Levels_of_measurement">levels of
+ * measurement</a>
  *
+ * <p><b>NOTE: this class is under heavy construction</b>
  *
- *
- * @since 2.0
+ * @since 2.0.3
  */ 
 public class KrippendorffsAlpha {
 
-    public enum DifferenceFunction {
+    /**
+     * The <a href="http://en.wikipedia.org/wiki/Levels_of_measurement">level of
+     * measurement</a> at which the data is annotated.
+     */
+    public enum LevelOfMeasurement {
             NOMINAL,
             ORDINAL,
             INTERVAL,
@@ -51,14 +62,31 @@ public class KrippendorffsAlpha {
             CIRCULAR
     }
 
-    public double compute(Matrix ratings, DifferenceFunction diffFunc) {
-        switch (diffFunc) {
+    /**
+     * Computes <a
+     * href="http://en.wikipedia.org/wiki/Krippendorff%27s_alpha">Krippendorff's
+     * alpha</a> for the provuded ratings, where the each coder (annotator) is
+     * listed as a separate row in {@code ratings} and each item and its ratings
+     * are indicated by a column in {@code ratings}
+     *
+     * @param ratings a matrix where coders are represented by rows and items by
+     *        columns.  The interpretation of the values of {@code ratings}
+     *        depends on the level of measurement.  Missing values are encoded
+     *        as {@code NaN} values.
+     * @param level the <a
+     *        href="http://en.wikipedia.org/wiki/Levels_of_measurement">level of
+     *        measurement</a> at which the data is annotated.
+     *
+     * @return the level of agreement for the given annotators
+     */
+    public double compute(Matrix ratings, LevelOfMeasurement level) {
+        switch (level) {
         case ORDINAL:
             return computeOrdinal(ratings);
         case INTERVAL:
             return computeInterval(ratings);
         }
-        throw new IllegalArgumentException("unssuported DifferenceFunction: " + diffFunc);
+        throw new IllegalArgumentException("unssuported LevelOfMeasurement: " + level);
     }
 
     private double computeOrdinal(Matrix ratings) {
@@ -122,8 +150,6 @@ public class KrippendorffsAlpha {
                                 if (Double.isNaN(r2))
                                     continue;
                                 if (r2 == rating2) {
-//                                     System.out.printf(" (coder-%d,coder-%d)%n",
-//                                                       coder, c);
                                     numPairsFound++;
                                 }
                             }
@@ -134,12 +160,6 @@ public class KrippendorffsAlpha {
                         ? 0 
                         : numPairsFound / (numResponses - 1d);
                     double curCoincidence = coincidenceMatrix.get(i, j);
-
-//                     System.out.printf("Found %d pairs of (%f, %f) in item " +
-//                                       "%d (with %d responses), co-incidence " +
-//                                       "is now: %f%n", numPairsFound, 
-//                                       rating1, rating2, item, numResponses,
-//                                       curCoincidence + coincidence);
 
                     coincidenceMatrix.set(i, j, curCoincidence + coincidence);
                     coincidenceMatrix.set(j, i, curCoincidence + coincidence);
@@ -152,21 +172,6 @@ public class KrippendorffsAlpha {
                 valueCounts[i] += coincidenceMatrix.get(i, j);
             }
         }
-
-//         System.out.print(" ");
-//         for (i = 0; i < valuesArr.length; ++i) 
-//             System.out.print("\t" + valuesArr[i]);
-//         System.out.println();
-
-//         for (i = 0; i < valuesArr.length; ++i) {
-//             System.out.print(valuesArr[i]);
-//             for (int j = 0; j < valuesArr.length; ++j) {
-//                 System.out.printf("\t%.2f", coincidenceMatrix.get(i, j));
-//             }
-//             System.out.println();
-//         }
-
-//         System.out.println(java.util.Arrays.toString(valueCounts));
         
         Matrix differenceFunctionMatrix = 
             new ArrayMatrix(valuesArr.length, valuesArr.length); 
@@ -187,26 +192,9 @@ public class KrippendorffsAlpha {
                 differenceFunctionMatrix.set(j, i, sum);
             }
         }
-                
-//         System.out.print(" ");
-//         for (i = 0; i < valuesArr.length; ++i) 
-//             System.out.print("\t" + valuesArr[i]);
-//         System.out.println();
-
-//         for (i = 0; i < valuesArr.length; ++i) {
-//             System.out.print(valuesArr[i]);
-//             for (int j = 0; j < valuesArr.length; ++j) {
-//                 System.out.printf("\t%.2f", differenceFunctionMatrix.get(i, j));
-//             }
-//             System.out.println();
-//         }
-        
-        
 
         double numerator = 0;
         double denominator = 0;
-
-//         System.out.println("n: " + numObservedRatings);
 
          for (i = 0; i < valuesArr.length; ++i) {
              for (int j = i+1; j < valuesArr.length; ++j) {
@@ -282,8 +270,6 @@ public class KrippendorffsAlpha {
                                 if (Double.isNaN(r2))
                                     continue;
                                 if (r2 == rating2) {
-//                                     System.out.printf(" (coder-%d,coder-%d)%n",
-//                                                       coder, c);
                                     numPairsFound++;
                                 }
                             }
@@ -294,12 +280,6 @@ public class KrippendorffsAlpha {
                         ? 0 
                         : numPairsFound / (numResponses - 1d);
                     double curCoincidence = coincidenceMatrix.get(i, j);
-
-//                     System.out.printf("Found %d pairs of (%f, %f) in item " +
-//                                       "%d (with %d responses), co-incidence " +
-//                                       "is now: %f%n", numPairsFound, 
-//                                       rating1, rating2, item, numResponses,
-//                                       curCoincidence + coincidence);
 
                     coincidenceMatrix.set(i, j, curCoincidence + coincidence);
                     coincidenceMatrix.set(j, i, curCoincidence + coincidence);
@@ -312,21 +292,6 @@ public class KrippendorffsAlpha {
                 valueCounts[i] += coincidenceMatrix.get(i, j);
             }
         }
-
-//         System.out.print(" ");
-//         for (i = 0; i < valuesArr.length; ++i) 
-//             System.out.print("\t" + valuesArr[i]);
-//         System.out.println();
-
-//         for (i = 0; i < valuesArr.length; ++i) {
-//             System.out.print(valuesArr[i]);
-//             for (int j = 0; j < valuesArr.length; ++j) {
-//                 System.out.printf("\t%.2f", coincidenceMatrix.get(i, j));
-//             }
-//             System.out.println();
-//         }
-
-//         System.out.println(java.util.Arrays.toString(valueCounts));
         
         Matrix differenceFunctionMatrix = 
             new ArrayMatrix(valuesArr.length, valuesArr.length); 
@@ -341,26 +306,9 @@ public class KrippendorffsAlpha {
                 differenceFunctionMatrix.set(j, i, diff);
             }
         }
-                
-//         System.out.print(" ");
-//         for (i = 0; i < valuesArr.length; ++i) 
-//             System.out.print("\t" + valuesArr[i]);
-//         System.out.println();
-
-//         for (i = 0; i < valuesArr.length; ++i) {
-//             System.out.print(valuesArr[i]);
-//             for (int j = 0; j < valuesArr.length; ++j) {
-//                 System.out.printf("\t%.2f", differenceFunctionMatrix.get(i, j));
-//             }
-//             System.out.println();
-//         }
-        
-        
-
+              
         double numerator = 0;
         double denominator = 0;
-
-//         System.out.println("n: " + numObservedRatings);
 
          for (i = 0; i < valuesArr.length; ++i) {
              for (int j = i+1; j < valuesArr.length; ++j) {
@@ -374,15 +322,10 @@ public class KrippendorffsAlpha {
          return 1d - (numObservedRatings - 1) * (numerator / denominator);
     }
 
-    
-//     static double compute(DifferenceFunction d, double value1, double value2) {
-//         switch (d) {
-//         case ORDINAL:
-//             return 
-//     }
-
-    public double[] computeConfidenceIntervals(
-            Matrix ratings, DifferenceFunction diffFunc, 
+    // NOTE: marked private until further testing can tell whether this actually
+    // is working... -jurgens
+    private double[] computeConfidenceIntervals(
+            Matrix ratings, LevelOfMeasurement level, 
             int numResamples, double[] confidenceIntervals) {
 
         for (int i = 0; i < confidenceIntervals.length; ++i) {
@@ -431,86 +374,12 @@ public class KrippendorffsAlpha {
         }
 
         double[] resamples = new double[numResamples];
-        /*
-
-        double origAlpha = compute(ratings, diffFunc);
-
-        // int[] bins = new int[2001];
-
-
-        for (int resample = 0; resample < numResamples; ++resample) {
-
-            Matrix sampledAssignments = getRandomSample(ratings);
-                                                        
-//                     numCoders, numItems, numObservedRatings, valueList);
-            
-            double sampleAlpha = compute(sampledAssignments, diffFunc);
-
-            if (sampleAlpha > 1)
-                sampleAlpha = 1;
-
-            // int sampleAlphaIndex = (int)(sampleAlpha * 1000) + 1000;
-            // bins[sampleAlphaIndex]++;
-            samples[resample] = sampleAlpha;
-        }
-
-
-
-        int origAlphaIndex = (int)(origAlpha * 1000) + 1000;
-
-        double[] alphasAtConfidence = new double[confidenceIntervals.length];
-
-        double x = numResamples;
-
-         for (int i = 0; i < bins.length; ++i) {
-             System.err.println( ((i - 1000d) / 1000) + " " + bins[i]);
-         }
-
-        for (int i = 0; i < confidenceIntervals.length; ++i) {
-            double confidence = confidenceIntervals[i];
-            
-            double lowerBound = Double.NaN;
-            double upperBound = Double.NaN;
-
-            double probSum = 0;
-            for (int j = origAlphaIndex; j >= 0; j--) {
-                double prob = bins[j] / x;
-                probSum += prob;
-                if (probSum >= confidence/2) {
-                    lowerBound = (j - 1000d) / 1000;
-                    break;
-                }
-            }
-            probSum = 0;
-            for (int j = origAlphaIndex; j < bins.length; ++j) {
-                double prob = bins[j] / x;
-                probSum += prob;
-                if (probSum >= 1 - (confidence/2)) {
-                    upperBound = (j - 1000d) / 1000;
-                    break;
-                }
-
-            }
-            
-            System.out.printf("Confidence at %f for alpha %f: (%f, %f)%n",
-                              confidence, origAlpha, lowerBound, upperBound);
-        }
-        
-        return alphasAtConfidence;
-
-
-
-    }
-    */
         
    
       for (int resample = 0; resample < numResamples; ++resample) {
 
-            Matrix sampledAssignments = getRandomSample(ratings);
-//                 getRandomSample(
-//                 numCoders, numItems, numObservedRatings, values);
-            
-            double sampleAlpha = compute(sampledAssignments, diffFunc);
+            Matrix sampledAssignments = getRandomSample(ratings);            
+            double sampleAlpha = compute(sampledAssignments, level);
             resamples[resample] = sampleAlpha;
         }
 
@@ -559,16 +428,9 @@ public class KrippendorffsAlpha {
         }
         Collections.shuffle(toAssign);
         
-//         // Dump the Set of values to an array for faster random access
-//         double[] valueArr = new double[values.size()];
-//         int x = 0;
-//         for (Double d : values)
-//             valueArr[x++] = d;
-
         for (int i = 0; i < samples; ++i) {
             IntPair assignment = toAssign.get(i);
             sample.set(assignment.x, assignment.y, values[i]);
-//                       valueArr[(int)(Math.random() * valueArr.length)]);
         }
         
         return sample;

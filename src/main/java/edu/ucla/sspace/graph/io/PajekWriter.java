@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens 
+ * Copyright 2012 David Jurgens 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -46,88 +46,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
- * A class for writing graph instances to files in Pajek's NET format.
+ * A class for writing graph instances to files in Pajek's <a
+ * href="https://gephi.org/users/supported-graph-formats/pajek-net-format/">NET
+ * format</a>.
  */
 public class PajekWriter {
 
     public PajekWriter() { }
 
-//     public void write(Graph<? extends Edge> g, File f) throws IOException {
-//         PrintWriter pw = new PrintWriter(f);
-//         pw.println("graph g {");
-//         String vertexLabel = null;
-//         for (int v : g.vertices()) {
-//             pw.print("\t" + v);
-//             if (vertexLabels != null && (vertexLabel = vertexLabels.get(v)) != null) {
-//                 pw.printf(" [label=\"%s\"]", vertexLabel);
-//             }
-//             pw.println(';');
-//         }
-//         for (Edge e : g.edges()) {
-//             pw.printf("\t%d -- %d\n", e.from(), e.to());
-//         }
-//         pw.println("}");
-//         pw.close();
-//     }
-
-//     public void write(DirectedGraph<? extends DirectedEdge> g, File f) 
-//             throws IOException {
-//         this.write(g, f, Collections.<Set<Integer>>emptySet());
-//     }
-
-//     public void write(DirectedGraph<? extends DirectedEdge> g, File f, 
-//                       Collection<Set<Integer>> groups) throws IOException {
-//         PrintWriter pw = new PrintWriter(f);
-//         pw.println("digraph g {");
-//         String vertexLabel = null;
-//         for (int v : g.vertices()) {
-//             pw.print("\t" + v);
-//             if (vertexLabels != null && (vertexLabel = vertexLabels.get(v)) != null) {
-//                 pw.printf(" [label=\"%s\"]", vertexLabel);
-//             }
-//             pw.println(';');
-//         }
-//         for (DirectedEdge e : g.edges()) {
-//             pw.printf("\t%d -> %d\n", e.from(), e.to());
-//         }
-//         if (!groups.isEmpty()) {
-//             for (Set<Integer> group : groups) {
-//                 pw.print("\t{ rank=same; ");
-//                 for (Integer i : group) {
-//                     pw.print(i);
-//                     pw.print(' ');
-//                 }
-//                 pw.println('}');
-//             }
-//         }
-//         pw.println("}");
-//         pw.close();
-//     }
-
-//     public <T> void write(Multigraph<T, ? extends TypedEdge<T>> g, File f) 
-//             throws IOException {
-//         PrintWriter pw = new PrintWriter(f);
-//         pw.println("graph g {");
-//         String vertexLabel = null;
-//         for (int v : g.vertices()) {
-//             pw.print("\t" + v);
-//             if (vertexLabels != null && (vertexLabel = vertexLabels.get(v)) != null) {
-//                 pw.printf(" [label=%s]", vertexLabel);
-//             }
-//             pw.println(';');
-//         }
-//         for (TypedEdge<T> e : g.edges()) {
-//             pw.printf("\t%d -- %d [label=\"%s\"]\n", e.from(), e.to(), e.edgeType());
-//         }
-//         pw.println("}");
-//         pw.close();
-//     }
-
-     public <T> void write(WeightedDirectedMultigraph<T> g, File f) 
+    public <T> void write(WeightedDirectedMultigraph<T> g, File f) 
             throws IOException {
-         write(g, f, null);
-     }
+        write(g, f, null);
+    }
 
     public <T> void write(WeightedDirectedMultigraph<T> g, File f, 
                           Indexer<String> vertexLabels) 
@@ -174,6 +106,5 @@ public class PajekWriter {
         }
         
         pw.close();
-    }
-   
+    }   
 }

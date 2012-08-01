@@ -1003,8 +1003,11 @@ public class Similarity {
 
     /**
      * Computes the Spearman rank correlation coefficient for the two arrays.
-     * If there is a tie in the ranking of {@code a}, then Pearson's
-     * product-moment coefficient is returned instead.
+     *
+     * <p> This implementation properly accounts for ties according to the
+     * procedure specified in <i>Nonparametric Statistics for The Behavioral
+     * Sciences</i> by Sidney Siegel and N. John Castellan Jr. Second
+     * Ed. (1988).
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
@@ -1043,8 +1046,11 @@ public class Similarity {
 
     /**
      * Computes the Spearman rank correlation coefficient for the two arrays.
-     * If there is a tie in the ranking of {@code a}, then Pearson's
-     * product-moment coefficient is returned instead.
+     *
+     * <p> This implementation properly accounts for ties according to the
+     * procedure specified in <i>Nonparametric Statistics for The Behavioral
+     * Sciences</i> by Sidney Siegel and N. John Castellan Jr. Second
+     * Ed. (1988).
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
@@ -1089,7 +1095,8 @@ public class Similarity {
     /**
      * Computes the ranks of the values of {@code vals}, returning their ranks
      * plus an addition array index representing the correction value when using
-     * the ranks to compute the correlation (see Eq. 9.6; p. 239).
+     * the ranks to compute the correlation (see Eq. 9.6; p. 239 in
+     * Nonparametric Statistics for The Behavioral Sciences).
      */
     static double[] rank(int[] vals) {
         IntRank[] ranked = new IntRank[vals.length];
@@ -1163,7 +1170,8 @@ public class Similarity {
     /**
      * Computes the ranks of the values of {@code vals}, returning their ranks
      * plus an addition array index representing the correction value when using
-     * the ranks to compute the correlation (see Eq. 9.6; p. 239).
+     * the ranks to compute the correlation (see Eq. 9.6; p. 239 in
+     * Nonparametric Statistics for The Behavioral Sciences).
      */
     static double[] rank(double[] vals) {
         DoubleRank[] ranked = new DoubleRank[vals.length];
@@ -1235,125 +1243,50 @@ public class Similarity {
 
     /**
      * Computes the Spearman rank correlation coefficient for the two {@code
-     * DoubleVector}s.  If there is a tie in the ranking of {@code a}, then
-     * Pearson's product-moment coefficient is returned instead.
+     * DoubleVector} instances.  
      *
-     * @throws IllegalArgumentException when the length of the two vectors are
-     *                                   not the same.
+     * <p> This implementation properly accounts for ties according to the
+     * procedure specified in <i>Nonparametric Statistics for The Behavioral
+     * Sciences</i> by Sidney Siegel and N. John Castellan Jr. Second
+     * Ed. (1988).
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(DoubleVector a, 
                                                             DoubleVector b) {
-        check(a, b);
-
-        SortedMap<Double,Double> ranking = new TreeMap<Double,Double>();
-        for (int i = 0; i < a.length(); ++i) {
-            ranking.put(a.get(i), b.get(i));
-        }
-        
-        double[] sortedB = b.toArray();
-        Arrays.sort(sortedB);
-        Map<Double,Integer> otherRanking = new HashMap<Double,Integer>();
-        for (int i = 0; i < b.length(); ++i) {
-            otherRanking.put(sortedB[i], i);
-        }
-        
-        // keep track of the last value we saw in the key set so we can check
-        // for ties.  If there are ties then the Pearson's product-moment
-        // coefficient should be returned instead.
-        Double last = null;
-
-        // sum of the differences in rank
-        double diff = 0d;
-
-        // the current rank of the element in a that we are looking at
-        int curRank = 0;
-
-        for (Map.Entry<Double,Double> e : ranking.entrySet()) {
-            Double x = e.getKey();
-            Double y = e.getValue();
-            // check that there are no tied rankings
-            if (last == null)
-                last = x;
-            else if (last.equals(x))
-                // if there was a tie, return the correlation instead.
-                return correlation(a,b);
-            else 
-                last = x;
-
-            // determine the difference in the ranks for both values
-            int rankDiff = curRank - otherRanking.get(y).intValue();
-            diff += rankDiff * rankDiff;
-
-            curRank++;
-        }
-
-        return 1 - ((6 * diff) / (a.length() * ((a.length() * a.length()) - 1)));
+        // NOTE: should this code ever be on the critical path, we should
+        // re-implement it to operate on the Vector instances themselves
+        return spearmanRankCorrelationCoefficient(a.toArray(), b.toArray());
     }
 
     /**
      * Computes the Spearman rank correlation coefficient for the two {@code
-     * DoubleVector}s.  If there is a tie in the ranking of {@code a}, then
-     * Pearson's product-moment coefficient is returned instead.
+     * IntegerVector} instances.  
+     *
+     * <p> This implementation properly accounts for ties according to the
+     * procedure specified in <i>Nonparametric Statistics for The Behavioral
+     * Sciences</i> by Sidney Siegel and N. John Castellan Jr. Second
+     * Ed. (1988).
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.
      */
     public static double spearmanRankCorrelationCoefficient(IntegerVector a, 
                                                             IntegerVector b) {
-        check(a, b);
-
-        SortedMap<Integer,Integer> ranking = new TreeMap<Integer,Integer>();
-        for (int i = 0; i < a.length(); ++i) {
-            ranking.put(a.get(i), b.get(i));
-        }
-        
-        int[] sortedB = b.toArray();
-        Arrays.sort(sortedB);
-        Map<Integer,Integer> otherRanking = new HashMap<Integer,Integer>();
-        for (int i = 0; i < b.length(); ++i) {
-            otherRanking.put(sortedB[i], i);
-        }
-        
-        // keep track of the last value we saw in the key set so we can check
-        // for ties.  If there are ties then the Pearson's product-moment
-        // coefficient should be returned instead.
-        Integer last = null;
-
-        // sum of the differences in rank
-        double diff = 0d;
-
-        // the current rank of the element in a that we are looking at
-        int curRank = 0;
-
-        for (Map.Entry<Integer,Integer> e : ranking.entrySet()) {
-            Integer x = e.getKey();
-            Integer y = e.getValue();
-            // check that there are no tied rankings
-            if (last == null)
-                last = x;
-            else if (last.equals(x))
-                // if there was a tie, return the correlation instead.
-                return correlation(a,b);
-            else 
-                last = x;
-
-            // determine the difference in the ranks for both values
-            int rankDiff = curRank - otherRanking.get(y).intValue();
-            diff += rankDiff * rankDiff;
-
-            curRank++;
-        }
-
-        return 1 - ((6 * diff) / (a.length() * ((a.length() * a.length()) - 1)));
+        // NOTE: should this code ever be on the critical path, we should
+        // re-implement it to operate on the Vector instances themselves
+        return spearmanRankCorrelationCoefficient(a.toArray(), b.toArray());
     }
 
     /**
      * Computes the Spearman rank correlation coefficient for the two {@code
-     * Vector}s.  If there is a tie in the ranking of {@code a}, then Pearson's
-     * product-moment coefficient is returned instead.
+     * Vector} instances.  
+     *
+     * <p> This implementation properly accounts for ties according to the
+     * procedure specified in <i>Nonparametric Statistics for The Behavioral
+     * Sciences</i> by Sidney Siegel and N. John Castellan Jr. Second
+     * Ed. (1988).
      *
      * @throws IllegalArgumentException when the length of the two vectors are
      *                                   not the same.

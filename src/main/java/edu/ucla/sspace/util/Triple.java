@@ -48,8 +48,8 @@ public class Triple<T> implements java.io.Serializable {
      * Creates a triple out of {@code x}, {@code y}, and  {@code z}
      */
     public Triple(T x, T y, T z) {
-	this.x = x;
-	this.y = y;
+        this.x = x;
+        this.y = y;
         this.z = z;
     }
 
@@ -59,21 +59,21 @@ public class Triple<T> implements java.io.Serializable {
      * Note that equality is specific to the ordering of the elements.
      */
     public boolean equals(Object o) {
-	if (o == null || !(o instanceof Triple))
-	    return false;
-	Triple p = (Triple)o;
-	return (x == p.x || (x != null && x.equals(p.x))) 
-	    && (y == p.y || (y != null && y.equals(p.y)))
+        if (o == null || !(o instanceof Triple))
+            return false;
+        Triple p = (Triple)o;
+        return (x == p.x || (x != null && x.equals(p.x))) 
+            && (y == p.y || (y != null && y.equals(p.y)))
             && (z == p.z || (z != null && z.equals(p.z)));
     }
     
     public int hashCode() {
-	return ((x == null) ? 0 : x.hashCode()) 
-	    ^  ((y == null) ? 0 : y.hashCode())
+        return ((x == null) ? 0 : x.hashCode()) 
+            ^  ((y == null) ? 0 : y.hashCode())
             ^  ((z == null) ? 0 : z.hashCode());
     }
 
     public String toString() {
-	return "{" + x + ", " + y + ", " + z + "}";
+        return "{" + x + ", " + y + ", " + z + "}";
     }
 }
