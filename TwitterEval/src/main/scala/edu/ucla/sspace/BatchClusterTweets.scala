@@ -13,7 +13,7 @@ import scala.util.Random
 import java.io.PrintWriter
 
 
-object BatchTweets {
+object BatchClusterTweets {
     val lambda = 0.5
     val beta = 100
     val w = (0.45, 0.45, 0.10)
@@ -21,25 +21,33 @@ object BatchTweets {
     var useMedian = false 
 
     def main(args: Array[String]) {
-        val config = Config(args(0))
+        val taggedFile = args(0)
+        val tokenBasisFile = args(1)
+        val neBasisFile = args(2)
+        val numGroups = args(3).toInt
+        val groupOutput = args(4)
+        val summaryOutput = args(5)
+        val featureModel = args(6)
+        val medianArg = args(7)
 
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
 
-        useMedian = args(1) match {
-            case "median" => true
-            case "mean" => false
-            case _ => throw new IllegalArgumentException("Not a valid argument for the median")
+        useMedian = medianArg match {
+            "median" => true
+            "mean" => fales
+            case _ => throw new IllegalArgumentException("Not a valid argument for the median method")
         }
-        val converter = config.featureModel.get match {
-            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
-            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
+
+        val converter = featureModel match {
+            case "split" => TweetModeler.split(tokenBasisFile, neBasisFile)
+            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile, 4)
             case _ => throw new IllegalArgumentException("Not a valid argument for the Tweet Modeler")
         }
 
-        val tweetArray = converter.tweetIterator(config.taggedFile.get).toArray
+        val tweetArray = converter.tweetIterator(taggedFile).toArray
         val tweets = tweetArray.toList
 
-        val k = config.numGroups.get
+        val k = numGroups
         val assignments = Array.fill(tweets.size)(-1)
         // Extract a random set of tweets to act as medians.
         var medianList = Random.shuffle(tweets).take(k).sortWith(_.timestamp <= _.timestamp)
@@ -103,21 +111,22 @@ object BatchTweets {
             medianList = newMedianList
         }
 
-        val p = new PrintWriter(config.groupOutput.get)
+        val p = new PrintWriter(groupOutput)
         p.println("Time Group")
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
-        val t = new PrintWriter(config.splitOutput.get)
-        t.println("Time")
-        medianList.map(_.timestamp).foreach(t.println)
-        t.close
-
-        val s = new PrintWriter(config.summaryOutput.get)
+        val s = new PrintWriter(summaryOutput)
         s.println("Summary")
-        medianList.map(_.text).foreach(s.println)
+        medianList.zipWithIndex.foreach{ case(medianTweet, groupId) => {
+            val startTime = medianTweet.timestamp
+            val meanTime = medianTweet.timestamp
+            val summary = medianTweet.text
+            s.println("%d %d %d \"%s\"".format(startTime, meanTime, groupId, summary))
+        }}
         s.close
 
+        /*
         val transform = new PointWiseMutualInformationTransform()
         val clusterMatrix = Matrices.asSparseMatrix(medianList.map(_.tokenVector))
         val weightedMatrix = transform.transform(clusterMatrix)
@@ -134,6 +143,7 @@ object BatchTweets {
                                                 .mkString(" "))
                                      .foreach(m.println)
         m.close
+        */
     }
 
     def assignTweets(items: List[Tweet], assignments: Array[Int], groupId: Int, offset: Int) = {

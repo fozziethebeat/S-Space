@@ -50,14 +50,19 @@ object ParticleFilterTweets {
     var uniformNeVector:CompactSparseVector = null
 
     def main(args: Array[String]) {
-        val config = Config(args(0))
+        val taggedFile = args(0)
+        val tokenBasisFile = args(1)
+        val neBasisFile = args(2)
+        val groupOutput = args(3)
+        val summaryOutput = args(4)
+        val featureModel = args(5)
 
         println("Loading configurations")
-        val converter = config.featureModel.get match {
-            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
-            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
+        val converter = featureModel match {
+            case "split" => TweetModeler.split(tokenBasisFile, neBasisFile)
+            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile, 4)
         }
-        val tweets = converter.tweetIterator(config.taggedFile.get).toList
+        val tweets = converter.tweetIterator(taggedFile).toList
         val tweetIter = tweets.iterator
 
         // Read in the first point to initialize each particle.
@@ -93,7 +98,8 @@ object ParticleFilterTweets {
         println("Printing Assignments for each tweet")
         val bestParticle = particleList.sortWith(_._1 > _._1).head._2
         val (assignments, clustersizes, meanTweets, _, _, lambda, beta, alpha) = bestParticle
-        val p = new PrintWriter(config.groupOutput.get)
+
+        val p = new PrintWriter(groupOutput)
         p.println("Time Group")
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
@@ -111,7 +117,7 @@ object ParticleFilterTweets {
         }}.toMap
 
         println("Printing summaries and time stamps for each group")
-        val t = new PrintWriter(config.splitOutput.get)
+        val t = new PrintWriter(summaryOutput)
         t.println("StartTime MeanTime Group Summary")
         meanTweets.zipWithIndex.foreach{ case(meanTweet, groupId) => {
             val medianTweet = summaryList(groupId)
