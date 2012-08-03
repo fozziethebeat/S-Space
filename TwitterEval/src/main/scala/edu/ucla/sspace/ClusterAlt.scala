@@ -18,24 +18,25 @@ object ClusterAlt {
             System.exit(1)
         }
 
-        // Extract the tweet representations and put them in a breeze format.
-        println("Loading the tweet model")
-        val modeler = TweetModeler.split(args(1), args(2))
-        println("Extracting the tweets")
-        val tweetVectors = modeler.tweetIterator(args(0)).map(_.tokenVector).toList
-        val data = Matrices.asSparseMatrix(tweetVectors)
-
         // Get the clustering algorithm that will be applied to the group of tweets.
         val nGroups = args(4).toInt
         val learner = args(3) match {
             case "kmean" => new DirectClustering()
         }
 
+        // Extract the tweet representations and put them in a breeze format.
+        println("Loading the tweet model")
+        val modeler = TweetModeler.split(args(1), args(2))
+        println("Extracting the tweets")
+        val tweets = modeler.tweetIterator(args(0)).toList
+        val data = Matrices.asSparseMatrix(tweets.map(_.tokenVector))
+
         println("Clustering the tweets")
         val assignments = learner.cluster(data, nGroups, System.getProperties)
         val p = new PrintWriter(args(5))
         p.println("Group")
-        assignments.assignments.map(_(0)).foreach(p.println)
+        for ( (groupId, tweet) <- assignments.assignments.zip(tweets) )
+            p.println("%d %d %s".format(groupId(0), tweet.timestamp, tweet.text))
         p.close
     }
 }

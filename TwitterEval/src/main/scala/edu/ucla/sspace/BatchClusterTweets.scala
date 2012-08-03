@@ -16,22 +16,30 @@ import java.io.PrintWriter
 object BatchTweets {
     val lambda = 0.5
     val beta = 100
-    val w = (.7, .2, .1)
+    val w = (0.45, 0.45, 0.10)
     val simFunc = new CosineSimilarity()
-    val useMedian = false 
+    var useMedian = false 
 
     def main(args: Array[String]) {
-        if (args.size != 8) {
-            println("args: <tweets> <basis1> <basis2> <numMedians> <group.out> <split.out> <summary.out> <features.out>")
-            System.exit(1)
-        }
+        val config = Config(args(0))
 
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
-        val converter = TweetModeler.joint(args(1), args(2), 4)
-        val tweetArray = converter.tweetIterator(args(0)).toArray
+
+        useMedian = args(1) match {
+            case "median" => true
+            case "mean" => false
+            case _ => throw new IllegalArgumentException("Not a valid argument for the median")
+        }
+        val converter = config.featureModel.get match {
+            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
+            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
+            case _ => throw new IllegalArgumentException("Not a valid argument for the Tweet Modeler")
+        }
+
+        val tweetArray = converter.tweetIterator(config.taggedFile.get).toArray
         val tweets = tweetArray.toList
 
-        val k = args(3).toInt
+        val k = config.numGroups.get
         val assignments = Array.fill(tweets.size)(-1)
         // Extract a random set of tweets to act as medians.
         var medianList = Random.shuffle(tweets).take(k).sortWith(_.timestamp <= _.timestamp)
@@ -95,17 +103,17 @@ object BatchTweets {
             medianList = newMedianList
         }
 
-        val p = new PrintWriter(args(4))
+        val p = new PrintWriter(config.groupOutput.get)
         p.println("Time Group")
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
-        val t = new PrintWriter(args(5))
+        val t = new PrintWriter(config.splitOutput.get)
         t.println("Time")
         medianList.map(_.timestamp).foreach(t.println)
         t.close
 
-        val s = new PrintWriter(args(6))
+        val s = new PrintWriter(config.summaryOutput.get)
         s.println("Summary")
         medianList.map(_.text).foreach(s.println)
         s.close
@@ -114,7 +122,7 @@ object BatchTweets {
         val clusterMatrix = Matrices.asSparseMatrix(medianList.map(_.tokenVector))
         val weightedMatrix = transform.transform(clusterMatrix)
 
-        val m = new PrintWriter(args(7))
+        val m = new PrintWriter(config.featureOutput.get)
         m.println("Top Words")
         medianList.map(_.tokenVector).map(v => v.getNonZeroIndices
                                                 .map(i => (v.get(i), i))
