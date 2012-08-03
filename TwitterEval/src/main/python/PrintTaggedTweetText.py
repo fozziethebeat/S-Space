@@ -1,4 +1,5 @@
 import pymongo
+import sys
 import time
 
 connection = pymongo.Connection()
@@ -6,7 +7,7 @@ db = connection.olympics_database
 posts = db.posts
 tagList = ["Olympics", "olympics", "Olympics2012", "Olympics12",
            "London2012", "london2012", "LONDON2012", "Olympicday"]
-keyWord = args[1]
+keyWord = sys.argv[1]
 
 tweets = []
 for tweet in posts.find(
@@ -18,7 +19,7 @@ for tweet in posts.find(
 tweets.sort()
 print "TimeStamp Tweet"
 for time, created_at, text in tweets:
-    print time, created_at, text.replace("\n", " ").encode('utf-8')
+    print time, text.replace("\n", " ").encode('utf-8')
 
         #   This is code to select only tweets using tags in the given set.
         #   Since we want all olympics tweets, we can ignore this.

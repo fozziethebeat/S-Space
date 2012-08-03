@@ -19,6 +19,7 @@ object BatchClusterTweets {
     val w = (0.45, 0.45, 0.10)
     val simFunc = new CosineSimilarity()
     var useMedian = false 
+    var counter = 300
 
     def main(args: Array[String]) {
         val taggedFile = args(0)
@@ -33,8 +34,8 @@ object BatchClusterTweets {
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
 
         useMedian = medianArg match {
-            "median" => true
-            "mean" => fales
+            case "median" => true
+            case "mean" => false 
             case _ => throw new IllegalArgumentException("Not a valid argument for the median method")
         }
 
@@ -46,17 +47,18 @@ object BatchClusterTweets {
 
         val tweetArray = converter.tweetIterator(taggedFile).toArray
         val tweets = tweetArray.toList
+        printf("Processing [%d] tweets\n", tweets.size)
 
         val k = numGroups
         val assignments = Array.fill(tweets.size)(-1)
         // Extract a random set of tweets to act as medians.
-        var medianList = Random.shuffle(tweets).take(k).sortWith(_.timestamp <= _.timestamp)
+        var medianList = selectMedians(tweets, k)
         var medianUpdated = true
 
-        while (medianUpdated) {
-            println("Starting full iteration")
+        while (medianUpdated && counter > 0) {
+            printf("Starting iteration [%d]\n", counter)
             // Assign the first set of tweets, i.e. those before the first median, to the first median.
-            val (firstGroup, remainingTweets) = tweets.span(_.timestamp < medianList.head.timestamp)
+            val (firstGroup, remainingTweets) = tweets.span(_.timestamp <= medianList.head.timestamp)
             var offset = assignTweets(firstGroup, assignments, 0, 0)
 
             // Iterate through each pairing of medians to compute the best cut point between each pair.  After computing the best cut point,
@@ -72,12 +74,19 @@ object BatchClusterTweets {
                 var objectiveValue = sim(m1, m1) + window.map(t=>sim(t, m2)).sum
                 // For each possible cut position, update the objective function and emit the value and timestamp.  After considering every
                 // possible cut location, find the one with the highest objective score.
-                val bestTime = window.map( t => {
+                var bestTime = window.map( t => {
                     // Updated objective value.
                     objectiveValue = objectiveValue - sim(t, m2) + sim(t, m1)
                     // Emiting value and timestamp of the cut.
                     (objectiveValue, t.timestamp)
                 }).max._2
+
+                // It's possible that the best cut point is at the same time as
+                // the end median of this segment.  In that case, don't let that
+                // get assigned to the previous group.
+                if (bestTime == m2.timestamp)
+                    bestTime = m2.timestamp - 1
+
                 // With the cut point, get the group of points assigned to each median.
                 val (g1, g2) = window.span(_.timestamp <= bestTime)
                 // Make the assignment of points to medians.
@@ -109,6 +118,7 @@ object BatchClusterTweets {
 
             medianUpdated = newMedianList.map(_.timestamp) != medianList.map(_.timestamp)
             medianList = newMedianList
+            counter -= 1
         }
 
         val p = new PrintWriter(groupOutput)
@@ -150,5 +160,20 @@ object BatchClusterTweets {
         for (i <- 0 until items.size)
             assignments(offset+i) = groupId
         offset + items.size
+    }
+
+    def selectMedians(tweets:List[Tweet], k:Int) : List[Tweet] = {
+        while (true) {
+            val medians = Random.shuffle(tweets).take(k).sortWith(_.timestamp < _.timestamp)
+            // If we don't have enough tweets for k medians, just return the
+            // median list.
+            if (tweets.size < k) return medians
+            // Check that we have k unique timestamps.  If we do, return the
+            // medians.
+            if (medians.map(_.timestamp).toSet.size == k) return medians
+            // Otherwise continue
+        }
+        // Do this so horrible horrible things happen otherwise.
+        return null
     }
 }
