@@ -14,7 +14,7 @@ object DaySplit {
         var part = 0
 
         part += 1
-        var p = new PrintWriter(args(1) + ".part." + part + ".dat")
+        var p = new PrintWriter("%s.part.%03d.dat".format(args(1), part))
         p.println("Time Tweet")
         timeLimit += dayTime
 

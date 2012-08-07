@@ -26,7 +26,7 @@ object ExtractBasisLists {
         val tokenBasis = new StringBasisMapping()
 
         val data = Source.fromFile(args(0)).getLines
-        //data.next
+        data.next
 
         val tokenizerModel = new TokenizerModel(new FileInputStream(args(1)))
         val tokenizer = new TokenizerME(tokenizerModel)
@@ -36,7 +36,7 @@ object ExtractBasisLists {
         for ((line,i) <- data.zipWithIndex) {
             val Array(timestamp, tweet) = line.split("\\s+", 2)
             try {
-                val tweetXml = XML.loadString(tweet.substring(1, tweet.length-1))
+                val tweetXml = XML.loadString(tweet)
                 for (token <- tokenizer.tokenize(tweetXml.child
                                                          .filter(_.label!="PERSON")
                                                          .map(_.text)
@@ -49,11 +49,10 @@ object ExtractBasisLists {
                 for (ne <- (tweetXml \ "PERSON").map(_.text))
                     neVector.add(neBasis.getDimension(ne), 1d)
             } catch {
-                case e => 
+                case e => System.err.println("Failed to handle tweet [%d]".format(i))
             }
         }
 
-        println(tokenBasis.numDimensions)
         val tokenWriter = new PrintWriter(args(2))
         for (i <- tokenVector.getNonZeroIndices)
             if (tokenVector.get(i) > 4 )
