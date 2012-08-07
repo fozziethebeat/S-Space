@@ -1,6 +1,6 @@
 #!/bin/bash
 
-keyWords="archery gymnastics judo fencing tennis"
+keyWords="gymnastics tennis archery judo fencing"
 
 run="scala -J-Xmx4g -cp target/TwitterEval-assembly-1.0.0.jar"
 base="edu.ucla.sspace"
@@ -11,8 +11,8 @@ resultDir=results
 mkdir $resultDir
 
 for word in $keyWords; do
-    #if [ 0 != 0 ]; then
-    #fi
+    if [ 0 != 0 ]; then
+        echo "skipped"
     echo "Extracting tweets for $word"
     # Extract the tweets for the word of interest.
     python src/main/python/PrintTaggedTweetText.py $word > $resultDir/tweet.$word.raw.txt
@@ -48,4 +48,17 @@ for word in $keyWords; do
         $run $base.MergeDayGroupLists $resultDir/tweet.$word.batch.$method.*.groups.dat > $resultDir/tweet.$word.batch.$method.all.groups.csv
         $run $base.MergeDaySplitsLists $resultDir/tweet.$word.batch.$method.*.summary.dat > $resultDir/tweet.$word.batch.$method.all.summary.csv
     done
+    fi
+
+    for part in $resultDir/tweet.$word.part.*.dat; do
+        partId=`echo $part | cut -d "." -f 4`
+        $run $base.ParticleFilterTweets $part \
+                                        $resultDir/tweet.$word.token_basis.dat \
+                                        $resultDir/tweet.$word.ne_basis.dat \
+                                        $resultDir/tweet.$word.particle.mean.$partId.groups.dat \
+                                        $resultDir/tweet.$word.particle.mean.$partId.summary.dat \
+                                        split 
+    done
+    $run $base.MergeDayGroupLists $resultDir/tweet.$word.particle.mean.*.groups.dat > $resultDir/tweet.$word.particle.mean.all.groups.csv
+    $run $base.MergeDaySplitsLists $resultDir/tweet.$word.particle.mean.*.summary.dat > $resultDir/tweet.$word.particle.mean.all.summary.csv
 done
