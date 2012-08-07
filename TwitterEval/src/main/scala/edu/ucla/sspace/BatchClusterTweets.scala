@@ -33,8 +33,8 @@ object BatchClusterTweets {
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
 
         useMedian = medianArg match {
-            "median" => true
-            "mean" => fales
+            case "median" => true
+            case "mean" => false 
             case _ => throw new IllegalArgumentException("Not a valid argument for the median method")
         }
 

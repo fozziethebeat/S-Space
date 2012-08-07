@@ -51,4 +51,20 @@ public class ObjectCounterTest {
         assertEquals(2, c.items().size());
         assertEquals(1, c.getCount(2));
     }
+
+    @Test public void testMax() {
+        Counter<String> c = new ObjectCounter<String>();
+        c.count("cat", 2);
+        c.count("dog", 20);
+        c.count("pidgeon", 1);
+        assertEquals("dog", c.max());
+    }
+
+    @Test public void testMin() {
+        Counter<String> c = new ObjectCounter<String>();
+        c.count("cat", 2);
+        c.count("dog", 20);
+        c.count("pidgeon", 1);
+        assertEquals("pidgeon", c.min());
+    }
 }

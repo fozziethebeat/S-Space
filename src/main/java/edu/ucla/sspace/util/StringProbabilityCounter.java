@@ -28,9 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 import gnu.trove.TDecorators;
-import gnu.trove.iterator.TObjectIntIterator;
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.iterator.TObjectDoubleIterator;
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 
 /** 
@@ -40,30 +40,26 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  * well as the instances and counts together.  All collections views that are
  * returned are unmodifiable and will throw an exception if a mutating method is
  * called.
- *
- * <p> This class is not thread-safe
- *
- * @param T the type of object being counted.
  */
-public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
+public class StringProbabilityCounter implements Iterable<Map.Entry<String, Double>> {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * A mapping from an object to the number of times it has been seen
      */
-    private final TObjectIntMap<T> counts;
+    private final TObjectDoubleMap<String> counts;
 
     /**
      * The total number of objects that have been counted
      */
-    private int sum;
+    private double sum;
 
     /**
      * Creates an empty {@code Counter}.
      */
-    public ObjectCounter() {
-        counts = new TObjectIntHashMap<T>();
+    public StringProbabilityCounter() {
+        counts = new TObjectDoubleHashMap<String>();
         sum = 0;
     }
 
@@ -71,9 +67,9 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Creates a {@code Counter} whose initial state has counted all of the
      * specified items.
      */
-    public ObjectCounter(Collection<? extends T> items) {
+    public StringProbabilityCounter(Collection<String> items) {
         this();
-        for (T item : items)
+        for (String item : items)
             count(item);
     }      
 
@@ -81,23 +77,16 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Adds the counts from the provided {@code Counter} to the current counts,
      * adding new elements as needed.
      */
-    public void add(Counter<? extends T> counter) {
-        for (Map.Entry<? extends T,Integer> e : counter) {
-            T t = e.getKey();
-            Integer cur = counts.get(t);
-            counts.put(t, (cur == null) ? e.getValue() : cur + e.getValue());
-        }
+    public void add(StringProbabilityCounter counter) {
+        for (Map.Entry<String,Double> e : counter)
+            count(e.getKey(), e.getValue());
     }
     
     /**
      * Counts the object, increasing its total count by 1.
      */
-    public int count(T obj) {
-        int count = counts.get(obj);
-        count++;
-        counts.put(obj, count);
-        sum++;
-        return count;
+    public double count(String obj) {
+        return count(obj, 1d);
     }
 
     /**
@@ -107,11 +96,9 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      *
      * @throws IllegalArgumentException if {@code count} is not a positive value.
      */
-    public int count(T obj, int count) {
-        if (count < 1)
-            throw new IllegalArgumentException("Count must be positive: " + count);
-        int oldCount = counts.get(obj);
-        int newCount = count + oldCount;
+    public double count(String obj, double count) {
+        double oldCount = counts.get(obj);
+        double newCount = count + oldCount;
         counts.put(obj, newCount);
         sum += count;
         return newCount;
@@ -120,21 +107,19 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     /**
      * {@inheritDoc}
      */
-    public void countAll(Collection<? extends T> c) {
-        for (T t : c)
+    public void countAll(Collection<String> c) {
+        for (String  t : c)
             count(t);
     }
 
     public boolean equals(Object o) {
-        if (o instanceof Counter) {
-            Counter<?> c = (Counter<?>)o;
+        if (o instanceof StringProbabilityCounter) {
+            StringProbabilityCounter c = (StringProbabilityCounter) o;
             if (counts.size() != c.size() || sum != c.sum())
                 return false;
-            for (Map.Entry<?,Integer> e : c) {
-                int i = counts.get(e.getKey());
-                if (i != e.getValue())
+            for (Map.Entry<String,Double> e : c)
+                if (e.getValue() != counts.get(e.getKey()))
                     return false;
-            }
             return true;
         }
         return false;
@@ -144,7 +129,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Returns the number of times the specified object has been seen by this
      * counter.
      */
-    public int getCount(T obj) {
+    public double getCount(String obj) {
         return counts.get(obj);
     }
 
@@ -153,7 +138,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * objects.  This value may also be interpreted as the probability of the
      * instance of {@code obj} being seen in the items that have been counted.
      */
-    public double getFrequency(T obj) {
+    public double getFrequency(String obj) {
         double count = getCount(obj);
         return (sum == 0) ? 0 : count / sum;
     }
@@ -167,7 +152,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * is read-only; any attempts to modify this view will throw an {@link
      * UnsupportedOperationException}.
      */
-    public Set<T> items() {
+    public Set<String> items() {
         return Collections.unmodifiableSet(counts.keySet());
     }
 
@@ -175,7 +160,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * Returns an interator over the elements that have been counted thusfar and
      * their respective counts.
      */
-    public Iterator<Map.Entry<T,Integer>> iterator() {
+    public Iterator<Map.Entry<String,Double>> iterator() {
         return Collections.unmodifiableSet(
             TDecorators.wrap(counts).entrySet()).iterator();
     }
@@ -185,15 +170,15 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * have been counted, {@code null} is returned.  Ties in counts are
      * arbitrarily broken.
      */
-    public T max() {
-        TObjectIntIterator<T> iter = counts.iterator();
-        int maxCount = -1;
-        T max = null;
+    public String max() {
+        TObjectDoubleIterator<String> iter = counts.iterator();
+        double maxCount = -1;
+        String max = null;
         while (iter.hasNext()) {
             iter.advance();
             if (iter.value() > maxCount) {
-                maxCount = iter.value();
                 max = iter.key();
+                maxCount = iter.value();
             }
         }
         return max;
@@ -204,15 +189,15 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
      * have been counted, {@code null} is returned.  Ties in counts are
      * arbitrarily broken.
      */
-    public T min() {
-        TObjectIntIterator<T> iter = counts.iterator();
-        int minCount = Integer.MAX_VALUE;
-        T min = null;
+    public String min() {
+        TObjectDoubleIterator<String> iter = counts.iterator();
+        Double minCount = Double.MAX_VALUE;
+        String min = null;
         while (iter.hasNext()) {
             iter.advance();
             if (iter.value() < minCount) {
-                minCount = iter.value();
                 min = iter.key();
+                minCount = iter.value();
             }
         }
         return min;
@@ -237,7 +222,7 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     /**
      * Returns the total number of instances that have been counted.
      */
-    public int sum() {
+    public double sum() {
         return sum;
     }
 
