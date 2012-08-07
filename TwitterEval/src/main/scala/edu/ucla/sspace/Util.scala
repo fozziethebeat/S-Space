@@ -20,6 +20,8 @@ object Util {
     def notUser(token: String) = !token.startsWith("@")
 
     def normalize(token:String) = 
-        token.replaceAll("^[\\W]+", "")
-             .replaceAll("[\\W]+$", "")
+        if (token.size > 1)
+            token.replaceAll("^[\\.?\\-$!()&%]+", "")
+                 .replaceAll("[\\W]+$", "")
+        else token
 }
