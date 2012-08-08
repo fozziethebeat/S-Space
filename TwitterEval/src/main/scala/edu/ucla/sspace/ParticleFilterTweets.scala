@@ -58,10 +58,7 @@ object ParticleFilterTweets {
         val featureModel = args(5)
 
         println("Loading configurations")
-        val converter = featureModel match {
-            case "split" => TweetModeler.split(tokenBasisFile, neBasisFile)
-            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile, 4)
-        }
+        val converter = TweetModeler.load(featureModel, tokenBasisFile, neBasisFile)
         val tweets = converter.tweetIterator(taggedFile).toList
         val tweetIter = tweets.iterator
 
@@ -104,16 +101,13 @@ object ParticleFilterTweets {
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
+        /*
         // For each group, compute the best median within the group.  This will simply be the tweet that maximizes the internal similarity
         // within the group.
         val summaryList = assignments.zip(tweets)
                                      .groupBy(_._1)
                                      .map{ case (groupId, group) => {
-            val points = group.map(_._2)
-            val bestMedian = points.map(pmedian => points.map(point => Tweet.sim(pmedian, point, lambda, beta, w, simFunc)).sum)
-                                   .zipWithIndex
-                                   .max._2
-            (groupId, points(bestMedian))
+            (groupId, Tweet.medianSummary(group.map(_._2), Tweet.sim(_, _, lambda, beta, w, simFunc)))
         }}.toMap
 
         println("Printing summaries and time stamps for each group")
@@ -129,7 +123,6 @@ object ParticleFilterTweets {
         t.close
 
         println("Done!")
-        /*
         // Weight the features using PMI so that we select the most saliently interesting features per group as opposed to just the most
         // frequent.
         val transform = new PointWiseMutualInformationTransform()

@@ -19,11 +19,9 @@ object MedianTests {
         val preGroupIter = Source.fromFile(args(1)).getLines
         preGroupIter.next
         val groupIter = preGroupIter.map(_.split("\\s+")(1).toInt)
-        val converter = config.featureModel.get match {
-            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
-            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
-            case _ => throw new IllegalArgumentException("Not a valid argument for the Tweet Modeler")
-        }
+        val converter = TweetModeler.load(config.featureModel.get,
+                                          config.tokenBasis.get,
+                                          config.neBasis.get)
         val tweetIter = converter.tweetIterator(config.taggedFile.get)
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
 

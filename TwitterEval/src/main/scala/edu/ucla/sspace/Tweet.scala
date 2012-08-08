@@ -61,7 +61,23 @@ object Tweet {
     def sim(t1: Tweet, t2: Tweet,
             lambda: Double, beta: Double, weights: (Double, Double, Double),
             simFunc: SimilarityFunction) =
-        //prodSim(t1, t2, lambda, beta, weights, simFunc)
         sumsim(t1, t2, lambda, beta, weights, simFunc)
+
+    def medianSummary(tweets: List[Tweet], converter: TweetModeler, simFunc: (Tweet, Tweet) => Double) = 
+        tweets.map(proposedMedian => (tweets.map(simFunc(_, proposedMedian)).sum, proposedMedian))
+              .maxBy(_._1)._2
+
+    def meanSummary(tweets: List[Tweet], converter: TweetModeler, simFunc: (Tweet, Tweet) => Double) = {
+        val mean = tweets.foldLeft( converter.emptyTweet )( _+_ ).avgTime(tweets.size)
+        tweets.map(proposedSummary => (simFunc(proposedSummary, mean), proposedSummary))
+              .maxBy(_._1)._2
+    }
+
+    def phraseGraphSummary(tweets: List[Tweet], converter: TweetModeler, simFunc: (Tweet, Tweet) => Double) = {
+        val tokenizedTweets = tweets.map(_.text).map(converter.tokenize)
+        val phraseGraph = new PhraseGraph()
+        phraseGraph.train(tokenizedTweets)
+        tweets(phraseGraph.score(tokenizedTweets).zipWithIndex.maxBy(_._1._2)._2)
+    }
 
 }

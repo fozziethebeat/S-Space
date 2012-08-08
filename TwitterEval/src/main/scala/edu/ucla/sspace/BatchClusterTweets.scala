@@ -1,13 +1,8 @@
 package edu.ucla.sspace
 
-import edu.ucla.sspace.matrix.Matrices
-import edu.ucla.sspace.matrix.PointWiseMutualInformationTransform
 import edu.ucla.sspace.similarity.CosineSimilarity
-import edu.ucla.sspace.vector.CompactSparseVector
-import edu.ucla.sspace.vector.VectorMath
 
 import scala.collection.JavaConversions.seqAsJavaList
-import scala.io.Source
 import scala.util.Random
 
 import java.io.PrintWriter
@@ -41,7 +36,7 @@ object BatchClusterTweets {
 
         val converter = featureModel match {
             case "split" => TweetModeler.split(tokenBasisFile, neBasisFile)
-            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile, 4)
+            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile)
             case _ => throw new IllegalArgumentException("Not a valid argument for the Tweet Modeler")
         }
 
@@ -126,6 +121,7 @@ object BatchClusterTweets {
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
+        /*
         val s = new PrintWriter(summaryOutput)
         s.println("Summary")
         medianList.zipWithIndex.foreach{ case(medianTweet, groupId) => {
@@ -136,7 +132,6 @@ object BatchClusterTweets {
         }}
         s.close
 
-        /*
         val transform = new PointWiseMutualInformationTransform()
         val clusterMatrix = Matrices.asSparseMatrix(medianList.map(_.tokenVector))
         val weightedMatrix = transform.transform(clusterMatrix)
