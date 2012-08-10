@@ -30,12 +30,21 @@ trait TweetModeler {
 
     def hashTagSet(tweets: List[Tweet]) = 
         tweets.map(_.text).map(text =>
-            XML.loadString(text).text.split("\\s+").filter(_.startsWith("#")).filter(Util.validTag).toList
+            XML.loadString(text).text
+               .toLowerCase
+               .split("\\s+")
+               .filter(_.startsWith("#"))
+               .filter(Util.validTag)
+               .map(Util.normalize)
+               .toList
         ).reduce(_++_).toSet
 
     def namedEntitySet(tweets: List[Tweet]) =
         tweets.map(_.text).map(text => 
-            XML.loadString(text).child.filter(node => entityLabels.contains(node.label)).map(_.text).toList
+            XML.loadString(text).child
+               .filter(node => entityLabels.contains(node.label))
+               .map(_.text)
+               .toList
         ).reduce(_++_).toSet
 
     def tweetIterator(tweetList: Iterator[String]) : Iterator[Tweet] = {
