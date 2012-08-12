@@ -1,6 +1,5 @@
 package edu.ucla.sspace
 
-import scala.collection.mutable.HashMap
 
 import edu.ucla.sspace.util.HashMultiMap
 import edu.ucla.sspace.util.Indexer
@@ -8,6 +7,9 @@ import edu.ucla.sspace.util.ObjectCounter
 import edu.ucla.sspace.util.ObjectIndexer
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.Buffer
+import scala.collection.mutable.HashSet
 import scala.io.Source
 import scala.math.log
 
@@ -194,28 +196,60 @@ class CondensedTrie(useSubsumingMatches: Boolean = false) {
         }
     }
 
+    def toJson = {
+        val nodeLabels = new ArrayBuffer[(String, Double)]()
+        val links = new ArrayBuffer[(Int, Int)]()
+        addLinksAndLabels(root, new ObjectIndexer[PhraseNode](), new HashSet[PhraseNode](), nodeLabels, links)
+        "{\n" +
+        " \"nodes\": [\n" +
+        nodeLabels.map{ case(label, weight) => "  {\"name\":\"%s\",\"weight\":%f},\n".format(label.replaceAll("\"", "'"), weight)}.mkString("") +
+        " ],\n" +
+        " \"links\":[\n" +
+        links.map{ case(from, to) => "  {\"source\":%d,\"target\":%d,\"value\":10},\n".format(from, to)}.mkString("") +
+        " ]\n" +
+        "}"
+    }
+
+    def addLinksAndLabels(node: PhraseNode,
+                          indexer: ObjectIndexer[PhraseNode], 
+                          printed: HashSet[PhraseNode], 
+                          labels: Buffer[(String, Double)], 
+                          links: Buffer[(Int, Int)]) {
+        if (printed.contains(node)) {
+            println("already printed: " + node.label)
+        } else {
+            println("printing first of: " + node.label)
+            labels.append((node.label, node.inCount))
+            val n_index = indexer.index(node)
+            printed.add(node)
+            node.linkMap.map{ case(_, child ) => {
+                val c_index = indexer.index(child)
+                links.append( (n_index, c_index) )
+                addLinksAndLabels(child, indexer, printed, labels, links)
+            }}
+        }
+    }
+
     override def toString : String =
         "digraph CondensedTrie {\n" +
-        toString(root, new ObjectIndexer[PhraseNode](), new HashMap[PhraseNode, PhraseNode]()) + 
+        "rankdir=LR;" +
+        toString(root, new ObjectIndexer[PhraseNode](), new HashSet[PhraseNode]()) + 
         "}\n" 
 
-    def toString(node: PhraseNode, indexer: Indexer[PhraseNode], printed: HashMap[PhraseNode, PhraseNode]) : String = {
-        printed.get(node) match {
-            case Some(existing) if existing eq node =>  {
-                println("already printed: " + node.label)
-                ""
-            }
-            case _ => {
-                println("printing first of: " + node.label)
-                val printLabel = node.label.replaceAll("[\\W]+", "") + indexer.index(node)
-                printed(node) = node
-                node.linkMap.map{ case(childLabel, child ) => {
-                    val printChildLabel = childLabel.replaceAll("[\\W]+", "") + indexer.index(child)
-                    "  %s -> %s; \n".format(printLabel, printChildLabel) +
-                    toString(child, indexer, printed)
-                }}.mkString("") +
-                "  %s [ label=\"%s, %d\" ]; \n".format(printLabel, node.label.replaceAll("[\\W+]", ""), node.inCount.toInt)
-            }
+    def toString(node: PhraseNode, indexer: Indexer[PhraseNode], printed: HashSet[PhraseNode]) : String = {
+        if (printed.contains(node)) {
+            println("already printed: " + node.label)
+            ""
+        } else {
+            println("printing first of: " + node.label)
+            val printLabel = node.label.replaceAll("[\\W]+", "") + indexer.index(node)
+            printed.add(node)
+            node.linkMap.map{ case(childLabel, child ) => {
+                val printChildLabel = childLabel.replaceAll("[\\W]+", "") + indexer.index(child)
+                "  %s -> %s; \n".format(printLabel, printChildLabel) +
+                toString(child, indexer, printed)
+            }}.mkString("") +
+            "  %s [ label=\"%s, %d\" ]; \n".format(printLabel, node.label.replaceAll("[\\W+]", ""), node.inCount.toInt)
         }
     }
 }
@@ -330,12 +364,16 @@ class PhraseNode(val label: String) {
 object PhraseGraph {
     def main(args: Array[String]) {
         val sentences = List(
+            "#archery by the Republic of Korea and the guy is legally blind",
+            "#archery by the Republic of Korea in archery by a guy who is legally blind")
+        /*
             "#archery by the Republic of Korea in archery by a guy who is legally blind",
             "#archery - by the Republic of Korea and by the guy is legally blind",
             "#archery by the Republic of Korea and by the guy is legally blind",
             "#archery - by the Republic of Korea in archery by a guy who is legally blind",
             "Republic of Korea in archery by a guy who is legally blind"
         )
+        */
 
         val tokenizedSentences = sentences.map(_.split("\\s+").toList)
 
