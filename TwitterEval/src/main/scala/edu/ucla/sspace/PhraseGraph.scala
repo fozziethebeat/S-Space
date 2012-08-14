@@ -18,10 +18,16 @@ import java.io.PrintWriter
 
 class PhraseGraph2 {
 
+/*
     var leftGraphs = Map[String, CondensedTrie]()
     var rightGraphs = Map[String, CondensedTrie]()
+    */
+    val graph = new CondensedTrie(true)
+
     def train(tweets: Seq[List[String]], keyPhrases: Set[String]) {
+        graph.train(tweets)
         // Create a left and right root node for each key phrase.
+        /*
         keyPhrases.foreach(phrase => {
             leftGraphs += (phrase -> new CondensedTrie(true))
             rightGraphs += (phrase -> new CondensedTrie(true))
@@ -35,9 +41,14 @@ class PhraseGraph2 {
             leftGraphs(keyPhrase).train(phraseMatches.map(_._1).map(_.reverse))
             rightGraphs(keyPhrase).train(phraseMatches.map(_._2).map(_.tail))
         }
+        */
     }
 
     def score(tweets: Seq[List[String]], keyPhrases: Set[String]) =
+        tweets.zipWithIndex.map{ case(tweet, ti) => {
+            (scoreGraph(tweet, graph.root), ti)
+        }}
+    /*
         keyPhrases.map(keyPhrase => {
             (keyPhrase,
              tweets.zipWithIndex.map{ case(tweet, ti) => {
@@ -51,6 +62,7 @@ class PhraseGraph2 {
               }}
             )
         })
+        */
 
     def scoreGraph(tokens: List[String], node: PhraseNode) : Double =
         tokens match {

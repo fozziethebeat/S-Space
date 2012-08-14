@@ -1,6 +1,6 @@
 #!/bin/bash
 
-keyWords="archery" #gymnastics tennis archery judo fencing"
+keyWords="archery gymnastics tennis archery judo fencing"
 
 run="scala -J-Xmx2g -cp target/TwitterEval-assembly-1.0.0.jar"
 base="edu.ucla.sspace"
@@ -9,21 +9,23 @@ englishFilter=data/classifier.nb.english-filter.json
 featureModel=split
 summariesPerDay=200
 resultDir=results
+trainingSize=500000
 
 mkdir $resultDir
 
 if [ 0 != 0 ]; then
     echo "Already Run"
+fi
 # Extract the first N tweets from the list (this should be a large numbe up to
 # the time when the olympics began).  Then use those tweets to build an
 # unsupervised classifier that will filter out blatantly non-english tweets.
 python src/main/python/PrintFirstNTweets.py $trainingSize > $resultDir/tweet.english-filter.train.txt
 $run $base.TrainEnglishTweetFilter $resultDir/tweet.english-filter.train.txt $englishFilter 
-fi
 
 for word in $keyWords; do
     if [ 0 != 0 ]; then
         echo "skipped"
+    fi
 
     echo "Extracting tweets for $word"
     # Extract the tweets for the word of interest.
@@ -73,7 +75,6 @@ for word in $keyWords; do
                                         $featureModel 
     done
 
-    fi
     for part in $resultDir/tweet.$word.part.*.dat; do
         partId=`echo $part | cut -d "." -f 4`
         for method in batch.mean batch.median particle.mean; do

@@ -8,9 +8,7 @@ posts = db.posts
 keyWord = sys.argv[1]
 
 tweets = []
-for tweet in posts.find(
-        { "user.lang" : "en" },
-        { "text": 1, "created_at" : 1} ):
+for tweet in posts.find( { "text": 1, "created_at" : 1} ):
     ts = convertTime(tweet['created_at'])
     if keyWord in tweet['text']:
         tweets.append((ts, tweet['created_at'], tweet['text']))
@@ -18,10 +16,3 @@ tweets.sort()
 print "TimeStamp Tweet"
 for time, created_at, text in tweets:
     print time, removeHttp(removeLineBreaks(text)).encode('utf-8')
-
-
-        #   This is code to select only tweets using tags in the given set.
-        #   Since we want all olympics tweets, we can ignore this.
-        #  "entities.hashtags" : 
-        #    { "$elemMatch" : 
-        #        { "text": { "$in": tagList } } } },
