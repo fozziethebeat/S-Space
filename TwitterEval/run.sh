@@ -1,6 +1,6 @@
 #!/bin/bash
 
-keyWords="archery" #gymnastics tennis archery judo fencing"
+keyWords="archery gymnastics tennis archery judo fencing swimming"
 
 run="scala -J-Xmx2g -cp target/TwitterEval-assembly-1.0.0.jar"
 base="edu.ucla.sspace"
@@ -9,6 +9,7 @@ englishFilter=data/classifier.nb.english-filter.json
 featureModel=split
 summariesPerDay=200
 resultDir=results
+trainingSize=500000
 
 mkdir $resultDir
 
@@ -24,6 +25,7 @@ fi
 for word in $keyWords; do
     if [ 0 != 0 ]; then
         echo "skipped"
+    fi
 
     echo "Extracting tweets for $word"
     # Extract the tweets for the word of interest.
@@ -59,8 +61,8 @@ for word in $keyWords; do
                                           $resultDir/tweet.$word.token_basis.dat \
                                           $resultDir/tweet.$word.ne_basis.dat \
                                           $summariesPerDay \
-                                          $resultDir/tweet.$word.batch.$method.$partId.groups.dat \
-                                          $resultDir/tweet.$word.batch.$method.$partId.summary.dat \
+                                          $resultDir/tweet.$word.batch-$method.$partId.groups.dat \
+                                          $resultDir/tweet.$word.batch-$method.$partId.summary.dat \
                                           $featureModel $method
         done
 
@@ -68,15 +70,14 @@ for word in $keyWords; do
         $run $base.ParticleFilterTweets $part \
                                         $resultDir/tweet.$word.token_basis.dat \
                                         $resultDir/tweet.$word.ne_basis.dat \
-                                        $resultDir/tweet.$word.particle.mean.$partId.groups.dat \
-                                        $resultDir/tweet.$word.particle.mean.$partId.summary.dat \
+                                        $resultDir/tweet.$word.particle-mean.$partId.groups.dat \
+                                        $resultDir/tweet.$word.particle-mean.$partId.summary.dat \
                                         $featureModel 
     done
 
-    fi
     for part in $resultDir/tweet.$word.part.*.dat; do
         partId=`echo $part | cut -d "." -f 4`
-        for method in batch.mean batch.median particle.mean; do
+        for method in batch-mean batch-median particle-mean; do
             for summary in mean median phrase; do
                 $run $base.SummarizeTweets $featureModel \
                                            $resultDir/tweet.$word.token_basis.dat \
@@ -91,7 +92,7 @@ for word in $keyWords; do
 
     # For each clustering method, smash together all the parts into one large
     # group for the csv files.
-    for method in batch.mean batch.median particle.mean; do
+    for method in batch-mean batch-median particle-mean; do
         $run $base.MergeDayGroupLists $resultDir/tweet.$word.$method.*.groups.dat > $resultDir/tweet.$word.$method.all.groups.csv
         for summary in mean median phrase; do
             $run $base.MergeDaySplitsLists $resultDir/tweet.$word.$method.*.$summary.summary.dat > $resultDir/tweet.$word.$method.all.$summary.summary.csv

@@ -74,8 +74,14 @@ object Tweet {
     }
 
     def phraseGraphSummary(tweets: List[Tweet], converter: TweetModeler, simFunc: (Tweet, Tweet) => Double) = {
-        meanSummary(tweets, converter, simFunc)
+        val phraseGraph = new PhraseGraph2()
+        val tokenizedTweets = tweets.map(_.text).map(converter.tokenize)
+        phraseGraph.train(tokenizedTweets, Set[String]())
+        val scored = phraseGraph.score(tokenizedTweets, Set[String]())
+        tweets( scored.maxBy(_._1)._2 )
+
         /*
+        meanSummary(tweets, converter, simFunc)
         val tokenizedTweets = tweets.map(_.text).map(converter.tokenize)
         val phraseGraph = new PhraseGraph()
         phraseGraph.train(tokenizedTweets)

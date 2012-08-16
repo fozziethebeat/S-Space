@@ -8,7 +8,7 @@ posts = db.posts
 keyWord = sys.argv[1]
 
 tweets = []
-for tweet in posts.find(
+for tweet in posts.find( 
         { "user.lang" : "en" },
         { "text": 1, "created_at" : 1} ):
     ts = convertTime(tweet['created_at'])
