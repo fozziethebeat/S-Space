@@ -19,6 +19,6 @@ for input in sys.stdin.readlines():
         start, end = input.split()
         start = start[2:] +"-0100"
         end = end[2:] + "-0100"
-    eventTimes.append( { "start": convertTime(start), "end": convertTime(end)} )
+    eventTimes.append( { "end": convertTime(start), "start": convertTime(end)} )
 
 print json.dumps(eventTimes)
