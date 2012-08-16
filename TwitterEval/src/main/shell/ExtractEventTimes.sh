@@ -2,5 +2,6 @@
 
 resultDir=tmpHtmlData
 for html in $resultDir/*.html; do
+    echo $html
     node src/main/javascript/ExtractTimes.js $html
-done | python src/main/python/ConvertEventTimes.py > olympics.event.times.txt
+done > olympics.event.times.txt

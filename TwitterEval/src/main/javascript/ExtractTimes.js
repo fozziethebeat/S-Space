@@ -22,11 +22,17 @@ fs.readFile(process.argv[2], function(err, data) {
         var elem = barElemens[i];
         var classAttr = $(elem).attr("class");
         var dataType = $(elem).attr("data-type");
-        if (dataType.substr(-1) == "_") {
+        if (dataType == "") {
+            // If the data-type attribute is empty, then we know that both the
+            // start and end times are stored in the class attribute, albeit in
+            // an utterly horrible and wretched format that uses two different
+            // timezones and two different formats.
+            console.log(classAttr);
+        } else if (dataType.substr(-1) == "_") {
             // If the data-type ends with an underscore, we know that the start
             // time is in the text and the end time is in the class attribute.
             // So report that.
-            console.log($(elem).attr("class") + " " + $(elem).find(".bar-time").text());
+            console.log(classAttr + " " + $(elem).find(".bar-time").text());
         } else {
             // Otherwise, the data-type has the full time range for the event,
             // so just report that, even though it's in a different format.
