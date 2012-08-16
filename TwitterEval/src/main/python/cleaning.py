@@ -1,3 +1,4 @@
+from dateutil import parser
 import time
 
 junkTokens = frozenset(["#", "htt"])
@@ -9,4 +10,4 @@ def removeHttp(s):
 def removeOddities(s):
     return " ".join([ t for t in s.split() if t not in junkTokens])
 def convertTime(created_at):
-    return time.mktime(time.strptime(created_at,'%a %b %d %H:%M:%S +0000 %Y'))
+    return int(time.mktime(parser.parse(created_at).utctimetuple()))

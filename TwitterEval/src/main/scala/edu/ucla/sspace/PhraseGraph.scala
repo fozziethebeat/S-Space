@@ -364,16 +364,13 @@ class PhraseNode(val label: String) {
 object PhraseGraph {
     def main(args: Array[String]) {
         val sentences = List(
-            "#archery by the Republic of Korea and the guy is legally blind",
-            "#archery by the Republic of Korea in archery by a guy who is legally blind")
-        /*
+            "#archery zoidberg by the Republic of Korea in archery by a guy who is legally blind",
             "#archery by the Republic of Korea in archery by a guy who is legally blind",
-            "#archery - by the Republic of Korea and by the guy is legally blind",
             "#archery by the Republic of Korea and by the guy is legally blind",
-            "#archery - by the Republic of Korea in archery by a guy who is legally blind",
-            "Republic of Korea in archery by a guy who is legally blind"
+            "Republic of Korea in archery by a guy who is legally blind",
+            "#archery zoidberg by the Republic of Korea and by the guy is legally blind",
+            "#archery by the Republic of Korea and the guy is legally blind"
         )
-        */
 
         val tokenizedSentences = sentences.map(_.split("\\s+").toList)
 

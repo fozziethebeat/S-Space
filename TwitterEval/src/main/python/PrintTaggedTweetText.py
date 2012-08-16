@@ -18,10 +18,3 @@ tweets.sort()
 print "TimeStamp Tweet"
 for time, created_at, text in tweets:
     print time, removeHttp(removeLineBreaks(text)).encode('utf-8')
-
-
-        #   This is code to select only tweets using tags in the given set.
-        #   Since we want all olympics tweets, we can ignore this.
-        #  "entities.hashtags" : 
-        #    { "$elemMatch" : 
-        #        { "text": { "$in": tagList } } } },
