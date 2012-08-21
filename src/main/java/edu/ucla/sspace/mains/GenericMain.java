@@ -424,6 +424,12 @@ public abstract class GenericMain {
             props.setProperty(IteratorFactory.TOKEN_COUNT_LIMIT_PROPERTY,
                               argOptions.getStringOption("wordLimit"));
 
+        // Get the format to be used when writing the semantic space.
+        SSpaceFormat format = (argOptions.hasOption("outputFormat"))
+            ? SSpaceFormat.valueOf(
+                argOptions.getStringOption("outputFormat").toUpperCase())
+            : getSpaceFormat();
+
         IteratorFactory.setProperties(props);
 
         // use the System properties in case the user specified them as
@@ -477,7 +483,7 @@ public abstract class GenericMain {
         System.out.println("output File: " + outputFile);
 
         long startTime = System.currentTimeMillis();
-        saveSSpace(space, outputFile);
+        saveSSpace(space, outputFile, format);
         long endTime = System.currentTimeMillis();
         verbose("printed space in %.3f seconds",
                 ((endTime - startTime) / 1000d));
@@ -486,17 +492,12 @@ public abstract class GenericMain {
     }
 
     /**
-     * Serializes the {@link SemanticSpace} object to {@code outputFile}.
-     * This uses {@code outputFormat} if set by the commandline.  If not, this
-     * uses the {@link SSpaceFormat} returned by {@link #getSpaceFormat}.
+     * Serializes the {@link SemanticSpace} object to {@code outputFile} using a
+     * given {@link SSpaceFormat}.
      */
-    protected void saveSSpace(SemanticSpace sspace, File outputFile)
-      throws IOException{
-        SSpaceFormat format = (argOptions.hasOption("outputFormat"))
-            ? SSpaceFormat.valueOf(
-                argOptions.getStringOption("outputFormat").toUpperCase())
-            : getSpaceFormat();
-
+    protected void saveSSpace(SemanticSpace sspace, 
+                              File outputFile,
+                              SSpaceFormat format) throws IOException {
         SemanticSpaceIO.save(sspace, outputFile, format);
     }
 

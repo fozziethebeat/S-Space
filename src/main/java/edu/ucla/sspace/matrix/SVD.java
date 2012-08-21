@@ -24,7 +24,8 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Matrix.Type;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
-import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibJ;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionMatlab;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionOctave;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -125,7 +126,6 @@ public class SVD {
      */
     public enum Algorithm {
         SVDLIBC,
-        SVDLIBJ,
         MATLAB,
         OCTAVE,
         JAMA,
@@ -146,8 +146,11 @@ public class SVD {
     public static MatrixFactorization getFastestAvailableFactorization() {
         if (isSVDLIBCavailable())
             return new SingularValueDecompositionLibC();
-        else 
-            return new SingularValueDecompositionLibJ();
+        if (isMatlabAvailable())
+            return new SingularValueDecompositionMatlab();
+        if (isOctaveAvailable())
+            return new SingularValueDecompositionOctave();
+        throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
     }
 
     /**
@@ -156,10 +159,11 @@ public class SVD {
      */
     public static MatrixFactorization getFactorization(Algorithm alg) {
         switch (alg)  {
-            case SVDLIBJ:
-                return new SingularValueDecompositionLibJ();
-            default:
-                return new SingularValueDecompositionLibC();
+            case MATLAB: return new SingularValueDecompositionMatlab();
+            case OCTAVE: return new SingularValueDecompositionOctave();
+            case SVDLIBC: return new SingularValueDecompositionLibC();
+            case ANY: return getFastestAvailableFactorization();
+            default: throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
         }
     }
 
@@ -178,12 +182,6 @@ public class SVD {
     static Algorithm getFastestAvailableAlgorithm() {
         if (isSVDLIBCavailable())
             return Algorithm.SVDLIBC;
-        else 
-            return Algorithm.SVDLIBJ;
-        // NOTE: commented out because SVDLIBJ is now included in the
-        // distribution and is likely faster than all of these implementations,
-        // though this should probably be tested to confirm.  -jurgens
-        /*
         else if (isMatlabAvailable())
             return Algorithm.MATLAB;
         else if (isOctaveAvailable())
@@ -193,8 +191,7 @@ public class SVD {
         else if (isColtAvailable())
             return Algorithm.COLT;
         else
-            return null;
-        */
+            throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
     }
 
     /**
@@ -254,8 +251,6 @@ public class SVD {
         // altogether, and just pass it in directly.  This avoids the I/O
         // overhead, althought both methods require that the matrix be converted
         // into arrays first.
-        case SVDLIBJ:
-            return SvdlibjDriver.svd(m, dimensions);
         case COLT:
             return coltSVD(m.toDenseArray(), !(m instanceof SparseMatrix), 
                            dimensions);
@@ -380,92 +375,58 @@ public class SVD {
         try {
             File converted = null;
             switch (alg) {
-            case SVDLIBC: {
-                // check whether the input matrix is in an SVDLIBC-acceptable
-                // format already and if not convert
-                switch (format) {
-                case SVDLIBC_DENSE_BINARY:
-                case SVDLIBC_DENSE_TEXT:
-                case SVDLIBC_SPARSE_TEXT:
-                case SVDLIBC_SPARSE_BINARY:
-                    converted = matrix;
-                    break;
-                default:
-                    SVD_LOGGER.fine("converting input matrix format " +
-                                    "from" + format + " to SVDLIBC " +
-                                    "ready format");
-                    converted = MatrixIO.convertFormat(
-                        matrix, format, Format.SVDLIBC_SPARSE_BINARY);
-                    format = Format.SVDLIBC_SPARSE_BINARY;
-                    break;
+                case SVDLIBC: {
+                    // check whether the input matrix is in an SVDLIBC-acceptable
+                    // format already and if not convert
+                    switch (format) {
+                    case SVDLIBC_DENSE_BINARY:
+                    case SVDLIBC_DENSE_TEXT:
+                    case SVDLIBC_SPARSE_TEXT:
+                    case SVDLIBC_SPARSE_BINARY:
+                        converted = matrix;
+                        break;
+                    default:
+                        SVD_LOGGER.fine("converting input matrix format " +
+                                        "from" + format + " to SVDLIBC " +
+                                        "ready format");
+                        converted = MatrixIO.convertFormat(
+                            matrix, format, Format.SVDLIBC_SPARSE_BINARY);
+                        format = Format.SVDLIBC_SPARSE_BINARY;
+                        break;
+                    }
+                    return svdlibc(converted, dimensions, format);
                 }
-                return svdlibc(converted, dimensions, format);
-            }
-            case SVDLIBJ: {
-                return SvdlibjDriver.svd(matrix, format, dimensions);
-            }
-            case JAMA: {
-                @SuppressWarnings("deprecation")
-                double[][] inputMatrix = 
-                    MatrixIO.readMatrixArray(matrix, format);
-                return jamaSVD(inputMatrix, dimensions);
-            }
-            case MATLAB:
-                // If the format of the input matrix isn't immediately useable
-                // by Matlab convert it
-                if (!format.equals(Format.MATLAB_SPARSE)) {
-                    matrix = MatrixIO.convertFormat(
-                        matrix, format, Format.MATLAB_SPARSE);
+                case JAMA: {
+                    @SuppressWarnings("deprecation")
+                    double[][] inputMatrix = 
+                        MatrixIO.readMatrixArray(matrix, format);
+                    return jamaSVD(inputMatrix, dimensions);
                 }
-                return matlabSVDS(matrix, dimensions);
-            case OCTAVE:
-                // If the format of the input matrix isn't immediately useable
-                // by Octave convert it
-                if (!format.equals(Format.MATLAB_SPARSE)) {
-                    matrix = MatrixIO.convertFormat(
-                        matrix, format, Format.MATLAB_SPARSE);
+                case MATLAB:
+                    // If the format of the input matrix isn't immediately useable
+                    // by Matlab convert it
+                    if (!format.equals(Format.MATLAB_SPARSE)) {
+                        matrix = MatrixIO.convertFormat(
+                            matrix, format, Format.MATLAB_SPARSE);
+                    }
+                    return matlabSVDS(matrix, dimensions);
+                case OCTAVE:
+                    // If the format of the input matrix isn't immediately useable
+                    // by Octave convert it
+                    if (!format.equals(Format.MATLAB_SPARSE)) {
+                        matrix = MatrixIO.convertFormat(
+                            matrix, format, Format.MATLAB_SPARSE);
+                    }
+                    return octaveSVDS(matrix, dimensions);
+                case COLT: {
+                    @SuppressWarnings("deprecation")
+                    double[][] m = MatrixIO.readMatrixArray(matrix, format);
+                    return coltSVD(m, Matrices.isDense(format), dimensions);
                 }
-                return octaveSVDS(matrix, dimensions);
-            case COLT: {
-                @SuppressWarnings("deprecation")
-                double[][] m = MatrixIO.readMatrixArray(matrix, format);
-                return coltSVD(m, Matrices.isDense(format), dimensions);
+                case ANY:               
+                    return svd(matrix, getFastestAvailableAlgorithm(), format, dimensions);
             }
-            case ANY:               
-                // NOTE: Since the addition of SVDLIBJ, all algorithms except
-                // SVDLIBC have been rendered obsolete.  Therefore, we see if
-                // SVDLIBC is available and then default to SVDLIBJ.
-                if (isSVDLIBCavailable()) {
-                    try {
-                        // check whether the input matrix is in an
-                        // SVDLIBC-acceptable format already and if not convert
-                        switch (format) {
-                        case SVDLIBC_DENSE_BINARY:
-                        case SVDLIBC_DENSE_TEXT:
-                        case SVDLIBC_SPARSE_TEXT:
-                        case SVDLIBC_SPARSE_BINARY:
-                            converted = matrix;
-                            break;
-                        default:
-                            SVD_LOGGER.fine("converting input matrix format " +
-                                            "from" + format + " to SVDLIBC" +
-                                            " ready format");
-                            converted = MatrixIO.convertFormat(
-                                matrix, format, Format.SVDLIBC_SPARSE_BINARY);
-                            format = Format.SVDLIBC_SPARSE_BINARY;
-                            break;
-                        }
-                        return svdlibc(converted, dimensions, format);                
-                    } catch (UnsupportedOperationException uoe) { }
-                }
-                else {
-                    // Default to SVDLIBJ as all remaining algorithms will be
-                    // slower
-                    return SvdlibjDriver.svd(matrix, format, dimensions);
-                }
-            }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             SVD_LOGGER.log(Level.SEVERE, "convertFormat", ioe);
         }
 

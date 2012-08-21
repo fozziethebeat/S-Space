@@ -24,18 +24,18 @@ package edu.ucla.sspace.tools;
 import edu.ucla.sspace.common.ArgOptions;
 
 import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.MatrixFactorization;
+import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
-import edu.ucla.sspace.matrix.SvdlibjDriver;
+import edu.ucla.sspace.matrix.SVD;
 
 import java.io.File;
-import java.io.IOError;
-import java.io.IOException;
 
 
 public class SvdTool {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ArgOptions options = new ArgOptions();
         
         options.addOption('h', "help", "Generates a help message and exits",
@@ -71,7 +71,6 @@ public class SvdTool {
         if (!outputDir.exists() || !outputDir.isDirectory())
             throw new IllegalArgumentException(
                 "invalid output directory: " + outputDirName);
-            
 
         Format inputFormat = (options.hasOption('r')) 
             ? getFormat(options.getStringOption('r'))
@@ -80,19 +79,12 @@ public class SvdTool {
             ? getFormat(options.getStringOption('w'))
             : Format.SVDLIBC_DENSE_TEXT;
 
-        try {
-            Matrix[] usv = 
-                SvdlibjDriver.svd(matrixFile, inputFormat, dimensions);
-            File uFile = new File(outputDir, "U.mat");
-            File sFile = new File(outputDir, "S.mat");
-            File vFile = new File(outputDir, "V.mat");
-
-            MatrixIO.writeMatrix(usv[0], uFile, outputFormat);
-            MatrixIO.writeMatrix(usv[1], sFile, outputFormat);
-            MatrixIO.writeMatrix(usv[2], vFile, outputFormat);
-        } catch (IOException ioe) {
-            throw new IOError(ioe);
-        }
+        MatrixFactorization factorizer = SVD.getFastestAvailableFactorization();
+        factorizer.factorize(new MatrixFile(matrixFile, inputFormat), dimensions);
+        File uFile = new File(outputDir, "U.mat");
+        MatrixIO.writeMatrix(factorizer.dataClasses(), uFile, outputFormat);
+        File vFile = new File(outputDir, "V.mat");
+        MatrixIO.writeMatrix(factorizer.classFeatures(), vFile, outputFormat);
     }
 
     private static MatrixIO.Format getFormat(String code) {
