@@ -1,46 +1,59 @@
 package edu.ucla.sspace
 
-import edu.ucla.sspace.matrix.Matrices
-import edu.ucla.sspace.matrix.PointWiseMutualInformationTransform
 import edu.ucla.sspace.similarity.CosineSimilarity
-import edu.ucla.sspace.vector.CompactSparseVector
-import edu.ucla.sspace.vector.VectorMath
 
 import scala.collection.JavaConversions.seqAsJavaList
-import scala.io.Source
 import scala.util.Random
 
 import java.io.PrintWriter
 
 
-object BatchTweets {
+object BatchClusterTweets {
     val lambda = 0.5
     val beta = 100
-    val w = (.7, .2, .1)
+    val w = (0.45, 0.45, 0.10)
     val simFunc = new CosineSimilarity()
-    val useMedian = false 
+    var useMedian = false 
+    var counter = 300
 
     def main(args: Array[String]) {
-        val config = Config(args(0))
+        val taggedFile = args(0)
+        val tokenBasisFile = args(1)
+        val neBasisFile = args(2)
+        val numGroups = args(3).toInt
+        val groupOutput = args(4)
+        val summaryOutput = args(5)
+        val featureModel = args(6)
+        val medianArg = args(7)
 
         def sim(t1: Tweet, t2: Tweet) = Tweet.sim(t1, t2, lambda, beta, w, simFunc)
-        val converter = config.featureModel.get match {
-            case "split" => TweetModeler.split(config.tokenBasis.get, config.neBasis.get)
-            case "joint" => TweetModeler.joint(config.tokenBasis.get, config.neBasis.get, config.ngramSize.get)
-        }
-        val tweetArray = converter.tweetIterator(config.taggedFile.get).toArray
-        val tweets = tweetArray.toList
 
-        val k = config.numGroups.get
+        useMedian = medianArg match {
+            case "median" => true
+            case "mean" => false 
+            case _ => throw new IllegalArgumentException("Not a valid argument for the median method")
+        }
+
+        val converter = featureModel match {
+            case "split" => TweetModeler.split(tokenBasisFile, neBasisFile)
+            case "joint" => TweetModeler.joint(tokenBasisFile, neBasisFile)
+            case _ => throw new IllegalArgumentException("Not a valid argument for the Tweet Modeler")
+        }
+
+        val tweetArray = converter.tweetIterator(taggedFile).toArray
+        val tweets = tweetArray.toList
+        printf("Processing [%d] tweets\n", tweets.size)
+
+        val k = numGroups
         val assignments = Array.fill(tweets.size)(-1)
         // Extract a random set of tweets to act as medians.
-        var medianList = Random.shuffle(tweets).take(k).sortWith(_.timestamp <= _.timestamp)
+        var medianList = selectMedians(tweets, k)
         var medianUpdated = true
 
-        while (medianUpdated) {
-            println("Starting full iteration")
+        while (medianUpdated && counter > 0) {
+            printf("Starting iteration [%d]\n", counter)
             // Assign the first set of tweets, i.e. those before the first median, to the first median.
-            val (firstGroup, remainingTweets) = tweets.span(_.timestamp < medianList.head.timestamp)
+            val (firstGroup, remainingTweets) = tweets.span(_.timestamp <= medianList.head.timestamp)
             var offset = assignTweets(firstGroup, assignments, 0, 0)
 
             // Iterate through each pairing of medians to compute the best cut point between each pair.  After computing the best cut point,
@@ -56,12 +69,19 @@ object BatchTweets {
                 var objectiveValue = sim(m1, m1) + window.map(t=>sim(t, m2)).sum
                 // For each possible cut position, update the objective function and emit the value and timestamp.  After considering every
                 // possible cut location, find the one with the highest objective score.
-                val bestTime = window.map( t => {
+                var bestTime = window.map( t => {
                     // Updated objective value.
                     objectiveValue = objectiveValue - sim(t, m2) + sim(t, m1)
                     // Emiting value and timestamp of the cut.
                     (objectiveValue, t.timestamp)
                 }).max._2
+
+                // It's possible that the best cut point is at the same time as
+                // the end median of this segment.  In that case, don't let that
+                // get assigned to the previous group.
+                if (bestTime == m2.timestamp)
+                    bestTime = m2.timestamp - 1
+
                 // With the cut point, get the group of points assigned to each median.
                 val (g1, g2) = window.span(_.timestamp <= bestTime)
                 // Make the assignment of points to medians.
@@ -93,21 +113,23 @@ object BatchTweets {
 
             medianUpdated = newMedianList.map(_.timestamp) != medianList.map(_.timestamp)
             medianList = newMedianList
+            counter -= 1
         }
 
-        val p = new PrintWriter(config.groupOutput.get)
+        val p = new PrintWriter(groupOutput)
         p.println("Time Group")
         assignments.zip(tweets).foreach(x => p.println("%d %d".format(x._2.timestamp, x._1)))
         p.close
 
-        val t = new PrintWriter(config.splitOutput.get)
-        t.println("Time")
-        medianList.map(_.timestamp).foreach(t.println)
-        t.close
-
-        val s = new PrintWriter(config.summaryOutput.get)
+        /*
+        val s = new PrintWriter(summaryOutput)
         s.println("Summary")
-        medianList.map(_.text).foreach(s.println)
+        medianList.zipWithIndex.foreach{ case(medianTweet, groupId) => {
+            val startTime = medianTweet.timestamp
+            val meanTime = medianTweet.timestamp
+            val summary = medianTweet.text
+            s.println("%d %d %d \"%s\"".format(startTime, meanTime, groupId, summary))
+        }}
         s.close
 
         val transform = new PointWiseMutualInformationTransform()
@@ -126,11 +148,27 @@ object BatchTweets {
                                                 .mkString(" "))
                                      .foreach(m.println)
         m.close
+        */
     }
 
     def assignTweets(items: List[Tweet], assignments: Array[Int], groupId: Int, offset: Int) = {
         for (i <- 0 until items.size)
             assignments(offset+i) = groupId
         offset + items.size
+    }
+
+    def selectMedians(tweets:List[Tweet], k:Int) : List[Tweet] = {
+        while (true) {
+            val medians = Random.shuffle(tweets).take(k).sortWith(_.timestamp < _.timestamp)
+            // If we don't have enough tweets for k medians, just return the
+            // median list.
+            if (tweets.size < k) return medians
+            // Check that we have k unique timestamps.  If we do, return the
+            // medians.
+            if (medians.map(_.timestamp).toSet.size == k) return medians
+            // Otherwise continue
+        }
+        // Do this so horrible horrible things happen otherwise.
+        return null
     }
 }

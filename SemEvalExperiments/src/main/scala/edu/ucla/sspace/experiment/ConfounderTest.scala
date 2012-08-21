@@ -4,6 +4,7 @@ import edu.ucla.sspace.similarity.CosineSimilarity
 import edu.ucla.sspace.vector.CompactSparseVector
 import edu.ucla.sspace.vector.SparseDoubleVector
 import edu.ucla.sspace.vector.VectorIO
+import edu.ucla.sspace.vector.VectorMath
 
 import scala.collection.JavaConversions.collectionAsScalaIterable
 import scala.io.Source
@@ -14,6 +15,7 @@ import java.io.FileReader
 
 object ConfounderTest {
     def main(args: Array[String]) {
+        System.err.printf("Loading test labels")
         // Load the test key file.  This will let us map from known labels to instance identifiers for each word.
         val testLabels = Source.fromFile(args(0)).getLines
                                .map(_.split("\\s+"))
@@ -24,10 +26,13 @@ object ConfounderTest {
         if (testLabels.size == 1)
             System.exit(0)
 
+        System.err.printf("Loading labeled contexts")
         // Read the context vectors for the test set.
         val contexts = VectorIO.readSparseVectors(new FileReader(args(1)))
+        System.err.printf("Loading headers")
         // Read the headers that map to the matching index in the context list.
         val headers = Source.fromFile(args(2)).getLines.zipWithIndex.toList.toMap
+        System.err.printf("Loading prototypes")
         // Load in the word senses we've learned.
         val clusters = VectorIO.readSparseVectors(new FileReader(args(3)))
         // Create the similarity function, this will be used to compare test instances to senses..
@@ -39,6 +44,7 @@ object ConfounderTest {
         var numBelligs = 0
         var numGood = 0
 
+        System.err.printf("Buidling mapping between cluster id's and prototypes")
         // Turn the test label mapping into a mapping from test labels to lists of context vectors and the best similarity to a sense for
         // each context.
         val testContexts = testLabels.map{ case (k, ids) =>
@@ -48,7 +54,10 @@ object ConfounderTest {
                    .map( v => (v, clusters.map(simFun.sim(_, v)).max )))
         }
 
+        System.err.printf("Performing Zellig and Bellig tests")
         for ( List(group1, group2) <- testContexts.toList.combinations(2) ) {
+            System.err.printf("Comparing groups [%s] and [%s] for %s\n", group1._1, group2._1, args(4))
+
             for ( (i1Context, bestI1Sim) <- group1._2;
                   (i2Context, bestI2Sim) <- group2._2) {
                 // Create a zellig that will consist of features from the known context and the confounder context.  We can use this zellig
@@ -86,7 +95,8 @@ object ConfounderTest {
     def mixContexts(initial: SparseDoubleVector, mixin: SparseDoubleVector) = {
         // Create a zellig that will consist of features from the known context and the confounder context.  We can use this zellig
         // to evaluate both true contexts from each group at the same time since it's a mixture of each one.
-        val zellig = new CompactSparseVector(initial)
+        val zellig = new CompactSparseVector(initial.length)
+        VectorMath.add(zellig, initial)
         // Randomly set half of the contexts in the original context to zero.
         val nonZeros = zellig.getNonZeroIndices
         val half = nonZeros.size/2

@@ -16,17 +16,20 @@ import java.io.StringReader
 object DisambiguateCorpus {
     def main(args: Array[String]) {
 
+        println("Loading keywords")
         val keyWords = Source.fromFile(args(0)).getLines.zipWithIndex.toList.toMap
         val prototypeFile = Source.fromFile(args(1)).getLines
         val numClusters = args(2).toInt
 
+        println("Loading the wordspace")
         val wordSpace = prototypeFile.sliding(numClusters+1, numClusters+1)
-                                     .map(_.mkString(" "))
+                                     .map(_.mkString("\n"))
                                      .map(new StringReader(_))
                                      .map(VectorIO.readSparseVectors)
                                      .map(asScalaBuffer)
                                      .toArray
 
+        println("Loading the feature basis")
         val basis = new StringBasisMapping()
         val windowSize = 20
         Source.fromFile(args(3)).getLines.foreach(basis.getDimension)
@@ -34,8 +37,10 @@ object DisambiguateCorpus {
 
         val simFunc = new CosineSimilarity()
 
+        println("Disambiguating the corpus")
         val writer = new PrintWriter(args(5))
-        for (doc <- Source.fromFile(args(4)).getLines) {
+        for ((doc, di) <- Source.fromFile(args(4)).getLines.zipWithIndex) {
+            printf("Disambiguating document [%d]\n", di)
             var prev = List[String]()
             var next = List[String]() 
             val tokenIter = doc.split("\\s+").iterator

@@ -191,8 +191,10 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
         T max = null;
         while (iter.hasNext()) {
             iter.advance();
-            if (iter.value() > maxCount)
+            if (iter.value() > maxCount) {
+                maxCount = iter.value();
                 max = iter.key();
+            }
         }
         return max;
     }
@@ -208,8 +210,10 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
         T min = null;
         while (iter.hasNext()) {
             iter.advance();
-            if (iter.value() < minCount)
+            if (iter.value() < minCount) {
+                minCount = iter.value();
                 min = iter.key();
+            }
         }
         return min;
     }

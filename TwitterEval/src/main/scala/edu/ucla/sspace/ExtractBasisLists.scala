@@ -5,8 +5,6 @@ import Util._
 import edu.ucla.sspace.basis.StringBasisMapping
 import edu.ucla.sspace.vector.CompactSparseVector
 
-import opennlp.tools.tokenize._
-
 import scala.collection.JavaConversions.setAsJavaSet
 import scala.io.Source
 import scala.xml.XML
@@ -17,8 +15,8 @@ import java.io.PrintWriter
 
 object ExtractBasisLists {
     def main(args: Array[String]) {
-        if (args.size != 4) {
-            println("args: <datafile> <tokenizer> <tokenBasis.out> <neBasis.out>")
+        if (args.size != 3) {
+            println("args: <datafile> <tokenBasis.out> <neBasis.out>")
             System.exit(1)
         }
 
@@ -26,43 +24,37 @@ object ExtractBasisLists {
         val tokenBasis = new StringBasisMapping()
 
         val data = Source.fromFile(args(0)).getLines
-        //data.next
+        data.next
 
-        val tokenizerModel = new TokenizerModel(new FileInputStream(args(1)))
-        val tokenizer = new TokenizerME(tokenizerModel)
-
+        val entityLabelSet = Set("PERSON", "ORGANIZATION", "LOCATION")
         val tokenVector = new CompactSparseVector()
         val neVector = new CompactSparseVector()
         for ((line,i) <- data.zipWithIndex) {
             val Array(timestamp, tweet) = line.split("\\s+", 2)
             try {
                 val tweetXml = XML.loadString(tweet)
-                for (token <- tokenizer.tokenize(tweetXml.child
-                                                         .filter(_.label!="PERSON")
-                                                         .map(_.text)
-                                                         .mkString(" ")
-                                                         .toLowerCase)
-                                       .filter(notUser)
-                                       .map(normalize)
-                                       .filter(validToken))
+                for (token <- tokenize(tweetXml.child
+                                               .filter(!entityLabelSet.contains(_))
+                                               .map(_.text)
+                                               .mkString(" "))
+                     if validToken(token))
                     tokenVector.add(tokenBasis.getDimension(token), 1d)
-                for (ne <- (tweetXml \ "PERSON").map(_.text))
+                for (entityLabel <- entityLabelSet;
+                     ne <- (tweetXml \ entityLabel).map(_.text))
                     neVector.add(neBasis.getDimension(ne), 1d)
             } catch {
-                case e => 
+                case e => System.err.println("Failed to handle tweet [%d]".format(i))
             }
         }
 
-        println(tokenBasis.numDimensions)
-        val tokenWriter = new PrintWriter(args(2))
-        for (i <- tokenVector.getNonZeroIndices)
-            if (tokenVector.get(i) > 4 )
-                tokenWriter.println(tokenBasis.getDimensionDescription(i))
-        tokenWriter.close
-        val neWriter = new PrintWriter(args(3))
-        for (i <- neVector.getNonZeroIndices)
-            if (neVector.get(i) > 4 )
-                neWriter.println(neBasis.getDimensionDescription(i))
-        neWriter.close
+        writeBasis(args(1), tokenBasis, tokenVector, 4)
+        writeBasis(args(2), neBasis, neVector, 2)
+    }
+
+    def writeBasis(basisFile: String, basis: StringBasisMapping, vector: CompactSparseVector, limit: Int) {
+        val writer = new PrintWriter(basisFile)
+        for (i <- vector.getNonZeroIndices; if vector.get(i) > limit)
+            writer.println(basis.getDimensionDescription(i))
+        writer.close
     }
 }
