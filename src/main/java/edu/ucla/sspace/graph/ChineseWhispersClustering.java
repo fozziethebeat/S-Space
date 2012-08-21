@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens 
+ * Copyright 2012 David Jurgens 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -40,6 +40,7 @@ import edu.ucla.sspace.util.primitive.IntIterator;
 import edu.ucla.sspace.util.primitive.IntSet;
 import edu.ucla.sspace.util.primitive.IntIntMultiMap;
 import edu.ucla.sspace.util.primitive.IntIntHashMultiMap;
+import edu.ucla.sspace.util.primitive.PrimitiveCollections;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -118,25 +119,40 @@ public class ChineseWhispersClustering implements java.io.Serializable {
         }
 
         boolean assignmentsChanged = true;
+        double mutationRate = randomAssignmentProb;
         for (int iter = 0; iter < maxIterations && assignmentsChanged; ++iter) {
             assignmentsChanged = false;
             
             // Shuffle the order in which the vertices will be accessed
-            shuffle(vertices);
+            PrimitiveCollections.shuffle(vertices);
 
             for (int i = 0; i < vertices.length; ++i) {
                 int vertex = vertices[i];
-                // Get the neighbors of the current vertex and identify which
-                // class label is the maximum from the neighbors
-                int maxClass = (graph instanceof WeightedGraph) 
-                    ? getMaxClassWeighted(vertex, vertexAssignments,
-                        (WeightedGraph<? extends WeightedEdge>)graph)
-                    : getMaxClass(vertex, vertexAssignments, graph);
-                int oldClass = vertexAssignments[vertex];
-                if (oldClass != maxClass) {
-                    vertexAssignments[vertex] = maxClass;
-                    assignmentsChanged = true;
+
+                // Allow for random mutations
+                if (RANDOM.nextDouble() < mutationRate) {
+                    int randomClass = RANDOM.nextInt(vertices.length);
+                    int oldClass = vertexAssignments[vertex];
+                    if (oldClass != randomClass) {
+                        vertexAssignments[vertex] = randomClass;
+                        assignmentsChanged = true;
+                    }                    
                 }
+                // Otherwise use the regular update procedure
+                else {
+                    // Get the neighbors of the current vertex and identify
+                    // which class label is the maximum from the neighbors
+                    int maxClass = (graph instanceof WeightedGraph) 
+                        ? getMaxClassWeighted(vertex, vertexAssignments,
+                            (WeightedGraph<? extends WeightedEdge>)graph)
+                        : getMaxClass(vertex, vertexAssignments, graph);
+                    int oldClass = vertexAssignments[vertex];
+                    if (oldClass != maxClass) {
+                        vertexAssignments[vertex] = maxClass;
+                        assignmentsChanged = true;
+                    }
+                }                
+                
             }
         }
 
@@ -218,18 +234,5 @@ public class ChineseWhispersClustering implements java.io.Serializable {
         return (options.length == 1)
             ? options[0]
             : options[RANDOM.nextInt(options.length)];
-    }
-
-    /**
-     * Randomly shuffles the contents of the provided array
-     */
-    static void shuffle(int[] arr) {
-        int size = arr.length;
-        for (int i = size; i > 1; i--) {
-            int tmp = arr[i-1];
-            int r = RANDOM.nextInt(i);
-            arr[i-1] = arr[r];
-            arr[r] = tmp;
-        }
     }
 }

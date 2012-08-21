@@ -59,6 +59,11 @@ public class SparseUndirectedEdgeSet extends AbstractSet<Edge>
         this.rootVertex = rootVertex;
         edges = new TIntHashSet();
     }
+
+    public SparseUndirectedEdgeSet(int rootVertex, int capacity) {
+        this.rootVertex = rootVertex;
+        edges = new TIntHashSet(capacity);
+    }
     
     /**
      * Adds the edge to this set if one of the vertices is the root vertex and

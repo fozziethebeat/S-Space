@@ -67,7 +67,7 @@ public class SvdlibcSparseBinaryMatrixBuilder implements MatrixBuilder {
     /**
      * The writer used to add data to the transposed matrix file
      */
-    private final DataOutputStream matrixDos;
+    private transient DataOutputStream matrixDos;
 
     /**
      * Whether the inputted matrix columns should be transposed as rows in the

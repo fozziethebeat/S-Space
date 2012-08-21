@@ -33,7 +33,8 @@ import edu.ucla.sspace.vector.SparseHashDoubleVector;
  *
  * @author Keith Stevens 
  */
-public class DiagonalMatrix implements SparseMatrix, java.io.Serializable {
+public class DiagonalMatrix extends AbstractMatrix
+        implements SparseMatrix, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
         

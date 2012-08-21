@@ -23,26 +23,26 @@ package edu.ucla.sspace.util.primitive;
 
 
 /**
- * A utility class for holding two {@code int}s.
+ * A utility class for holding two {@code double}s.
  */
-public class IntPair {
+public class DoublePair {
 
     /**
-     * The first {@code int} in the pair
+     * The first {@code double} in the pair
      */
-    public final int x;
+    public final double x;
     
     /**
-     * The second {@code int} in the pair
+     * The second {@code double} in the pair
      */
-    public final int y;
+    public final double y;
 
     /**
      * Creates a pair out of {@code x} and {@code y}
      */
-    public IntPair(int x, int y) {
-	this.x = x;
-	this.y = y;
+    public DoublePair(double x, double y) {
+        this.x = x;
+        this.y = y;
     }
 
     /**
@@ -51,17 +51,19 @@ public class IntPair {
      * is specific to the ordering of {@code x} and {@code y}.
      */
     public boolean equals(Object o) {
-	if (!(o instanceof IntPair))
-	    return false;
-	IntPair p = (IntPair)o;
-	return x == p.x && y == p.y;
+        if (!(o instanceof DoublePair))
+            return false;
+        DoublePair p = (DoublePair)o;
+        return x == p.x && y == p.y;
     }
     
     public int hashCode() {
-        return x ^ y;
+        long v1 = Double.doubleToLongBits(x);
+        long v2 = Double.doubleToLongBits(y);
+        return (int)(v1 ^ (v2 >>> 32)) ^ (int)(v2 ^ (v2 >>> 32));
     }
 
     public String toString() {
-	return "{" + x + ", " + y + "}";
+        return "{" + x + ", " + y + "}";
     }
 }

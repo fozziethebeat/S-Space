@@ -44,16 +44,38 @@ public class SparseUndirectedGraph extends AbstractGraph<Edge,SparseUndirectedEd
 
     private static final long serialVersionUID = 1L;
 
+    public static final int DEFAULT_INITIAL_EDGE_CAPACITY = 4;
+
+    /**
+     * The default initial storage used to hold a vertex's edge set.
+     */
+    private final int initialEdgeCapacity;
+
     /**
      * Creates an empty undirected graph
      */
-    public SparseUndirectedGraph() { }
+    public SparseUndirectedGraph() { 
+        this(DEFAULT_INITIAL_VERTEX_CAPACITY, 
+             DEFAULT_INITIAL_EDGE_CAPACITY);
+    }
+
+    /**
+     * Creates an empty undirected graph with the provided initial edge and
+     * vertex storage capacities.
+     */
+    public SparseUndirectedGraph(int initialVertexCapacity, int initialEdgeCapacity) {
+        super(initialVertexCapacity);
+        if (initialEdgeCapacity < 0)
+            throw new IllegalArgumentException("Edge capcity must be positive");
+        this.initialEdgeCapacity = initialEdgeCapacity;
+    }
 
     /**
      * Creates an undirected graph with no edges and the provided set of vertices
      */
     public SparseUndirectedGraph(Set<Integer> vertices) {
         super(vertices);
+        this.initialEdgeCapacity = DEFAULT_INITIAL_EDGE_CAPACITY;
     }
 
     /**
@@ -61,6 +83,11 @@ public class SparseUndirectedGraph extends AbstractGraph<Edge,SparseUndirectedEd
      * {@code g}.
      */
     public SparseUndirectedGraph(Graph<? extends Edge> g) {
+        super(Math.max(g.order(), 
+                       AbstractGraph.DEFAULT_INITIAL_VERTEX_CAPACITY));
+        this.initialEdgeCapacity = (g.order() > 0)
+            ? (int)(Math.ceil(g.size() / (double)g.order()))
+            : DEFAULT_INITIAL_EDGE_CAPACITY;
         for (Integer v : g.vertices())
             add(v);
         for (Edge e : g.edges())
@@ -92,6 +119,6 @@ public class SparseUndirectedGraph extends AbstractGraph<Edge,SparseUndirectedEd
      * Creates a sparse edge set that treats all edges as symmetric.
      */
     @Override protected SparseUndirectedEdgeSet createEdgeSet(int vertex) {
-        return new SparseUndirectedEdgeSet(vertex);
+        return new SparseUndirectedEdgeSet(vertex, initialEdgeCapacity);
     }
 }

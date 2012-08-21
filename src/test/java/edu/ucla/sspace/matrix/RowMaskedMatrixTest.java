@@ -41,12 +41,31 @@ public class RowMaskedMatrixTest {
         {.1, .2, .3, .4, .5},
     };
 
-    @Test public void testReorderdMatrix() {
+    @Test public void testReorderdMatrix() throws Exception {
         Matrix baseMatrix = new ArrayMatrix(VALUES);
 
         int[] reordering = new int[] {1, 2, 3};
         RowMaskedMatrix mapped = new RowMaskedMatrix(baseMatrix, reordering);
 
+        if (baseMatrix.rows() != mapped.backingMatrix().rows())
+            throw new Exception(String.format("row mismatch: %d != %d%n",
+                                              baseMatrix.rows(), mapped.backingMatrix().rows()));
+        if (baseMatrix.columns() != mapped.backingMatrix().columns()) 
+            throw new Exception(String.format("col mismatch: %d != %d%n",
+                                              baseMatrix.columns(), mapped.backingMatrix().columns()));
+        if (baseMatrix.rows() == mapped.backingMatrix().rows()) {
+            for (int row = 0; row < baseMatrix.rows(); ++row) {
+                if (!baseMatrix.getRowVector(row).equals(mapped.backingMatrix().getRowVector(row))) 
+                    throw new Exception(String.format("val mismatch: %s != %s%n",
+                                                      baseMatrix.getRowVector(row),
+                                                      mapped.backingMatrix().getRowVector(row)));
+            }
+        }
+
+
+        assertTrue(baseMatrix.equals(baseMatrix));
+        assertTrue(mapped.backingMatrix().equals(mapped.backingMatrix()));
+        assertTrue(baseMatrix.equals(mapped.backingMatrix()));
         assertEquals(baseMatrix, mapped.backingMatrix());
         assertEquals(3, mapped.rows());
         assertEquals(5, mapped.columns());

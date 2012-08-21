@@ -48,7 +48,11 @@ import java.util.logging.Level;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionOctave extends AbstractSvd {
+public class SingularValueDecompositionOctave extends AbstractSvd 
+        implements SingularValueDecomposition, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
+
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionOctave.class.getName());
@@ -125,8 +129,8 @@ public class SingularValueDecompositionOctave extends AbstractSvd {
 
                 // load U in memory, since that is what most algorithms will be
                 // using (i.e. it is the word space)
-                dataClasses = MatrixIO.readMatrix(uOutput, Format.DENSE_TEXT, 
-                                                  Type.DENSE_IN_MEMORY);
+                U = MatrixIO.readMatrix(uOutput, Format.DENSE_TEXT, 
+                                        Type.DENSE_IN_MEMORY);
                 scaledClassFeatures = false;
 
                 // Sigma only has n values for an n^2 matrix, so make it sparse
@@ -136,10 +140,9 @@ public class SingularValueDecompositionOctave extends AbstractSvd {
                 for (int s = 0; s < dimensions; ++s)
                     singularValues[s] = S.get(s, s);
 
-                // V could be large, so just keep it on disk.  Furthermore,
                 // Octave does not transpose V, so transpose it
-                classFeatures = MatrixIO.readMatrix(vOutput, Format.DENSE_TEXT, 
-                                                    Type.DENSE_ON_DISK, true);
+                V = MatrixIO.readMatrix(vOutput, Format.DENSE_TEXT, 
+                                        Type.DENSE_ON_DISK, true);
                 scaledDataClasses = false;
             }
             else {

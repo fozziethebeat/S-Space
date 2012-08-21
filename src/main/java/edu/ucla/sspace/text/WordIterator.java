@@ -62,7 +62,7 @@ public class WordIterator implements Iterator<String> {
     /**
      * The current line being considered
      */
-    private String curLine;
+    String curLine;
 
     /**
      * Constructs an iterator for all the tokens contained in the string

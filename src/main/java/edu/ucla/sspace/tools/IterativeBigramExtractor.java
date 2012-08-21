@@ -104,7 +104,7 @@ public class IterativeBigramExtractor {
                           "a file where each line is a document", true,
                           "FILE[,FILE...]", "Required (at least one of)");
 
-        options.addOption('s', "stopWrods", "A file containing a list of stop "+
+        options.addOption('s', "stopWords", "A file containing a list of stop "+
                           "words that should be encluded from bigrams",
                           true, "FILE", "Program Options");
 
