@@ -21,7 +21,6 @@
 
 package edu.ucla.sspace.matrix;
 
-
 import edu.ucla.sspace.vector.DoubleVector;
 
 import java.io.File;
@@ -29,12 +28,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import java.nio.channels.FileChannel;
 
 /**
  * Performs no transform on the input matrix.
  */
-public class NoTransform extends BaseTransform implements Transform {
+public class NoTransform extends BaseTransform 
+        implements Transform, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * {@inheritDoc}

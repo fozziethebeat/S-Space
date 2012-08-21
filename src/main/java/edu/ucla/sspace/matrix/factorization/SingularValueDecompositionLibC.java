@@ -51,7 +51,9 @@ import java.util.logging.Logger;
  * @author Keith Stevens
  */
 public class SingularValueDecompositionLibC
-        implements SingularValueDecomposition {
+        implements SingularValueDecomposition, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionLibC.class.getName());

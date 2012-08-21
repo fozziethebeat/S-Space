@@ -35,6 +35,21 @@ import java.util.Map;
  */
 public class SparseHashDoubleVectorTests {
 
+    @Test public void testSetZero() {
+        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
+        v.set(0, 0);
+        assertEquals(0, v.getNonZeroIndices().length);
+    }
+
+    @Test public void testSetAddSumIsZero() {
+        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
+        assertEquals(0, v.getNonZeroIndices().length);
+        v.add(0, 1);
+        assertEquals(1, v.getNonZeroIndices().length);
+        v.add(0, -1);
+        assertEquals(0, v.getNonZeroIndices().length);
+    }
+
     @Test public void testMagnitude() {
         SparseHashDoubleVector v = new SparseHashDoubleVector(100);
         assertEquals(0, v.magnitude(), .0001);

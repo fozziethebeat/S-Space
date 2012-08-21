@@ -48,7 +48,10 @@ import java.util.logging.Level;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionMatlab extends AbstractSvd {
+public class SingularValueDecompositionMatlab extends AbstractSvd 
+        implements SingularValueDecomposition, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionMatlab.class.getName());

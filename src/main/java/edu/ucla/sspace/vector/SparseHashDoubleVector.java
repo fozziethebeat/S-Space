@@ -56,6 +56,7 @@ public class SparseHashDoubleVector
     private int maxLength;
 
     private double magnitude;
+
     /**
      * Creates a new vector of the specified length
      *
@@ -149,7 +150,11 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public void set(int index, double value) {
-        vector.put(index, value);
+        double old = vector.get(index);
+        if (value == 0)
+            vector.remove(index);
+        else 
+            vector.put(index, value);
         magnitude = -1;
         nonZeroIndices = null;
     }

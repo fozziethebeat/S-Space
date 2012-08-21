@@ -47,7 +47,10 @@ import java.io.File;
  *
  * @see LogEntropyTransform
  */
-public class TfIdfTransform extends BaseTransform {
+public class TfIdfTransform extends BaseTransform 
+        implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * {@inheritDoc}
@@ -71,7 +74,10 @@ public class TfIdfTransform extends BaseTransform {
         return "TF-IDF";
     }
 
-    public class TfIdfGlobalTransform implements GlobalTransform {
+    public class TfIdfGlobalTransform 
+            implements GlobalTransform, java.io.Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         /**
          * The total number of documents (columns) that each row occurs in.

@@ -173,7 +173,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * @author David Jurgens
  */
-public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
+public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
+        implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** 
      * The prefix for naming publically accessible properties
@@ -243,7 +246,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace {
      * WeakReference}, letting the result be garbage collected if memory
      * pressure gets too high.
      */
-    private WeakReference<Matrix> UtimesSigmaInvRef;
+    private transient WeakReference<Matrix> UtimesSigmaInvRef;
 
     /**
      * The left factor matrix of the SVD operation, which is the word space

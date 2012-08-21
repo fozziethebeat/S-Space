@@ -66,7 +66,10 @@ import static edu.ucla.sspace.common.Statistics.log2_1p;
  *
  * @author David Jurgens
  */
-public class LogEntropyTransform extends BaseTransform {
+public class LogEntropyTransform extends BaseTransform 
+        implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * The logger for reporting the status of the transformation.
@@ -100,7 +103,10 @@ public class LogEntropyTransform extends BaseTransform {
      * The real implementation of the Log Entropy transformation as a {@link
      * GlobalTransform}
      */
-    public class LogEntropyGlobalTransform implements GlobalTransform {
+    public class LogEntropyGlobalTransform 
+            implements GlobalTransform, java.io.Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         /**
          * The entropy for every row.

@@ -36,7 +36,10 @@ import java.io.IOException;
  * define the a {@link GlobalTransform} and then subclass this abstract class to
  * adhere to the standard {@link Transform} interface.
  */
-public abstract class BaseTransform implements Transform {
+public abstract class BaseTransform 
+        implements Transform, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private GlobalTransform transform;
 

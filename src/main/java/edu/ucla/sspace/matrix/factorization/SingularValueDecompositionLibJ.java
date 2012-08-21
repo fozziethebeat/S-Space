@@ -48,7 +48,10 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibJ extends AbstractSvd {
+public class SingularValueDecompositionLibJ extends AbstractSvd 
+        implements SingularValueDecomposition, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionLibJ.class.getName());

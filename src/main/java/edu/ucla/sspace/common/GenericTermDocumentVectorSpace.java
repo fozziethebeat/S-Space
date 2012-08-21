@@ -96,7 +96,10 @@ import java.util.logging.Logger;
  * 
  * @author Keith Stevens
  */
-public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
+public abstract class GenericTermDocumentVectorSpace 
+        implements SemanticSpace, java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     protected static final Logger LOG = 
         Logger.getLogger(GenericTermDocumentVectorSpace.class.getName());
@@ -117,7 +120,7 @@ public abstract class GenericTermDocumentVectorSpace implements SemanticSpace {
      * The builder used to construct the term-document matrix as new documents
      * are processed.
      */
-    private final MatrixBuilder termDocumentMatrixBuilder;
+    private transient MatrixBuilder termDocumentMatrixBuilder;
 
     /**
      * If true, the first token in each document is considered to be a document
