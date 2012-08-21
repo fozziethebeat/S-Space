@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ *
+ * This file is part of the S-Space package and is covered under the terms and
+ * conditions therein.
+ *
+ * The S-Space package is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as published
+ * by the Free Software Foundation and distributed hereunder to you.
+ *
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND NO REPRESENTATIONS OR WARRANTIES,
+ * EXPRESS OR IMPLIED ARE MADE.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, WE MAKE
+ * NO REPRESENTATIONS OR WARRANTIES OF MERCHANT- ABILITY OR FITNESS FOR ANY
+ * PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE OR DOCUMENTATION
+ * WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER
+ * RIGHTS.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package edu.ucla.sspace.matrix;
 
 import java.util.ArrayList;
@@ -6,10 +29,50 @@ import java.util.List;
 
 
 /**
+ * This {@link MatrixAggregate} computes the <a
+ * href="http://en.wikipedia.org/wiki/Adjusted_mutual_information">Adjusted
+ * Mutual Information</a> between two factors whose interactions are stored
+ * within a {@link Matrix}.  The rows of the {@link Matrix} should correspond to
+ * factors for one variable while the columns should correspond to factors for a
+ * separate variable.  The computed {@link AdjustedMutualInformation} then
+ * represents the the amount of overlap between the two variables, as a value
+ * between 0 and 1 where 1 is perfect overlap and 0 indicates no overlap.  This
+ * measure is best used to compare two distinct clusterings of the same dataset.
+ * Under this formulation, an {@link AdjustedMutualInformation} of {@code 1.0}
+ * then indicates the two solutions are equivalent while {@code 0.0} indicates
+ * that they share no significant groupings.
+ *
+ * </p>
+ *
+ * This implementation is based off of the following paper:
+ * <li>
+ *   Vinh, Nguyen Xuan and Epps, Julien and Bailey, James, "Information
+ *   Theoretic Measures for Clusterings Comparison: Variants, Properties,
+ *   Normalization and Correction for Chance," in <i>The Journal of Machine
+ *   Learning Research</i>.  Available <a
+ *   href="http://dl.acm.org/citation.cfm?id=1756006.1953024">here</a>.</li>
+ *
+ * </p>
+ *
+ * We make one siginficant deviation from the standard {@link
+ * AdjustedMutualInformation} measure.  If both variables have only one factor,
+ * i.e. the matrix has one row and one column, we return an AMI of 1.0 to
+ * indicate a perfect match between the two variables.  Techinically however,
+ * the AMI should be 0.0 as there is no shared information.
+ *
+ * </p> 
+ *
+ * Implementation note: that the code for this computation is extremely complicated and
+ * poorly documented as it's a translation of Matlab code optimized to avoid
+ * computing too many factorials.
+ *
  * @author Keith Stevens
  */
 public class AdjustedMutualInformation implements MatrixAggregate {
 
+    /**
+     * {@inheritDoc}
+     */
     public double aggregate(Matrix m) {
         if (m.rows() == 1 && m.columns() == 1)
             return 1.0;

@@ -7,6 +7,23 @@ import java.io.PrintStream;
 
 
 /**
+ * This {@link MatrixWriter} serializes a {@link Matrix} into the sparse matlab
+ * format to an arbitrary {@link OutputStream}.  The format looks like:
+ *
+ * <pre>
+ *   row col value
+ *   row col value
+ * </pre>
+ *
+ * Where both row and column indices start at one.  
+ *
+ * </p>
+ *
+ * When writing a {@link SparseMatrix}, the element at the bottom right of the
+ * matrix, i.e. the element with the largest row and column indices, will be
+ * written to the {@link OutputStream} first, even if it is zero, in order to
+ * provide the bounds of the matrix.
+ *
  * @author Keith Stevens
  */
 public class MatlabSparseMatrixWriter implements MatrixWriter {

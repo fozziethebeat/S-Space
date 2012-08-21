@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 David Jurgens
+ * Copyright 2012 Keith Stevens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -34,12 +34,19 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 
 /** 
- * A utility for counting unique instance of an object.  
+ * A utility for counting unique instance of an object which have real values
+ * attached to each observation.  This is a direct copy of the {@link Counter}
+ * interface however allows for aggregating counts as {@code doubles} instead of
+ * {@code integers}.  
  *
- * <p> This class supports iterating over the set of instances being counted as
+ * </p>
+ *
+ * This class supports iterating over the set of instances being counted as
  * well as the instances and counts together.  All collections views that are
  * returned are unmodifiable and will throw an exception if a mutating method is
  * called.
+ *
+ * @author Keith Stevens
  */
 public class StringProbabilityCounter implements Iterable<Map.Entry<String, Double>> {
 
