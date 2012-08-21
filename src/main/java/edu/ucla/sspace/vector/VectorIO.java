@@ -46,33 +46,60 @@ public class VectorIO {
      */
     private VectorIO() { }
 
+    /**
+     * Returns a {@link List} of {@link SparseDoubleVector} read from an
+     * artbitrary {@link Reader}.  Data read from the reader is assumed to be in
+     * a the following text format:
+     *
+     * <pre>
+     *     numRows numColumns
+     *     (colId:value)+
+     *     (colId:value)+
+     *     ...
+     * </pre>
+     *
+     * Which includes a header listing the number of rows and number of
+     * dimensions, then one row for each vector to be read.  Each vector row has
+     * a series of white space delimited column id an value pairs, which are
+     * connected via ":".
+     */
     public static List<SparseDoubleVector> readSparseVectors(
             Reader reader) throws IOException {
+        // Turn the reader into a buffered reader to read off each line.
         BufferedReader br = new BufferedReader(reader);
 
+        // Read off the header from the file.
         String line = br.readLine();
         String[] numRowColumns = line.split("\\s+");
         int numRows = Integer.parseInt(numRowColumns[0]);
         int numCols = Integer.parseInt(numRowColumns[1]);
 
+        // Parse each row and create a new vector.
         List<SparseDoubleVector> vectors =
             new ArrayList<SparseDoubleVector>(numRows);
         for (line = null; (line = br.readLine()) != null; ) {
+            // Create and store the vector for this row.
             SparseDoubleVector sv = new CompactSparseVector(numCols);
+            vectors.add(sv);
             for (String entry : line.trim().split("\\s+")) {
+                // Skip the row if it is empty.
                 if (entry.equals(""))
                     continue;
+                // Update the column value.
                 String[] colValue = entry.split(":");
                 int col = Integer.parseInt(colValue[0]);
                 double val = Double.parseDouble(colValue[1]);
                 sv.set(col, val);
             }
-            vectors.add(sv);
         }
 
         return vectors;
     }
 
+    /**
+     * Writes the {@link SparseDoubleVector}s to a file specified by {@code
+     * outputFile}.
+     */
     public static void writeVectors(List<SparseDoubleVector> vectors,
                                     String outputFile) throws IOException {
         PrintStream ps = new PrintStream(outputFile);
@@ -80,6 +107,10 @@ public class VectorIO {
         ps.close();
     }
 
+    /**
+     * Writes the {@link SparseDoubleVector}s to a {@link File} specified by {@code
+     * outputFile}.
+     */
     public static void writeVectors(List<SparseDoubleVector> vectors,
                                     File outputFile) throws IOException {
         PrintStream ps = new PrintStream(outputFile);
@@ -87,6 +118,10 @@ public class VectorIO {
         ps.close();
     }
 
+    /**
+     * Writes the {@link SparseDoubleVector}s to an arbitrary {@link PrintStream} destination.
+     * The output format will match that of {@link readSparseVectors}.
+     */
     public static void writeVectors(List<SparseDoubleVector> vectors,
                                     PrintStream stream) {
         int numData = vectors.size();
@@ -101,6 +136,10 @@ public class VectorIO {
         }
     }
 
+    /**
+     * Writes a single {@link SparseDoubleVector} to a file specified by {@code
+     * outputFile}.
+     */
     public static void writeVector(SparseDoubleVector vector, 
                                    String outputFile) throws IOException {
         PrintStream ps = new PrintStream(outputFile);
@@ -108,6 +147,10 @@ public class VectorIO {
         ps.close();
     }
 
+    /**
+     * Writes a single {@link SparseDoubleVector} to a {@link File} specified by
+     * {@code outputFile}.
+     */
     public static void writeVector(SparseDoubleVector vector, 
                                    File outputFile) throws IOException {
         PrintStream ps = new PrintStream(outputFile);
@@ -115,6 +158,11 @@ public class VectorIO {
         ps.close();
     }
 
+    /**
+     * Writes a single {@link SparseDoubleVector} to an arbitrary output {@link
+     * PrintStream} matching the format of the row format described by {@link
+     * readSparseVectors}.
+     */
     public static void writeVector(SparseDoubleVector vector, 
                                    PrintStream stream) {
         for (int i : vector.getNonZeroIndices())
