@@ -1,7 +1,5 @@
 /*
- * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
- * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
- * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ * Copyright 2011 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,24 +19,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.matrix.factorization;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+package edu.ucla.sspace.graph;
 
 
 /**
- * @author Keith Stevens
+ * An interface for representing a weigthed edge between two vertices.
  */
-public class SingularValueDecompositionLibJTest {
+public interface WeightedDirectedEdge extends WeightedEdge, DirectedEdge {
 
-    @Test public void testMatrixReduction() {
-        // This test is known to fail.
-        /*
-        SingularValueDecompositionTestUtil.testReductionMatrix(
-                new SingularValueDecompositionLibJ());
-        */
-    }
+    /**
+     * Returns {@code true} if {@code o} connects the same two vertices with the
+     * same the edge orientation regardless of edge weight.
+     */
+    boolean equals(Object o);
+
 }

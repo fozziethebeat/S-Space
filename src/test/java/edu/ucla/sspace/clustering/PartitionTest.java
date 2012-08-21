@@ -133,6 +133,7 @@ public class PartitionTest {
             {1, 2, 3, 4},
             {0, 5, 10, 8},
             {6, 7, 9},
+            {},
         };
         File f = File.createTempFile("partitionTest", "rca");
         f.deleteOnExit();
