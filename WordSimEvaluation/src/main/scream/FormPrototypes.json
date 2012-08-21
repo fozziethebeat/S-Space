@@ -1,0 +1,40 @@
+{
+  "title" : "FormPrototypes",
+  "timeout" : 600000000,
+  "inputFile" : "screamInput/formPrototypes",
+  "inputDir" : "/user/stevens35/input/",
+  "outputDir" : "/user/stevens35/output/",
+  "runFile": "edu.ucla.sspace.experiment.FormPrototypes",
+  "jars": [
+      "target/wordsim-experiment-1.0-jar-with-dependencies.jar",
+  ],
+  "lineParts": [
+     "partitionDir",
+     "partition",
+     "dataDir",
+     "data",
+     "prototype",
+  ],
+  "downloads" : [
+    {
+      "location" : "$partitionDir",
+      "name" : "$partition",
+    },
+
+    {
+      "location" : "$dataDir",
+      "name" : "$data",
+    },
+  ],
+  "uploads" : [
+    {
+      "location" : "$partitionDir",
+      "name" : "$prototype",
+    },
+  ],
+  "arguments" : [
+    "$partition",
+    "$data",
+    "$prototype",
+  ],
+}
