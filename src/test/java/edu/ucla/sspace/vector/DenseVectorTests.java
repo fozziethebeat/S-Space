@@ -21,38 +21,21 @@
 
 package edu.ucla.sspace.vector;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
 
 /**
  * Tests for the {@link DenseVector} class.
  */
-public class DenseVectorTests {
+public class DenseVectorTests extends AbstractTestDenseDoubleVector {
 
-    @Test public void testMagnitude() {
-        DenseVector v = new DenseVector(100);
-        assertEquals(0, v.magnitude(), .0001);
-
-        v.set(1, 1);
-        assertEquals(1, v.magnitude(), .0001);
-
-        v.set(1, 3);
-        v.set(2, 4);
-        assertEquals(5, v.magnitude(), .0001);
-
-        DenseVector v2 = new DenseVector(v);
-        assertEquals(5, v2.magnitude(), .0001);
+    protected DoubleVector newLengthVector(int length) {
+        return new DenseVector(length);
     }
 
-    @Test public void testArrayMagnitude() {
-        double[] values = new double[] {0, 3, 4, 0, 0};
-        DenseVector v = new DenseVector(values);
-        assertEquals(5, v.magnitude(), .0001);
+    protected DoubleVector newFromArray(double[] values) {
+        return new DenseVector(values);
+    }
+
+    protected DoubleVector newCopy(DoubleVector other) {
+        return new DenseVector(other);
     }
 }

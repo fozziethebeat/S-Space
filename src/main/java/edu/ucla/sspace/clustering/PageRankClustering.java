@@ -1,5 +1,7 @@
 /*
- * Copyright 2010 David Jurgens
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
+ * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
+ * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -19,34 +21,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.vector;
+package edu.ucla.sspace.clustering;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import edu.ucla.sspace.matrix.PageRank;
 
 
 /**
- * Tests for the {@link SparseHashDoubleVector} class.
+ * A {@link HubClustering} implementation that uses {@link PageRank}.
+ *
+ * @see HubClustering
+ * @see PageRank
+ * @author Keith Stevens
  */
-public class SparseHashDoubleVectorTests {
+public class PageRankClustering extends HubClustering {
 
-    @Test public void testMagnitude() {
-        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
-        assertEquals(0, v.magnitude(), .0001);
-
-        v.set(1, 1);
-        assertEquals(1, v.magnitude(), .0001);
-
-        v.set(1, 3);
-        v.set(2, 4);
-        assertEquals(5, v.magnitude(), .0001);
-
-        SparseHashDoubleVector v2 = new SparseHashDoubleVector(v);
-        assertEquals(5, v2.magnitude(), .0001);
+    /**
+     * Creates a new {@link PageRankClustering} instance.
+     */
+    public PageRankClustering() {
+        super(new PageRank());
     }
 }

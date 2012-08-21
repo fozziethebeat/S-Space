@@ -128,12 +128,7 @@ public class SpectralClustering {
     public Assignments cluster(Matrix matrix) {
         ClusterResult r = fullCluster(scaleMatrix(matrix), 0);
         verbose("Created " + r.numClusters + " clusters");
-
-        Assignment[] assignments = new HardAssignment[r.assignments.length];
-        for (int i = 0; i < r.assignments.length; ++i)
-            assignments[i] = new HardAssignment(r.assignments[i]);
-
-        return new Assignments(r.numClusters, assignments, matrix);
+        return new Assignments(r.numClusters, r.assignments, matrix);
     }
 
     /**
@@ -162,11 +157,7 @@ public class SpectralClustering {
 
         // Convert the LimitedResult object into an Assignments object.
         verbose("Created " + r.numClusters + " clusters");
-        Assignment[] assignments = new HardAssignment[r.assignments.length];
-        for (int i = 0; i < r.assignments.length; ++i)
-            assignments[i] = new HardAssignment(r.assignments[i]);
-
-        return new Assignments(r.numClusters, assignments, matrix);
+        return new Assignments(r.numClusters, r.assignments, matrix);
     }
 
     /**

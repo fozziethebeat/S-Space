@@ -21,7 +21,6 @@
 
 package edu.ucla.sspace.wordsi;
 
-import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.Clustering;
 
@@ -267,9 +266,9 @@ public class WaitingWordsi extends BaseWordsi {
         // does this on occasion) so we must check for the number of assignments
         // first.
         for (int i = 0; i < assignments.size(); ++i)
-            if (assignments.get(i).assignments().length > 0)
-                reporter.updateAssignment(senseName, contextLabels[i],
-                                          assignments.get(i).assignments()[0]);
+            reporter.updateAssignment(
+                    senseName, contextLabels[i], assignments.get(i));
+
         LOG.info("Finished making assignment report: " + senseName);
     }
 }

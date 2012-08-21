@@ -110,8 +110,8 @@ public class WordOccrrenceDependencyContextGenerator
             // Get the dimension from the basis mapping, ignore any features
             // that are not mapped.
             int dimension = basisMapping.getDimension(path);
-                if (dimension < 0)
-                    continue;
+            if (dimension < 0)
+                continue;
 
             double weight = weighter.scorePath(path);
             focusMeaning.add(dimension, weight);                                        

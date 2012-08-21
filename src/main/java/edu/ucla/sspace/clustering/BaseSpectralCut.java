@@ -556,7 +556,7 @@ public abstract class BaseSpectralCut implements EigenCut {
      * A simple comparable data struct holding a row vector's weight and the
      * vector's original index in a matrix.
      */
-    protected static class Index implements Comparable {
+    protected static class Index implements Comparable<Index> {
         public final double weight;
         public final int index;
 
@@ -565,9 +565,12 @@ public abstract class BaseSpectralCut implements EigenCut {
             this.index = index;
         }
 
-        public int compareTo(Object other) {
-            Index i = (Index) other;
-            return (int) (this.weight - i.weight);
+        public int compareTo(Index other) {
+            if (this.weight > other.weight)
+                return 1;
+            if (this.weight < other.weight)
+                return -1;
+            return this.index - other.index;
         }
     }
 }

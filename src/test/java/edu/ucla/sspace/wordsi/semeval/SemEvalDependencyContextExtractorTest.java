@@ -32,7 +32,9 @@ import edu.ucla.sspace.wordsi.*;
 
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Queue;
 import java.util.Map;
 import java.util.Properties;
@@ -48,6 +50,9 @@ import static org.junit.Assert.*;
  * @author Keith Stevens
  */
 public class SemEvalDependencyContextExtractorTest {
+
+    public static final List<DependencyRelation> EMPTY =
+        new ArrayList<DependencyRelation>();
 
     public static final String SINGLE_PARSE = 
         "cat.n.1\n" + 
@@ -83,7 +88,7 @@ public class SemEvalDependencyContextExtractorTest {
         SemEvalDependencyContextExtractor extractor = 
             new SemEvalDependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         MockWordsi wordsi = new MockWordsi(null, extractor);
         assertTrue(extractor.acceptWord(node, "c", wordsi));
         assertFalse(extractor.acceptWord(node, "cat", wordsi));
@@ -94,7 +99,7 @@ public class SemEvalDependencyContextExtractorTest {
         SemEvalDependencyContextExtractor extractor = 
             new SemEvalDependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         assertEquals("c", extractor.getSecondaryKey(node, "header"));
     }
 

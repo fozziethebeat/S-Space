@@ -104,21 +104,21 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
         // Test expected relation for each of the links for "Review".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "NMOD",
-                    new SimpleDependencyTreeNode("the", "DT", 1)),
+                    new SimpleDependencyTreeNode("the", "DT", 6)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "NMOD",
-                    new SimpleDependencyTreeNode("literary", "NNP", 2)),
+                    new SimpleDependencyTreeNode("literary", "NNP", 7)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 1),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "ADV",
-                    new SimpleDependencyTreeNode("in", "IN", 1)),
+                    new SimpleDependencyTreeNode("in", "IN", 9)),
             new SimpleDependencyRelation(
-                   new SimpleDependencyTreeNode("for", "IN", 1),
+                   new SimpleDependencyTreeNode("for", "IN", 5),
                    "PMOD",
-                   new SimpleDependencyTreeNode("review", "NNP", 1))
+                   new SimpleDependencyTreeNode("review", "NNP", 8))
         };
 
         evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
@@ -138,7 +138,7 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
-        testSecondRoot(relations, 1);
+        testSecondRoot(relations, 1, 0);
     }
     
     @Test public void testRootNode() throws Exception {
@@ -158,7 +158,7 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
-        testSecondRoot(relations, 13);
+        testSecondRoot(relations, 13, 12);
     }
 
     @Test public void testConcatonatedTreesZeroOffset() throws Exception {
@@ -168,7 +168,7 @@ public class WaCKyDependencyExtractorTest extends CoNLLDependencyExtractorTest {
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
-        testSecondRoot(relations, 13);
+        testSecondRoot(relations, 13, 12);
     }
 
     static String toTabs(String doc) {

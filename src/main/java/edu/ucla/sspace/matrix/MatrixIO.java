@@ -695,22 +695,106 @@ public class MatrixIO {
         // reduces the possibilities for bugs.
         return readMatrix(input, format).toDenseArray();
     }
-    
+
+    /**
+     * Returns the contents of a matrix file as a {@link SparseMatrix} object,
+     * using the provided format as a hint for what kind to create.  The type
+     * of {@code SparseMatrix} object created will assuming that the entire matrix
+     * can fit in memory based on the format of the file speicfied.  Note that
+     * the returned {@link SparseMatrix} instance is not backed by the data on file;
+     * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file containing matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code SparseMatrix} instance that contains the data in the
+     *         provided file
+     */
+    public static SparseMatrix readSparseMatrix(String matrix, Format format)
+             throws IOException {
+        return readSparseMatrix(new File(matrix), format, false);
+    }
+ 
+    /**
+     * Returns the contents of a matrix file as a {@link SparseMatrix} object,
+     * using the provided format as a hint for what kind to create.  The type
+     * of {@code SparseMatrix} object created will assuming that the entire matrix
+     * can fit in memory based on the format of the file speicfied.  Note that
+     * the returned {@link SparseMatrix} instance is not backed by the data on file;
+     * changes to the {@code SparseMatrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file containing matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code SparseMatrix} instance that contains the data in the
+     *         provided file
+     */
+    public static SparseMatrix readSparseMatrix(File matrix, Format format)
+             throws IOException {
+       return readSparseMatrix(matrix, format, false);
+    }
+
+    public static SparseMatrix readSparseMatrix(String matrix, Format format, boolean transposeOnRead)
+             throws IOException {
+         return readSparseMatrix(new File(matrix), format, transposeOnRead);
+    }
+
+    public static SparseMatrix readSparseMatrix(File matrix, Format format, boolean transposeOnRead)
+             throws IOException {
+        Type type = Type.SPARSE_IN_MEMORY;
+        switch (format) {
+            // Assume all sparse formats will fit in memory.
+            case MATLAB_SPARSE:
+                return readMatlabSparse(matrix, type, transposeOnRead);
+            case CLUTO_SPARSE:
+                return readClutoSparse(matrix, type, transposeOnRead);
+            case SVDLIBC_SPARSE_TEXT:
+                return readSparseSVDLIBCtext(matrix, type, transposeOnRead);
+            case SVDLIBC_SPARSE_BINARY:
+                return readSparseSVDLIBCbinary(matrix, type, transposeOnRead);
+            default:
+                throw new Error(
+                         format + " is not a a supproted sparse format");
+        }
+    }
+
     /**
      * Converts the contents of a matrix file as a {@link Matrix} object, using
-      * the provided format as a hint for what kind to create.  The
-      * type of {@code Matrix} object created will assuming that the entire
-      * matrix can fit in memory based on the format of the file speicfied
-      * Note that the returned {@link Matrix} instance is not backed by the data
-      * on file; changes to the {@code Matrix} will <i>not</i> be reflected in
-      * the original file's data.
-      *
-      * @param matrix a file contain matrix data
-      * @param format the format of the file
-      *
-      * @return the {@code Matrix} instance that contains the data in the
-      *         provided file
-      */
+     * the provided format as a hint for what kind to create.  The type of
+     * {@code Matrix} object created will assuming that the entire matrix can
+     * fit in memory based on the format of the file speicfied Note that the
+     * returned {@link Matrix} instance is not backed by the data on file;
+     * changes to the {@code Matrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file contain matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code Matrix} instance that contains the data in the
+     *         provided file
+     */
+    public static Matrix readMatrix(String matrix, Format format)
+             throws IOException {
+        return readMatrix(new File(matrix), format);
+    }
+
+    /**
+     * Converts the contents of a matrix file as a {@link Matrix} object, using
+     * the provided format as a hint for what kind to create.  The type of
+     * {@code Matrix} object created will assuming that the entire matrix can
+     * fit in memory based on the format of the file speicfied Note that the
+     * returned {@link Matrix} instance is not backed by the data on file;
+     * changes to the {@code Matrix} will <i>not</i> be reflected in the
+     * original file's data.
+     *
+     * @param matrix a file contain matrix data
+     * @param format the format of the file
+     *
+     * @return the {@code Matrix} instance that contains the data in the
+     *         provided file
+     */
      public static Matrix readMatrix(File matrix, Format format)
              throws IOException {
          switch (format) {
@@ -836,8 +920,9 @@ public class MatrixIO {
      *
      * @return A {@link SparseMatrix} containing the data in {@code matrix}.
      */
-    private static Matrix readClutoSparse(File matrix, Type matrixType,
-                                          boolean transposeOnRead)
+    private static SparseMatrix readClutoSparse(File matrix, 
+                                                Type matrixType,
+                                                boolean transposeOnRead)
             throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(matrix));
 
@@ -848,9 +933,9 @@ public class MatrixIO {
         int cols = Integer.parseInt(rowCol[1]);
 
         // Create the matrix.
-        Matrix m = (transposeOnRead)
-            ? Matrices.create(cols, rows, matrixType)
-            : Matrices.create(rows, cols, matrixType);
+        SparseMatrix m = (transposeOnRead)
+            ? new YaleSparseMatrix(cols, rows)
+            : new YaleSparseMatrix(rows, cols);
 
         // Cluto Sparse stores each row's values on a single line in the form of 
         // "col value" tuples with everything separated by space.
@@ -1054,8 +1139,9 @@ public class MatrixIO {
      *
      * @return a matrix whose data was specified by the provided file
      */
-    private static Matrix readSparseSVDLIBCbinary(File matrix, Type matrixType,
-                                                  boolean transposeOnRead) 
+    private static SparseMatrix readSparseSVDLIBCbinary(File matrix,
+                                                        Type matrixType,
+                                                        boolean transposeOnRead) 
             throws IOException {
         DataInputStream dis = new DataInputStream(
             new BufferedInputStream(new FileInputStream(matrix)));
@@ -1067,7 +1153,7 @@ public class MatrixIO {
             String.format("Creating %s matrix %d rows, %d cols, %d nz%n",
                           ((transposeOnRead) ? "transposed" : ""),
                           rows, cols, nz));
-        Matrix m = null;
+        SparseMatrix m = null;
         
         // Special case for reading transposed data.  This avoids the log(n)
         // overhead from resorting the row data for the matrix, which can be
@@ -1107,7 +1193,7 @@ public class MatrixIO {
 
         MATRIX_IO_LOGGER.fine("Completed loading matrix");
         return m;
-    }    
+    }
 
     /**
      * Creates a {@code Matrix} from the data encoded as {@link
@@ -1119,12 +1205,12 @@ public class MatrixIO {
      *
      * @return a matrix whose data was specified by the provided file
      */
-     private static Matrix readMatlabSparse(
+     private static SparseMatrix readMatlabSparse(
              File matrixFile,
              Type matrixType,
              boolean transposeOnRead) throws IOException {
 
-         Matrix matrix = new GrowingSparseMatrix();
+         SparseMatrix matrix = new GrowingSparseMatrix();
          BufferedReader br = new BufferedReader(new FileReader(matrixFile));
          for (String line = null; (line = br.readLine()) != null; ) {
              String[] rowColVal = line.split("\\s+");
@@ -1151,7 +1237,7 @@ public class MatrixIO {
      *
      * @return a matrix whose data was specified by the provided file
      */
-     private static Matrix readSparseSVDLIBCtext(
+     private static SparseMatrix readSparseSVDLIBCtext(
              File matrix,
              Type matrixType,
              boolean transposeOnRead) throws IOException {
@@ -1164,9 +1250,9 @@ public class MatrixIO {
              int rows = Integer.parseInt(numRowsColsNonZeros[0]);
              int cols = Integer.parseInt(numRowsColsNonZeros[1]);
  
-         Matrix m = (transposeOnRead)
-             ? Matrices.create(cols, rows, matrixType)
-             : Matrices.create(rows, cols, matrixType);
+         SparseMatrix m = (transposeOnRead)
+             ? new YaleSparseMatrix(cols, rows)
+             : new YaleSparseMatrix(rows, cols);
          
          for (int j = 0; j < cols && (line = br.readLine()) != null; ++j) {
              int numNonZeros = Integer.parseInt(line);
@@ -1187,6 +1273,22 @@ public class MatrixIO {
          return m;
      }
  
+    /**
+     * Writes the matrix to the specified output file in the provided format
+     *
+     * @param matrix the matrix to be written
+     * @param output the file in which the matrix should be written
+     * @param format the data format in which the matrix's data should be
+     *        written
+     *
+     * @throws IllegalArgumentException if the input matrix is 0-dimensional
+     * @throws IOException if an error occurs while writing to the output file
+     */
+    public static void writeMatrix(Matrix matrix, String output, Format format)
+        throws IOException {
+        writeMatrix(matrix, new File(output), format);
+    }
+
     /**
      * Writes the matrix to the specified output file in the provided format
      *

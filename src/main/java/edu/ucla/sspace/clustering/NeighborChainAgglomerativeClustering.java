@@ -331,10 +331,10 @@ public class NeighborChainAgglomerativeClustering implements Clustering {
     public static Assignments formAssignments(Collection<Set<Integer>> clusters,
                                               int numPoints) {
         int cid = 0;
-        Assignment[] assignments = new Assignment[numPoints];
+        int[] assignments = new int[numPoints];
         for (Set<Integer> cluster : clusters) {
             for (int point : cluster)
-                assignments[point] = new HardAssignment(cid);
+                assignments[point] = cid;
             cid++;
         }
         return new Assignments(clusters.size(), assignments, null);

@@ -34,10 +34,12 @@ import edu.ucla.sspace.matrix.SparseMatrix;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 
 /**
  * The return value for all {@link Clustering} implementations.  This class
@@ -46,12 +48,12 @@ import java.util.Set;
  *
  * @author Keith Stevens
  */
-public class Assignments implements Iterable<Assignment> {
+public class Assignments implements Iterable<int[]> {
 
     /**
      * The {@link Assignment}s made for each data point.
      */
-    private Assignment[] assignments;
+    private int[][] assignments;
 
     /**
      * The number of clusters found from a particular algorithm.
@@ -82,7 +84,7 @@ public class Assignments implements Iterable<Assignment> {
     public Assignments(int numClusters, int numAssignments, Matrix matrix) {
         this.numClusters = numClusters;
         this.matrix = matrix;
-        assignments = new Assignment[numAssignments];
+        assignments = new int[numAssignments][1];
     }
 
     /**
@@ -92,8 +94,18 @@ public class Assignments implements Iterable<Assignment> {
      * this constructor.
      */
     public Assignments(int numClusters,
-                       Assignment[] initialAssignments) {
+                       int[][] initialAssignments) {
         this(numClusters, initialAssignments, null);
+    }
+
+    public Assignments(int numClusters,
+                       int[] initialAssignments, 
+                       Matrix matrix) {
+        this.numClusters = numClusters;
+        this.matrix = matrix;
+        assignments = new int[initialAssignments.length][1];
+        for (int i = 0; i < initialAssignments.length; ++i)
+            set(i, initialAssignments[i]);
     }
 
     /**
@@ -101,7 +113,7 @@ public class Assignments implements Iterable<Assignment> {
      * {@code initialAssignments} array.
      */
     public Assignments(int numClusters,
-                       Assignment[] initialAssignments, 
+                       int[][] initialAssignments, 
                        Matrix matrix) {
         this.numClusters = numClusters;
         this.matrix = matrix;
@@ -111,8 +123,44 @@ public class Assignments implements Iterable<Assignment> {
     /**
      * Sets {@link Assignment} {@code i} to have value {@code assignment}.
      */
-    public void set(int i, Assignment assignment) {
-        assignments[i] = assignment;
+    public void set(int i, int id) {
+        assignments[i] = new int[1];
+        assignments[i][0] = id;
+    }
+
+    /**
+     * Sets {@link Assignment} {@code i} to have value {@code assignment}.
+     */
+    public void setAll(int i, int[] ids) {
+        if (ids.length == 0)
+            throw new IllegalArgumentException(
+                    "Cannot have an empty assignment.  " +
+                    "Use a negative cluster id instead");
+
+        assignments[i] = ids;
+    }
+
+    public void setAll(int i, Collection<Integer> ids) {
+        if (ids.size() == 0)
+            throw new IllegalArgumentException(
+                    "Cannot have an empty assignment.  " +
+                    "Use a negative cluster id instead");
+
+        assignments[i] = new int[ids.size()];
+        Iterator<Integer> it = ids.iterator();
+        for (int j = 0; j < assignments.length; ++j)
+            assignments[i][j] = it.next();
+    }
+
+    public void setAll(int i, Integer... ids) {
+        if (ids.length  == 0)
+            throw new IllegalArgumentException(
+                    "Cannot have an empty assignment.  " +
+                    "Use a negative cluster id instead");
+
+        assignments[i] = new int[ids.length];
+        for (int j = 0; j < ids.length; ++j)
+            assignments[i][j] = ids[j];
     }
 
     /**
@@ -125,14 +173,21 @@ public class Assignments implements Iterable<Assignment> {
     /**
      * Returns an iterator over the {@link Assignment} objects stored.
      */
-    public Iterator<Assignment> iterator() {
+    public Iterator<int[]> iterator() {
         return Arrays.asList(assignments).iterator();
     }
 
     /**
      * Returns the {@link Assignment} object at index {@code i}.
      */
-    public Assignment get(int i) {
+    public int get(int i) {
+        return assignments[i][0];
+    }
+
+    /**
+     * Returns the {@link Assignment} object at index {@code i}.
+     */
+    public int[] getAll(int i) {
         return assignments[i];
     }
 
@@ -146,7 +201,7 @@ public class Assignments implements Iterable<Assignment> {
     /**
      * Returns the array of {@link Assignment} objects.
      */
-    public Assignment[] assignments() {
+    public int[][] assignments() {
         return assignments;
     }
 
@@ -158,8 +213,8 @@ public class Assignments implements Iterable<Assignment> {
         for (int c = 0; c < numClusters; ++c)
             clusters.add(new HashSet<Integer>());
         for (int i = 0; i < assignments.length; ++i)
-            for (int k : assignments[i].assignments())
-                clusters.get(k).add(i);
+            for (int id : assignments[i])
+                clusters.get(id).add(i);
         return clusters;
     }
 
@@ -182,14 +237,11 @@ public class Assignments implements Iterable<Assignment> {
 
         // For each initial assignment, add the vector to it's centroid and
         // increase the size of the cluster.
-        int row = 0;
-        for (Assignment assignment : assignments) {
-            if (assignment.length() != 0) {
-                counts[assignment.assignments()[0]]++;
-                DoubleVector centroid = centroids[assignment.assignments()[0]];
-                VectorMath.add(centroid, matrix.getRowVector(row));
-            }
-            row++;
+        for (int row = 0; row < assignments.length; ++row) {
+            int id = get(row);
+            counts[id]++;
+            DoubleVector centroid = centroids[id];
+            VectorMath.add(centroid, matrix.getRowVector(row));
         }
 
         // Scale any non empty clusters by their size.
@@ -228,14 +280,11 @@ public class Assignments implements Iterable<Assignment> {
 
         // For each initial assignment, add the vector to it's centroid and
         // increase the size of the cluster.
-        int row = 0;
-        for (Assignment assignment : assignments) {
-            if (assignment.length() != 0 && assignment.assignments()[0] != -1) {
-                counts[assignment.assignments()[0]]++;
-                DoubleVector centroid = centroids[assignment.assignments()[0]];
-                VectorMath.add(centroid, sm.getRowVector(row));
-            }
-            row++;
+        for (int row = 0; row < assignments.length; ++row) {
+            int id = get(row);
+            counts[id]++;
+            DoubleVector centroid = centroids[id];
+            VectorMath.add(centroid, sm.getRowVector(row));
         }
 
         // Scale any non empty clusters by their size.

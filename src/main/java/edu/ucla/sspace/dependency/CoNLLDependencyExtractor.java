@@ -273,8 +273,6 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
         MultiMap<Integer,Duple<Integer,String>> relationsToAdd 
             = new HashMultiMap<Integer,Duple<Integer,String>>();
 
-        StringBuilder sb = new StringBuilder();
-
         // Read each line in the document to extract the feature set for each
         // word in the sentence.
         int id = 0;
@@ -293,8 +291,6 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
             if (line.length() == 0)
                 break;
 
-            sb.append(line).append("\n");
-
             // CoNLL formats using tabs between features.
             String[] nodeFeatures = line.split("\t");
 
@@ -308,8 +304,7 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
                 offset = nodes.size();
 
             // Get the node id and the parent node id.
-            int parent =
-                Integer.parseInt(nodeFeatures[parentIndex]) - 1 + offset;
+            int parent = Integer.parseInt(nodeFeatures[parentIndex]) - 1 + offset;
 
             String word = getWord(nodeFeatures);
 

@@ -123,17 +123,17 @@ public class CoNLLDependencyExtractorTest {
         // Test that the root node does not have a link to itself.
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("is", "VBZ", 0), 
+                    new SimpleDependencyTreeNode("is", "VBZ", 2), 
                     "SBJ",
-                    new SimpleDependencyTreeNode("holt", "NNP", 0)),
+                    new SimpleDependencyTreeNode("holt", "NNP", 1)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("is", "VBZ", 0),
+                    new SimpleDependencyTreeNode("is", "VBZ", 2),
                     "PRD",
-                    new SimpleDependencyTreeNode("columnist", "NN", 0)),
+                    new SimpleDependencyTreeNode("columnist", "NN", 4)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("is", "VBZ", 0),
+                    new SimpleDependencyTreeNode("is", "VBZ", 2),
                     "P",
-                    new SimpleDependencyTreeNode(".", ".", 0))
+                    new SimpleDependencyTreeNode(".", ".", 11))
         };
         evaluateRelations(relations[index],
                           new LinkedList<DependencyRelation>(Arrays.asList(expectedRelations)));
@@ -143,7 +143,7 @@ public class CoNLLDependencyExtractorTest {
      * A simple helper method for checking that the root node in the second
      * sentence is correctly linked up."
      */
-    protected void testSecondRoot(DependencyTreeNode[] relations, int index) {
+    protected void testSecondRoot(DependencyTreeNode[] relations, int index, int start) {
         // Check the basics of the node.
         assertEquals("beskattning", relations[index].word());
         assertEquals("N", relations[index].pos());
@@ -151,13 +151,13 @@ public class CoNLLDependencyExtractorTest {
         // Test expected relation for each of the links for "beskattning".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("beskattning", "N", 0),
+                    new SimpleDependencyTreeNode("beskattning", "N", start+1),
                     "AT",
-                    new SimpleDependencyTreeNode("individuell", "AJ", 0)),
+                    new SimpleDependencyTreeNode("individuell", "AJ", start)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("beskattning", "N", 0),
+                    new SimpleDependencyTreeNode("beskattning", "N", start+1),
                     "ET",
-                    new SimpleDependencyTreeNode("av", "PR", 0))
+                    new SimpleDependencyTreeNode("av", "PR", start+2))
         };
         
         evaluateRelations(relations[index],
@@ -179,21 +179,21 @@ public class CoNLLDependencyExtractorTest {
         // Test expected relation for each of the links for "Review".
         DependencyRelation[] expectedRelations = new DependencyRelation[] {
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "NMOD",
-                    new SimpleDependencyTreeNode("the", "DT", 0)),
+                    new SimpleDependencyTreeNode("the", "DT", 6)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "NMOD",
-                    new SimpleDependencyTreeNode("literary", "NNP", 0)),
+                    new SimpleDependencyTreeNode("literary", "NNP", 7)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("review", "NNP", 0),
+                    new SimpleDependencyTreeNode("review", "NNP", 8),
                     "ADV",
-                    new SimpleDependencyTreeNode("in", "IN", 0)),
+                    new SimpleDependencyTreeNode("in", "IN", 9)),
             new SimpleDependencyRelation(
-                    new SimpleDependencyTreeNode("for", "IN", 0),
+                    new SimpleDependencyTreeNode("for", "IN", 5),
                     "PMOD",
-                    new SimpleDependencyTreeNode("review", "NNP", 0))
+                    new SimpleDependencyTreeNode("review", "NNP", 8))
         };
 
         evaluateRelations(nodes[8], new LinkedList<DependencyRelation>(
@@ -217,7 +217,7 @@ public class CoNLLDependencyExtractorTest {
         assertTrue(relations != null);
         assertEquals(4, relations.length);
 
-        testSecondRoot(relations, 1);
+        testSecondRoot(relations, 1, 0);
     }
     
     @Test public void testRootNode() throws Exception {
@@ -237,7 +237,7 @@ public class CoNLLDependencyExtractorTest {
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
-        testSecondRoot(relations, 13);
+        testSecondRoot(relations, 13, 12);
     }
 
     @Test public void testConcatonatedTreesZeroOffset() throws Exception {
@@ -247,7 +247,7 @@ public class CoNLLDependencyExtractorTest {
         
         assertEquals(16, relations.length);
         testFirstRoot(relations, 2);
-        testSecondRoot(relations, 13);
+        testSecondRoot(relations, 13, 12);
     }
 
     static String toTabs(String doc) {

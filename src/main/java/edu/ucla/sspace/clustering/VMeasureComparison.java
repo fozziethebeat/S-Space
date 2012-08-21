@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
+ * Copyright (c) 2012, Lawrence Livermore National Security, LLC. Produced at
  * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
  * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
  *
@@ -21,24 +21,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.matrix.factorization;
+package edu.ucla.sspace.clustering;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import edu.ucla.sspace.matrix.VMeasure;
 
 
 /**
+ * {@link MatrixAggregateComparison} that uses the {@link VMeasure}.
+ *
+ * @see MatrixAggregateComparison
+ * @see VMeasure
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibJTest {
+public class VMeasureComparison extends MatrixAggregateComparison {
 
-    @Test public void testMatrixReduction() {
-        // This test is known to fail.
-        /*
-        SingularValueDecompositionTestUtil.testReductionMatrix(
-                new SingularValueDecompositionLibJ());
-        */
+    /**
+     * Creates a new {@link VMeasureComparison}.
+     */
+    public VMeasureComparison() {
+        super(new VMeasure());
+    }
+
+    public boolean isDistance() {
+        return false;
     }
 }

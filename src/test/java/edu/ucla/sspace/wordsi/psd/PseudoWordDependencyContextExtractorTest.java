@@ -32,7 +32,9 @@ import edu.ucla.sspace.wordsi.*;
 
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Queue;
 import java.util.Map;
 import java.util.Properties;
@@ -48,6 +50,9 @@ import static org.junit.Assert.*;
  * @author Keith Stevens
  */
 public class PseudoWordDependencyContextExtractorTest {
+
+    public static final List<DependencyRelation> EMPTY =
+        new ArrayList<DependencyRelation>();
 
     public static final String SINGLE_PARSE = 
         toTabs("target: cat absolute_position: 4 relative_position: 4 prior_trees: 0 after_trees: 0\n" + 
@@ -88,14 +93,14 @@ public class PseudoWordDependencyContextExtractorTest {
             new PseudoWordDependencyContextExtractor(null, null, termMap);
 
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         assertTrue(extractor.acceptWord(node, "cat", null));
         assertFalse(extractor.acceptWord(node, "cat.n.1", null));
 
-        node = new SimpleDependencyTreeNode("c", "n", "c", 0, null);
+        node = new SimpleDependencyTreeNode("c", "n", "c", 0, EMPTY);
         assertFalse(extractor.acceptWord(node, "cat", null));
 
-        node = new SimpleDependencyTreeNode("", "n", "c", 0, null);
+        node = new SimpleDependencyTreeNode("", "n", "c", 0, EMPTY);
         assertFalse(extractor.acceptWord(node, "", null));
     }
 

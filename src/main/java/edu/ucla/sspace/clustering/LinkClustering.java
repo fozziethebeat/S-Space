@@ -106,7 +106,8 @@ import java.util.logging.Logger;
  *
  * @author David Jurgens 
  */
-public class LinkClustering implements Clustering, java.io.Serializable {
+public class LinkClustering extends AbstractGraphClustering
+                            implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -159,23 +160,6 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         edgeList = null;
         numRows = 0;
         workQueue = WorkQueue.getWorkQueue();
-    }
-
-    /**
-     * <i>Ignores the specified number of clusters</i> and returns the
-     * clustering solution according to the partition density.
-     *
-     * @param numClusters this parameter is ignored.
-     *
-     * @throws IllegalArgumentException if {@code matrix} is not square, or is
-     *         not an instance of {@link SparseMatrix}
-     */
-    public Assignments cluster(Matrix matrix, 
-                               int numClusters,
-                               Properties props) {
-        LOGGER.warning("Link clustering does not take a specified number of " +
-                       "clusters.  Clustering the matrix anyway.");
-        return cluster(matrix, props);
     }
 
     /**
@@ -342,12 +326,11 @@ public class LinkClustering implements Clustering, java.io.Serializable {
         }
 
         int numClusters = 0;
-        Assignment[] nodeAssignments = new Assignment[rows];
-        for (int i = 0; i < nodeAssignments.length; ++i) {
-            nodeAssignments[i] = 
-                new SoftAssignment(nodeClusters.get(i));
-        }
-        return new Assignments(numClusters, nodeAssignments, matrix);
+        Assignments assignments = new Assignments(
+                numClusters, matrix.rows(), matrix);
+        for (int i = 0; i < assignments.size(); ++i)
+            assignments.setAll(i, nodeClusters.get(i));
+        return assignments;
     }
 
     /**
@@ -591,10 +574,10 @@ public class LinkClustering implements Clustering, java.io.Serializable {
             clusterId++;
         }
 
-        Assignment[] nodeAssignments = new Assignment[numRows];
-        for (int i = 0; i < nodeAssignments.length; ++i)
-            nodeAssignments[i] = new SoftAssignment(nodeClusters.get(i));
-        return new Assignments(clusterId, nodeAssignments);
+        Assignments assignments = new Assignments(clusterId, numRows);
+        for (int i = 0; i < assignments.size(); ++i)
+            assignments.setAll(i, nodeClusters.get(i));
+        return assignments;
     }
 
     /**

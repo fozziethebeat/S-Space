@@ -48,20 +48,19 @@ public class BoundedSortedMap<K,V> extends TreeMap<K,V> {
      * @param bound the number of mappings to retain
      */
     public BoundedSortedMap(int bound) {
-	this(bound, true);
+        this(bound, null);
     }
 
     /**
      * Creatins an instance that will only retain the specified number of keys,
-     * where the largest (highest) keys.
+     * where the keys are orded according to the given {@link Comparator}.
      *
      * @param bound the number of mappings to retain
-     * @param retainHighest {@code true} if the highest elements are to be
-     *        retained, {@code false} if the lowest keys are to be retained
+     * @param comparator The {@link Comparator} used to compare two keys
      */
-    public BoundedSortedMap(int bound, boolean retainHighest) {
-	super(((retainHighest) ? null : new ReverseComparator<K>()));
-	this.bound = bound;
+    public BoundedSortedMap(int bound, Comparator<K> comparator) {
+        super(comparator);
+        this.bound = bound;
     }
 
     /**
@@ -73,11 +72,11 @@ public class BoundedSortedMap<K,V> extends TreeMap<K,V> {
      * @param value {@inheritDoc}
      */
     public V put(K key, V value) {
-	V old = super.put(key, value);
-	if (size() > bound) {
-	    remove(firstKey());
-	}
-	return old;
+        V old = super.put(key, value);
+        if (size() > bound) {
+            remove(firstKey());
+        }
+        return old;
     }
 
     /**
@@ -88,25 +87,7 @@ public class BoundedSortedMap<K,V> extends TreeMap<K,V> {
      * @param m {@inheritDoc}
      */
     public void putAll(Map<? extends K,? extends V> m) {
-	for (Map.Entry<? extends K,? extends V> e : m.entrySet()) {
-	    put(e.getKey(), e.getValue());
-	}
-    }
-
-    /**
-     * A comparator that results in the opposite ordering of the natural
-     * ordering from {@link Comparator#compareTo(Object,Object) compareTo}.
-     */
-    static final class ReverseComparator<K> 
-            implements Comparator<K>, java.io.Serializable {
-
-        private static final long serialVersionUID = 1;
-	
-	// Assume that if the comparator is being used that the objects are
-	// instances of Comparable
-	@SuppressWarnings("unchecked")
-	public int compare(K c1, K c2) {
-	    return -(((Comparable)c1).compareTo(c2));
-	}
+        for (Map.Entry<? extends K,? extends V> e : m.entrySet())
+            put(e.getKey(), e.getValue());
     }
 }

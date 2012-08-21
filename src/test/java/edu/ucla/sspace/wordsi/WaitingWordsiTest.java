@@ -141,11 +141,11 @@ public class WaitingWordsiTest {
         public Assignments cluster(Matrix matrix, Properties props) {
             calledWithoutNumC = true;
  
-            Assignment[] assignments = new Assignment[4];
-            assignments[0] = new HardAssignment(0);
-            assignments[1] = new HardAssignment(0);
-            assignments[2] = new HardAssignment(1);
-            assignments[3] = new HardAssignment(1);
+            int[] assignments = new int[4];
+            assignments[0] = 0;
+            assignments[1] = 0;
+            assignments[2] = 1;
+            assignments[3] = 1;
 
             return new Assignments(2, assignments, matrix);
         }
@@ -161,11 +161,11 @@ public class WaitingWordsiTest {
             assertEquals(VectorIO.toString(vectors[3]),
                          VectorIO.toString(matrix.getRowVector(3)));
             
-            Assignment[] assignments = new Assignment[4];
-            assignments[0] = new HardAssignment(0);
-            assignments[1] = new HardAssignment(0);
-            assignments[2] = new HardAssignment(1);
-            assignments[3] = new HardAssignment(1);
+            int[] assignments = new int[4];
+            assignments[0] = 0;
+            assignments[1] = 0;
+            assignments[2] = 1;
+            assignments[3] = 1;
 
             calledWithNumC = true;
             return new Assignments(2, assignments, matrix);

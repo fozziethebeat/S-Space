@@ -1,0 +1,11 @@
+target/*
+*/target*
+.manager
+*.jar
+*.txt
+*.dat
+*.png
+.*.swp
+*.class
+target
+*~

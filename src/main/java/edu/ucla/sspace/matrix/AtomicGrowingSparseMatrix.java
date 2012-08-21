@@ -108,6 +108,15 @@ public class AtomicGrowingSparseMatrix
     /**
      * {@inheritDoc}
      */
+    public double add(int row, int col, double delta) {
+        checkIndices(row, col);
+        AtomicSparseVector rowEntry = getRow(row, col, true);
+        return rowEntry.getAndAdd(col, delta);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double addAndGet(int row, int col, double delta) {
         checkIndices(row, col);
         AtomicSparseVector rowEntry = getRow(row, col, true);
@@ -141,16 +150,6 @@ public class AtomicGrowingSparseMatrix
         AtomicSparseVector rowEntry = getRow(row, col, false);
         return (rowEntry == null) ? 0d : rowEntry.get(col);
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double getAndAdd(int row, int col, double delta) {
-        checkIndices(row, col);
-        AtomicSparseVector rowEntry = getRow(row, col, true);
-        return rowEntry.getAndAdd(col, delta);
-    }
-
 
     /**
      * {@inheritDoc} The length of the returned column reflects the size of

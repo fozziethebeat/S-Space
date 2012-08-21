@@ -76,10 +76,10 @@ public class LinkClusteringTests {
         SparseMatrix m = Matrices.asSparseMatrix(vectors);
 
         Assignments a = linkClustering.cluster(m, new Properties());
-        Assignment[] assignments = a.assignments();
+        int[][] assignments = a.assignments();
         for (int i = 0; i < assignments.length; ++i) 
             System.out.printf("Node %d is in clusters %s%n",
-                              i, Arrays.toString(assignments[i].assignments()));
+                              i, Arrays.toString(assignments[i]));
 
         assertEquals(9, assignments.length);
 
@@ -87,30 +87,30 @@ public class LinkClusteringTests {
         assertEquals(12, linkClustering.numberOfSolutions());
         
         // Nodes 1, 2, and 3 should all have one cluster, which is the same
-        assertEquals(1, assignments[0].assignments().length);
-        int clusterId = assignments[0].assignments()[0];
-        assertEquals(1, assignments[1].assignments().length);
-        assertEquals(clusterId, assignments[1].assignments()[0]);
-        assertEquals(1, assignments[2].assignments().length);
-        assertEquals(clusterId, assignments[2].assignments()[0]);
+        assertEquals(1, assignments[0].length);
+        int clusterId = assignments[0][0];
+        assertEquals(1, assignments[1].length);
+        assertEquals(clusterId, assignments[1][0]);
+        assertEquals(1, assignments[2].length);
+        assertEquals(clusterId, assignments[2][0]);
         
         // Node 4 should have 3 clusters
-        assertEquals(3, assignments[3].assignments().length);
+        assertEquals(3, assignments[3].length);
 
         // Nodes 5 and 6 should have one cluster, which is the same
-        assertEquals(1, assignments[4].assignments().length);
-        clusterId = assignments[4].assignments()[0];
-        assertEquals(1, assignments[5].assignments().length);
-        assertEquals(clusterId, assignments[5].assignments()[0]);
+        assertEquals(1, assignments[4].length);
+        clusterId = assignments[4][0];
+        assertEquals(1, assignments[5].length);
+        assertEquals(clusterId, assignments[5][0]);
 
         // Node 7 should have two clusters
-        assertEquals(2, assignments[6].assignments().length);
+        assertEquals(2, assignments[6].length);
 
         // Nodes 8 and 9 should have one cluster, which is the same
-        assertEquals(1, assignments[7].assignments().length);
-        clusterId = assignments[7].assignments()[0];
-        assertEquals(1, assignments[8].assignments().length);
-        assertEquals(clusterId, assignments[8].assignments()[0]);
+        assertEquals(1, assignments[7].length);
+        clusterId = assignments[7][0];
+        assertEquals(1, assignments[8].length);
+        assertEquals(clusterId, assignments[8][0]);
 
         int numSol = linkClustering.numberOfSolutions();
         for (int i = 0; i < numSol; ++i) {

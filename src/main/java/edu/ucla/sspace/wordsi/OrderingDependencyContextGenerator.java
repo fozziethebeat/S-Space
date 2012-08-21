@@ -22,6 +22,8 @@
 package edu.ucla.sspace.wordsi;
 
 import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.hal.EvenWeighting;
+import edu.ucla.sspace.hal.WeightingFunction;
 
 import edu.ucla.sspace.dependency.DependencyTreeNode;
 
@@ -41,9 +43,20 @@ public class OrderingDependencyContextGenerator
     public OrderingDependencyContextGenerator(
             BasisMapping<String, String> basis,
             int windowSize) {
-        super(basis, windowSize);
+        super(basis, new EvenWeighting(), windowSize);
     }
 
+    /**
+     * Constructs a new {@link OrderingDependencyContextGenerator}.
+     */
+    public OrderingDependencyContextGenerator(
+            BasisMapping<String, String> basis,
+            WeightingFunction weighting,
+            int windowSize) {
+        super(basis, weighting, windowSize);
+    }
+
+    /**
     /**
      * Returns a string with the node's word plus it's distance from the focus
      * word, with a hyphen between the two.

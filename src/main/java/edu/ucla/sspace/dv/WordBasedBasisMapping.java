@@ -25,6 +25,9 @@ import edu.ucla.sspace.basis.AbstractBasisMapping;
 
 import edu.ucla.sspace.dependency.DependencyPath;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * A {@link BasisMapping} implementation where each word corresponds to a unique
@@ -40,6 +43,16 @@ public class WordBasedBasisMapping
 
     private static final long serialVersionUID = 1L;
 
+    private final Set<String> excludedFeatures;
+
+    public WordBasedBasisMapping() {
+        excludedFeatures = null;
+    }
+
+    public WordBasedBasisMapping(Set<String> excludedFeatures) {
+        this.excludedFeatures = excludedFeatures;
+    }
+
     /**
      * Returns the dimension number corresponding to the term at the end of the
      * provided path.
@@ -49,6 +62,9 @@ public class WordBasedBasisMapping
      * @return the dimension for the occurrence of the last word in the path
      */
     public int getDimension(DependencyPath path) {       
-        return getDimensionInternal(path.last().word());
+        String word = path.last().word();
+        return (excludedFeatures == null || !excludedFeatures.contains(word))
+            ? getDimensionInternal(word)
+            : -1;
     }
 }

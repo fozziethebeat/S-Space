@@ -37,6 +37,12 @@ public interface DependencyTreeNode {
     List<DependencyRelation> neighbors();
 
     /**
+     * Returns the link from this {@link DependencyTreeNode} to it's parent or
+     * {@code null} if no parent exists.
+     */
+    DependencyRelation parentLink();
+
+    /**
      * Returns the word stored in this node.
      */
     String word();

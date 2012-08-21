@@ -189,28 +189,26 @@ public class DirectClustering implements Clustering {
                                       KMeansSeed seedType,
                                       CriterionFunction criterion) {
         int[] bestAssignment = null;
-        double bestScore = (criterion.isMaximize()) ? 0 : Double.MAX_VALUE;
+        double bestScore = (criterion.isMaximize()) 
+            ? -Double.MIN_VALUE
+            : Double.MAX_VALUE;
         for (int i = 0; i < numRepetitions; ++i) {
+            System.err.printf("Repeating DirectClustering with new starting point: [%d]\n", i);
             clusterIteration(matrix, numClusters, seedType, criterion);
             if (criterion.isMaximize()) {
-                if (criterion.score() > bestScore) {
+                if (criterion.score() >= bestScore) {
                     bestScore = criterion.score();
                     bestAssignment = criterion.assignments();
                 }
             } else {
-                if (criterion.score() < bestScore) {
+                if (criterion.score() <= bestScore) {
                     bestScore = criterion.score();
                     bestAssignment = criterion.assignments();
                 }
             }
         }
 
-        // Convert the array of assignments to an Assignments object.
-        Assignment[] assignments = new Assignment[matrix.rows()];
-        for (int i = 0; i < bestAssignment.length; ++i)
-            assignments[i] = new HardAssignment(bestAssignment[i]);
-
-        return new Assignments(numClusters, assignments, matrix);
+        return new Assignments(numClusters, bestAssignment, matrix);
     }
 
     /**
@@ -220,8 +218,10 @@ public class DirectClustering implements Clustering {
                                          int numClusters,
                                          KMeansSeed seedType,
                                          CriterionFunction criterion) {
+        System.err.println("Selecting seeds");
         DoubleVector[] centers = seedType.chooseSeeds(numClusters, matrix);
 
+        System.err.println("Forming initial assignments");
         // Compute the initial set of assignments for each data point based on
         // the initial assignments.
         int[] initialAssignments = new int[matrix.rows()];
@@ -247,6 +247,7 @@ public class DirectClustering implements Clustering {
             }
         }
 
+        System.err.println("Initializing the Criterion function");
         // Setup the criterion function with it's meta data.
         criterion.setup(matrix, initialAssignments, numClusters);
 
@@ -260,7 +261,9 @@ public class DirectClustering implements Clustering {
         // point, try to assign it to a new cluster.  If no data point is moved
         // in an iteration, end the iterations.
         boolean changed = true;
+        int i = 0;
         while (changed) {
+            System.err.printf("Making pass [%d] over the dataset\n", i++);
             changed = false;
             Collections.shuffle(indices);
             for (int index : indices)

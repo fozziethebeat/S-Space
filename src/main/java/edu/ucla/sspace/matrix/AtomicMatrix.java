@@ -34,19 +34,6 @@ package edu.ucla.sspace.matrix;
 public interface AtomicMatrix extends Matrix {
 
     /**
-     * Return the value stored at ({@code row}, {@code col}), and add {@code
-     * delta} to the same index.
-     *
-     * @param row The row of the cell to return and modify.
-     * @param col The column of the cell to return and modify.
-     * @param delta The amount to change the specified cell.
-     *
-     * @return The value of the cell at ({@code row}, {@code col}) prior to
-     *         adding {@code delta}.
-     */
-    double getAndAdd(int row, int col, double delta);
-
-    /**
      * Return the value stored at ({@code row}, {@code col}) plus {@code delta},
      * and then increment the specified cell by {@code delta}.
      *

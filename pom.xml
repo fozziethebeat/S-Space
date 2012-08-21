@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>edu.ucla.sspace</groupId>
-  <artifactId>sspace</artifactId>
+  <artifactId>sspace-wordsi</artifactId>
   <packaging>jar</packaging>
   <name>S-Space Package</name>
   <version>2.0.3</version>
@@ -80,6 +80,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math</artifactId>
+      <version>2.2</version>
+    </dependency>
+    <dependency>
       <groupId>net.sf.trove4j</groupId>
       <artifactId>trove4j</artifactId>
       <version>3.0.2</version>
@@ -89,6 +94,16 @@
       <artifactId>junit</artifactId>
       <version>4.8</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.netlib-java</groupId>
+      <artifactId>netlib-java</artifactId>
+      <version>0.9.3</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.f2j</groupId>
+      <artifactId>arpack_combined_all</artifactId>
+      <version>0.1</version>
     </dependency>
   </dependencies>
 

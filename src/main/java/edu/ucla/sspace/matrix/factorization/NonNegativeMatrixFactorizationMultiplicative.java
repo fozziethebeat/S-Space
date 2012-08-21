@@ -231,7 +231,10 @@ public class NonNegativeMatrixFactorizationMultiplicative
                             sum += WtW.get(k, l) * H.get(l, m);
                         double v = Hprime.get(k, m);
                         double w = H.get(k, m);
-                        Hprime.set(k, m, w * v / sum);
+                        if (sum == 0)
+                            LOG.info("Zero Denom error in updating H");
+                        else
+                            Hprime.set(k, m, w * v / sum);
 
                     }
                 }
@@ -298,7 +301,10 @@ public class NonNegativeMatrixFactorizationMultiplicative
                             sum += W.get(n, l) * HHt.get(l, k);
                         double v = Wprime.get(n, k);
                         double w = W.get(n, k);
-                        Wprime.set(n, k, w * v / sum);
+                        if (sum == 0)
+                            LOG.info("Zero Denom error in updating W");
+                        else
+                            Wprime.set(n, k, w * v / sum);
                     }
                 }
                 end = System.currentTimeMillis();

@@ -30,7 +30,9 @@ import edu.ucla.sspace.vector.VectorIO;
 
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Queue;
 import java.util.Map;
 import java.util.Properties;
@@ -46,6 +48,9 @@ import static org.junit.Assert.*;
  * @author Keith Stevens
  */
 public class DependencyContextExtractorTest {
+
+    public static final List<DependencyRelation> EMPTY = 
+        new ArrayList<DependencyRelation>();
 
     public static final String SINGLE_PARSE = 
         "1   Mr. _   NNP NNP _   2   NMOD    _   _\n" +
@@ -79,14 +84,14 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         MockWordsi wordsi = new MockWordsi(null, extractor);
         assertTrue(extractor.acceptWord(node, "cat", wordsi));
 
-        node = new SimpleDependencyTreeNode("ca", "n", "c", 0, null);
+        node = new SimpleDependencyTreeNode("ca", "n", "c", 0, EMPTY);
         assertFalse(extractor.acceptWord(node, "c", wordsi));
 
-        node = new SimpleDependencyTreeNode("", "n", "c", 0, null);
+        node = new SimpleDependencyTreeNode("", "n", "c", 0, EMPTY);
         assertFalse(extractor.acceptWord(node, "", wordsi));
     }
 
@@ -94,7 +99,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         assertEquals("cat", extractor.getPrimaryKey(node));
     }
 
@@ -102,7 +107,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         assertEquals("cat", extractor.getSecondaryKey(node, null));
     }
 
@@ -110,7 +115,7 @@ public class DependencyContextExtractorTest {
         DependencyContextExtractor extractor = 
             new DependencyContextExtractor(null, null);
         DependencyTreeNode node = new SimpleDependencyTreeNode(
-                "cat", "n", "c", 0, null);
+                "cat", "n", "c", 0, EMPTY);
         assertEquals("header", extractor.getSecondaryKey(node, "header"));
     }
 

@@ -51,6 +51,12 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
     private int index;
 
     /**
+     * The {@Link DependencyRelation} between this node and it's parent node in
+     * the tree.
+     */
+    private DependencyRelation parent;
+
+    /**
      * The list of neighbors of this node.
      */
     private List<DependencyRelation> neighbors;
@@ -89,19 +95,39 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
                                     String lemma,
                                     int index,
                                     List<DependencyRelation> neighbors) {
-      this.word = word;
-      this.pos = pos;
-      this.lemma = lemma;
-      this.index = index;
-      this.neighbors = neighbors;
+        this.word = word;
+        this.pos = pos;
+        this.lemma = lemma;
+        this.index = index;
+        this.parent = null;
+        this.neighbors = neighbors;
+
+        // Check for a parent link.  If one exists, set it.
+        for (DependencyRelation link : neighbors)
+            checkAndSetParentLink(link);
     }
 
+    /**
+     * Sets the {@code parent} link from this node to the parent node.  If the
+     * parent link has already been set, this throws an {@link
+     * IllegalArgumentException} since a dependency tree node can have only one
+     * parent.
+     */
+    private void checkAndSetParentLink(DependencyRelation link) {
+        if (link.dependentNode().equals(this)) {
+            if (parent != null)
+                throw new IllegalArgumentException(
+                        "A DependencyTreeNode can have only one parent.");
+            parent = link;
+        }
+    }
     /**
      * Adds a relation from node to another node.
      *
      * @param relation a relation connecting this node to another
      */
     public void addNeighbor(DependencyRelation relation) {
+        checkAndSetParentLink(relation);
         // NB: this method is currently package-private to ensure that a user
         // doesn't add a relation that isn't connected to the current node
         // NB: Changed to being public, since this is currently the only way for
@@ -114,7 +140,8 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
             SimpleDependencyTreeNode n = (SimpleDependencyTreeNode)o;
             return pos.equals(n.pos) && 
                    word.equals(n.word) &&
-                   lemma.equals(n.lemma);
+                   lemma.equals(n.lemma) &&
+                   this.index == n.index;
             // NOTE: testing for neighbor equality is important, i.e.
             // neighbors.equals(n.neighbors); however, both classes .equal()
             // method call the others, resulting in mutual recursion and an
@@ -179,5 +206,12 @@ public class SimpleDependencyTreeNode implements DependencyTreeNode {
      */
     public int index() {
         return index;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public DependencyRelation parentLink() {
+        return parent;
     }
 }

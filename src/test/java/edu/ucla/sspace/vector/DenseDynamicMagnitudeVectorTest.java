@@ -23,70 +23,22 @@
 
 package edu.ucla.sspace.vector;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
 
 /**
  * @author Keith Stevens
  */
-public class DenseDynamicMagnitudeVectorTest {
+public class DenseDynamicMagnitudeVectorTest
+        extends AbstractTestDenseDoubleVector {
 
-    @Test public void testLength() {
-        DoubleVector v = new DenseDynamicMagnitudeVector(4);
-        assertEquals(4, v.length());
-
-        v = new DenseDynamicMagnitudeVector(new double[] {4, 4, 4, 4});
-        assertEquals(4, v.length());
-
-        v = new DenseVector(new double[] {4, 4, 4, 4});
-        v = new DenseDynamicMagnitudeVector(v);
-        assertEquals(4, v.length());
+    protected DoubleVector newLengthVector(int length) {
+        return new DenseDynamicMagnitudeVector(length);
     }
 
-    @Test public void testAdd() {
-        DoubleVector v = new DenseDynamicMagnitudeVector(4);
-
-        assertEquals(0, v.magnitude(), .0001);
-
-        v.add(0, 1);
-        assertEquals(1, v.get(0), .0001);
-        assertEquals(1, v.magnitude(), .0001);
-
-        v.add(2, 5);
-        assertEquals(5, v.get(2), .0001);
-        assertEquals(Math.sqrt(26), v.magnitude(), .0001);
-
-        v.add(2, -4);
-        assertEquals(1, v.get(2), .0001);
-        assertEquals(Math.sqrt(2), v.magnitude(), .0001);
-
-        v.add(3, 2);
-        assertEquals(2, v.get(3), .0001);
-        assertEquals(Math.sqrt(6), v.magnitude(), .0001);
+    protected DoubleVector newFromArray(double[] values) {
+        return new DenseDynamicMagnitudeVector(values);
     }
 
-    @Test public void testSetAndGet() {
-        DoubleVector v = new DenseDynamicMagnitudeVector(4);
-
-        assertEquals(0, v.magnitude(), .0001);
-
-        v.set(0, 1);
-        assertEquals(1, v.get(0), .0001);
-        assertEquals(1, v.magnitude(), .0001);
-
-        v.set(2, 5);
-        assertEquals(5, v.get(2), .0001);
-        assertEquals(Math.sqrt(26), v.magnitude(), .0001);
-
-        v.set(2, 1);
-        assertEquals(1, v.get(2), .0001);
-        assertEquals(Math.sqrt(2), v.magnitude(), .0001);
-
-        v.set(3, 2);
-        assertEquals(2, v.get(3), .0001);
-        assertEquals(Math.sqrt(6), v.magnitude(), .0001);
+    protected DoubleVector newCopy(DoubleVector other) {
+        return new DenseDynamicMagnitudeVector(other);
     }
 }

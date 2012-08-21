@@ -513,8 +513,8 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     private void retainOnly(int columns) {
         int words = termToIndex.size();
         MultiMap<Double,Integer> entropyToIndex = 
-            new BoundedSortedMultiMap<Double,Integer>(columns, false, 
-                                  true, true);
+            new BoundedSortedMultiMap<Double,Integer>(
+                    columns, false, null, true);
 
         // first check all the columns in the co-occurrence matrix
         for (int col = 0; col < words; ++col) {

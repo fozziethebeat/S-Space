@@ -21,100 +21,17 @@
 
 package edu.ucla.sspace.matrix;
 
-import edu.ucla.sspace.matrix.MatrixIO.Format;
-import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
-
-import java.io.File;
+import edu.ucla.sspace.common.statistics.PointwiseMutualInformationTest;
 
 
 /**
+ * Computes the <a
+ * href="http://en.wikipedia.org/wiki/Pointwise_mutual_information">Pointwise
+ * Mutual Information</a> for every joint event stored in a contingency matrix.  
  * @author Keith Stevens
  */
-public class PointWiseMutualInformationTransform extends BaseTransform {
-
-    /**
-     * {@inheritDoc}
-     */
-    protected GlobalTransform getTransform(Matrix matrix) {
-        return new PointWiseMutualInformationGlobalTransform(matrix);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected GlobalTransform getTransform(File inputMatrixFile,
-                                           MatrixIO.Format format) {
-        return new PointWiseMutualInformationGlobalTransform(
-                inputMatrixFile, format);
-    }
-
-    /**
-     * Returns the name of this transform.
-     */
-    public String toString() {
-        return "PMI";
-    }
-
-    public class PointWiseMutualInformationGlobalTransform
-            implements GlobalTransform {
-
-        /**
-         * The total sum of occurances for each row (row).
-         */
-        private double[] rowCounts;
-
-        /**
-         * The total sum of occurances for each col (column).
-         */
-        private double[] colCounts;
-
-        /**
-         * The total summation of the entire matrix.
-         */
-        private double matrixSum;
-
-        /**
-         * Creates an instance of {@code PointWiseMutualInformationTransform}
-         * from a given {@link Matrix}.
-         */
-        public PointWiseMutualInformationGlobalTransform(Matrix matrix) {
-            MatrixStatistics stats =
-                TransformStatistics.extractStatistics(matrix);
-            rowCounts = stats.rowSums;
-            colCounts = stats.columnSums;
-            matrixSum = stats.matrixSum;
-        }
-
-        /**
-         * Creates an instance of {@code PointWiseMutualInformationTransform}
-         * from a matrix {@code File} of format {@code format}.
-         */
-        public PointWiseMutualInformationGlobalTransform(
-                File inputMatrixFile,
-                MatrixIO.Format format) {
-            MatrixStatistics stats =
-                TransformStatistics.extractStatistics(inputMatrixFile, format);
-            rowCounts = stats.rowSums;
-            colCounts = stats.columnSums;
-            matrixSum = stats.matrixSum;
-        }
-
-        /**
-         * Computes the point wise-mutual information between the {@code row}
-         * and {@code col} with {@code value} specifying the number of
-         * occurances of {@code row} with {@code col}.   This is
-         * approximated based on the occurance counts for each {@code row} and
-         * {@code col}.
-         *
-         * @param row The index specifying the row being observed
-         * @param col The index specifying the col being observed
-         * @param value The number of ocurrances of row and col together
-         *
-         * @return log(value * matrixSum / (rowSum[row] * colSum[col]))
-         */
-        public double transform(int row, int col, double value) {
-            return Math.log(value * matrixSum /
-                            (rowCounts[row] * colCounts[col] ));
-        }
+public class PointWiseMutualInformationTransform extends SignificanceMatrixTransform {
+    public PointWiseMutualInformationTransform() {
+        super(new PointwiseMutualInformationTest());
     }
 }

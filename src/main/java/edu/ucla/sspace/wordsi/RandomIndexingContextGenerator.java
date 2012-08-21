@@ -21,8 +21,6 @@
 
 package edu.ucla.sspace.wordsi;
 
-import edu.ucla.sspace.basis.StringBasisMapping;
-
 import edu.ucla.sspace.index.PermutationFunction;
 
 import edu.ucla.sspace.text.IteratorFactory;
@@ -115,18 +113,20 @@ public class RandomIndexingContextGenerator implements ContextGenerator {
 
     /**
      * Adds the index vector for each co-occurring word in the context.    Index
-     * vectors are permuted if {@code permFunc} is not {@code null}.    When in read
-     * only mode, only existing index vector are used.
+     * vectors are permuted if {@code permFunc} is not {@code null}.    When in
+     * read only mode, only existing index vector are used.
      */
     protected void addContextTerms(SparseDoubleVector meaning,
                                    Queue<String> words,
                                    int distance) {
+        --distance;
         // Iterate through the words in the context.
         for (String term : words) {
+            ++distance;
             if (!term.equals(IteratorFactory.EMPTY_TOKEN)) {
 
-                // If in read only mode, ignore any terms that are not already in the
-                // index map.
+                // If in read only mode, ignore any terms that are not already
+                // in the index map.
                 if (readOnly && !indexMap.containsKey(term))
                     continue;
 
@@ -137,11 +137,10 @@ public class RandomIndexingContextGenerator implements ContextGenerator {
                 
                 // Permute the index vector if a permutation function is provided.
                 if (permFunc != null)
-                        termVector = permFunc.permute(termVector, distance);
+                    termVector = permFunc.permute(termVector, distance);
 
                 // Add the index vector and update the distance.
                 add(meaning, termVector);
-                ++distance;
             }
         }
     }

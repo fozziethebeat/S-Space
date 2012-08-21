@@ -67,6 +67,15 @@ public class RowScaledMatrix implements Matrix, java.io.Serializable {
     /**
      * {@inheritDoc}
      */
+    public double add(int row, int col, double delta) {
+        double old = get(row, col);
+        set(row, col, delta+old);
+        return old;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double get(int row, int col) {
         return m.get(row, col) * scales.get(row);
     }

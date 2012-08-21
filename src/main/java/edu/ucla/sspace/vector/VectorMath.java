@@ -103,6 +103,25 @@ public class VectorMath {
     }
 
     /**
+     * Adds the second {@code SparseDoubleVector} to the first {@code
+     * SparseDoubleVector} and returns the result.
+     *
+     * @param vector1 The destination vector to be summed onto.
+     * @param vector2 The source vector to sum from.
+     * @return The summation of {code vector1} and {@code vector2}.
+     */
+    public static SparseDoubleVector add(SparseDoubleVector vector1,
+                                   SparseDoubleVector vector2) {
+        if (vector2.length() != vector1.length())
+            throw new IllegalArgumentException(
+                    "Vectors of different sizes cannot be added.  " +
+                    "Lengths are: vector1: " + vector1.length() +
+                    ", vector2: " + vector2.length());
+        addSparseValues(vector1, vector2);
+        return vector1;
+    }
+
+    /**
      * Adds the second {@code IntegerVector} to the first {@code IntegerVector}
      * and returns the result.
      *
@@ -328,6 +347,7 @@ public class VectorMath {
                 "cannot compute dot product of vectors with different lengths");
 
         double dotProduct = 0;
+
         // Check whether both vectors support fast iteration over their non-zero
         // values.  If so, use only the non-zero indices to speed up the
         // computation by avoiding zero multiplications
@@ -362,31 +382,30 @@ public class VectorMath {
             }            
         }
 
-        // Check whether both vectors are sparse.  If so, use only the non-zero
-        // indices to speed up the computation by avoiding zero multiplications
-        else if (a instanceof SparseVector && b instanceof SparseVector) {
-            SparseVector svA = (SparseVector)a;
-            SparseVector svB = (SparseVector)b;
-            int[] nzA = svA.getNonZeroIndices();
-            int[] nzB = svB.getNonZeroIndices();
-            // Choose the smaller of the two to use in computing the dot
-            // product.  Because it would be more expensive to compute the
-            // intersection of the two sets, we assume that any potential
-            // misses would be less of a performance hit.
-            if (nzA.length < nzB.length) {
-                for (int nz : nzA) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
+        // Special case if either of the vectors is a sparse vectors to save on
+        // computation costs.
+        if (a instanceof SparseDoubleVector &&
+            b instanceof SparseDoubleVector) {
+            // If both vectors are sparse, then determine which one has fewer
+            // non zero values and iterate over that one.
+            SparseDoubleVector sx = (SparseDoubleVector) a;
+            SparseDoubleVector sy = (SparseDoubleVector) b;
+
+            // y is shorter than x, so swap and iterate over y's indices.
+            if (sx.getNonZeroIndices().length >
+                sy.getNonZeroIndices().length) {
+                SparseDoubleVector t = sx;
+                sx = sy;
+                sy = t;
             }
-            else {
-                for (int nz : nzB) {
-                    double aValue = a.get(nz);
-                    double bValue = b.get(nz);
-                    dotProduct += aValue * bValue;
-                }
-            }
+
+            for (int c : sx.getNonZeroIndices())
+                dotProduct += sx.get(c) * sy.get(c);
+        }
+        if (a instanceof SparseDoubleVector) {
+            SparseDoubleVector sdv = (SparseDoubleVector)a;
+            for (int i  : sdv.getNonZeroIndices()) 
+                dotProduct += a.get(i) * b.get(i);
         }
 
         // Otherwise, just assume both are dense and compute the full amount

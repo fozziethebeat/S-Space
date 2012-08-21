@@ -279,20 +279,20 @@ public class ClusteringByCommittee implements Clustering {
         
         LOGGER.info("CBC begining Phase 3");
         // PHASE 3: Assign elements to clusters
-        Assignment[] result = new Assignment[m.rows()];
+        Assignments assignments = new Assignments(
+                committees.size(), m.rows(), m);
         for (int r = 0; r < m.rows(); ++r) {
             LOGGER.fine("Computing Phase 3 for row " + r);
             SparseDoubleVector row = sm.getRowVector(r);
             // Determine to which committees the row belongs
             List<Integer> committeeIds = phase3(
                 row, committees, useHardClustering, softClusteringThresh);
-            int[] assignments = new int[committeeIds.size()];
-            for (int i = 0; i < committeeIds.size(); ++i) {
-                assignments[i] = committeeIds.get(i);
-            }
-            result[r] = new SoftAssignment(assignments);
+            int[] clusters = new int[committeeIds.size()];
+            for (int i = 0; i < committeeIds.size(); ++i)
+                clusters[i] = committeeIds.get(i);
+            assignments.setAll(r, clusters);
         }
-        return new Assignments(committees.size(), result, m);
+        return assignments;
     }
 
     /**

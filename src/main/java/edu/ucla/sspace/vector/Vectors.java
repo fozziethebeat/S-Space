@@ -261,6 +261,17 @@ public class Vectors {
         return new SynchronizedVector(vector);
     }
 
+    public static DoubleVector scale(DoubleVector vector, double scale) {
+        if (vector instanceof SparseDoubleVector)
+            return scaleSparse((SparseDoubleVector) vector, scale);
+        return new ScaledDoubleVector(vector, scale);
+    }
+
+    public static SparseDoubleVector scaleSparse(SparseDoubleVector vector, 
+                                                 double scale) {
+        return new ScaledSparseDoubleVector(vector, scale);
+    }
+
     public static DoubleVector scaleByMagnitude(DoubleVector vector) {
         if (vector instanceof SparseDoubleVector)
             return scaleByMagnitude((SparseDoubleVector) vector);

@@ -151,7 +151,33 @@ public class AtomicGrowingSparseHashMatrix
         matrixEntries = new ConcurrentHashMap<Entry,Double>(
             10000, 4f, threads * 16);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    public double add(int row, int col, double delta) {
+        checkIndices(row, col, true);
+        Entry e = new Entry(row, col);
+        // Spin waiting for the entry to be unlocked
+        while (lockedEntries.putIfAbsent(e, new Object()) != null)
+            ;
+        Double val = matrixEntries.get(e);
+        double newVal = (val == null) ? delta : delta + val;
+        if (newVal != 0) {
+            matrixEntries.put(e, newVal);
+            // Only invalidate the cache if the number of rows or columns
+            // containing data has changed
+            if (val == null)
+                modifications.incrementAndGet();
+        }
+        else {
+            matrixEntries.remove(e);
+            modifications.incrementAndGet();
+        }
+        lockedEntries.remove(e);
+        return (val == null) ? 0 : val;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -219,33 +245,6 @@ public class AtomicGrowingSparseHashMatrix
         Double val = matrixEntries.get(new Entry(row, col));
         return (val == null) ? 0 : val;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double getAndAdd(int row, int col, double delta) {
-        checkIndices(row, col, true);
-        Entry e = new Entry(row, col);
-        // Spin waiting for the entry to be unlocked
-        while (lockedEntries.putIfAbsent(e, new Object()) != null)
-            ;
-        Double val = matrixEntries.get(e);
-        double newVal = (val == null) ? delta : delta + val;
-        if (newVal != 0) {
-            matrixEntries.put(e, newVal);
-            // Only invalidate the cache if the number of rows or columns
-            // containing data has changed
-            if (val == null)
-                modifications.incrementAndGet();
-        }
-        else {
-            matrixEntries.remove(e);
-            modifications.incrementAndGet();
-        }
-        lockedEntries.remove(e);
-        return (val == null) ? 0 : val;
-    }
-
 
     /**
      * {@inheritDoc} The length of the returned column reflects the size of

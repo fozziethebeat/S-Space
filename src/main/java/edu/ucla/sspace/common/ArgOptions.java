@@ -260,7 +260,7 @@ public class ArgOptions {
      * @param commandLine the set of string arguments provided on the command
      *        line
      */
-    public void parseOptions(String[] commandLine) {
+    public String[] parseOptions(String[] commandLine) {
 
         for (int i = 0; i < commandLine.length; ++i) {
             String s = commandLine[i];
@@ -364,6 +364,8 @@ public class ArgOptions {
                 positionalArgs.add(s);
             }
         }
+
+        return positionalArgs.toArray(new String[positionalArgs.size()]);
     }
 
     /**

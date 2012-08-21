@@ -41,11 +41,15 @@
   <!-- define Maven coordinates, repository url and artifacts name etc -->
   <property name="groupId" value="edu.ucla.sspace" />
   <property name="artifactId" value="sspace" />
-  <property name="maven-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
-  <property name="maven-repository-id" value="sonatype-nexus-staging" />
   <property name="maven-jar" value="${dist.dir}/${artifactId}-${version}.jar" />
   <property name="maven-javadoc-jar" value="${dist.dir}/${artifactId}-${version}-javadoc.jar" />
   <property name="maven-sources-jar" value="${dist.dir}/${artifactId}-${version}-src.jar" />
+
+  <property name="maven-snapshots-repository-id" value="sonatype-nexus-snapshots" />
+  <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
+  <property name="maven-staging-repository-id" value="sonatype-nexus-staging" />
+  <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+
 
   <path id="classpath">
     <fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -93,7 +97,7 @@
     <!-- Compile all of the classes and put the results in the classes
 	 directory -->
      <javac srcdir="./" destdir="classes" classpathref="classpath" 
-	    debug="true" debuglevel="lines,source">
+	    debug="true" nowarn="yes" debuglevel="lines,source">
        <compilerarg value="-Xlint"/>
        <compilerarg value="-g"/>
        <include name="src/**"/>
@@ -168,14 +172,27 @@
   </target>
 
   <!--
-       Deploy the distribution jars to the maven repository.
+       Deploy a snapshot of the distribution jars to the maven repository.
   -->
-  <target name="deploy" depends="dist" description="deploy to Nexus">
+  <target name="deploy" depends="dist" description="deploy snapshot version to Maven snapshot repository">
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file" />
+      <arg value="-Durl=${maven-snapshots-repository-url}" />
+      <arg value="-DrepositoryId=${maven-snapshots-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-jar}" />
+    </artifact:mvn>
+  </target>
+
+  <!--
+       Stage the distribution jars to the maven repository.
+  -->
+  <target name="stage" depends="dist" description="deploy to Nexus">
     <!-- sign and deploy the main artifact -->
     <artifact:mvn>
-      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
-      <arg value="-Durl=${maven-repository-url}" />
-      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-staging-repository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
       <arg value="-DpomFile=pom.xml" />
       <arg value="-Dfile=${maven-jar}" />
       <arg value="-Pgpg" />
@@ -183,9 +200,9 @@
 
     <!-- sign and deploy the sources artifact -->
     <artifact:mvn>
-      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
-      <arg value="-Durl=${maven-repository-url}" />
-      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-stagingrepository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
       <arg value="-DpomFile=pom.xml" />
       <arg value="-Dfile=${maven-sources-jar}" />
       <arg value="-Dclassifier=sources" />
@@ -194,9 +211,9 @@
 
     <!-- sign and deploy the javadoc artifact -->
     <artifact:mvn>
-      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file" />
-      <arg value="-Durl=${maven-repository-url}" />
-      <arg value="-DrepositoryId=${maven-repository-id}" />
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${maven-staging-repository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
       <arg value="-DpomFile=pom.xml" />
       <arg value="-Dfile=${maven-javadoc-jar}" />
       <arg value="-Dclassifier=javadoc" />

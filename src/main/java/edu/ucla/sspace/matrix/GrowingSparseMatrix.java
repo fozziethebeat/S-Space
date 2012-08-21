@@ -101,6 +101,15 @@ public class GrowingSparseMatrix implements SparseMatrix, java.io.Serializable {
     /**
      * {@inheritDoc}
      */
+    public double add(int row, int col, double delta) {
+        double old = get(row, col);
+        set(row, col, delta+old);
+        return old;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public double get(int row, int col) {
         checkIndices(row, col);
         CompactSparseVector sv = rowToColumns.get(row);

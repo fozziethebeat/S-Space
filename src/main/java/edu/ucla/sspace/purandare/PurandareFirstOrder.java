@@ -21,7 +21,6 @@
 
 package edu.ucla.sspace.purandare;
 
-import edu.ucla.sspace.clustering.Assignment;
 import edu.ucla.sspace.clustering.Assignments;
 import edu.ucla.sspace.clustering.ClutoClustering;
 
@@ -618,10 +617,9 @@ public class PurandareFirstOrder implements SemanticSpace {
         // For each of the contexts, determine which cluster it was in and sum
         // it value with the other contexts
         for (int row = 0; row < clusterAssignment.size(); ++row) {
-            // Check whether this row was assigned a cluster
-            if (clusterAssignment.get(row).assignments().length == 0)
+            int assignment = clusterAssignment.get(row);
+            if (assignment < 0)
                 continue;                
-            int assignment = clusterAssignment.get(row).assignments()[0];                
             clusterSize[assignment]++;
 
             DoubleVector contextVector = contexts.getRowVector(row);

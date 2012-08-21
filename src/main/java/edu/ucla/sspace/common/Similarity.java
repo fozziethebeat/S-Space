@@ -41,9 +41,11 @@ import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.VectorMath;
 import edu.ucla.sspace.vector.Vectors;
+import edu.ucla.sspace.vector.VectorMath;
 import edu.ucla.sspace.vector.SparseIntegerVector;
 
 import java.lang.reflect.Method;
@@ -71,6 +73,8 @@ import java.util.TreeMap;
  */
 public class Similarity {
     
+    private static final double EPS = .00000000000001;
+
     /**
      * A type of similarity function to use when generating a {@link Method}
      */
@@ -416,11 +420,13 @@ public class Similarity {
             // product.  Because it would be more expensive to compute the
             // intersection of the two sets, we assume that any potential
             // misses would be less of a performance hit.
-            if (a.length() < b.length() ||
-                nzA.length < nzB.length) {
+            if (a.length() < b.length() || nzA.length < nzB.length) {
                 DoubleVector t = a;
+                int[] nzT = nzA;
                 a = b;
+                nzA = nzB;
                 b = t;
+                nzB = nzT;
             }
 
             for (int nz : nzB) {
@@ -749,23 +755,24 @@ public class Similarity {
         check(a, b);
         
         if (a instanceof SparseVector && b instanceof SparseVector) {
-            SparseVector svA = (SparseVector)a;
-            SparseVector svB = (SparseVector)b;
-
-            int[] aNonZero = svA.getNonZeroIndices();
-            int[] bNonZero = svB.getNonZeroIndices();
-            HashSet<Integer> sparseIndicesA = new HashSet<Integer>(
-                    aNonZero.length);
-            double sum = 0;
-            for (int nonZero : aNonZero) {
-                sum += Math.pow((a.get(nonZero) - b.get(nonZero)), 2);
-                sparseIndicesA.add(nonZero);
+            SparseDoubleVector svA = (SparseDoubleVector)a;
+            SparseDoubleVector svB = (SparseDoubleVector)b;
+            if (svA.getNonZeroIndices().length >
+                svB.getNonZeroIndices().length) {
+                SparseDoubleVector t = svA;
+                svA = svB;
+                svB = t;
             }
 
-            for (int nonZero : bNonZero)
-                if (!sparseIndicesA.contains(nonZero))
-                    sum += Math.pow(b.get(nonZero), 2);
-            return sum;
+            double sum = 0;
+            double bMagnitude = Math.pow(b.magnitude(), 2);
+            for (int nonZero : svA.getNonZeroIndices()) {
+                double value = svB.get(nonZero);
+                bMagnitude -= value * value;
+                sum += Math.pow((svA.get(nonZero) - value), 2);
+            }
+            sum += bMagnitude;
+            return (sum < 0d) ? 0 : Math.sqrt(sum);
         } else if (b instanceof SparseVector) {
             // If b is sparse, use a special case where we use the cached
             // magnitude of a and the sparsity of b to avoid most of the
@@ -899,20 +906,25 @@ public class Similarity {
      * samples.
      */
     public static double jaccardIndex(double[] a, double[] b) {        
-        Set<Double> intersection = new HashSet<Double>();
-        Set<Double> union = new HashSet<Double>();
-        for (double d : a) {
-            intersection.add(d);
-            union.add(d);
+        BitSet c = new BitSet();
+        BitSet d = new BitSet();
+        BitSet union = new BitSet();
+        for (int i = 0; i < a.length; ++i) {
+            if (a[i] > 0) {
+                c.set(i);
+                union.set(i);
+            }
         }
-        Set<Double> tmp = new HashSet<Double>();
-        for (double d : b) {
-            tmp.add(d);
-            union.add(d);
+        for (int i = 0; i < b.length; ++i) {
+            if (b[i] > 0) {
+                d.set(i);
+                union.set(i);
+            }
         }
 
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
+        // get the intersection
+        c.and(d); 
+        return ((double)(c.cardinality())) / union.cardinality();
     }
 
     /**
@@ -930,13 +942,17 @@ public class Similarity {
         BitSet c = new BitSet();
         BitSet d = new BitSet();
         BitSet union = new BitSet();
-        for (int i : a) {
-            c.set(i);
-            union.set(i);
+        for (int i = 0; i < a.length; ++i) {
+            if (a[i] > 0) {
+                c.set(i);
+                union.set(i);
+            }
         }
-        for (int i : b) {
-            d.set(i);
-            union.set(i);
+        for (int i = 0; i < b.length; ++i) {
+            if (b[i] > 0) {
+                d.set(i);
+                union.set(i);
+            }
         }
         
         // get the intersection
@@ -946,59 +962,36 @@ public class Similarity {
 
     /**
      * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
-     * index</a> comparing the similarity both {@code DoubleVector}s when viewed
-     * as sets of samples.
-     */
-    public static double jaccardIndex(DoubleVector a, DoubleVector b) {
-        Set<Double> intersection = new HashSet<Double>();
-        Set<Double> union = new HashSet<Double>();
-        for (int i = 0; i < a.length(); ++i) {
-            double d = a.get(i);
-            intersection.add(d);
-            union.add(d);
-        }
-        Set<Double> tmp = new HashSet<Double>();
-        for (int i = 0; i < b.length(); ++i) {
-            double d = b.get(i);
-            tmp.add(d);
-            union.add(d);
-        }
-
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
-    }
-
-    /**
-     * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
-     * index</a> comparing the similarity both {@code IntegerVector}s when viewed
-     * as sets of samples.
-     */
-    public static double jaccardIndex(IntegerVector a, IntegerVector b) {
-        Set<Integer> intersection = new HashSet<Integer>();
-        Set<Integer> union = new HashSet<Integer>();
-        for (int i = 0; i < a.length(); ++i) {
-            int d = a.get(i);
-            intersection.add(d);
-            union.add(d);
-        }
-        Set<Integer> tmp = new HashSet<Integer>();
-        for (int i = 0; i < b.length(); ++i) {
-            int d = b.get(i);
-            tmp.add(d);
-            union.add(d);
-        }
-
-        intersection.retainAll(tmp);
-        return ((double)(intersection.size())) / union.size();
-    }
-
-    /**
-     * Computes the <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard
      * index</a> comparing the similarity both {@code Vector}s when viewed as
      * sets of samples.
      */
     public static double jaccardIndex(Vector a, Vector b) {
-        return jaccardIndex(Vectors.asDouble(a), Vectors.asDouble(b));
+        BitSet intersection = new BitSet();
+        BitSet union = new BitSet();
+        addAttributesToSet(a, intersection, union);
+        BitSet tmp = new BitSet();
+        addAttributesToSet(b, tmp, union);
+        intersection.and(tmp);
+        return ((double)(intersection.cardinality())) / union.cardinality();
+    }
+
+    private static void addAttributesToSet(Vector a,
+                                           BitSet intersection,
+                                           BitSet union) {
+        if (a instanceof SparseVector) {
+            SparseVector sv = (SparseVector) a;
+            for (int i : sv.getNonZeroIndices()) {
+                intersection.set(i);
+                union.set(i);
+            }
+        } else {
+            for (int i = 0; i < a.length(); ++i) {
+                if (a.getValue(i).doubleValue() > 0d) {
+                    intersection.set(i);
+                    union.set(i);
+                }
+            }
+        }
     }
 
     /**
@@ -1722,6 +1715,20 @@ public class Similarity {
     }
 
     /**
+     * Computes the Jenson-Shannon  divergence bewteen two probability
+     * distributions, {@code a} and {@code b}.  The divergence between the two
+     * distributions is symmetric and based on the {@link #klDivergence} between
+     * each distribution and an average distribtion composed from both {@code a}
+     * and {@code b}.
+     */
+    public static double jsDivergence(DoubleVector a, DoubleVector b) {
+        DoubleVector median = Vectors.copyOf(a);
+        VectorMath.add(median, b);
+        median = Vectors.scale(median, .5);
+        return .5 * klDivergence(a, median) + .5 * klDivergence(b, median);
+    }
+
+    /**
      * Computes the K-L Divergence of two probability distributions {@code A}
      * and {@code B} where the vectors {@code a} and {@code b} correspond to
      * {@code n} samples from each respective distribution.  The divergence
@@ -1749,12 +1756,8 @@ public class Similarity {
 
             for (int index : aNonZeros) {
                 double aValue = a.get(index);
-                double bValue = b.get(index);
-
-                // Ignore values from b that are zero, since they would cause a
-                // divide by zero error.
-                if (bValue != 0d)
-                    divergence += aValue * Math.log(aValue / bValue);
+                double bValue = b.get(index)+EPS;
+                divergence += aValue * Math.log(aValue / bValue);
             }
         }
         // Otherwise iterate over all values and ignore any that are zero.
