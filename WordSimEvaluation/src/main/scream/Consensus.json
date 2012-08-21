@@ -15,7 +15,7 @@
      "inputPartitions",
      "outputPartition",
   ],
-  "preCommand": "for file in `echo $inputPartitions | tr ',' ' '`; do copyToLocal $file $location; done",
+  "preCommand": "for file in `echo $inputPartitions | tr ';' ' '`; do copyToLocal $file $location; done",
   "uploads" : [
     {
       "location" : "$location",
@@ -26,6 +26,6 @@
     "$k",
     "$alg",
     "$outputPartition",
-    "`echo $inputPartitions | tr ':' ' '`",
+    "`echo $inputPartitions | tr ';' ' '`",
   ],
 }

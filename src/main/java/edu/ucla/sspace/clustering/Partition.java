@@ -176,13 +176,13 @@ public class Partition {
 
             int clusterId = 0;
             for (line = null; (line = br.readLine()) != null; ) {
-                if (line.trim().equals(""))
-                    continue;
                 Set<Integer> cluster = new HashSet<Integer>();
-                for (String point : line.split("\\s+")) {
-                    int id = Integer.parseInt(point);
-                    cluster.add(id);
-                    assignments[id] = clusterId;
+                if (!line.trim().equals("")) {
+                    for (String point : line.split("\\s+")) {
+                        int id = Integer.parseInt(point);
+                        cluster.add(id);
+                        assignments[id] = clusterId;
+                    }
                 }
                 clusters.add(cluster);
                 clusterId++;

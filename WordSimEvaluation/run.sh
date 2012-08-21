@@ -1,69 +1,42 @@
 #!/bin/bash
 
-baseDir=$HOME/devel/S-Space/WordSimEvaluation/data
-stopWordFile=$HOME/devel/S-Space/data/english-stop-words-large.txt 
-topWordFile=$baseDir/top.50k.words.wiki.txt
+source ./config.sh
 
-wordSimDir="$baseDir/evals"
-wordSimFiles="$wordSimDir/wordSim65pairs.tab $wordSimDir/Mtruk.csv $wordSimDir/wordsim_relatedness_goldstandard.txt $wordSimDir/wordsim_similarity_goldstandard.txt" 
-wordSimFixedFiles="$wordSimDir/wordSim65pairs.fixed.txt $wordSimDir/Mtruk.fixed.txt $wordSimDir/wordsim_relatedness_goldstandard.fixed.txt $wordSimDir/wordsim_similarity_goldstandard.fixed.txt" 
-wordSimFile=$baseDir/evals/wordSim65pairs.tab
-wordSimKeyWordsFile=$baseDir/wordsim.keywords.txt
-wordSimComparisonFile=$baseDir/wordsim.induced.comparison.dat
-hfs=/hdfs/data/corpora
-wackyFiles="$hfs/wackypedia/wikipedia-1.xml $hfs/wackypedia/wikipedia-2.xml $hfs/wackypedia/wikipedia-3.xml $hfs/wackypedia/wikipedia-4.xml"
-oneDocFile=$hfs/wackypedia/wiki.full.one-doc.txt
-contextDir=$hfs/contexts/wiki
-contextFilePrefix=wiki-contexts-
-hdfsOutputDir=/user/stevens35/wordsim-contexts
-hdfsInputDir=/data/wackypedia/wiki-contexts
-
-numTopWords=50000
-windowSize=20
-clusterAlgsList="hac eigen kmeans"
-consensusAlgList="boem agglo bok"
-numClustersList="5 10 15 20"
-simFunc=cosine
-matchFunc=avg
-
-jar="target/wordsim-experiment-1.0-jar-with-dependencies.jar"
-run="scala -J-Xmx4g -cp $jar"
-base="edu.ucla.sspace.experiment"
-
-#for wordSimTest in $wordSimFiles; do
-#    newName=`echo $wordSimTest | cut -d "." -f 1`.fixed.txt
-#    echo $newName
-#    cat $wordSimTest | grep -v "^#" | tr "," " " | tr -s " " "\t" >$newName
-#done
+if [ 0 != 0 ]; then
+for wordSimTest in $wordSimFiles; do
+    newName=`echo $wordSimTest | cut -d "." -f 1`.fixed.txt
+    echo $newName
+    cat $wordSimTest | grep -v "^#" | tr "," " " | tr -s " " "\t" >$newName
+done
 
 # Extract the key words that we will need to represent in our model.
 echo "Extracting the key words to represent from each of the evaluation data sets"
-#cat $wordSimFixedFiles | cut -f 1,2 | tr "\t" "\n" | sort -u > $wordSimKeyWordsFile
+cat $wordSimFixedFiles | cut -f 1,2 | tr "\t" "\n" | sort -u > $wordSimKeyWordsFile
 
 # Convert the ukwac or wackypedia corpora into a one doc per line format for
 # easier use later on.
 echo "Extracting the documents from $wackyFiles"
-#$run $base.ExtractParsedWackyCopora $wackyFiles > $oneDocFile
+$run $base.ExtractParsedWackyCopora $wackyFiles > $oneDocFile
 
 # Extract the top N words from all contexts excluding stop words
 echo "Computing the top $numTopWords words in the corpus"
-#cat $oneDocFile | tr -s " " "\n" | sort | uniq -c > $topWordFile.tmp
-#$run $base.SelectTopWords $stopWordFile $numTopWords $topWordFile.tmp $numTopWords > $topWordFile
-#rm $topWordFile.tmp
+cat $oneDocFile | tr -s " " "\n" | sort | uniq -c > $topWordFile.tmp
+$run $base.SelectTopWords $stopWordFile $numTopWords $topWordFile.tmp $numTopWords > $topWordFile
+rm $topWordFile.tmp
 
 # Extract contexts for each of the words in the word similarity test we are
 # considerinng.
 echo "Extracting n word sized contexts for each key word from $oneDocFile"
 mkdir -p $contextDir
-#$run $base.ExtractWordSimContexts $wordSimKeyWordsFile $topWordFile $windowSize \
-#                                  $oneDocFile $contextDir/$contextFilePrefix
+$run $base.ExtractWordSimContexts $wordSimKeyWordsFile $topWordFile $windowSize \
+                                  $oneDocFile $contextDir/$contextFilePrefix
 
 # Convert each corpus file into a sparse matrix recording the
 # co-occurring content words.
 echo "Conveting each word's contexts into vectors using a shared feature space"
 for txt in $contextDir/*.txt; do
     newName=`echo $txt | sed "s/txt$/sparse_vector.mat/"`
-    #$run $base.ExtractWordsiContexts $topWordFile $txt $newName
+    $run $base.ExtractWordsiContexts $topWordFile $txt $newName
 done
 
 # Cluster each set of contexts for a multi-sense word using each of the
@@ -80,7 +53,7 @@ for mat in $contextDir/*.mat; do
         done
     done
 done > screamInput/wordsim-contexts
-#scream src/main/scream/ClusterContexts.json screamInput/wordsim-contexts
+scream src/main/scream/ClusterContexts.json screamInput/wordsim-contexts
 
 # Iterate over every word and construct multiple consensus functions over the
 # component solutions computed above.
@@ -98,14 +71,30 @@ for txt in $contextDir/*.txt; do
 done
 for w in `cat $wordSimKeyWordsFile`; do
     for k in $numClustersList; do
-        inputPartitions=`for c in $clusterAlgsList; do echo $contextFilePrefix.$w.$c.$k.partition; done | tr "\n" ";"`
+        inputPartitions=`for c in $clusterAlgsList; do echo $contextFilePrefix$w.$c.$k.partition; done | tr "\n" ";"`
         for c in $consensusAlgList; do
-            echo $c $k $hdfsOutputDir $inputPartitions $contextFilePrefix.$w.$c.$k.partition
+            echo $c $k $hdfsOutputDir $inputPartitions $contextFilePrefix$w.$c.$k.partition
         done
     done
-done > screamInput/ConsensusRun
-scream src/main/scream/ConsensusRun.json screamInput/ConsensusRun
+done > screamInput/Consensus
+scream src/main/scream/Consensus.json screamInput/Consensus
 
+fi
+
+for w in `cat $wordSimKeyWordsFile`; do
+    for k in $numClustersList; do
+        for alg in $clusterAlgsList $consensusAlgList; do
+            echo $hdfsOutputDir \
+                 $contextFilePrefix$w.$alg.$k.partition \
+                 $hdfsInputDir \
+                 $contextFilePrefix$w.sparse_vector.mat \
+                 $contextFilePrefix$w.$alg.$k.prototype
+        done
+    done
+done > screamInput/formPrototypes
+scream src/main/scream/FormPrototypes.json screamInput/formPrototypes
+
+exit
 # Iterate over all of the partitions and form them into prototype vectors for
 # easy comparison in semantic similarity tests
 for partition in $contextDir/*.partition; do
