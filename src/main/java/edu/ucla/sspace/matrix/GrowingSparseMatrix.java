@@ -50,7 +50,8 @@ import java.util.Map;
  *
  * @author Keith Stevens 
  */
-public class GrowingSparseMatrix implements SparseMatrix, java.io.Serializable {
+public class GrowingSparseMatrix extends AbstractMatrix
+        implements SparseMatrix, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 

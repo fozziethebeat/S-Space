@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 David Jurgens
+ * Copyright 2012 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -33,35 +33,29 @@ import java.util.Map;
 /**
  * Tests for the {@link SparseHashDoubleVector} class.
  */
-public class SparseHashDoubleVectorTests {
+public class AbstractDoubleVectorTest {
 
-    @Test public void testSetZero() {
-        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
-        v.set(0, 0);
-        assertEquals(0, v.getNonZeroIndices().length);
-    }
+    @Test public void testEquals() {
+        DoubleVector v1 = new AbstractDoubleVector() {
+                public int length() { return 10; }
+                public double get(int i) { return 1; }
+            };
+        DoubleVector v2 = new AbstractDoubleVector() {
+                public int length() { return 10; }
+                public double get(int i) { return 1; }
+            };
+        DoubleVector v3 = new AbstractDoubleVector() {
+                public int length() { return 11; }
+                public double get(int i) { return 1; }
+            };
+        DoubleVector v4 = new AbstractDoubleVector() {
+                public int length() { return 10; }
+                public double get(int i) { return 2; }
+            };
 
-    @Test public void testSetAddSumIsZero() {
-        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
-        assertEquals(0, v.getNonZeroIndices().length);
-        v.add(0, 1);
-        assertEquals(1, v.getNonZeroIndices().length);
-        v.add(0, -1);
-        assertEquals(0, v.getNonZeroIndices().length);
-    }
-
-    @Test public void testMagnitude() {
-        SparseHashDoubleVector v = new SparseHashDoubleVector(100);
-        assertEquals(0, v.magnitude(), .0001);
-
-        v.set(1, 1);
-        assertEquals(1, v.magnitude(), .0001);
-
-        v.set(1, 3);
-        v.set(2, 4);
-        assertEquals(5, v.magnitude(), .0001);
-
-        SparseHashDoubleVector v2 = new SparseHashDoubleVector(v);
-        assertEquals(5, v2.magnitude(), .0001);
+        assertEquals(v1, v2);
+        assertFalse(v1.equals(v3));
+        assertFalse(v1.equals(v4));
+        assertFalse(v3.equals(v4));
     }
 }

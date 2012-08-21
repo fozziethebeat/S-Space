@@ -24,6 +24,10 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.VectorMath;
+
 import java.io.File;
 
 
@@ -44,7 +48,10 @@ import java.io.File;
  *
  * @see LogEntropyTransform
  */
-public class TfIdfTransform extends BaseTransform {
+public class TfIdfTransform extends BaseTransform 
+        implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * {@inheritDoc}
@@ -68,7 +75,10 @@ public class TfIdfTransform extends BaseTransform {
         return "TF-IDF";
     }
 
-    public class TfIdfGlobalTransform implements GlobalTransform {
+    public class TfIdfGlobalTransform 
+            implements GlobalTransform, java.io.Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         /**
          * The total number of documents (columns) that each row occurs in.
@@ -122,6 +132,26 @@ public class TfIdfTransform extends BaseTransform {
          */
         public double transform(int row, int column, double value) {
             double tf = value / docTermCount[column];
+            double idf =
+                Math.log(totalDocCount / (termDocCount[row] + 1));
+            return tf * idf;
+        }
+
+        /**
+         * Computes the Term Frequency-Inverse Document Frequency for a given
+         * value where {@code value} is the observed frequency of term {@code
+         * row} in document {@code column}.
+         *
+         * @param row The index speicifying the term being observed
+         * @param column The index specifying the document being observed
+         * @param value The number of occurances of the term in the document.
+         *
+         * @return the TF-IDF of the observed value
+         */
+        public double transform(int row, DoubleVector column) {
+            // Calcuate the term frequencies in this new document
+            double sum = VectorMath.sum(column);
+            double tf = column.get(row) / sum;
             double idf =
                 Math.log(totalDocCount / (termDocCount[row] + 1));
             return tf * idf;

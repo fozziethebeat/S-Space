@@ -25,6 +25,8 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 
 
@@ -32,7 +34,7 @@ import java.io.File;
  * Tranforms a matrix according to the <a
  * href="http://en.wikipedia.org/wiki/Tf%E2%80%93idf">Term frequency-Inverse
  * Document Frequency</a> weighting.  The input matrix is assumed to be
- * formatted as rows representing documents and columns representing rows.  Each
+ * formatted as rows representing documents and columns representing words.  Each
  * matrix cell indicates the number of times the columns's word occurs within
  * the rows's document.  For full details see:
  *
@@ -126,6 +128,15 @@ public class TfIdfDocStripedTransform extends BaseTransform {
             double idf =
                 Math.log(totalDocCount / (1 + termDocCount[column]));
             return tf * idf;
+        }
+
+        /**
+         * Throws an {@link UnsupportedOperationException} if called.
+         */
+        public double transform(int row, DoubleVector column) {
+            throw new UnsupportedOperationException(
+                "Cannot compute weighting given a column an a " +
+                "doc-striped matrix.");
         }
     }
 }

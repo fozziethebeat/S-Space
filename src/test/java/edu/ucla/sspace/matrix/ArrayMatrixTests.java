@@ -55,6 +55,24 @@ public class ArrayMatrixTests {
                 assertEquals(values[r][c], matrix.get(r, c), .0001);
     }
 
+    @Test public void testEquals() {
+        double[][] values = {
+            {1, 1, 2, 4},
+            {4, 3, 2, 1},
+            {7, 8, 9, 0},
+        };
+
+        Matrix m1 = new ArrayMatrix(2, 2);
+        Matrix m2 = new ArrayMatrix(2, 2);
+        assertEquals(m1, m2);
+        assertEquals(m1, m1);
+
+        m1 = new ArrayMatrix(values);
+        m2 = new ArrayMatrix(values);
+        assertEquals(m1, m2);
+        assertEquals(m1, m1);
+    }
+
     @Test public void testGet() {
         Matrix matrix = new ArrayMatrix(10, 10);
         GenericMatrixUtil.testGet(matrix);

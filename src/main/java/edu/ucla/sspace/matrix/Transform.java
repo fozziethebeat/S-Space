@@ -21,6 +21,8 @@
 
 package edu.ucla.sspace.matrix;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -30,12 +32,31 @@ import java.io.IOException;
  * support both a {@link Matrix} and a serialized {@link Matrix} stored in a
  * {@code File}, in one of the supported matrix formats.  Implementations are
  * strongly encouraged to implement the {@code toString} method, as many {@link
- * edu.ucla.sspace.common.SemanticSpace} implementations will use this when
- * serializing.
+ * edu.ucla.sspace.common.SemanticSpace} implementations will use the name of
+ * the applied transform for describing their state.
  *
  * @author David Jurgens
  */
 public interface Transform {
+
+    /**
+     * Once a matrix has been transformed, use the existing state of this
+     * transform to apply the same transformate to this new column vector, as if
+     * it had been a part of the input matrix, but without changing this
+     * transform's state.
+     *
+     * <p> This method is intended for use cases after when the statistics of a
+     * matrix are calcuated and then used to transform that matrix, but where
+     * new vector data could be transformed by the same procedure.  For example,
+     * a {@link TfIdfTransform} could be applied to a term document space to
+     * create the transform state necessary for calculating the {@code idf};
+     * then, the same weighting could be applied to a new document.
+     *
+     * @throws IllegalStateException if this {@code Transform} instances does
+     *         not yet have sufficient state to transform a new document.  That
+     *         is, the {@code transform} method has yet to be called.
+     */
+    DoubleVector transform(DoubleVector column);
 
     /**
      * Transforms the matrix in the file using the an implemented method and
