@@ -26,6 +26,7 @@ import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.VectorMath;
 
 import java.io.File;
 
@@ -132,17 +133,7 @@ public class PointWiseMutualInformationTransform extends BaseTransform {
          */
         public double transform(int row, DoubleVector column) {
             // Calcuate the term frequencies in this new document
-            double sum = 0;
-            if (column instanceof SparseVector) {
-                SparseVector sv = (SparseVector)column;
-                for (int nz : sv.getNonZeroIndices())
-                    sum += column.get(nz);
-            }
-            else {
-                int length = column.length();
-                for (int i = 0; i < length; ++i)
-                    sum += column.get(i);
-            }
+            double sum = VectorMath.sum(column);
             double value = column.get(row);
             return Math.log(value * matrixSum /
                             (rowCounts[row] * sum));

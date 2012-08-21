@@ -56,11 +56,28 @@ public class PajekWriter {
 
     public PajekWriter() { }
 
+    /**
+     * Writes this {@link WeightedDirectedMultigraph} instance to the specified
+     * file.  Note that because the Pajek format does not support parallel
+     * edges, all parallel edges in one direction are flatted into a single
+     * directed edge.
+     */
     public <T> void write(WeightedDirectedMultigraph<T> g, File f) 
             throws IOException {
         write(g, f, null);
     }
 
+    /**
+     * Writes this {@link WeightedDirectedMultigraph} instance to the specified
+     * file using the provided {@link Indexer} to lookup labels for the graph's
+     * vertices.  Note that because the Pajek format does not support parallel
+     * edges, all parallel edges in one direction are flatted into a single
+     * directed edge.
+     *
+     * @param vertexLabels the {@code Indexer} used to look up labels for the
+     *        vertices.  If {@link Indexer#lookup(int)} returns {@code null} no
+     *        label is supplied for the vertex.
+     */
     public <T> void write(WeightedDirectedMultigraph<T> g, File f, 
                           Indexer<String> vertexLabels) 
             throws IOException {

@@ -705,6 +705,47 @@ public class VectorMath {
     }
 
     /**
+     * Sums the values in the vector, returning the result.
+     */
+    public static double sum(Vector v) {
+        return sum(Vectors.asDouble(v));
+    }
+
+    /**
+     * Sums the values in the vector, returning the result.
+     */
+    public static double sum(DoubleVector v) {
+        double sum = 0;
+        if (v instanceof SparseVector) {
+            for (int nz : ((SparseVector)v).getNonZeroIndices())
+                sum += v.get(nz);
+        }
+        else {
+            int len = v.length();
+            for (int i = 0; i < len; ++i)
+                sum += v.get(i);
+        }
+        return sum;
+    }
+
+    /**
+     * Sums the values in the vector, returning the result.
+     */
+    public static int sum(IntegerVector v) {
+        int sum = 0;
+        if (v instanceof SparseVector) {
+            for (int nz : ((SparseVector)v).getNonZeroIndices())
+                sum += v.get(nz);
+        }
+        else {
+            int len = v.length();
+            for (int i = 0; i < len; ++i)
+                sum += v.get(i);
+        }
+        return sum;
+    }
+
+    /**
      * Adds the values from a {@code CompactSparseVector} to a {@code Vector}.
      * Only the non-zero indices will be traversed to save time.
      *

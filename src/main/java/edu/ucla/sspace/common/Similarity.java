@@ -1069,16 +1069,11 @@ public class Similarity {
         double[] rankedA = rank(a);
         double[] rankedB = rank(b);
 
-        System.out.println("a ranks: " + Arrays.toString(rankedA));
-        System.out.println("b ranks: " + Arrays.toString(rankedB));
-    
         double sumDiffs = 0;
         for (int i = 0; i < rankedA.length - 1; ++i) {
             double diff = rankedA[i] - rankedB[i];
             sumDiffs += diff * diff;
         }
-
-        System.out.printf("Sum diffs: %f%n", sumDiffs);
 
         double aCorrectionFactor = rankedA[rankedA.length - 1];
         double bCorrectionFactor = rankedB[rankedB.length - 1];
@@ -1103,13 +1098,11 @@ public class Similarity {
         for (int i = 0; i < vals.length; ++i)
             ranked[i] = new IntRank(vals[i], i);
         Arrays.sort(ranked);
-        System.out.println("ranked vals: " + Arrays.toString(ranked));
             
         double[] ranks = new double[vals.length + 1];
         int correctionFactor = 0;
         
         for (int i = 0; i < ranked.length; ++i) {
-            System.out.printf("Determining rank of %s at %d%n", ranked[i], i);
             // Determine how many ties (if any) occur at this rank
             int ties = 0;
             for (int j = i + 1; j < ranked.length
@@ -1118,7 +1111,6 @@ public class Similarity {
             if (ties == 0)
                 ranks[ranked[i].index] = i+1;
             else {
-                System.out.printf("Found %d ties starting at index %d%n", ties, i);
                 // Each tie is computed as the average of the ties' ranks, e.g.,
                 // two tie at rank 2 would be averaged as rank (2 + 3) / 2 = 2.5
                 double rank = i + 1 + (ties / 2d);
@@ -1178,13 +1170,11 @@ public class Similarity {
         for (int i = 0; i < vals.length; ++i)
             ranked[i] = new DoubleRank(vals[i], i);
         Arrays.sort(ranked);
-        System.out.println("ranked vals: " + Arrays.toString(ranked));
-            
+           
         double[] ranks = new double[vals.length + 1];
         int correctionFactor = 0;
         
         for (int i = 0; i < ranked.length; ++i) {
-            System.out.printf("Determining rank of %s at %d%n", ranked[i], i);
             // Determine how many ties (if any) occur at this rank
             int ties = 0;
             for (int j = i + 1; j < ranked.length
@@ -1193,7 +1183,6 @@ public class Similarity {
             if (ties == 0)
                 ranks[ranked[i].index] = i+1;
             else {
-                System.out.printf("Found %d ties starting at index %d%n", ties, i);
                 // Each tie is computed as the average of the ties' ranks, e.g.,
                 // two tie at rank 2 would be averaged as rank (2 + 3) / 2 = 2.5
                 double rank = i + 1 + (ties / 2d);

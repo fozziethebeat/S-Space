@@ -67,6 +67,8 @@ public abstract class AbstractMatrix implements Matrix {
             int cols = columns();
             if (m.columns() != cols)
                 return false;
+            // REMINDER: this could potentially be optimized for sparse
+            // matrices.
             for (int r = 0; r < rows; ++r) {
                 for (int c = 0; c < cols; ++c) {
                     if (m.get(r, c) != get(r, c))
@@ -74,15 +76,6 @@ public abstract class AbstractMatrix implements Matrix {
                 }
             }
             return true;
-            /*
-              
-            if (m.rows() == rows() && m.columns() == columns()) {
-                for (int row = 0; row < rows(); ++row) {
-                    if (!getRowVector(row).equals(m.getRowVector(row))) 
-                        return false;
-                }
-            }
-            */
         }
         return false;
     }

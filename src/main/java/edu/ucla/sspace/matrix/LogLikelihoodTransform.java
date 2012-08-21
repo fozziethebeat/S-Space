@@ -26,6 +26,7 @@ import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseVector;
+import edu.ucla.sspace.vector.VectorMath;
 
 import java.io.File;
 
@@ -153,17 +154,7 @@ public class LogLikelihoodTransform extends BaseTransform {
             double value = column.get(row);
 
             // Calcuate the term frequencies in this new document
-            double colSum = 0;
-            if (column instanceof SparseVector) {
-                SparseVector sv = (SparseVector)column;
-                for (int nz : sv.getNonZeroIndices())
-                    colSum += column.get(nz);
-            }
-            else {
-                int length = column.length();
-                for (int i = 0; i < length; ++i)
-                    colSum += column.get(i);
-            }
+            double colSum = VectorMath.sum(column);
 
             double l = colSum - value;
             double m = rowCounts[row] - value;

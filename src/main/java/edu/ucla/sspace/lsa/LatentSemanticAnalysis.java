@@ -44,6 +44,7 @@ import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.LoggerUtil;
 import edu.ucla.sspace.util.ObjectCounter;
 
+import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.SparseHashDoubleVector;
@@ -537,11 +538,11 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
         // Compute the resulting projected vector as a matrix
         Matrix result = Matrices.multiply(queryAsMatrix, UtimesSigmaInv);
 
-        // The resulting matrix is dense (unfortunately), so we perform an extra
-        // operation to compact the result, which is expected to be sparse.
+        // Copy out the vector itself so that we don't retain a reference to the
+        // matrix as a result of its getRowVector call, which isn't guaranteed
+        // to return a copy.
         int cols = result.columns();
-        DoubleVector projected = 
-            new SparseHashDoubleVector(result.columns());
+        DoubleVector projected = new DenseVector(result.columns());
         for (int i = 0; i < cols; ++i)
             projected.set(i, result.get(0, i));
         return projected;
