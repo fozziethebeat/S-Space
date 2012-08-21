@@ -50,52 +50,13 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class SingularValueDecompositionLibC
+public class SingularValueDecompositionLibC extends AbstractSvd 
         implements SingularValueDecomposition, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = 
         Logger.getLogger(SingularValueDecompositionLibC.class.getName());
-
-    /**
-     * The class by feature type matrix.
-     */
-    private Matrix classFeatures;
-
-    /**
-     * The left vectors of the SVD decomposition
-     */
-    private Matrix U;
-
-    /**
-     * The right vectors of the SVD decomposition
-     */
-    private Matrix V;
-
-    /**
-     * Set to true when {@code classFeatures} has been accessed the first time
-     * to mark that the singular values have been applied to each value in the
-     * matrix.
-     */
-    private boolean scaledClassFeatures;
-
-    /**
-     * The data point by class matrix.
-     */
-    private Matrix dataClasses;
-
-    /**
-     * Set to true when {@code dataClasses} has been accessed the first time to
-     * mark that the singular values have been applied to each value in the
-     * matrix.
-     */
-    private boolean scaledDataClasses;
-
-    /**
-     * The singular values computed during factorization.
-     */
-    private double[] singularValues;
 
     /**
      * {@inheritDoc}
@@ -211,84 +172,6 @@ public class SingularValueDecompositionLibC
         } catch (InterruptedException ie) {
             LOG.log(Level.SEVERE, "SVDLIBC", ie);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix dataClasses() {
-        if (!scaledDataClasses) {
-            dataClasses = new ArrayMatrix(U.rows(), U.columns());
-            scaledDataClasses = true;
-            // Weight the values in the data point space by the singular
-            // values.
-            for (int r = 0; r < dataClasses.rows(); ++r) {
-                for (int c = 0; c < dataClasses.columns(); ++c) {
-                    dataClasses.set(r, c, U.get(r, c) * singularValues[c]);
-                }
-            }
-        }
-
-        return dataClasses;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix classFeatures() {
-        if (!scaledClassFeatures) {
-            scaledClassFeatures = true;
-            classFeatures = new ArrayMatrix(V.rows(), V.columns());
-            // Weight the values in the document space by the singular
-            // values.
-            // REMINDER: when the RowScaledMatrix class is merged in with
-            // the trunk, this code should be replaced.
-            for (int r = 0; r < classFeatures.rows(); ++r)
-                for (int c = 0; c < classFeatures.columns(); ++c)
-                    classFeatures.set(r, c, V.get(r, c) * singularValues[r]);
-        }
-
-        return classFeatures;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix getLeftVectors() {
-        if (U == null)
-            throw new IllegalStateException(
-                "The matrix has not been factorized yet");
-        // NOTE: make this read-only?
-        return U;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix getRightVectors() {
-        if (V == null)
-            throw new IllegalStateException(
-                "The matrix has not been factorized yet");
-        // NOTE: make this read-only?
-        return V;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Matrix getSingularValues() {
-        if (singularValues == null)
-            throw new IllegalStateException(
-                "The matrix has not been factorized yet");
-        // NOTE: make this read-only?
-        return new DiagonalMatrix(singularValues);
-    }
-
-    /**
-     * Returns a double array of the singular values.
-     */
-    public double[] singularValues() {
-        return singularValues;
     }
 
     /**
