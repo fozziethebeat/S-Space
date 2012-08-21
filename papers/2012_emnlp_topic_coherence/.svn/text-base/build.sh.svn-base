@@ -1,6 +1,0 @@
-#!/bin/bash
-latex topic_coherence
-bibtex topic_coherence
-latex topic_coherence
-latex topic_coherence
-dvipdfm topic_coherence.dvi
