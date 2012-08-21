@@ -1,0 +1,495 @@
+import java.io.*;
+import java.util.*;
+import edu.ucla.sspace.common.Similarity;
+import edu.ucla.sspace.common.Statistics;
+import edu.ucla.sspace.util.*;
+
+public class SenseSimilarityScoringScript {
+
+    public static void main(String[] args) throws Exception {
+        if (args.length != 6) {
+            System.out.println("usage: java SSSS wordnet-sense-similarities.txt"
+                               + " onto-to-wn-mapping.txt"
+                               + " onto-gold-standard.key" 
+                               + " solution.key"
+                               + " null-model-output.dat"
+                               + " solution-output.dat");
+            return;
+        }
+
+        Map<Pair<String>,Double> sensesToSimilarity = 
+            new HashMap<Pair<String>,Double>();
+        for (String line : new LineReader(new File(args[0]))) {
+            String[] arr = line.split("\\s+");
+            if (arr.length != 3)
+                continue;
+            String sense1 = arr[0];
+            String sense2 = arr[1];
+            Double similarity = Double.valueOf(arr[2]);
+            // the JCN has a range [0,1] except when comparing a sense to itself
+            if (similarity > 1)
+                continue;
+            sensesToSimilarity.put(new Pair<String>(sense1, sense2), 
+                                   similarity);
+        }
+
+        MultiMap<String,Integer> ontoNoteSenseToWordNetSenses =
+            new HashMultiMap<String,Integer>();
+        for (String line : new LineReader(new File(args[1]))) {
+            String[] arr = line.split("\t");
+            if (arr.length != 3)
+                continue;
+            // Skip mapping to non-WordNet 3.0 senses
+            if (!arr[1].equals("3.0"))
+                continue;
+
+            String[] senses = arr[2].split("[ ,]+");
+            for (String sense : senses) {
+                try {                    
+                    Integer i = Integer.valueOf(sense);
+                    ontoNoteSenseToWordNetSenses.put(arr[0], i);
+                } catch (NumberFormatException nfe) {
+                    // System.out.println("#Bad sense mapping: " + line);
+                }
+            }
+        }
+
+//         System.out.printf("Loaded mapping for %d OntoNotes senses%n", 
+//                       ontoNoteSenseToWordNetSenses.size());
+        
+        // Load in the gold standard sense labeling for each of the instances
+        Map<String,String> instanceToGoldStandardSense = 
+            new HashMap<String,String>();
+
+        // Keep track of how many senses each word has
+        MultiMap<String,String> wordToSenses =
+            new HashMultiMap<String,String>();        
+
+        for (String line : new LineReader(new File(args[2]))) {
+            String[] arr = line.split("\\s+");
+            if (arr.length < 3)
+                continue;
+            String word = arr[0];
+            String instance = arr[1];
+            String gsSense = arr[2];
+            instanceToGoldStandardSense.put(instance, gsSense);
+            wordToSenses.put(word, gsSense);
+        }
+
+        // Load in the induced sense labelings, keeping track of which senses
+        // were mapped to which instances
+        MultiMap<String,String> inducedSenseToInstances 
+            = new HashMultiMap<String,String>();
+
+        Map<String,String> instanceToInducedSense = new HashMap<String,String>();
+
+        // Keep track of which instances were for a specific word.  We'll use
+        // this to generate the default error rate
+        MultiMap<String,String> wordToInstances =
+            new HashMultiMap<String,String>();
+        
+        for (String line : new LineReader(new File(args[3]))) {
+            String[] arr = line.split("\\s+");
+            if (arr.length < 3)
+                continue;
+            String word = arr[0];
+            String instance = arr[1];
+            // NOTE: assuming first sense is main senses...
+            String inducedSense = arr[2].split("/")[0];
+            inducedSenseToInstances.put(inducedSense, instance);
+            instanceToInducedSense.put(instance, inducedSense);
+            wordToInstances.put(word, instance);
+        }
+                
+//         int numBins = 20;
+//         DoubleVector baselineConfusionProbabilities = 
+//             new DenseVector(numBins); // 20 bins in .05 probability increments
+
+
+        Map<String,String> inducedSenseToOntoNoteSense =
+            new HashMap<String,String>();
+        for (String inducedSense : inducedSenseToInstances.keySet()) {
+            // Keep track of how many times each gold standard sense was seen
+            Counter<String> gsSenseCounts = new Counter<String>();
+
+            // For all the instances, count how many times each of the gold
+            // standard label was used.
+            for (String instance : inducedSenseToInstances.get(inducedSense)) {
+                String gsSense = instanceToGoldStandardSense.get(instance);
+                gsSenseCounts.count(gsSense);
+            }
+
+            // Map the induced senses to the WordNet senses of the most frequent
+            // OntoNotes gold standard sense
+            String mostFreq = gsSenseCounts.max();
+            Set<Integer> wnSenses = ontoNoteSenseToWordNetSenses.get(mostFreq);
+//             System.out.printf("%s -> %s -> %s%n", inducedSense, mostFreq, wnSenses);
+            inducedSenseToOntoNoteSense.put(inducedSense, mostFreq);
+        }
+
+        // Create two data structures to keep track of how many errors we see at
+        // each similiarity level, both for the solution and the null model.
+        // Note that the null model can't be a Counter because we record
+        // fractional counts per similarity level, depending on the number of
+        // senses.
+        Map<Double,Double> nullModelSimilarityToErrorCount =
+            new HashMap<Double,Double>();
+        Counter<Double> errorsAtSimilarityLevel = new Counter<Double>();
+        
+        // For each word, iterate through all of its instances, and see whether
+        // the provided solution got that instance correct
+        for (String word : wordToInstances.keySet()) {
+
+            Set<String> senses = wordToSenses.get(word);
+
+            // Skip words with 2 senses, as there's no way to measure whether
+            // the sense similarity affected which other sense was selected
+            if (senses.size() < 3) {
+//                  System.out.printf("Skipping %s, which has only %d senses%n",
+//                                    word, senses.size());
+                continue;
+            }
+
+            // For each instance, see whether we were correct
+            next_instance:
+            for (String instance : wordToInstances.get(word)) {
+
+                String correctSense = instanceToGoldStandardSense.get(instance);
+                String inducedSense = instanceToInducedSense.get(instance);
+                // Map the induced sense to an ontonotes sense
+                String mappedOntoNotesSense = 
+                    inducedSenseToOntoNoteSense.get(inducedSense);
+
+                // See whether this was correct
+                if (!mappedOntoNotesSense.equals(correctSense)) {
+                    
+                    // Load the OntoNotes->WordNet sense mappings
+                    Set<Integer> mappedWnSenses = 
+                        ontoNoteSenseToWordNetSenses.get(mappedOntoNotesSense);
+                    Set<Integer> gsWnSenses = 
+                        ontoNoteSenseToWordNetSenses.get(correctSense);
+
+                    // If there was no mapping, then skip recording the error.
+                    // This should only happen if we didn't have a WordNet 3.0
+                    // sense mapping on file
+                    if (mappedWnSenses == null || gsWnSenses == null) {
+                        System.out.printf("skipp %s%n", instance);
+                        continue;
+                    }
+                    // Check that we have all the mappings for the other senses
+                    // for this instance
+                    else {
+                        for (String sense : senses) {
+                            Set<Integer> possibleConfusedSense = 
+                                ontoNoteSenseToWordNetSenses.get(sense);
+                            if (possibleConfusedSense == null) {
+                                System.out.printf("skipp %s%n", instance);
+                                continue next_instance;
+                            }
+                        }
+                    }
+                    double similarityToConfused = calcSimilarity(instance,
+                        sensesToSimilarity, mappedWnSenses, gsWnSenses);
+                    errorsAtSimilarityLevel.count(similarityToConfused);
+                    System.out.println("instance " + instance);
+                    
+                    // Next calculate the error for the null model by looking at
+                    // all other senses that could have been selected
+                    int numOfPossibleConfusedSense = senses.size() - 1;
+                    for (String sense : senses) {
+                        // Skip over similarity comparisons for the correct sense
+                        if (sense.equals(correctSense))
+                            continue;
+                        
+                        // Load the OntoNotes->WordNet sense mapping for the
+                        // alternate sense
+                        Set<Integer> possibleConfusedSense = 
+                            ontoNoteSenseToWordNetSenses.get(sense);
+                        if (possibleConfusedSense == null) {
+                            continue next_instance;
+                        }
+                        
+                        // Calculate the similarity between this alternate sense
+                        // and the gold standard sense
+                        double similarityToPossibleConfusion = calcSimilarity(instance,
+                            sensesToSimilarity, possibleConfusedSense, gsWnSenses);
+
+                        // Get how many times an alternate sense with this
+                        // similarity has been confused
+                        Double curCount = 
+                            nullModelSimilarityToErrorCount.get(similarityToPossibleConfusion);
+
+                        // Increment the count by a fractional value
+                        // representing the possibility of selecting this sense
+                        // among all the other possible incorrect senses.
+                        curCount = (curCount == null) 
+                            ? 1d / numOfPossibleConfusedSense
+                            : curCount + (1d / numOfPossibleConfusedSense);
+                        nullModelSimilarityToErrorCount.put( 
+                            similarityToPossibleConfusion, curCount);
+                    }                                        
+                }
+                // else 
+//                     System.out.println("instance " + instance);
+            }
+        }
+
+        /*
+         *
+         * Print out the recorded errors and their similarities
+         *
+         */
+        PrintWriter solutionWriter = new PrintWriter(args[5]);
+        solutionWriter.println("# similarity error_count");
+        double[] probSumPerBin = new double[50];
+        for (Map.Entry<Double,Integer> e : errorsAtSimilarityLevel) {
+            double similarity = e.getKey();            
+            int bin = (int)(similarity * 50);
+            if (bin > 50)
+                throw new Error("similarity: " + similarity);
+            
+            double similarityConfusionProb = 
+                // errorsAtSimilarityLevel.getFrequency(similarity);
+                e.getValue();
+            probSumPerBin[bin] += similarityConfusionProb;
+        }
+        for (int i = 0; i < probSumPerBin.length; ++i) {
+            double similarity = .02 * i;
+            double prob = probSumPerBin[i];
+            solutionWriter.println(similarity + " " + prob); 
+        }        
+        solutionWriter.close();
+
+
+        /*
+         *
+         * Print out the null model errors
+         *
+         */
+        PrintWriter nullModelWriter = new PrintWriter(args[4]);
+        nullModelWriter.println("# similarity error_count");
+        probSumPerBin = new double[50];
+        for (Map.Entry<Double,Double> e : nullModelSimilarityToErrorCount.entrySet()) {
+            double similarity = e.getKey();            
+            int bin = (int)(similarity * 50);
+            if (bin > 50)
+                throw new Error("similarity: " + similarity);
+            
+            double similarityConfusionProb = 
+                // errorsAtSimilarityLevel.getFrequency(similarity);
+                e.getValue();
+            probSumPerBin[bin] += similarityConfusionProb;
+        }
+        for (int i = 0; i < probSumPerBin.length; ++i) {
+            double similarity = .02 * i;
+            double prob = probSumPerBin[i];
+            nullModelWriter.println(similarity + " " + prob); 
+        }        
+        nullModelWriter.close();
+    }
+
+    private static double calcSimilarity(String instance, 
+                                         Map<Pair<String>,Double> wnSenseSimilarity,
+                                         Set<Integer> mappedWnSenses,
+                                         Set<Integer> gsWnSenses) {
+        
+        String termBase = instance.substring(0, instance.lastIndexOf('.'));
+        List<Double> similarities = new ArrayList<Double>();
+        for (Integer i : mappedWnSenses) {
+            for (Integer j : gsWnSenses) {
+                String wnSense1 = termBase + "." + i;
+                String wnSense2 = termBase + "." + j;
+                Double sim = wnSenseSimilarity.get(
+                    new Pair<String>(wnSense1, wnSense2));
+                if (sim == null) {
+//                     System.out.printf("# Missing Similarity for %s - %s%n",
+//                                       wnSense1, wnSense2);
+                }
+                else{
+                    similarities.add(sim);
+                }
+            }
+        }
+
+        if (similarities.isEmpty())
+            return 0;
+        else {
+            //return Statistics.mean(similarities);
+             Collections.sort(similarities);
+             return similarities.get(similarities.size() - 1);
+        }
+    }
+
+
+    /*
+
+        // For each of the words, get its instances and compute the baseline
+        // error rate
+        Counter<Double> baselineSenseSimilarityCounter = 
+            new Counter<Double>();
+        for (String word : wordToInstances.keySet()) {
+            Set<String> senses = new HashSet<String>();
+            int numInstances = wordToInstances.get(word).size();
+            for (String instance : wordToInstances.get(word)) {
+                senses.add(instanceToGoldStandardSense.get(instance));
+            }
+
+            // For each pair-wise combination of senses, record its similarity
+            int combinations = 0;
+            for (String sense : senses) {
+                Set<Integer> wnSenses1 = ontoNoteSenseToWordNetSenses.get(sense);
+                if (wnSenses1 == null)
+                    continue;
+                for (String sense2 : senses) {
+                    if (sense.equals(sense2))
+                        break;
+                    combinations++;
+                    Set<Integer> wnSenses2 = 
+                        ontoNoteSenseToWordNetSenses.get(sense2);
+                    if (wnSenses2 == null)
+                        continue;
+                    // System.out.printf("%s %s%n", sense, sense2);
+                    double similarity = calcSimilarity(word + ".dummy",
+                                                       sensesToSimilarity,
+                                                       wnSenses1,
+                                                       wnSenses2);
+                    baselineSenseSimilarityCounter.count(similarity);
+                }
+            }
+        }
+
+        PrintWriter baselineWriter = new PrintWriter(args[4]);
+        baselineWriter.println("# similarity prob-of-confusion");
+        double[] baselineProbSumPerBin = new double[50];
+        for (Map.Entry<Double,Integer> e : baselineSenseSimilarityCounter) {
+            
+             double similarity = e.getKey();
+//             int count = e.getValue();
+//             int bin = (int)((similarity * 100) / numBins);
+//             baselineConfusionProbabilities.add(bin, count * baseProb);
+
+             int bin = (int)(similarity * 50);
+             if (bin > 50)
+                 throw new Error("similarity: " + similarity);
+            
+            double similarityConfusionProb = 
+                //baselineSenseSimilarityCounter.getFrequency(similarity);
+                baselineSenseSimilarityCounter.getCount(similarity);
+
+            baselineProbSumPerBin[bin] += similarityConfusionProb;
+//             baselineWriter.println(similarity + " " + similarityConfusionProb
+//                                    + " " + (int)(similarity * 100) 
+//                                    + " " + (int)(similarityConfusionProb));
+        }
+        for (int i = 0; i < baselineProbSumPerBin.length; ++i) {
+            double similarity = .02 * i;
+            double prob = baselineProbSumPerBin[i];
+            baselineWriter.println(similarity + " " + prob); 
+        }
+
+        baselineWriter.close();
+    */
+
+
+    /*
+        // Create two data structures to keep track of how many errors we see at
+        // each similiarity level, both for the solution and the null model.
+        // Note that the null model can't be a Counter because we record
+        // fractional counts per similarity level, depending on the number of
+        // senses.
+        Counter<Double> errorsAtSimilarityLevel = new Counter<Double>();
+        Map<Double,Double> nullModelSimilarityToErrorCount =
+            new HashMap<Double,Double>();
+
+        // Score the induce sense labeling by looking at which of its instances
+        // were labeled with a sense other than the primary sense and then
+        // keeping track of that sense's similarity.
+        for (String inducedSense : inducedSenseToInstances.keySet()) { 
+            String mappedOntoNotesSense = 
+                inducedSenseToOntoNoteSense.get(inducedSense);
+
+            // For all the instances, count how many times each of the gold
+            // standard label was used.
+            for (String instance : inducedSenseToInstances.get(inducedSense)) {
+                String gsSense = instanceToGoldStandardSense.get(instance);
+                                
+                // If the actual label for this sense and the mapped sense
+                // disagree, then calculate the inter-sense similarity between
+                // the two
+                if (!mappedOntoNotesSense.equals(gsSense)) {
+                    
+                    Set<Integer> mappedWnSenses = 
+                        ontoNoteSenseToWordNetSenses.get(mappedOntoNotesSense);
+                    Set<Integer> gsWnSenses = 
+                        ontoNoteSenseToWordNetSenses.get(gsSense);
+
+                    // If there was no mapping, then just note the error in the
+                    // comments
+                    if (mappedWnSenses == null || gsWnSenses == null) {
+//                         System.out.printf("# induced: %s, gs: %s (no WN mapping)%n",
+//                                           mappedOntoNotesSense, gsSense);
+                        continue;
+                    }
+
+                    double similarity = calcSimilarity(instance,
+                        sensesToSimilarity, mappedWnSenses, gsWnSenses);
+                    errorsAtSimilarityLevel.count(similarity);
+//                     System.out.printf("# induced: %s, gs: %s, sim: %f%n", 
+//                                       mappedOntoNotesSense, gsSense,
+//                                       similarity);
+                                                  
+                }
+            }
+        }
+*/
+
+    /*
+
+            // For each pair-wise combination of senses, record its similarity
+            int combinations = 0;
+            for (String sense : senses) {
+                Set<Integer> wnSenses1 = ontoNoteSenseToWordNetSenses.get(sense);
+                if (wnSenses1 == null)
+                    continue;
+                for (String sense2 : senses) {
+                    if (sense.equals(sense2))
+                        break;
+                    combinations++;
+                    Set<Integer> wnSenses2 = 
+                        ontoNoteSenseToWordNetSenses.get(sense2);
+                    if (wnSenses2 == null)
+                        continue;
+                    // System.out.printf("%s %s%n", sense, sense2);
+                    double similarity = calcSimilarity(word + ".dummy",
+                                                       sensesToSimilarity,
+                                                       wnSenses1,
+                                                       wnSenses2);
+                    baselineSenseSimilarityCounter.count(similarity);
+                }
+            }
+        }
+*/
+
+
+    /*
+
+        double[] scores = new double[errorsAtSimilarityLevel.size()];
+        double[] values = new double[errorsAtSimilarityLevel.size()];
+        SortedMap<Double,Double> sm = new TreeMap<Double,Double>();
+        for (Map.Entry<Double,Integer> e : errorsAtSimilarityLevel) {
+            sm.put(e.getKey(), e.getValue().doubleValue());
+        }
+
+        int i = 0;
+        for (Map.Entry<Double,Double> e : sm.entrySet()) {
+            // System.out.println(e.getKey() + " " + e.getValue());
+            scores[i] = e.getKey();
+            values[i] = e.getValue();
+            i++;
+        }
+        
+//         System.err.println(scores.length + " correlation samples");
+//         System.err.printf("Pearson Correlation: %f%n", Similarity.correlation(scores, values));
+//         System.err.printf("Spearman's Correlation: %f%n", Similarity.spearmanRankCorrelationCoefficient(scores, values));
+*/
+}

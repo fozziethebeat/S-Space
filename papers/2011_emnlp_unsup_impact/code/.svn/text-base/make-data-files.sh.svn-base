@@ -1,0 +1,5 @@
+for g in `ls induced_keys/*test.key` ; do 
+    f=`echo $g | awk '{split($0,a,"/"); print a[2]; }'` ; 
+    echo $f ; 
+    java -cp ~/svn/graphical-update/classes/:. SenseSimilarityScoringScript semeval-2010-sense-similarities.txt semEval-2010-sense-mapping.txt gold-standard-semeval-2010.key induced_keys/$f plots/$f.avg.baseline plots/$f.avg.actual ;
+done

@@ -1,0 +1,315 @@
+\documentclass[11pt]{article}
+\usepackage{acl2010}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{epsfig}
+\usepackage{booktabs}
+\usepackage{latexsym}
+\usepackage[usenames]{color}
+\usepackage{times} 
+\usepackage{verbatim}
+\usepackage{threeparttable}
+\usepackage{multirow}
+
+\begin{document}
+
+\author{David Jurgens\\
+  University of California, Los Angeles\\
+  Los Angeles, California, USA\\
+  {\tt jurgens@cs.ucla.edu} \And
+  Keith Stevens \\
+  University of California, Los Angeles\\
+  Los Angeles, California, USA\\
+  {\tt kstevens@cs.ucla.edu}}
+
+\title{
+  HERMIT. Using word ordering applied to the Sense Induction task of SemEval-2}
+
+\date{}
+
+\maketitle
+
+\begin{abstract}
+A single word may have multiple unspecified meanings in a corpus.  Word sense
+induction aims to discover these different meanings through word use, and
+knowledge-poor algorithms attempt this without using external lexical resources.
+However, the syntactic information available from these resources has been shown
+to improve performance.  Therefore, we propose a new knowledge-poor model that
+uses word order to add a limited form of syntactic information. Three
+experiments demonstrate improvement in word sense induction accuracy and state
+of the art performance on benchmarks.
+
+\end{abstract}
+  
+\section{Introduction}
+
+The Word Sense Induction task of SemEval 2010 is compares several sense
+induction and discrimination systems when trained over a common corpus.  Systems
+are provided with an unlabeled training corpus consisting of XX,XXX contexts for
+100 different polysemous words, composed of X nouns and Y verbs.  Each context
+is composed of several sentences, several of which may contain a polysemous word
+that requires a sense label and the sense label of each context is unknown.
+Systems must use a training corpus to induce the word senses for each of the 100
+words and then use those senses to label unseen contexts for the same 100 words
+from a testing corpus.
+
+We perform this task by utilizing a distributional word space that is formed by
+using word ordering, dimensionality reduction, and a simple clustering method.
+We refer to our model as Word Ordering with Reduced Dimensionality for Sense
+Induction (WORDSI).  Word ordering provides a shallow form of syntactic
+information that can be applied to any language and has has previously been
+shown to benefit distributional semantics\cite{burgess97modeling}.  Our model is
+also highly scalable; the dimensionality of the word space is reduced
+immediately through a process based on random projections.  In addition, our
+online clustering algorithm maintains only a centroid that describes an induced
+word sense, instead of all observed contexts, which lets the model scale to
+large corpora.
+
+\section{The Word Sense Induction Model}
+\label{sec:alg}
+
+We perform word sense induction by modeling individual contexts in a high
+dimensional word space that encodes lexical position.  Word senses are induced
+by clustering these contexts as they are observed to identify groupings of
+similar contexts, under the assumption that contexts with different word
+distributions denote a different sense of the word is being used.
+
+\subsection{Modeling Context}
+\label{sec:context}
+
+For a word, each of its contexts are represented by the words with which it
+co-occurs and their respective lexical positions.  To fully model this
+information, each unique word would be represented with multiple dimensions to
+distinguish its occurrence in different lexical positions.
+We approximate this high dimensional space with the Random Indexing (RI) word
+space model \cite{kanerva00random} with permutations
+\cite{sahlgren08permutations}.  RI represent the occurrence of a word with an
+\emph{index vector}, rather than a set of dimensions.  An index vector is a
+sparse vector that is highly orthogonal to all other words' index vectors; the
+total number of dimensions in the model is fixed at a small value,
+e.g. 50,000. A context's word occurrences are represented by summing the index
+vectors of the occurring words, projecting the full context information in a
+subspace that best preserves the original distances between context vectors.
+
+We illustrate this with an example.  Consider the context for ``check'' in the
+phrase ``I could not deposit check due to a bank holiday,''.  After stop words
+have been removed, the context vector would be the summation of the index
+vectors of the co-occurring words, ``deposit,'' ``bank,'' and ``holiday.''  Word
+ordering information is added by \emph{permuting} the index vectors based their
+respective words' positions:
+%
+ {\small $
+  context_{check} = \Pi^{-1}(iv_{deposit}) + \Pi^{4}(iv_{bank}) +
+  \Pi^{5}(iv_{holiday}) $ },
+%
+where $\Pi^i$ is a bijective permutation function that is applied $i$ times to a
+vector and $iv_{term}$ is a term's index vector.  This creates a unique method
+of counting the co-occurrence for each word based on its position.  Formally, we
+define the context vector, $V$, for an occurrence of term $w$, as
+%
+$
+V = \sum_{term \in Context} \Pi^{dist(term,w)}(iv_{term}),
+$
+%
+where $dist(term, w)$ is the lexical distance between $term$ and $w$.  Note that
+terms preceding $w$ are given a negative distance, which results in an inverse
+permutation of their index vectors.
+
+
+\subsection{Identifying Related Contexts}
+\label{sec:clustering}
+
+Clustering separates similar context vectors into dissimilar clusters that
+represent the distinct senses of a word.  We use an efficient hybrid of online
+K-Means and Hierarchical Agglomerative Clustering (HAC) with a threshold.  The
+threshold allows for the final number of clusters to be determined by data
+similarity instead of having to specify the number of clusters.
+
+The set of context vectors for a word are clustered using using K-Means, which
+assigns a context to the most similar cluster centroid.  If the nearest centroid
+has a similarity less than the \emph{cluster threshold} and there are not $K$
+clusters, the context forms a new cluster.  We define the similarity between
+contexts vectors as the cosine similarity.
+
+Once the corpus has been processed, clusters are repeatedly merged using HAC
+with the average link criteria, following \cite{pedersen97distinguishing}.
+Average link clustering defines cluster similarity as the mean cosine similarity
+of the pairwise similarity of all data points from each cluster.  Cluster
+merging stops when the two most similar clusters have a similarity less than the
+cluster threshold.  Reaching a similarity lower than the cluster threshold
+signifies that each cluster represents a distinct word sense.  This approach is
+similar in intent to that of Neill \shortcite{neill02fully}
+where an upper-bound of $K$ is initially used, but the number of final senses
+may be much smaller.
+
+\section{Applying Sense Labels}
+
+After training our WSI model on the training corpus, process the test corpus and
+label the context for each polysemous word with an induced sense.  We represent
+the test contexts in the same method used for training; the index vectors and
+permutation functions are re-used during training and testing.  Each word's
+context is then labeled with the induced cluster that has the most similar
+representation.  
+
+BIGFUCKINGNOTE somewhere around here.  We don't use permutations in the version
+we submitted. 
+
+\subsection{Tuning Parameters}
+
+Previous WSI evaluations provided a test corpus, a set of golden sense labels,
+and a scoring mechanism, which allowed models to do parameter tuning prior to
+providing a set of sense labels.  The SemEval 2010 task is structured such that
+a trial corpus is provided, which consists of training contexts, test contexts,
+and a set of golden sense assignments for the test contexts.  The trial corpus
+consists of four polysemous verbs that are not part of the real corpus.  The
+lack of a golden set of sense labels for the real test corpus presents an issue
+for our model, which requires a clustering threshold in addition to a random set
+of index vectors and permutation functions.
+
+Rather than doing parameter tuning on the real corpus, we perform parameter
+tuning by utilizing the trial corpus and re-using the clustering threshold,
+index vectors, and permutation functions that provided the best trial score.
+Based on experiments over the trial corpus, and previous experiments on other
+corpora \cite{}, we use a clustering threshold of {\bf .15}, a maximum
+of {\bf 15} clusters per word, and a window of $\pm1$.  These values showed
+reasonable stable scores when different sets of index vectors and permutation
+vectors were used.
+
+The trial corpus does not consist of all the words observed in the real training
+and test corpora.  The permutation functions are re-used without any
+alterations.  Any index vectors generated for the trial corpus are re-used, and
+the random number generator for the trial corpus is re-used to generate new
+index vectors for the training and test corpora.  We note that this is the only
+information shared between the trial corpus and the evaluation corpus; the word
+distributions from the trial corpus are not used during evaluation in any way.
+
+\section{Results and Discussion}
+
+The WSI task used experiments to evaluate submitted solutions: an unsupervised
+method and a supervised method.  The unsupervised method is measured according
+to the V-Measure and the F-Score.  The supervised method is measured using
+precision and recall.  Our submitted solution was optimized for the unsupervised
+experiment when rated by the V-Measure.  For comparison, we include in this
+system description alternate versions of our system that are optimized for the
+F-Score and the supervised experiment.
+
+\subsection{Unsupervised Evaluation}
+
+Intro paragraph here explaining concisely the unsupervised evaluation.  Then
+explain how the V-Measure \cite{rosenberg07vmeasure} and F-Score differ, and
+what they each measure.  We should note that the V-Measure tends to favor
+systems that generate more clusters whereas the F-Score favors systems that
+generate fewer clusters. 
+
+Refer to a table that contains optimized results for the V-Measure and the
+F-Score.  Be sure to highlight what is interesting about each of them.  It would
+be best to find a configuration that scores high according to the F-Score but
+still has a high number of clusters, i.e., something more than 1.02 (Pedersen's
+cluster average).
+
+\subsection{Supervised Evaluation}
+
+Intro paragraph here explaining concisely the supervised evaluation.  Then
+explain how the measurements function, along with the two test splits.  
+
+Refer to a table that contains optimized results for the V-Measure submission
+and another submission based on this experiment.  Note how they are different.
+
+We also need to spend a fair amount of time describing how we are different from
+others.  We can also explore why a context window of 1, as opposed to more,
+provides good results.  It is also worth noting that permutations only really
+gives us a right/left distinction with the window size.
+
+\begin{table}[htb]
+  \small
+  \center
+  \begin{tabular}{| l | ccccc | }
+    \hline
+    System & All & Nouns & Verbs & Rank & Senses \\
+    \hline
+    HERMIT & 16.1 & 15.6 & 16.7 & 1 & 10.78 \\
+    WORDSI-F & 26.7 & 30.1 & 24.4 & ? & 10.78 \\
+    WORDSI-S & 26.7 & 30.1 & 24.4 & ? & 10.78 \\
+    Random & 4.4 & 4.6 & 4.1 & ? & 4 \\
+    MFS & 0.0, & 0.0 & 0.0 & ? & 1.0 \\
+    LOW & 0.0 & 0.1 & 0.0 &  ? & 1.01 \\
+    \hline
+  \end{tabular}
+  \caption{V-Measure}
+  \label{tab:evaluation}
+\end{table}
+
+\begin{table}[htb]
+  \small
+  \center
+  \begin{tabular}{| l | ccccc | }
+    \hline
+    System & All & Nouns & Verbs & Rank & Senses \\
+    \hline
+    MFS & 63.4 & 72.7 & 57.0 & 1 & 1 \\
+    Random & 31.9 & 34.1 & 30.4 & ? & 4 \\
+    HERMIT & 26.7 & 30.1 & 24.4 & ? & 10.78 \\
+    WORDSI-F & 26.7 & 30.1 & 24.4 & ? & 10.78 \\
+    WORDSI-S & 26.7 & 30.1 & 24.4 & ? & 10.78 \\
+    LOW & 16.1 & 16.4 & 15.8 & ? & 9.71 \\
+    \hline
+  \end{tabular}
+  \caption{F-Score}
+  \label{tab:evaluation}
+\end{table}
+
+\begin{table}
+  \center
+  \small
+  \begin{tabular} { | l | cccc |}
+      \hline
+      System & All & Noun & Verb & Rank \\
+      \hline
+      HIGH & 62.44 & 59.43 & 66.82 & 1 \\
+      MFS & 58.67 & 53.22  & 66.620 & ? \\
+      WORDSI-F & 58.34 & 53.56 & 65.30 & ? \\
+      WORDSI-S & 58.34 & 53.56 & 65.30 & ? \\
+      HERMIT & 58.34 & 53.56 & 65.30 & ? \\
+      Random & 57.25 & 51.45 & 65.69 & ? \\
+      LOW & 18.72 & 1.55 & 43.76 & ? \\
+      \hline
+  \end{tabular}
+  \caption{Scores for SemEval Task 2 Supervised Evaluation, ordered by recall}
+  \label{tab:supervised-sem07}
+\end{table}
+
+\begin{table}
+  \center
+  \small
+  \begin{tabular} { | l | cccc |}
+      \hline
+      System & All & Noun & Verb & Rank \\
+      \hline
+      HIGH & 61.96 & 58.62 & 66.82 & 1 \\
+      MFS & 58.25 & 52.45 & 67.11 & ? \\
+      WORDSI-F & 58.34 & 53.56 & 65.30 & ? \\
+      WORDSI-S & 58.34 & 53.56 & 65.30 & ? \\
+      HERMIT & 57.27 & 52.53 & 64.16 & ? \\
+      Random & 56.52 & 50.21 & 65.73 & ? \\
+      LOW & 18.91 & 1.52 & 44.23 & ? \\
+      \hline
+  \end{tabular}
+  \caption{Scores for SemEval Task 2 Supervised Evaluation, ordered by recall}
+  \label{tab:supervised}
+\end{table}
+
+\section{Conclusion}
+
+The syntactic information in word-ordering improves WSI accuracy when used with
+co-occurrence features.  Our results show that adding word-ordering results in
+state-of-the-art performance on a standard WSI benchmark.  Furthermore, the WSI
+accuracy gains from word-ordering were shown to be present in two languages.
+In future work, we will consider other clustering techniques, and investigate
+the impact of specific positions.  This model will also be provided as part
+of an open source toolkit for Word Space Algorithms.
+
+\bibliographystyle{acl}
+\bibliography{semeval_2010}
+
+\end{document}

@@ -1,0 +1,41 @@
+\label{sec:discusssion}
+Through our experiments, we made several exciting and interesting discoveries.
+First, we discovered that the coherence metrics depend heavily on the smoothing
+factor $\epsilon$.  The original value, $1.0$ created a positive bias towards
+NMF from both metrics even when NMF generated incoherent topics.  The high
+smoothing factor also gave a significant increase to SVD scores.  We suspect
+that this was not an issue in previous studies with the coherence measures as
+LDA prefers to form topics from words that co-occur frequently, whereas NMF and
+SVD have no such preferences and often create low quality topics from completely
+unrelated words.  Therefore, we suggest a smaller $\epsilon$ value in general.
+
+We also found that the UCI measure often agreed with the UMass measure, but the
+UCI-entropy aggregate method induced more separation between LSA, SVD, and NMF
+in terms of topic coherence.  This measure also revealed the importance of the
+smoothing factor for topic coherence measures.
+
+With respects to human judgements, we found that coherence scores do not always
+indicate a better representation of distributional information.  The SVD model
+consistently out performed both LDA and NMF models, which each had higher
+coherence scores, when attempting to predict human judgements of similarity.  
+
+Lastly, we found all models capable of producing topics that improved document
+classification.  At the same time, SVD provided the most information during
+classification and outperformed the other models, which again had more coherent
+topics.  Our comparison between topic coherence scores and feature importance in
+classification revealed that relatively high quality topics, but not the most
+coherent topics, drive most of the classification decisions, and most topics do
+not affect the accuracy.  
+
+Overall, we see that each topic model paradigm has it's own strengths and
+weaknesses.  Latent Semantic Analysis with Singular Value Decomposition fails to
+form individual topics that aggregate similar words, but it does remarkably well
+when considering all the learned topics as similar words develop a similar topic
+representation.  These topics similarly perform well during classification.
+Conversely, both Non Negative Matrix factorization and Latent Dirichlet
+Allocation learn concise and coherent topics and achieved similar performance on
+our evaluations. However, NMF learns more incoherent topics than LDA and SVD.
+For applications in which a human end-user will interact with learned topics,
+the flexibility of LDA and the coherence advantages of LDA warrant strong
+consideration.  All of code for this work will be made available through an open
+source project.\footnote{https://github.com/fozziethebeat/TopicModelComparison}

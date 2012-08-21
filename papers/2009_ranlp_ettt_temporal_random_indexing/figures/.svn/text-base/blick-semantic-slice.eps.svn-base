@@ -1,0 +1,384 @@
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 1 758 133 835
+%%Title: blick-semantic-slice
+%%CreationDate: Tue Jun  2 13:32:13 2009
+%%Creator: Tgif-4.1.45-QPL written by William Chia-Wei Cheng (bill.cheng@acm.org)
+%%ProducedBy: (unknown)
+%%Pages: 1
+%%DocumentFonts: (atend)
+%%EndComments
+%%BeginProlog
+
+/tgifdict 89 dict def
+tgifdict begin
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/TGAT % tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifarcdict 8 dict def
+tgifarcdict /mtrx matrix put
+
+/TGAN % tgifarcn
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arc
+      savematrix setmatrix
+   end
+ } def
+
+/TGAR % tgifarc
+ { tgifarcdict begin
+      /endangle exch def
+      /startangle exch def
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 startangle endangle arcn
+      savematrix setmatrix
+   end
+ } def
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/TGPF % tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      tgiforigctm setmatrix
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+/TGMAX
+ { exch dup 3 1 roll exch dup 3 1 roll gt { pop } { exch pop } ifelse
+ } def
+/TGMIN
+ { exch dup 3 1 roll exch dup 3 1 roll lt { pop } { exch pop } ifelse
+ } def
+/TGSW { stringwidth pop } def
+
+/bd { bind def } bind def
+
+/GS { gsave } bd
+/GR { grestore } bd
+/NP { newpath } bd
+/CP { closepath } bd
+/CHP { charpath } bd
+/CT { curveto } bd
+/L { lineto } bd
+/RL { rlineto } bd
+/M { moveto } bd
+/RM { rmoveto } bd
+/S { stroke } bd
+/F { fill } bd
+/TR { translate } bd
+/RO { rotate } bd
+/SC { scale } bd
+/MU { mul } bd
+/DI { div } bd
+/DU { dup } bd
+/NE { neg } bd
+/AD { add } bd
+/SU { sub } bd
+/PO { pop } bd
+/EX { exch } bd
+/CO { concat } bd
+/CL { clip } bd
+/EC { eoclip } bd
+/EF { eofill } bd
+/IM { image } bd
+/IMM { imagemask } bd
+/ARY { array } bd
+/SG { setgray } bd
+/RG { setrgbcolor } bd
+/SD { setdash } bd
+/W { setlinewidth } bd
+/SM { setmiterlimit } bd
+/SLC { setlinecap } bd
+/SLJ { setlinejoin } bd
+/SH { show } bd
+/FF { findfont } bd
+/MS { makefont setfont } bd
+/AR { arcto 4 {pop} repeat } bd
+/CURP { currentpoint } bd
+/FLAT { flattenpath strokepath clip newpath } bd
+/TGSM { tgiforigctm setmatrix } def
+/TGRM { savematrix setmatrix } def
+
+end
+
+%%EndProlog
+%%Page: 1 1
+
+%%PageBoundingBox: 1 758 133 835
+tgifdict begin
+/tgifsavedpage save def
+
+1 SM
+1 W
+
+0 SG
+
+72 0 MU 72 11.602 MU TR
+72 128 DI 100.000 MU 100 DI DU NE SC
+
+GS
+
+/tgiforigctm matrix currentmatrix def
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   20 115 M
+   95 40 L
+   220 40 L
+   145 115 L
+CP
+GS
+GR
+GS
+   S
+GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   35 100 M
+   160 100 L
+   195 65 L
+   70 65 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   EC NP
+   pat7 8 32 56 168 48 TGPF
+GR
+GS
+   S
+GR
+
+% POLYGON/CLOSED-SPLINE
+0 SG
+NP
+   70 65 M
+   195 65 L
+   220 40 L
+   95 40 L
+CP
+GS
+   1 SG EF
+GR
+GS
+   EC NP
+   pat21 8 64 32 160 40 TGPF
+GR
+GS
+   S
+GR
+
+% TEXT
+NP
+0 SG
+GS
+   25 70 TR
+   [0.707 -0.707 0.707 0.707 4 9] CO
+   25 NE 70 NE TR
+GR
+   GS
+      1 W
+      25 70 TR
+      [0.707 -0.707 0.707 0.707 4 9] CO
+      0 12 M
+      GS
+            0 SG
+            /NewCenturySchlbk-Roman FF [12 0 0 -12 0 0] MS
+            (time) SH
+      GR
+   GR
+
+% POLY/OPEN-SPLINE
+0 SG
+GS
+   NP
+      55 65 M
+      -15 15 atan DU cos 8.000 MU 70 exch SU
+      exch sin 8.000 MU 50 exch SU L
+   TGSM
+   1 W
+   S
+GR
+GS
+   TGSM
+   NP
+      70 50 8.000 3.000 15 -15 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      70 50 8.000 3.000 15 -15 TGAT
+   CP F
+GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      5 130 M
+      GS
+            0 SG
+            /NewCenturySchlbk-Roman FF [12 0 0 -12 0 0] MS
+            (The "blick" toy is introduced) SH
+      GR
+   GR
+
+% TEXT
+NP
+0 SG
+   GS
+      1 W
+      110 15 M
+      GS
+            0 SG
+            /NewCenturySchlbk-Roman FF [12 0 0 -12 0 0] MS
+            (The "blick" toy is ) SH
+      GR
+      0 15 RM
+      GS
+            0 SG
+            /NewCenturySchlbk-Roman FF [12 0 0 -12 0 0] MS
+            (discovered to be toxic) SH
+      GR
+   GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         210 35 25 25 -53 64 TGAN
+      S
+   GR
+GR
+GS
+   TGSM
+   NP
+      215 59 8.000 3.000 -49 10 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      215 59 8.000 3.000 -49 10 TGAT
+   CP F
+GR
+
+% ARC
+0 SG
+GS
+   GS
+      NP
+         147 113 32 16 45 -33 TGAR
+      S
+   GR
+GR
+GS
+   TGSM
+   NP
+      169 101 8.000 3.000 -47 -22 TGAT
+   1 SG CP F
+   0 SG
+   NP
+      169 101 8.000 3.000 -47 -22 TGAT
+   CP F
+GR
+
+GR
+tgifsavedpage restore
+end
+showpage
+
+%%Trailer
+%MatchingCreationDate: Tue Jun  2 13:32:13 2009
+%%DocumentFonts: NewCenturySchlbk-Roman
+%%EOF

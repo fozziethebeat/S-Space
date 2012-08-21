@@ -1,0 +1,611 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/depot/!svn/ver/848/papers/topic-coherence_emnlp_2012/plots
+END
+lda-nmf-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-umassNoSmoothing.eps
+END
+umassNoSmoothing-ranks.eps
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/umassNoSmoothing-ranks.eps
+END
+mean-uciNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-uciNoSmoothing.diff.eps
+END
+rng_wordsim.eps
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/848/papers/topic-coherence_emnlp_2012/plots/rng_wordsim.eps
+END
+10mean-uciNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-uciNoSmoothing.diff.eps
+END
+mean-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umassNoSmoothing.eps
+END
+ordered_300_uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/ordered_300_uciNoSmoothing.eps
+END
+lda-nmf-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-uci.eps
+END
+entropy-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/entropy-umassNoLog.diff.eps
+END
+mean-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-uciNoLog.eps
+END
+max-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-uci.eps
+END
+10mean-umassNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umassNoSmoothing.diff.eps
+END
+model_topic_probs.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/model_topic_probs.eps
+END
+mean-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umass.eps
+END
+10mean-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-uci.diff.eps
+END
+ordered_300_uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/ordered_300_uci.eps
+END
+median-uciNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-uciNoSmoothing.diff.eps
+END
+umassNoSmoothing-rank-500.eps
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/umassNoSmoothing-rank-500.eps
+END
+10median-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umassNoSmoothing.eps
+END
+max-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umass.eps
+END
+10median-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-uciNoLog.eps
+END
+10median-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-uci.eps
+END
+10mean-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umass.diff.eps
+END
+median-umassNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umassNoSmoothing.diff.eps
+END
+weightedMean-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/weightedMean-uci.eps
+END
+10median-umassNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umassNoSmoothing.diff.eps
+END
+uci.zeros.lda.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/uci.zeros.lda.eps
+END
+max-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umassNoLog.diff.eps
+END
+median-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-uci.diff.eps
+END
+10mean-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-uciNoSmoothing.eps
+END
+weightedMean-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/weightedMean-umass.eps
+END
+10median-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umassNoLog.diff.eps
+END
+median-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umass.diff.eps
+END
+10mean-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umassNoSmoothing.eps
+END
+10mean-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-uciNoLog.eps
+END
+median-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-uciNoSmoothing.eps
+END
+353_wordsim.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/848/papers/topic-coherence_emnlp_2012/plots/353_wordsim.pdf
+END
+score_coherence_rank_correlation.eps
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/score_coherence_rank_correlation.eps
+END
+lda-nmf-umass-300.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-umass-300.eps
+END
+avatar_classifier.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/847/papers/topic-coherence_emnlp_2012/plots/avatar_classifier.pdf
+END
+boxplot-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-uci.eps
+END
+10mean-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umassNoLog.eps
+END
+median-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umassNoSmoothing.eps
+END
+median-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-uciNoLog.eps
+END
+boxplot-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-uci.diff.eps
+END
+uci.zeros.svd.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/uci.zeros.svd.eps
+END
+rng_wordsim.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/848/papers/topic-coherence_emnlp_2012/plots/rng_wordsim.pdf
+END
+mean-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umass.diff.eps
+END
+entropy-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/entropy-uciNoLog.eps
+END
+boxplot-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-umass.eps
+END
+mean-umassNoSmoothing.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/depot/!svn/ver/847/papers/topic-coherence_emnlp_2012/plots/mean-umassNoSmoothing.pdf
+END
+lda-nmf-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-uciNoSmoothing.eps
+END
+uciNoSmoothing-ranks.eps
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/uciNoSmoothing-ranks.eps
+END
+median-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umassNoLog.eps
+END
+mean-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-uciNoSmoothing.eps
+END
+lda-nmf-umass-correlation.eps
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-umass-correlation.eps
+END
+entropy-uciNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/entropy-uciNoLog.diff.eps
+END
+boxplot-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-umass.diff.eps
+END
+boxplot-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-uciNoSmoothing.eps
+END
+10median-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umass.diff.eps
+END
+mean-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-uci.eps
+END
+max-uciNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-uciNoSmoothing.diff.eps
+END
+10mean-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-uci.eps
+END
+uci.zeros.nmf.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/uci.zeros.nmf.eps
+END
+uciNoSmoothing-rank-500.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/uciNoSmoothing-rank-500.eps
+END
+10median-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-uciNoSmoothing.eps
+END
+boxplot-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-umassNoSmoothing.eps
+END
+mean-umassNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umassNoSmoothing.diff.eps
+END
+ordered_300_umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/ordered_300_umassNoSmoothing.eps
+END
+lda-nmf-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-umass.eps
+END
+boxplot-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-uciNoLog.eps
+END
+mean-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umassNoLog.eps
+END
+max-umassNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umassNoSmoothing.diff.eps
+END
+coherence_rank_correlation.eps
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/coherence_rank_correlation.eps
+END
+10mean-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umass.eps
+END
+10median-uciNoSmoothing.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-uciNoSmoothing.diff.eps
+END
+max-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-uci.diff.eps
+END
+median-uci.eps
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-uci.eps
+END
+boxplot-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/boxplot-umassNoLog.eps
+END
+mean-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-umassNoLog.diff.eps
+END
+10mean-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10mean-umassNoLog.diff.eps
+END
+ordered_300_umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/ordered_300_umass.eps
+END
+max-umass.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umass.diff.eps
+END
+rank_coherence_rank_correlation.eps
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/rank_coherence_rank_correlation.eps
+END
+10median-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umassNoLog.eps
+END
+median-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umass.eps
+END
+10median-umass.eps
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-umass.eps
+END
+max-uciNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-uciNoSmoothing.eps
+END
+median-umassNoLog.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/median-umassNoLog.diff.eps
+END
+lda-nmf-uci-300.eps
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-uci-300.eps
+END
+max-umassNoSmoothing.eps
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umassNoSmoothing.eps
+END
+max-uciNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-uciNoLog.eps
+END
+mean-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/mean-uci.diff.eps
+END
+mean-uciNoSmoothing.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/depot/!svn/ver/847/papers/topic-coherence_emnlp_2012/plots/mean-uciNoSmoothing.pdf
+END
+max-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/max-umassNoLog.eps
+END
+lda-nmf-uci-correlation.eps
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/lda-nmf-uci-correlation.eps
+END
+353_wordsim.eps
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/depot/!svn/ver/848/papers/topic-coherence_emnlp_2012/plots/353_wordsim.eps
+END
+uci.zeros.eps
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/uci.zeros.eps
+END
+avatar_classifier.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/845/papers/topic-coherence_emnlp_2012/plots/avatar_classifier.eps
+END
+10median-uci.diff.eps
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/10median-uci.diff.eps
+END
+entropy-umassNoLog.eps
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/depot/!svn/ver/841/papers/topic-coherence_emnlp_2012/plots/entropy-umassNoLog.eps
+END
