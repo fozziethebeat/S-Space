@@ -29,7 +29,7 @@ import edu.ucla.sspace.vector.DoubleVector;
  * matrix.  This class provides a way to quickly tranpose the matrix data
  * without the need for copying it.
  */
-public class TransposedMatrix implements Matrix, java.io.Serializable {
+public class TransposedMatrix extends AbstractMatrix implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
     

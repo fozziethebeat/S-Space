@@ -24,6 +24,9 @@ package edu.ucla.sspace.matrix;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.TransformStatistics.MatrixStatistics;
 
+import edu.ucla.sspace.vector.DoubleVector;
+import edu.ucla.sspace.vector.SparseVector;
+
 import java.io.File;
 
 
@@ -129,6 +132,44 @@ public class CorrelationTransform extends BaseTransform {
                 (totalSum * value - rowSums[row] * colSums[column]) / 
                 Math.sqrt(rowSums[row] * (totalSum - rowSums[row]) *
                         colSums[column] * (totalSum - colSums[column]));
+            return (newValue > 0) ? Math.sqrt(newValue) : 0;
+        }
+
+        /**
+         * Computes the correlation, scaled using the square root, between item
+         * {@code row} and feature {@code column} where {@code value} specifies
+         * the number of occurances.   If {@code value} is zero, the correlation
+         * is zero.
+         *
+         * @param row The index specifying the item being observed
+         * @param column The index specifying the feature being observed
+         * @param value The number of occurance of the item and feature
+         *
+         * @return the square root of the correlation between the item aand
+         *         feature
+         */
+        public double transform(int row, DoubleVector column) {
+            double value = column.get(row);
+            if (value == 0d)
+                return 0;
+
+            // Calcuate the term frequencies in this new document
+            double colSum = 0;
+            if (column instanceof SparseVector) {
+                SparseVector sv = (SparseVector)column;
+                for (int nz : sv.getNonZeroIndices())
+                    colSum += column.get(nz);
+            }
+            else {
+                int length = column.length();
+                for (int i = 0; i < length; ++i)
+                    colSum += column.get(i);
+            }
+
+            double newValue = 
+                (totalSum * value - rowSums[row] * colSum) / 
+                Math.sqrt(rowSums[row] * (totalSum - rowSums[row]) *
+                        colSum * (totalSum - colSum));
             return (newValue > 0) ? Math.sqrt(newValue) : 0;
         }
     }

@@ -53,7 +53,8 @@ import java.util.Set;
  *
  * @author David Jurgens
  */
-public class RowMaskedMatrix implements Matrix, java.io.Serializable {
+public class RowMaskedMatrix extends AbstractMatrix 
+        implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 

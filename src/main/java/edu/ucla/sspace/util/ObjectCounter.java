@@ -68,11 +68,19 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
     }
 
     /**
+     * Creates an empty {@code Counter} with the provided capacity.
+     */
+    public ObjectCounter(int capacity) {
+        counts = new TObjectIntHashMap<T>(capacity);
+        sum = 0;
+    }
+
+    /**
      * Creates a {@code Counter} whose initial state has counted all of the
      * specified items.
      */
     public ObjectCounter(Collection<? extends T> items) {
-        this();
+        this(items.size());
         for (T item : items)
             count(item);
     }      
@@ -191,8 +199,11 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
         T max = null;
         while (iter.hasNext()) {
             iter.advance();
-            if (iter.value() > maxCount)
+            int count = iter.value();
+            if (count > maxCount) {
                 max = iter.key();
+                maxCount = count;
+            }
         }
         return max;
     }
@@ -208,8 +219,11 @@ public class ObjectCounter<T> implements Counter<T>, java.io.Serializable {
         T min = null;
         while (iter.hasNext()) {
             iter.advance();
-            if (iter.value() < minCount)
+            int count = iter.value();
+            if (count < minCount) {
                 min = iter.key();
+                minCount = count;
+            }
         }
         return min;
     }

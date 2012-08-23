@@ -47,13 +47,13 @@ import java.util.Set;
 public interface BasisMapping<T,E> {
 
     /**
-     * Returns the dimension number corresponding to the provided feature.
+     * Returns the dimension index corresponding to the provided feature.
      *
      * @param feature a feature whose value can be used 
      *
-     * @return the dimension for the occurrence of the last word in the path
+     * @return the dimension to which the specified {@code feature} is mapped
      */
-    int getDimension(T features);
+    int getDimension(T feature);
    
     /**
      * Returns a description of the specified dimension.  

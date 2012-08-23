@@ -37,6 +37,22 @@ import java.util.*;
  */
 public class SparseHashIntegerVectorTests {
 
+    @Test public void testSetZero() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        v.set(0, 0);
+        assertEquals(0, v.getNonZeroIndices().length);
+    }
+
+    @Test public void testSetAddSumIsZero() {
+        SparseHashIntegerVector v = new SparseHashIntegerVector(100);
+        assertEquals(0, v.getNonZeroIndices().length);
+        v.add(0, 1);
+        assertEquals(1, v.getNonZeroIndices().length);
+        v.add(0, -1);
+        assertEquals(0, v.getNonZeroIndices().length);
+    }
+
+
     @Test public void testGetAndSet() {
         SparseHashIntegerVector v = new SparseHashIntegerVector(100);
         v.set(1, 1);

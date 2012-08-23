@@ -79,6 +79,11 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
     private static final long serialVersionUID = 1L;
 
     /**
+     * The default space allocated for storing vertices.
+     */
+    public static final int DEFAULT_INITIAL_VERTEX_CAPACITY = 16;
+
+    /**
      * The number of edges in this graph.
      */
     private int numEdges;
@@ -87,7 +92,6 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
      * A mapping from a vertex's index to the the set of {@link Edge} instances
      * that connect it to other members of the graph.
      */
-    //private final Map<Integer,S> vertexToEdges;
     private final TIntObjectMap<S> vertexToEdges;
 
     /**
@@ -102,11 +106,22 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
     private Collection<WeakReference<Subgraph>> subgraphs;
 
     /**
-     * Creates an empty {@code AbstractGraph}
+     * Creates an empty {@code AbstractGraph} with the default initial capacity
+     * for vertices ({@value DEFAULT_INITIAL_VERTEX_CAPACITY});
      */
     public AbstractGraph() {
-        // vertexToEdges = new HashMap<Integer,S>();
-        vertexToEdges = new TIntObjectHashMap<S>();
+        this(DEFAULT_INITIAL_VERTEX_CAPACITY);
+    }
+
+
+    /**
+     * Creates an empty {@code AbstractGraph} with the provided initial capacity
+     */
+    public AbstractGraph(int capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("Capcity must be positive");
+        
+        vertexToEdges = new TIntObjectHashMap<S>(capacity);
         subgraphs = new ArrayList<WeakReference<Subgraph>>();
     }    
 
@@ -114,7 +129,7 @@ public abstract class AbstractGraph<T extends Edge,S extends EdgeSet<T>>
      * Creates a new {@code AbstractGraph} with the provided set of vertices.
      */
     public AbstractGraph(Set<Integer> vertices) {
-        this();
+        this(Math.max(vertices.size(), DEFAULT_INITIAL_VERTEX_CAPACITY));
         for (Integer v : vertices)
             vertexToEdges.put(v, createEdgeSet(v));
     }    

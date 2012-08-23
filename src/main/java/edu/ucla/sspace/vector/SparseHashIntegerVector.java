@@ -51,6 +51,8 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
     
     private final int length;
 
+    private double magnitude;
+
     /**
      * Creates a new vector of the specified length
      *
@@ -59,6 +61,7 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
     public SparseHashIntegerVector(int length) {
         this.length = length;
         map = new TIntIntHashMap();
+        magnitude = -1;
     }
 
     /**
@@ -73,6 +76,7 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
         for (int i = 0; i < values.length; ++i)
             if (values[i] != 0)
                 map.put(i, values[i]);
+        magnitude = -1;
     }
 
     /**
@@ -82,6 +86,7 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
         int val = map.get(index);
         int newVal = val + delta;
         map.put(index, newVal);
+        magnitude = -1;
         return newVal;
     }
 
@@ -116,6 +121,16 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
     }    
 
     /**
+     * {@inheritDoc} This value is cached and recomputed as needed when the
+     * vector changes.
+     */
+    @Override public double magnitude() {
+        return (magnitude == -1) 
+            ? magnitude = super.magnitude()
+            : magnitude;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void set(int index, int value) {
@@ -126,6 +141,7 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
         }
         else 
             map.put(index, value);
+        magnitude = -1;
     }
 
     /**

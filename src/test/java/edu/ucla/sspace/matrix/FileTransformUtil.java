@@ -25,6 +25,8 @@ package edu.ucla.sspace.matrix;
 
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 
+import edu.ucla.sspace.vector.DoubleVector;
+
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -69,6 +71,10 @@ public class FileTransformUtil {
     public static class OnePlusGlobalTransform implements GlobalTransform {
         public double transform(int row, int col, double value) {
             return value+1;
+        }
+
+        public double transform(int row, DoubleVector column) {
+            return column.get(row) + 1;
         }
     }
 }

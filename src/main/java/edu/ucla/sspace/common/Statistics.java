@@ -30,7 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.IntegerMap;
+import edu.ucla.sspace.util.ObjectCounter;
 
 
 /**
@@ -165,6 +167,43 @@ public class Statistics {
         Arrays.sort(sorted);
         return sorted[sorted.length/2];
     }
+
+    /**
+     * Returns the mode value of the collection of numbers
+     */
+    public static <T extends Number> T mode(Collection<T> values) {
+        if (values.isEmpty())
+            throw new IllegalArgumentException(
+                "No median in an empty collection");
+        Counter<T> c = new ObjectCounter<T>();
+        for (T n : values)
+            c.count(n);
+        return c.max();
+    }
+
+    /**
+     * Returns the mode value of the array of ints
+     */
+    public static int mode(int[] values) {
+        if (values.length == 0)
+            throw new IllegalArgumentException("No median in an empty array");        
+        Counter<Integer> c = new ObjectCounter<Integer>();
+        for (int i : values)
+            c.count(i);
+        return c.max();
+    }
+
+    /**
+     * Returns the mode value of the array of doubles
+     */
+    public static double mode(double[] values) {
+        if (values.length == 0)
+            throw new IllegalArgumentException("No median in an empty array");        
+        Counter<Double> c = new ObjectCounter<Double>();
+        for (double d : values)
+            c.count(d);
+        return c.max();
+    } 
 
     /**
      * Randomly sets {@code valuesToSet} values to {@code true} for a sequence

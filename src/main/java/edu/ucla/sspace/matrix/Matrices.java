@@ -332,8 +332,10 @@ public class Matrices {
     public static Matrix multiply(Matrix m1, Matrix m2) {
         if (m1.columns() != m2.rows()) 
             throw new IllegalArgumentException(
-                    "The number of columns in the first matrix do not match " +
-                    "the number of rows in the second matrix.");
+                String.format(
+                "The number of columns in the first matrix (%d) do not match " +
+                "the number of rows in the second matrix (%d).", m1.columns(),
+                m2.rows()));
 
 	if (m1.columns() != m2.rows()) 
 	    return null;

@@ -27,7 +27,6 @@ import java.io.ObjectOutputStream;
 
 import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +47,7 @@ import edu.ucla.sspace.util.primitive.TroveIntSet;
 
 import gnu.trove.TDecorators;
 import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
@@ -68,56 +68,6 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         implements EdgeSet<TypedEdge<T>>, java.io.Serializable {
         
     private static final long serialVersionUID = 1L;
-
-    /////
-    //
-    // IMPLEMENTATION NOTE: This class stores a set of types associated each
-    // each in coming and outgoing edge's vertex.  Rather than storing the set
-    // of types as a Set<T>, the set is represented in a compact form using a
-    // BitSet, where each bit corresponds to a type index.  Given the potential
-    // for a huge number of edge sets in any give graph, having each set
-    // maintain its own type-to-bit-index mapping wastes a significant amount of
-    // space -- especially if the sets are all using the same types.  Therefore,
-    // we use a class-level cache of mapping the types to indices with two
-    // global static variables.  This results in a significant space savings.
-    // However, because these are static variables, their mapping state needs to
-    // be preserved upon serialization, which leads to a (rather complex) custom
-    // serialization code.
-    //
-    ////
-
-    /**
-     * A mapping from indices to their corresponding types 
-     */
-    private static final List<Object> TYPES = new ArrayList<Object>();
-
-    /**
-     * The mapping from types to their indices
-     */
-    private static final Map<Object,Integer> TYPE_INDICES = 
-         new HashMap<Object,Integer>();
-
-    /**
-     * Returns the index for the given type, creating a new index if necessary
-     */
-    private static int index(Object o) {
-        Integer i = TYPE_INDICES.get(o);
-        if (i == null) {
-            synchronized (TYPE_INDICES) {
-                // check that another thread did not already update the index
-                i = TYPE_INDICES.get(o);
-                if (i != null)
-                    return i;
-                else {
-                    int j = TYPE_INDICES.size();
-                    TYPE_INDICES.put(o, j);
-                    TYPES.add(o);
-                    return j;
-                }
-            }
-        }
-        return i;
-    }
        
     /**
      * The vertex to which all edges in the set are connected
@@ -127,7 +77,7 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     /**
      * A mapping from a type to the set of outgoing edges
      */
-    private final TIntObjectHashMap<BitSet> edges;
+    private final TIntObjectMap<Set<T>> edges;
         
     /**
      * The number of edges in this set.
@@ -135,17 +85,11 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     private int size;
 
     /**
-     * The types that are contained in this set;
-     */
-    private BitSet setTypes;
-
-    /**
      * Creates a new {@code SparseTypedEdgeSet} for the specfied vertex.
      */
     public SparseTypedEdgeSet(int rootVertex) {
         this.rootVertex = rootVertex;
-        edges = new TIntObjectHashMap<BitSet>();
-        setTypes = new BitSet();
+        edges = new TIntObjectHashMap<Set<T>>();
         size = 0;
     }
     
@@ -155,9 +99,9 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     public boolean add(TypedEdge<T> e) {
         if (e.from() == rootVertex) 
-            return add(edges, e.to(), e.edgeType());
+            return add(e.to(), e.edgeType());
         else if (e.to() == rootVertex) 
-            return add(edges, e.from(), e.edgeType());
+            return add(e.from(), e.edgeType());
         return false;
     }
 
@@ -165,29 +109,19 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * Adds an edge to the spectied set that connectes t{@code i} according to
      * the given type, or returns {@code false} if the edge already existed.
      */
-    private boolean add(TIntObjectHashMap<BitSet> edges, int i, T type) {
-        BitSet types = edges.get(i);
+    private boolean add(int i, T type) {
+        Set<T> types = edges.get(i);
         // If there weren't any edges to this vertex, then special case the
         // creation and return true.
         if (types == null) {
-            types = new BitSet();
+            types = new HashSet<T>();
             edges.put(i, types);
-            types.set(index(type));
-            size++;
-            return true;
         }
-        // Otherwise, lookup the type's index and see if it already exists in
-        // the bitset, indicating the edge does too
-        int index = index(type);
-        setTypes.set(index);
-        if (!types.get(index)) {
-            types.set(index);            
+        
+        boolean b = types.add(type);
+        if (b)
             size++;
-            return true;            
-        }
-        // If the type was already there, then return false because the edge
-        // already exists
-        return false;
+        return b;
     }
 
     /**
@@ -215,8 +149,8 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * {@inheritDoc}
      */
     public boolean connects(int vertex, T type) {
-        BitSet types = edges.get(vertex);
-        return types != null && types.get(index(type));
+        Set<T> types = edges.get(vertex);
+        return types != null && types.contains(type);
     }
 
     /**
@@ -235,12 +169,9 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         return false;
     }
 
-    private boolean contains(TIntObjectHashMap<BitSet> edges, int i, T type) {
-        BitSet types = edges.get(i);
-        if (types == null) 
-            return false;
-        int index = index(type);
-        return types.get(index);
+    private boolean contains(TIntObjectMap<Set<T>> edges, int i, T type) {
+        Set<T> types = edges.get(i);
+        return types != null && types.contains(type);
     }
 
     /**
@@ -248,31 +179,15 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
      public SparseTypedEdgeSet<T> copy(IntSet vertices) {        
          SparseTypedEdgeSet<T> copy = new SparseTypedEdgeSet<T>(rootVertex);
-         
-         if (vertices.size() < edges.size()) {
-            IntIterator iter = vertices.iterator();
-            while (iter.hasNext()) {
-                int v = iter.nextInt();
-                if (edges.containsKey(v)) {
-                    BitSet b = edges.get(v);
-                    BitSet b2 = new BitSet();
-                    b2.or(b);
-                    copy.edges.put(v, b2);
-                }
-            }            
-        }
-        else {
-            TIntObjectIterator<BitSet> iter = edges.iterator();
-            while (iter.hasNext()) {
-                iter.advance();
-                int v = iter.key();
-                if (vertices.contains(v)) {
-                    BitSet b = iter.value();
-                    BitSet b2 = new BitSet();
-                    b2.or(b);
-                    copy.edges.put(v, b2);
-                }
-            }
+         TIntObjectIterator<Set<T>> iter = edges.iterator();
+         while (iter.hasNext()) {
+             iter.advance();
+             int v = iter.key();
+             if (vertices.contains(v)) {
+                 Set<T> types = iter.value();
+                 copy.edges.put(v, types);
+                 copy.size += types.size();
+             }
         }
         return copy;
     }
@@ -281,9 +196,9 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * {@inheritDoc}
      */
     public int disconnect(int v) {
-        BitSet b = edges.remove(v);
-        if (b != null) {
-            int edges = b.cardinality();
+        Set<T> types = edges.remove(v);
+        if (types != null) {
+            int edges = types.size();
             size -= edges;
             return edges;
         }
@@ -294,13 +209,10 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * {@inheritDoc}
      */
     public Set<TypedEdge<T>> getEdges(final T type) {    
-        if (!TYPE_INDICES.containsKey(type))
-            return Collections.<TypedEdge<T>>emptySet();
-        final int typeIndex = index(type);
         final Set<TypedEdge<T>> s = new HashSet<TypedEdge<T>>();
-        edges.forEachEntry(new TIntObjectProcedure<BitSet>() {
-                public boolean execute(int v, BitSet types) {
-                    if (types.get(typeIndex))
+        edges.forEachEntry(new TIntObjectProcedure<Set<T>>() {
+                public boolean execute(int v, Set<T> types) {
+                    if (types.contains(type))
                         s.add(new SimpleTypedEdge<T>(
                                       type, v, rootVertex));
                     return true;
@@ -313,16 +225,25 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * {@inheritDoc}
      */
     public Set<TypedEdge<T>> getEdges(int vertex) {
-        BitSet b = edges.get(vertex);
-        if (b == null)
+        return new EdgesForVertex(vertex);
+        /*
+        Set<T> types = edges.get(vertex);
+        // For unconnected vertices, return the empty set
+        if (types == null)
             return Collections.<TypedEdge<T>>emptySet();
-        Set<TypedEdge<T>> s = new HashSet<TypedEdge<T>>();
-        for (int i = b.nextSetBit(0); i >= 0; i = b.nextSetBit(i+1)) {
-            @SuppressWarnings("unchecked")
-            T type = (T)(TYPES.get(i));
-            s.add(new SimpleTypedEdge<T>(type, vertex, rootVertex));
+        // If there's only a single type, just use the singleton set to avoid
+        // allocating a new HashSet for just one object
+        else if (types.size() == 1) {
+            return Collections.<TypedEdge<T>>singleton(
+                new SimpleTypedEdge(types.iterator().next(), vertex, rootVertex));
         }
-        return s;
+        else {
+            Set<TypedEdge<T>> s = new HashSet<TypedEdge<T>>();
+            for (T type : types) 
+                s.add(new SimpleTypedEdge<T>(type, vertex, rootVertex));
+            return s;
+        }
+        */
     }    
 
     /**
@@ -370,29 +291,18 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         TypedEdge<T> e = (TypedEdge<T>)o;
 
         if (e.from() == rootVertex) 
-            return remove(edges, e.to(), e.edgeType());
+            return remove(e.to(), e.edgeType());
         else if (e.to() == rootVertex) 
-            return remove(edges, e.from(), e.edgeType());
+            return remove(e.from(), e.edgeType());
         return false;
     }
 
-    private boolean remove(TIntObjectHashMap<BitSet> edges, int i, T type) {
-        BitSet types = edges.get(i);
-        if (types == null) 
-            return false;
-        int index = index(type);
-        // If there was an edge of that type, remove it and update the
-        // "connected" set as necessary
-        if (types.get(index)) {
-            types.set(index, false);
-            // If this was the last edge to that vertex, remove this BitMap
-            if (types.cardinality() == 0) {
-                edges.remove(i);
-                size--;
-            }
-            return true;
-        }
-        return false;
+    private boolean remove(int i, T type) {
+        Set<T> types = edges.get(i);
+        boolean b = types.remove(type);
+        if (b)
+            size--;
+        return b;
     }
 
     /**
@@ -406,7 +316,11 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      * Returns the set of types contained within this set
      */
     public Set<T> types() {
-        return new Types();
+        // NOTE: purely unoptimized!
+        Set<T> types = new HashSet<T>();
+        for (Set<T> s : edges.values())
+            types.addAll(s);
+        return types;
     }
 
     /**
@@ -414,158 +328,6 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     public Iterator<TypedEdge<T>> uniqueIterator() {
         return new UniqueEdgeIterator();
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-        // The TYPE_INDICES mapping is not longer valid upon deserialization so
-        // we need to write it as a part of this object's state.  Serialization
-        // uses some caching, so if multiple instances of this class are being
-        // written, the cache is only saved once, which saves significant space.
-        out.writeObject(TYPE_INDICES);
-    }
-
-    private void readObject(ObjectInputStream in) 
-            throws IOException, ClassNotFoundException {
-        // Restore the existing state of the Set
-        in.defaultReadObject();
-
-        // Then read in the type indices, which may or may not need to be
-        // restored depending on the current state of the cache
-        @SuppressWarnings("unchecked")
-        Map<Object,Integer> typeIndices = 
-            (Map<Object,Integer>)Map.class.cast(in.readObject());
-        boolean needToRemapIndices = true;
-        if (!TYPE_INDICES.equals(typeIndices)) {
-            if (TYPE_INDICES.isEmpty()) {
-                synchronized (TYPE_INDICES) {
-                    // Check whether some thread might have modified the map in
-                    // the mean-time.  If not, then use our type mapping as the
-                    // default
-                    if (TYPE_INDICES.isEmpty()) {
-                        TYPE_INDICES.putAll(typeIndices);
-                        // Fill in the VALUES array with nulls first so that we
-                        // can iterate through the typeIndices map once without
-                        // having to worry about the indexing
-                        for (int i = 0; i < TYPE_INDICES.size(); ++i)
-                            TYPES.add(null);
-                        for (Map.Entry<Object,Integer> e : 
-                                 TYPE_INDICES.entrySet()) {
-                            TYPES.set(e.getValue(), e.getKey());
-                        }                       
-                        needToRemapIndices = false;
-                    }
-                   
-                }
-            }
-        }
-        // Check if the indices we have are a subset or superset of the current
-        // type indices
-        else {
-            boolean foundMismatch = false;
-            for (Map.Entry<Object,Integer> e : typeIndices.entrySet()) {
-                Object o = e.getKey();
-                int oldIndex = e.getValue();
-                Integer curIndex = TYPE_INDICES.get(o);
-                // If the current index is null, then map it to what this has,
-                // which is possibly beyond the range of the current set of
-                // types.  Note that our type mapping isn't invalidated yet by
-                // this action, so we don't need to remap.
-                if (curIndex == null) {
-                    // Grow the TYPES list until there is room for this
-                    // additional index                    
-                    while (TYPES.size() <= oldIndex) 
-                        TYPES.add(null);
-                    TYPES.set(oldIndex, o);
-                    TYPE_INDICES.put(o, oldIndex);
-                }
-                else if (curIndex != oldIndex) {
-                    foundMismatch = true;
-                }
-            }
-            // If we were successfully able to add the indices we have without
-            // disturbing the existing mapping, or our indices were just a
-            // subset of the existing ones, then we don't need to remap the
-            // total set of indices.
-            if (!foundMismatch)
-                needToRemapIndices = false;
-        }
-
-        // If the state of this set's type is inconsistent with the current type
-        // mapping, then update the mapping with any missing types and then
-        // reset all of its BitSet contents with the correct indices
-        if (needToRemapIndices) {
-            TIntIntMap typeRemapping = new TIntIntHashMap();
-            for (Map.Entry<Object,Integer> e : typeIndices.entrySet()) {
-                Object o = e.getKey();
-                int oldIndex = e.getValue();
-                // NOTE: the else {} case above may have added several of our
-                // types that weren't inconsistent, so this may be an identity
-                // mapping for some types, which is nice.
-                typeRemapping.put(oldIndex, index(o));
-            }
-            // Remap all the in-edges vertices' types...
-            for (TIntObjectIterator<BitSet> it = edges.iterator(); it.hasNext(); ) {
-                it.advance();
-                int v = it.key();
-                BitSet oldIndices = it.value();
-                BitSet newIndices = new BitSet();
-                for (int i = oldIndices.nextSetBit(0); i >= 0; 
-                         i = oldIndices.nextSetBit(i+1)) {
-                    newIndices.set(typeRemapping.get(i));
-                }
-                it.setValue(newIndices);
-            }
-        }
-    }
-
-    /**
-     * A utility class for exposing the objects for types of the edges in this
-     * set, which are otherwise represented as bits.
-     */
-    private class Types extends AbstractSet<T> {
-        
-        public boolean contains(Object o) {
-            if (TYPE_INDICES.containsKey(o)) {
-                Integer i = TYPE_INDICES.get(o);
-                return setTypes.get(i);
-            }
-            return false;
-        }
-
-        public Iterator <T> iterator() {
-            return new TypeIter();
-        }
-
-        public int size() {
-            return setTypes.cardinality();
-        }
-
-        private class TypeIter implements Iterator<T> {
-
-            IntIterator typeIndices;
-            
-            public TypeIter() {
-                typeIndices = CompactIntSet.wrap(setTypes).iterator();
-            }
-
-            public boolean hasNext() {
-                return typeIndices.hasNext();
-            }
-
-            public T next() {
-                if (!typeIndices.hasNext())
-                    throw new NoSuchElementException();
-                int i = typeIndices.nextInt();
-                @SuppressWarnings("unchecked")
-                T type = (T)(TYPES.get(i));
-                return type;
-            }
-
-            public void remove() { 
-                throw new UnsupportedOperationException();
-            }
-        }        
     }
 
     /**
@@ -616,8 +378,8 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         }
 
         @Override public int size() {
-            BitSet b = edges.get(otherVertex);
-            return (b == null) ? 0 : b.cardinality();
+            Set<T> types = edges.get(otherVertex);
+            return (types == null) ? 0 : types.size();
         }
     }
 
@@ -628,58 +390,28 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
      */
     private class EdgesForVertexIterator implements Iterator<TypedEdge<T>> {
 
-        private int curTypeIndex;
-
-        private BitSet curTypes;
-
-        /**
-         * The next edge to return.  This field is updated by {@link advance()}
-         */
-        private TypedEdge<T> next;
+        private final Iterator<T> typeIter;
 
         int otherVertex;
 
         public EdgesForVertexIterator(int otherVertex) {
             this.otherVertex = otherVertex;
-            curTypeIndex = -1;
-            curTypes = edges.get(otherVertex);
-            advance();
-        }
-
-        private void advance() {
-            next = null;
-            while (next == null && curTypes != null) {
-                if (curTypes == null) {
-                    curTypes = edges.get(otherVertex);
-                    curTypeIndex = -1;
-                }
-                
-                if (curTypes == null)
-                    break;
-                curTypeIndex = curTypes.nextSetBit(curTypeIndex + 1);
-                if (curTypeIndex >= 0) {
-                    // We know that the TYPES map has the right object type
-                    @SuppressWarnings("unchecked")
-                    T type = (T)(TYPES.get(curTypeIndex));
-                    next = new SimpleTypedEdge<T>(type, otherVertex, rootVertex);
-                }
-                // If there were no further types in this edge set, then loop
-                // again to load the next set of types for a new vertex, if it exists
-                else 
-                    curTypes = null;
-            }
+            Set<T> types = edges.get(otherVertex);
+            
+            typeIter = (types != null) 
+                ? types.iterator()
+                : Collections.<T>emptySet().iterator();
         }
 
         public boolean hasNext() {
-            return next != null;
+            return typeIter.hasNext();
         }
 
         public TypedEdge<T> next() {
-            if (next == null)
+            if (!typeIter.hasNext())
                 throw new NoSuchElementException();
-            TypedEdge<T> n = next;
-            advance();
-            return n;
+            return new SimpleTypedEdge(
+                typeIter.next(), rootVertex, otherVertex);
         }
 
         public void remove() {
@@ -698,42 +430,32 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
         /**
          * An iterator over the incoming edges for the current type
          */
-        private TIntObjectIterator<BitSet> iter;
+        private TIntObjectIterator<Set<T>> iter;
 
-        /**
-         * The next edge to return.  This field is updated by {@link advance()}
-         */
-        private TypedEdge<T> next;
+        private Iterator<T> typeIter;
 
-        private int curVertex;
-
-        private IntIterator curVertexTypes;
-
+        TypedEdge<T> next;
 
         public EdgeIterator() {
             this.iter = edges.iterator();
+            typeIter = null;
             advance();
         }
 
         private void advance() {
             next = null;            
             while (next == null) {
-                // Check whether the current vertex has types left, and if not,
-                // load a new vertex's types
-                if (curVertexTypes == null || !curVertexTypes.hasNext()) {
-                    // If there were no more types to load, stop searching
+                if (typeIter == null || !typeIter.hasNext()) {
+                    // If there were no more vertices to load, stop searching
                     if (!iter.hasNext())
                         break;
                     iter.advance();
-                    curVertex = iter.key();
-                    curVertexTypes = CompactIntSet.wrap(iter.value()).iterator();
+                    typeIter = iter.value().iterator();
                 }
 
-                if (curVertexTypes.hasNext()) {
-                    int typeIndex = curVertexTypes.nextInt();
-                    @SuppressWarnings("unchecked")
-                    T type = (T)(TYPES.get(typeIndex));
-                    next = new SimpleTypedEdge<T>(type, curVertex, rootVertex);
+                if (typeIter.hasNext()) {
+                    next = new SimpleTypedEdge<T>(
+                        typeIter.next(), iter.key(), rootVertex);
                 }
             }
         }
