@@ -15,4 +15,8 @@ a quick introduction on how to use the S-Space package, see the [Package
 Overview] (/fozziethebeat/S-Space/wiki/PackageStructure) for information on the
 code and available features, or dive right into the
 [Javadoc](http://fozziethebeat.github.com/S-Space/apidocs/) to see what's
-available now.
+available now.  For any questions, please contact us via our mailing lists:
+[S-Space-Users][1]
+
+  [1]:mailto:s-space-users@googlegroups.com
+  [2]:mailto:s-space-research-dev@googlegroups.com
