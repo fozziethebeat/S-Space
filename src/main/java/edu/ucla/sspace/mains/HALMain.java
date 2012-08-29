@@ -148,14 +148,9 @@ public class HALMain extends GenericMain {
                           "CLASSNAME", "Algorithm Options");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         HALMain hal = new HALMain();
-        try {
-            hal.run(args);
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
+        hal.run(args);
     }
     
     /**
@@ -175,44 +170,8 @@ public class HALMain extends GenericMain {
     /**
      * {@inheritDoc}
      */
-    protected Properties setupProperties() {
-        // use the System properties in case the user specified them as
-        // -Dprop=<val> to the JVM directly.
-        Properties props = System.getProperties();
-
-         if (argOptions.hasOption("windowSize")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.WINDOW_SIZE_PROPERTY,
-                     argOptions.getStringOption("windowSize"));
-         }
-
-         if (argOptions.hasOption("threshold")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.ENTROPY_THRESHOLD_PROPERTY,
-                     argOptions.getStringOption("threshold"));
-         }
-
-         if (argOptions.hasOption("retain")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.RETAIN_PROPERTY,
-                     argOptions.getStringOption("retain"));
-         }
-
-         if (argOptions.hasOption("weighting")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.WEIGHTING_FUNCTION_PROPERTY,
-                     argOptions.getStringOption("weighting"));
-         }        
-
-        return props;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     protected String getAlgorithmSpecifics() {
-        return
-            "Note that the --retain and --threshold properties are mutually " + 
-            "exclusive;\nusing both will cause an exception";
+        return "Note that the --retain and --threshold properties are " +
+               "mutually exclusive;\nusing both will cause an exception";
     }
 }

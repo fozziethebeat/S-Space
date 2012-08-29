@@ -39,7 +39,6 @@ public class LinearWeighting implements WeightingFunction {
      * @return {@inheritDoc}
      */
     public double weight(int positionOffset, int windowSize) {
-	return windowSize - (Math.abs(positionOffset) - 1);
+        return windowSize - (Math.abs(positionOffset) - 1);
     }
-
 }

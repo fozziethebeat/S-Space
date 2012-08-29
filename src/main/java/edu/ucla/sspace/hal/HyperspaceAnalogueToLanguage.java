@@ -21,6 +21,9 @@
 
 package edu.ucla.sspace.hal;
 
+import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Statistics;
 
@@ -154,61 +157,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HyperspaceAnalogueToLanguage implements SemanticSpace {
 
     /**
-     * The prefix for naming public properties.
-     */
-    private static final String PROPERTY_PREFIX = 
-        "edu.ucla.sspace.hal.HyperspaceAnalogueToLanguage";
-    
-    /**
-     * The property to specify the minimum entropy theshold a word should have
-     * to be included in the vector space after processing.  The specified value
-     * of this property should be a double
-     */
-    public static final String ENTROPY_THRESHOLD_PROPERTY =
-        PROPERTY_PREFIX + ".threshold";
-
-    /**
-     * The property to specify the number of words to view before and after each
-     * word in focus.
-     */
-    public static final String WINDOW_SIZE_PROPERTY =
-        PROPERTY_PREFIX + ".windowSize";
-
-    /**
-     * The property to specify the number of words to view before and after each
-     * word in focus.
-     */
-    public static final String RETAIN_PROPERTY =
-        "edu.ucla.sspace.hal.retainColumns";
-
-    /**
-     * The property to set the {@link WeightingFunction} to be used with
-     * weighting the co-occurrence of neighboring words based on their distance.
-     */
-    public static final String WEIGHTING_FUNCTION_PROPERTY =
-        "edu.ucla.sspace.hal.weighting";
-    
-    /**
-     * The default number of words before and after the focus word to include
-     */
-    public static final int DEFAULT_WINDOW_SIZE = 5;
-
-    /**
-     * The default {@code WeightingFunction} to use.
-     */        
-    public static final WeightingFunction DEFAULT_WEIGHTING = 
-        new LinearWeighting();
-
-    /**
      * Logger for HAL
      */
     private static final Logger LOGGER = 
         Logger.getLogger(HyperspaceAnalogueToLanguage.class.getName());
 
     /**
-     * Map that pairs the word with it's position in the matrix
+     * The default number of words before and after the focus word to include
      */
-    private final Map<String,Integer> termToIndex;       
+    public static final int DEFAULT_WINDOW_SIZE = 5;
+
+    /**
+     * A mapping from terms to initial indices in the co-occurrence matrix.
+     */
+    private final BasisMapping<String, String> termToIndex;
 
     /**
      * The number of words to consider in one direction to create the symmetric
@@ -216,6 +178,10 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      */
     private final int windowSize;
     
+    private final double columnThreshold;
+
+    private final int retainColumns;
+
     /**
      * The type of weight to apply to a the co-occurrence word based on its
      * relative location
@@ -242,49 +208,33 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * Constructs a new instance using the system properties for configuration.
      */
     public HyperspaceAnalogueToLanguage() {
-        this(System.getProperties());
+        this(new StringBasisMapping(),
+             DEFAULT_WINDOW_SIZE,
+             new LinearWeighting(), 
+             -1d,
+             -1);
     }
     
     /**
      * Constructs a new instance using the provided properties for
      * configuration.
      */
-    public HyperspaceAnalogueToLanguage(Properties properties) {
-        cooccurrenceMatrix = new AtomicGrowingSparseHashMatrix();
+    public HyperspaceAnalogueToLanguage(BasisMapping<String, String> basis,
+                                        int windowSize,
+                                        WeightingFunction weightFunction,
+                                        double columnThreshold,
+                                        int retainColumns) {
+        this.cooccurrenceMatrix = new AtomicGrowingSparseHashMatrix();
+        this.termToIndex = basis;
+        this.windowSize = windowSize;
+        this.weighting = weightFunction;
+        this.columnThreshold = columnThreshold;
+        this.retainColumns = retainColumns;
+
         reduced = null;
-        termToIndex = new ConcurrentHashMap<String,Integer>();
-        
         wordIndexCounter = 0;
-
-        String windowSizeProp = properties.getProperty(WINDOW_SIZE_PROPERTY);
-        windowSize = (windowSizeProp != null)
-            ? Integer.parseInt(windowSizeProp)
-            : DEFAULT_WINDOW_SIZE;
-
-        String weightFuncProp = 
-        properties.getProperty(WEIGHTING_FUNCTION_PROPERTY);
-        weighting = (weightFuncProp == null) 
-            ? DEFAULT_WEIGHTING
-            : loadWeightingFunction(weightFuncProp);
     }
 
-    /**
-     * Creates an instance of {@link WeightingFunction} based on the provide
-     * class name.
-     */
-    private static WeightingFunction loadWeightingFunction(String classname) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<WeightingFunction> clazz = 
-            (Class<WeightingFunction>)Class.forName(classname);
-            WeightingFunction wf = clazz.newInstance();
-            return wf;
-        } catch (Exception e) {
-            // rethrow based on any reflection errors
-            throw new Error(e);
-        }
-    }
-    
     /**
      * {@inheritDoc}
      */
@@ -329,48 +279,16 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
                 continue;
             }
             
-            int focusIndex = getIndexFor(focus);
+            int focusIndex = termToIndex.getDimension(focus);
             
             // Iterate through the words occurring after and add values
             int wordDistance = 1;
-            for (String after : nextWords) {
-                // skip adding co-occurence values for words that are not
-                // accepted by the filter
-                if (!after.equals(IteratorFactory.EMPTY_TOKEN)) {
-                    int index = getIndexFor(after);
-                    
-                    // Get the current number of times that the focus word has
-                    // co-occurred with this word appearing after it.  Weightb
-                    // the word appropriately baed on distance
-                    Pair<Integer> p = new Pair<Integer>(focusIndex, index);
-                    double value = weighting.weight(wordDistance, windowSize);
-                    Double curCount = matrixEntryToCount.get(p);
-                    matrixEntryToCount.put(p, (curCount == null)
-                                           ? value : value + curCount);
-                }
-             
-                wordDistance++;        
-            }
+            addTokens(nextWords, focusIndex, wordDistance, matrixEntryToCount);
 
-            wordDistance = -1; // in front of the focus word
-            for (String before : prevWords) {
-                // skip adding co-occurence values for words that are not
-                // accepted by the filter
-                if (!before.equals(IteratorFactory.EMPTY_TOKEN)) {
-                    int index = getIndexFor(before);
+            // in front of the focus word
+            wordDistance = -windowSize + (windowSize - prevWords.size());
+            addTokens(prevWords, focusIndex, wordDistance, matrixEntryToCount);
 
-                    // Get the current number of times that the focus word has
-                    // co-occurred with this word before after it.  Weight the
-                    // word appropriately baed on distance
-                    Pair<Integer> p = new Pair<Integer>(index, focusIndex);
-                    double value = weighting.weight(wordDistance, windowSize);
-                    Double curCount = matrixEntryToCount.get(p);
-                    matrixEntryToCount.put(p, (curCount == null)
-                                           ? value : value + curCount);
-                }
-                wordDistance--;
-            }
-                    
             // last, put this focus word in the prev words and shift off the
             // front if it is larger than the window
             prevWords.offer(focus);
@@ -383,32 +301,32 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         for (Map.Entry<Pair<Integer>,Double> e : matrixEntryToCount.entrySet()){
             Pair<Integer> p = e.getKey();
             cooccurrenceMatrix.addAndGet(p.x, p.y, e.getValue());
-        }                    
+        }
     }
 
-    /**
-     * Returns the index in the co-occurence matrix for this word.  If the word
-     * was not previously assigned an index, this method adds one for it and
-     * returns that index.
-     */
-    private final int getIndexFor(String word) {
-        Integer index = termToIndex.get(word);
-        if (index == null) {     
-            synchronized(this) {
-                // recheck to see if the term was added while blocking
-                index = termToIndex.get(word);
-                // if another thread has not already added this word while the
-                // current thread was blocking waiting on the lock, then add it.
-                if (index == null) {
-                    int i = wordIndexCounter++;
-                    termToIndex.put(word, i);
-                    return i; // avoid the auto-boxing to assign i to index
-                }
+    private void addTokens(Queue<String> words,
+                           int foucsIndex,
+                           int distance,
+                           Map<Pair<Integer>, Double> matrixEntryToCount) {
+        for (String word : words) {
+            // skip adding co-occurence values for words that are not
+            // accepted by the filter
+            if (!word.equals(IteratorFactory.EMPTY_TOKEN)) {
+                int index = termToIndex.getDimension(word);
+
+                // Get the current number of times that the focus word has
+                // co-occurred with this word before after it.  Weight the
+                // word appropriately baed on distance
+                Pair<Integer> p = new Pair<Integer>(index, focusIndex);
+                double value = weighting.weight(distance, windowSize);
+                Double curCount = matrixEntryToCount.get(p);
+                matrixEntryToCount.put(p, (curCount == null)
+                                       ? value : value + curCount);
             }
+            distance++;
         }
-        return index;
     }
-    
+                    
     /**
      * {@inheritDoc}
      */
@@ -421,7 +339,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * {@inheritDoc}
      */
     public Vector getVector(String word) {
-        Integer index = termToIndex.get(word);
+        Integer index = termToIndex.getDimension(word);
         if (index == null)
             return null;
         // If the matrix hasn't had columns dropped then the returned vector
@@ -433,10 +351,10 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             // size first.
             SparseDoubleVector rowVec = (index < cooccurrenceMatrix.rows())
                 ? cooccurrenceMatrix.getRowVectorUnsafe(index)
-                : new CompactSparseVector(termToIndex.size());
+                : new CompactSparseVector(termToIndex.numDimensions());
             SparseDoubleVector colVec = (index < cooccurrenceMatrix.columns())
                 ? cooccurrenceMatrix.getColumnVectorUnsafe(index)
-                : new CompactSparseVector(termToIndex.size());
+                : new CompactSparseVector(termToIndex.numDimensions());
 
             return new ConcatenatedSparseDoubleVector(rowVec, colVec);
         }
@@ -469,39 +387,16 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * {@inheritDoc}
      */
     public void processSpace(Properties properties) {
-        // Get threshold value defined by user
-        String userDefinedThresh = 
-            properties.getProperty(ENTROPY_THRESHOLD_PROPERTY);
-        String retainProp = 
-            properties.getProperty(RETAIN_PROPERTY);
-        if (userDefinedThresh != null && retainProp != null) {
-            throw new IllegalArgumentException(
-            "Cannot define the " + ENTROPY_THRESHOLD_PROPERTY + " and " +
-            RETAIN_PROPERTY + " properties at the same time");
-        }
-        else if (userDefinedThresh != null) {        
-            try {
-                double threshold = Double.parseDouble(userDefinedThresh);
-                thresholdColumns(threshold);
-            } catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException(
-                    ENTROPY_THRESHOLD_PROPERTY + " is not an number: " +
-                    userDefinedThresh);
-            }
-        }
-        else if (retainProp != null) {
-            try {
-                int toRetain = Integer.parseInt(retainProp);
-                retainOnly(toRetain);
-            } catch (NumberFormatException nfe) {
-            throw new IllegalArgumentException(
-                RETAIN_PROPERTY + " is not an number: " + retainProp);
-            }
-        }
-        // The default is not to drop any columns
-        else {
-            return;
-        }
+        if (cooccurrenceMatrix.get(termToIndex.numDimensions() - 1,
+                                   termToIndex.numDimensions() - 1) == 0d)
+            cooccurrenceMatrix.set(termToIndex.numDimensions() - 1,
+                                   termToIndex.numDimensions() - 1,
+                                   0d);
+
+        if (columnThreshold > -1d)
+            thresholdColumns(columnThreshold);
+        if (retainColumns > 0)
+            retainOnly(retainColumns);
     }
 
     /**
@@ -511,7 +406,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * @param columns the number of columns to keep
      */
     private void retainOnly(int columns) {
-        int words = termToIndex.size();
+        int words = termToIndex.numDimensions();
         MultiMap<Double,Integer> entropyToIndex = 
             new BoundedSortedMultiMap<Double,Integer>(columns, false, 
                                   true, true);
@@ -566,7 +461,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * @param threshold
      */
     private void thresholdColumns(double threshold) {
-        int words = termToIndex.size();
+        int words = termToIndex.numDimensions();
         BitSet colsToDrop = new BitSet(words * 2);
 
         // first check all the columns in the co-occurrence matrix
