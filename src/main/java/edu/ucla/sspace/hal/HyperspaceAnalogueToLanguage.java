@@ -94,59 +94,59 @@ import java.util.concurrent.ConcurrentHashMap;
  * href="http://en.wikipedia.org/wiki/Information_entropy">entropy</a> of each
  * column can be calculated as a way of ordering the columns by their
  * importance.  Using this ranking, either a fixed number of columns may be
- * retained, or a threshold may be set to filter out low-entropy columns.<p>
+ * retained, or a threshold may be set to filter out low-entropy columns.
  *
- * This class provides four parameters that may be set:
+ * <p>
  *
+ * A {@link HyperspaceAnalogueToLanguage} model is defined by four parameters.
+ * The default constructor uses reasonable parameters that match those mentioned
+ * in the original publication.  For alternate models, appropriate values must
+ * be passed in through the full constructor.  The four parameters are:
  *
  * <dl style="margin-left: 1em">
  *
- * <dt> <i>Property:</i> <code><b>{@value #WINDOW_SIZE_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@value #DEFAULT_WINDOW_SIZE}
+ * <dt> <i>Parameter:</i> {@code windowSize} </br>
+ *      <i>Default:</i> 5
  *
- * <dd style="padding-top: .5em">This variable sets the number of words before
- *      and after that are counted as co-occurring.  With the default value,
- *      {@value #DEFAULT_WINDOW_SIZE} words are counted before and {@value
- *      #DEFAULT_WINDOW_SIZE} words are counter after.  This class always uses a
- *      symmetric window. <p>
-
-
- * <dt> <i>Property:</i> <code><b>{@value #WEIGHTING_FUNCTION_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> {@link LinearWeighting edu.ucla.sspace.hal.LinearWeighting} 
+ * <dd style="padding-top: .5em">This parameter sets size of the sliding
+ * co-occurrence window such that the {@code windowSize} words before and the {@code
+ * windowSize} words after the focus word will be used to count co-occurances.
+ * This model always uses symmetric windows.
  *
- * <dd style="padding-top: .5em">This property sets the fully-qualified class
- *      name of the {@link WeightingFunction} class that will be used to
- *      determine how to weigh co-occurrences.  HAL traditionally uses a ramped,
- *      linear weighting where those words occurring closets receive more
- *      weight, with a linear decrease based on distance.
+ * <dt> <i>Property:</i> {@code weighting} </br>
+ *      <i>Default:</i> {@link LinearWeighting}
  *
- * <dt> <i>Property:</i> <code><b>{@value #RETAIN_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> unset
+ * <dd style="padding-top: .5em">This parameter sets the {@link
+ * WeightingFunction} used to weight co-occurrences between two words based on
+ * the number of interleaving words, i.e. the distance between the two words in
+ * the sliding window.  HAL traditionally uses a ramped, linear weighting where
+ * those words occurring closets receive more weight, with a linear decrease
+ * based on distance.
  *
- * <dd style="padding-top: .5em">This optional property enables dimensionality
- *      reduction by retaining only a fixed number of columns.  The columns with
- *      the high entropy are retrained.  The value should be an integer.  This
- *      property may not be set concurrently with {@value
- *      #ENTROPY_THRESHOLD_PROPERTY}, and will throw an exception if done so.
+ * <dt> <i>Property:</i> {@code retainColumns} </br>
+ *      <i>Default:</i> -1
  *
- * <dt> <i>Property:</i> <code><b>{@value #ENTROPY_THRESHOLD_PROPERTY}
- *      </b></code> <br>
- *      <i>Default:</i> unset
+ * <dd style="padding-top: .5em">If set to a positive value, this
+ * parameter enables dimensionality reduction by retaining only {@code
+ * retainColumns} columns.  Columns will be ordered according to their entropy,
+ * and the {@code retainColumns} columns with the highest entropy will be
+ * retained.  This parameter cannot be set in conjunction with {@code columnThreshold}
  *
- * <dd style="padding-top: .5em">This optional property enables dimensionality
+ * <dt> <i>Property:</i> {@code columnThreshold} </br>
+ *      <i>Default:</i> -1
+ *
+ * <dd style="padding-top: .5em">If set to a positive value, this parameter enables dimensionality
  *      reduction by retaining only those columns whose entropy is above the
- *      specified threshold.  The value should be a double.  This property may
- *      not be set concurrently with {@value #RETAIN_PROPERTY}, and will throw
- *      an exception if done so.
+ *      specified threshold.  This parameter may not be set concurrently with
+ *      {@code retainColumns}.
  *
- * </dl><p>
+ * </dl>
  *
- * Note that the weight function can also be used to create special cases of the
- * HAL model, For example, an asymmetric window could be created by assigning a
- * weight of {@code 0} to all those co-occurrence on one side.
+ * <p>
+ *
+ * For models that require a non-symmetric window, a special {@link
+ * WeightingFunction} can be used which assigns a weight of {@code 0} to
+ * co-occurrences that match the non-symmetric window size.
  *
  * @author Alex Nau
  * @author David Jurgens
@@ -178,8 +178,18 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      */
     private final int windowSize;
     
+    /**
+     * If set to a positive value, this parameter sets a threshold on the
+     * columns to be retained.  This cannot be used in conjunction with {@code
+     * retainColumns}.
+     */
     private final double columnThreshold;
 
+    /**
+     * If set to a positive value, this parameter sets the number of highest
+     * entropy columns to retain.  This cannot be used in conjunction with
+     * {@code columnThreshold}.
+     */
     private final int retainColumns;
 
     /**
@@ -205,7 +215,8 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     private Matrix reduced;
 
     /**
-     * Constructs a new instance using the system properties for configuration.
+     * Constructs a new instance using the default parameters used in the
+     * original publication.
      */
     public HyperspaceAnalogueToLanguage() {
         this(new StringBasisMapping(),
@@ -216,8 +227,32 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     }
     
     /**
-     * Constructs a new instance using the provided properties for
-     * configuration.
+     * Constructs a {@link HyperspaceAnalogueToLanguage} instance using the
+     * provided parameters.
+     *
+     * @param basis A mapping from tokens to dimensions.  This may be preset to
+     *              ensure a known column ordering or to prevent particular
+     *              tokens from being analyzed.
+     * @param windowSize a positive integer that specifies the size of a
+     *                   symmetric sliding co-occurence window.
+     * @param weightFunction A {@link WeightingFunction} that scores a
+     *                       co-occurrence between two words based on the
+     *                       distance between them in the co-occurrence window.
+     * @param columnThreshold An optional, positive threshold.  If set, only
+     *                        columns with an entropy above this value will be
+     *                        retained as dimensions.  Note, this cannot be used
+     *                        in conjunction with {@code retainColumns}.
+     * @param retainColumns An optional, positive number of columns.  If set,
+     *                      only the {@code retainColumns} columns with the
+     *                      highest entropy will be retained. Note that this
+     *                      cannot be used in conjunction with {@code
+     *                      columnThreshold}.
+     * @throws IllegalArgumentException If: either{@code basis} or {@code
+     *                                  weightFunction} are {@code null}.
+     *                                  {@code windowSize} is non-positive, or
+     *                                  {@code columnThreshold} and {@code
+     *                                  retainColumns} are both set to positive
+     *                                  values.
      */
     public HyperspaceAnalogueToLanguage(BasisMapping<String, String> basis,
                                         int windowSize,
@@ -230,9 +265,26 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         this.weighting = weightFunction;
         this.columnThreshold = columnThreshold;
         this.retainColumns = retainColumns;
-
         reduced = null;
         wordIndexCounter = 0;
+
+        // Validate all the parameters early to prevent processing with invalid
+        // parameters.
+        if (basis == null)
+            throw new IllegalArgumentException(
+                    "basis mapping must not be null");
+        if (weightFunction == null)
+            throw new IllegalArgumentException(
+                    "weightFunction must not be null");
+        if (windowSize <= 0)
+            throw new IllegalArgumentException(
+                    "Window size must be a positive, non-negative integer.\n" +
+                    "Given: " + windowSize);
+        if (columnThreshold > -1d && retainColumns > 0)
+            throw new IllegalArgumentException(
+                    "columnThreshold and retainColumns cannot both be active.\n" +
+                    "columnThreshold: " + columnThreshold + "\n" +
+                    "retainColumns: " + retainColumns+ "\n");
     }
 
     /**
@@ -280,14 +332,17 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             }
             
             int focusIndex = termToIndex.getDimension(focus);
-            
-            // Iterate through the words occurring after and add values
-            int wordDistance = 1;
-            addTokens(nextWords, focusIndex, wordDistance, matrixEntryToCount);
+            // Only process co-occurrences with words with non-negative
+            // dimensions.
+            if (focusIndex >= 0) {
+                // Iterate through the words occurring after and add values
+                int wordDistance = 1;
+                addTokens(nextWords, focusIndex, wordDistance, matrixEntryToCount);
 
-            // in front of the focus word
-            wordDistance = -windowSize + (windowSize - prevWords.size());
-            addTokens(prevWords, focusIndex, wordDistance, matrixEntryToCount);
+                // in front of the focus word
+                wordDistance = -windowSize + (windowSize - prevWords.size());
+                addTokens(prevWords, focusIndex, wordDistance, matrixEntryToCount);
+            }
 
             // last, put this focus word in the prev words and shift off the
             // front if it is larger than the window
@@ -305,7 +360,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     }
 
     private void addTokens(Queue<String> words,
-                           int foucsIndex,
+                           int focusIndex,
                            int distance,
                            Map<Pair<Integer>, Double> matrixEntryToCount) {
         for (String word : words) {
@@ -313,15 +368,16 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             // accepted by the filter
             if (!word.equals(IteratorFactory.EMPTY_TOKEN)) {
                 int index = termToIndex.getDimension(word);
-
-                // Get the current number of times that the focus word has
-                // co-occurred with this word before after it.  Weight the
-                // word appropriately baed on distance
-                Pair<Integer> p = new Pair<Integer>(index, focusIndex);
-                double value = weighting.weight(distance, windowSize);
-                Double curCount = matrixEntryToCount.get(p);
-                matrixEntryToCount.put(p, (curCount == null)
-                                       ? value : value + curCount);
+                if (index >= 0) {
+                    // Get the current number of times that the focus word has
+                    // co-occurred with this word before after it.  Weight the
+                    // word appropriately baed on distance
+                    Pair<Integer> p = new Pair<Integer>(index, focusIndex);
+                    double value = weighting.weight(distance, windowSize);
+                    Double curCount = matrixEntryToCount.get(p);
+                    matrixEntryToCount.put(p, (curCount == null)
+                                           ? value : value + curCount);
+                }
             }
             distance++;
         }
@@ -387,6 +443,9 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * {@inheritDoc}
      */
     public void processSpace(Properties properties) {
+        // Ensure that the bottom right corner of the matrix has a valid value
+        // so that we always create a 2 * n set of dimensions in the default
+        // case.
         if (cooccurrenceMatrix.get(termToIndex.numDimensions() - 1,
                                    termToIndex.numDimensions() - 1) == 0d)
             cooccurrenceMatrix.set(termToIndex.numDimensions() - 1,

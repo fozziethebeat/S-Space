@@ -51,11 +51,16 @@ public class SparseHashDoubleVector
 
     private TIntDoubleHashMap vector;
 
-    private int[] nonZeroIndices;
-
     private int maxLength;
 
     private double magnitude;
+
+    /**
+     * Creates a new {@link SparseHashDoubleVector} with an unbounded length.
+     */
+    public SparseHashDoubleVector() {
+        this(Integer.MAX_VALUE);
+    }
 
     /**
      * Creates a new vector of the specified length
@@ -65,7 +70,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(int length) {
         maxLength = length;
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
     }
 
     /**
@@ -78,7 +82,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(double[] values) {
         maxLength = values.length;
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
         magnitude = 0;
         for (int i = 0; i < values.length; ++i) {
             if (values[i] != 0) {
@@ -92,7 +95,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(DoubleVector values) {
         maxLength = values.length();
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
         magnitude = values.magnitude();
         if (values instanceof SparseVector) {
             int[] nonZeros = ((SparseVector) values).getNonZeroIndices();
@@ -156,7 +158,6 @@ public class SparseHashDoubleVector
         else 
             vector.put(index, value);
         magnitude = -1;
-        nonZeroIndices = null;
     }
 
     /**
@@ -193,11 +194,14 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        if (nonZeroIndices == null) {
-            nonZeroIndices = vector.keys();
-            Arrays.sort(nonZeroIndices);
-        }
-        return nonZeroIndices;
+        return vector.keys();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return new SparseHashDoubleVector(maxLength);
     }
 
     /**

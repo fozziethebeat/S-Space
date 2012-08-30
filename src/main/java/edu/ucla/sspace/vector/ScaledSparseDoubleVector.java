@@ -67,4 +67,11 @@ public class ScaledSparseDoubleVector extends ScaledDoubleVector
     public int[] getNonZeroIndices() {
         return vector.getNonZeroIndices();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return vector.instanceCopy();
+    }
 }

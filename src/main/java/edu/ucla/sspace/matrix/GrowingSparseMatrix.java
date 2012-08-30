@@ -66,16 +66,34 @@ public class GrowingSparseMatrix extends AbstractMatrix
     private int cols;
 
     /**
-     * Each row is defined as a {@link CompactSparseVector} which does most of
+     * Each row is defined as a {@link SparseDoubleVector} which does most of
      * the work.
      */
-    private final Map<Integer,CompactSparseVector> rowToColumns;
+    private final Map<Integer, SparseDoubleVector> rowToColumns;
 
     /**
-     * Create a new empty {@code GrowingSparseMatrix}.
+     * The default empty vector which will be used to populate new rows as they
+     * are generated.
+     */
+    private final SparseDoubleVector emptyVector;
+
+    /**
+     * Create a new empty {@code GrowingSparseMatrix} which uses a {@link
+     * CompactSparseVector} as the backing data structure.
      */
     public GrowingSparseMatrix() {
-        this(0,0);
+        this(new CompactSparseVector());
+    }
+
+    /**
+     * Create a new empty {@code GrowingSparseMatrix} with no specified row or
+     * column boundaries.
+     *
+     * @param emptyVector An empty {@link SparseDoubleVector} with no bounds
+     *                    that will be used to generate new rows in the matrix.
+     */
+    public GrowingSparseMatrix(SparseDoubleVector emptyVector) {
+        this(0,0, emptyVector);
     }
 
     /**
@@ -84,11 +102,19 @@ public class GrowingSparseMatrix extends AbstractMatrix
      *
      * @param rows the number of rows in the matrix
      * @param columns the number of columns in the matrix
+     * @param emptyVector An empty {@link SparseDoubleVector} with no bounds
+     *                    that will be used to generate new rows in the matrix.
      */
-    public GrowingSparseMatrix(int rows, int columns) {
+    public GrowingSparseMatrix(int rows, int columns, SparseDoubleVector emptyVector) {
+        if (emptyVector.length() != Integer.MAX_VALUE) 
+            throw new IllegalArgumentException(
+                    "The given empty vector has a restricted bound.  " +
+                    "Given empty vectors must have no bound");
+
         this.rows = rows;
         this.cols = columns;
-        rowToColumns = new HashMap<Integer,CompactSparseVector>();
+        this.emptyVector = emptyVector;
+        rowToColumns = new HashMap<Integer,SparseDoubleVector>();
     }
 
     /**
@@ -104,7 +130,7 @@ public class GrowingSparseMatrix extends AbstractMatrix
      */
     public double get(int row, int col) {
         checkIndices(row, col);
-        CompactSparseVector sv = rowToColumns.get(row);
+        SparseDoubleVector sv = rowToColumns.get(row);
         return (sv == null) ? 0 : sv.get(col);
     }
 
@@ -153,7 +179,7 @@ public class GrowingSparseMatrix extends AbstractMatrix
         SparseDoubleVector v = rowToColumns.get(row);
         return (v != null)
             ? Vectors.subview(v, 0, cols)
-            : new CompactSparseVector(cols);
+            : Vectors.subview(emptyVector, 0, cols);
     }
 
     /**
@@ -180,12 +206,7 @@ public class GrowingSparseMatrix extends AbstractMatrix
         if (col + 1 > cols)
             cols = col + 1;
 
-        CompactSparseVector rowVec = rowToColumns.get(row);
-        if (rowVec == null) {
-            rowVec = new CompactSparseVector();
-            rowToColumns.put(row, rowVec);
-        }
-        rowVec.set(col, val);
+        updateRow(row).set(col, val);
     }
 
     /**
@@ -218,16 +239,26 @@ public class GrowingSparseMatrix extends AbstractMatrix
         if (cols <= columns.length)
             cols = columns.length;
         
-        CompactSparseVector rowVec = rowToColumns.get(row);
-        if (rowVec == null) {
-            rowVec = new CompactSparseVector();
-            rowToColumns.put(row, rowVec);
-        }
+        SparseDoubleVector rowVec = updateRow(row);
 
         for (int col = 0; col < cols; ++col) {
             double val = columns[col];
             rowVec.set(col, val);
         }
+    }
+
+    /**
+     * Returns the {@link SparseDoubleVector} at index {@code row}.  If one does
+     * not exist, a new vector will be created and stored in the mapping.
+     */
+    private SparseDoubleVector updateRow(int row) {
+        SparseDoubleVector rowVec = rowToColumns.get(row);
+        if (rowVec == null) {
+            rowVec = emptyVector.instanceCopy();
+            rowToColumns.put(row, rowVec);
+        }
+
+        return rowVec;
     }
 
     /** 
@@ -238,19 +269,13 @@ public class GrowingSparseMatrix extends AbstractMatrix
      * When the matrix is expanded by either dimension, the values for the new
      * row/column will all be assumed to be zero.
      */
-    public void setRow(int row, DoubleVector columns) {
-        checkIndices(row, columns.length() -1);
+    public void setRow(int row, DoubleVector data) {
+        checkIndices(row, data.length() -1);
 
-        if (cols <= columns.length())
-            cols = columns.length();
+        if (cols <= data.length())
+            cols = data.length();
 
-        CompactSparseVector rowVec = rowToColumns.get(row);
-        if (rowVec == null) {
-            rowVec = new CompactSparseVector();
-            rowToColumns.put(row, rowVec);
-        }
-     
-        Vectors.copy(rowVec, columns);
+        Vectors.copy(updateRow(row), data);
     }
 
     /**

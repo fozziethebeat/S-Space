@@ -217,6 +217,13 @@ public class AmortizedSparseVector implements SparseDoubleVector,
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return new AmortizedSparseVector(length());
+    }
+
+    /**
      * A small struct to hold the index and value of an entry.  This should
      * offset the object creation costs from storing Integer and Double's in the
      * array lists.

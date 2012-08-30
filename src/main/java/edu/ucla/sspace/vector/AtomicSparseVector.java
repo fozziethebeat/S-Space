@@ -175,4 +175,11 @@ public class AtomicSparseVector implements SparseDoubleVector, Serializable {
         readLock.unlock();
         return length;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return vector.instanceCopy();
+    }
 }
