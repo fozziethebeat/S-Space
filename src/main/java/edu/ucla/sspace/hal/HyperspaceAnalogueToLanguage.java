@@ -28,7 +28,9 @@ import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.Statistics;
 
 import edu.ucla.sspace.matrix.AtomicGrowingSparseHashMatrix;
-import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.MatrixEntropy;
+import edu.ucla.sspace.matrix.MatrixEntropy.EntropyStats;
+import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 
 import edu.ucla.sspace.text.IteratorFactory;
@@ -151,7 +153,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Alex Nau
  * @author David Jurgens
  *
- * @see SemanticSpace 
+ * @see SemanticSpace
  * @see WeightingFunction
  */
 public class HyperspaceAnalogueToLanguage implements SemanticSpace {
@@ -159,7 +161,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     /**
      * Logger for HAL
      */
-    private static final Logger LOGGER = 
+    private static final Logger LOGGER =
         Logger.getLogger(HyperspaceAnalogueToLanguage.class.getName());
 
     /**
@@ -177,7 +179,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * window
      */
     private final int windowSize;
-    
+
     /**
      * If set to a positive value, this parameter sets a threshold on the
      * columns to be retained.  This cannot be used in conjunction with {@code
@@ -212,7 +214,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     /**
      * The reduced matrix, if columns are to be dropped.
      */
-    private Matrix reduced;
+    private SparseMatrix reduced;
 
     /**
      * Constructs a new instance using the default parameters used in the
@@ -221,11 +223,11 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     public HyperspaceAnalogueToLanguage() {
         this(new StringBasisMapping(),
              DEFAULT_WINDOW_SIZE,
-             new LinearWeighting(), 
+             new LinearWeighting(),
              -1d,
              -1);
     }
-    
+
     /**
      * Constructs a {@link HyperspaceAnalogueToLanguage} instance using the
      * provided parameters.
@@ -293,55 +295,43 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     public void  processDocument(BufferedReader document) throws IOException {
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
-            
-        Iterator<String> documentTokens = 
+
+        Iterator<String> documentTokens =
             IteratorFactory.tokenizeOrdered(document);
-            
+
         String focus = null;
 
         // Rather than updating the matrix every time an occurrence is seen,
         // keep a thread-local count of what needs to be modified in the matrix
         // and update after the document has been processed.  This saves
         // potential contention from concurrent writes.
-        Map<Pair<Integer>,Double> matrixEntryToCount = 
+        Map<Pair<Integer>,Double> matrixEntryToCount =
             new HashMap<Pair<Integer>,Double>();
-            
-        //Load the first windowSize words into the Queue        
+
+        //Load the first windowSize words into the Queue
         for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
             nextWords.offer(documentTokens.next());
-            
+
         while(!nextWords.isEmpty()) {
-            
+
             // Load the top of the nextWords Queue into the focus word
             focus = nextWords.remove();
 
             // Add the next word to nextWords queue (if possible)
-            if (documentTokens.hasNext()) {        
-                String windowEdge = documentTokens.next();
-                nextWords.offer(windowEdge);
-            }            
+            if (documentTokens.hasNext())
+                nextWords.offer(documentTokens.next());
 
             // If the filter does not accept this word, skip the semantic
             // processing, continue with the next word
-            if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
-            // shift the window
-                prevWords.offer(focus);
-                if (prevWords.size() > windowSize)
-                    prevWords.remove();
-                continue;
-            }
-            
-            int focusIndex = termToIndex.getDimension(focus);
-            // Only process co-occurrences with words with non-negative
-            // dimensions.
-            if (focusIndex >= 0) {
-                // Iterate through the words occurring after and add values
-                int wordDistance = 1;
-                addTokens(nextWords, focusIndex, wordDistance, matrixEntryToCount);
-
-                // in front of the focus word
-                wordDistance = -windowSize + (windowSize - prevWords.size());
-                addTokens(prevWords, focusIndex, wordDistance, matrixEntryToCount);
+            if (!focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+                int focusIndex = termToIndex.getDimension(focus);
+                // Only process co-occurrences with words with non-negative
+                // dimensions.
+                if (focusIndex >= 0) {
+                    // in front of the focus word
+                    int wordDistance = -windowSize + (windowSize - prevWords.size());
+                    addTokens(prevWords, focusIndex, wordDistance, matrixEntryToCount);
+                }
             }
 
             // last, put this focus word in the prev words and shift off the
@@ -359,6 +349,12 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         }
     }
 
+    /**
+     * Adds co-occurrence counts between the list of previous words in {@code
+     * words} and the focus word represented by {@code focusIndex} which start
+     * at {@code distance} tokens away from the focus word.  All Counts will be
+     * added into {@code matrixEntryToCount}.
+     */
     private void addTokens(Queue<String> words,
                            int focusIndex,
                            int distance,
@@ -382,14 +378,14 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             distance++;
         }
     }
-                    
+
     /**
      * {@inheritDoc}
      */
     public Set<String> getWords() {
-        // If no documents have been processed, it will be empty        
-        return Collections.unmodifiableSet(termToIndex.keySet());            
-    }        
+        // If no documents have been processed, it will be empty
+        return Collections.unmodifiableSet(termToIndex.keySet());
+    }
 
     /**
      * {@inheritDoc}
@@ -414,11 +410,10 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
 
             return new ConcatenatedSparseDoubleVector(rowVec, colVec);
         }
+
         // The co-occurrence matrix has had columns dropped so the vector is
         // just the word's row
-        else {
-            return reduced.getRowVector(index);
-        }
+        return reduced.getRowVector(index);
     }
 
     /**
@@ -430,15 +425,6 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         return reduced.columns();
     }
 
-    private double[] getColumn(int col) {
-        int rows = cooccurrenceMatrix.rows();
-        double[] column = new double[rows];
-        for (int row = 0; row < rows; ++row) {
-            column[row] = cooccurrenceMatrix.get(row, col);
-        }
-        return column;
-    }
-    
     /**
      * {@inheritDoc}
      */
@@ -465,53 +451,34 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * @param columns the number of columns to keep
      */
     private void retainOnly(int columns) {
+        LOGGER.info("Sorting the columns by entropy and computing the top " + 
+                    columns + " columns to retain");
+
         int words = termToIndex.numDimensions();
-        MultiMap<Double,Integer> entropyToIndex = 
-            new BoundedSortedMultiMap<Double,Integer>(columns, false, 
-                                  true, true);
+        MultiMap<Double,Integer> entropyToIndex =
+            new BoundedSortedMultiMap<Double,Integer>(
+                    columns, false, true, true);
 
-        // first check all the columns in the co-occurrence matrix
-        for (int col = 0; col < words; ++col) {
-            entropyToIndex.put(Statistics.entropy(getColumn(col)), col);
-        }
+        // Compute the entropy of each row and column.
+        EntropyStats stats = MatrixEntropy.entropy(cooccurrenceMatrix);
 
-        // Next check the rows.  Note that in the full version, the row's values
-        // become a columns with the word's row is appended to the column.
-        for (int row = 0; row < words; ++row) {
-            double[] rowArr = cooccurrenceMatrix.getRow(row);
-            entropyToIndex.put(Statistics.entropy(rowArr), row + words);
-        }
+        // Add the entropy values for each column.  Since the rows will be
+        // concatenated as columns, they represent currently non-existing
+        // columns beyond the number of words.
+        for (int col = 0; col < words; ++col)
+            entropyToIndex.put(stats.colEntropy[col], col);
+        for (int row = 0; row < words; ++row)
+            entropyToIndex.put(stats.rowEntropy[row], row+words);
 
-        LOGGER.info("reducing to " + columns + " columns");
-
-        // create the next matrix that will contain the fixed number of columns
-        reduced = new YaleSparseMatrix(words, columns);
-
-        Set<Integer> indicesToKeep = 
+        Set<Integer> indicesToKeep =
             new HashSet<Integer>(entropyToIndex.values());
 
-        for (int word = 0; word < words; ++word) {
-            int newColIndex = 0;
-            for (int col = 0; col < words * 2; ++col) {
-                if (indicesToKeep.contains(col)) {
-                    if (col < words) {
-                        reduced.set(word, newColIndex, 
-                                    cooccurrenceMatrix.get(word, col));
-                    } else {
-                        // the column value is really from one of the transposed
-                        // rows
-                        reduced.set(word, newColIndex, 
-                                    cooccurrenceMatrix.get(col - words, word));
-                    }
-                    newColIndex++;
-                }
-            }
-        }
+        LOGGER.info("Reducing to " + columns + " highest entropy columns.");
         
-        // replace the co-occurrence matrix with the truncated version
+        reduced = retainColumns(indicesToKeep);
         cooccurrenceMatrix = null;
     }
-        
+
     /**
      * Calculates the entropy of all the columns in the co-occurrence matrix and
      * removes those columns that are below the threshold, setting {@link
@@ -520,59 +487,77 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
      * @param threshold
      */
     private void thresholdColumns(double threshold) {
+        LOGGER.info("Computing the columns which are equal to or above the " +
+                    "specified threshold");
+
         int words = termToIndex.numDimensions();
-        BitSet colsToDrop = new BitSet(words * 2);
+        Set<Integer> colsToRetain = new HashSet<Integer>();
 
-        // first check all the columns in the co-occurrence matrix
-        for (int col = 0; col < words; ++col) {
-            double[] column = getColumn(col);
-            double entropy = Statistics.entropy(column);
+        // Compute the entropy of each row and column.
+        EntropyStats stats = MatrixEntropy.entropy(cooccurrenceMatrix);
 
-            if (entropy < threshold)
-                colsToDrop.set(col);
-        }
+        // Compare the entropy of each column to the threshold and save and
+        // indices that pass the threshold. Since the rows will be concatenated
+        // as columns, they represent currently non-existing columns beyond the
+        // number of words.
+        for (int col = 0; col < words; ++col)
+            if (stats.colEntropy[col] >= threshold)
+                colsToRetain.add(col);
 
-        // Next check the rows.  Note that in the full version, the row's values
-        // become a columns with the word's row is appended to the column.
-        for (int row = 0; row < words; ++row) {
-            double[] rowArr = cooccurrenceMatrix.getRow(row);
-            double entropy = Statistics.entropy(rowArr);
+        for (int row = 0; row < words; ++row)
+            if (stats.rowEntropy[row] >= threshold)
+                colsToRetain.add(row+words);
 
-            // add an offset based on the number of words.
-            if (entropy < threshold) 
-                colsToDrop.set(row + words);
-        }
+        LOGGER.info("Retaining " + colsToRetain.size() + "/" + (words*2) +
+                    " columns, which passed the threshold of " + threshold);
 
-        LOGGER.info("dropping " + colsToDrop.cardinality() + "/" + (words*2) +
-                " columns, which were below the threshold of " + threshold);
-        
-        // create the next matrix that will contain only those columns with
-        // enough entropy to pass the threshold
-        reduced =
-            new YaleSparseMatrix(words, (words*2)-colsToDrop.cardinality());
-
-        for (int word = 0; word < words; ++word) {
-            int newColIndex = 0;
-            for (int col = 0; col < words * 2; ++col) {
-                if (!colsToDrop.get(col)) {
-                    if (col < words) {
-                        reduced.set(word, newColIndex, 
-                                cooccurrenceMatrix.get(word, col));
-                    } else {
-                        // the column value is really from one of the transposed
-                        // rows
-                        reduced.set(word, newColIndex, 
-                                    cooccurrenceMatrix.get(col - words, word));
-                    }
-                    newColIndex++;
-                }
-            }
-        }
-        
-        // replace the co-occurrence matrix with the truncated version
+        reduced = retainColumns(colsToRetain);
         cooccurrenceMatrix = null;
     }
-        
+
+    /**
+     * Returns a reduced and concatenated version of {@code cooccurrenceMatrix}
+     * which has only the columns specified in {@code indicesToKeep}.
+     */
+    private SparseMatrix retainColumns(Set<Integer> indicesToKeep) {
+        int words = termToIndex.numDimensions();
+        int cols = indicesToKeep.size();
+
+        // Create a mapping from old indices to their new index value.
+        Map<Integer, Integer> indexMap = new HashMap<Integer, Integer>();
+        int newIndex = 0;
+        for (Integer index : indicesToKeep)
+            indexMap.put(index, newIndex++);
+
+        // Create a reduced matrix that will have only the selected columns in
+        // the final space.
+        SparseMatrix reduced = new YaleSparseMatrix(
+                words, indicesToKeep.size());
+
+        // Iterate over the sparse values in the matrix for added efficiency.
+        for (int row = 0; row < words; ++ row) {
+            SparseDoubleVector sv = cooccurrenceMatrix.getRowVector(row);
+            for (int col : sv.getNonZeroIndices()) {
+                double v = cooccurrenceMatrix.get(row, col);
+
+                // If the original column was retained, get it's new index
+                // value and add it to the reduced matrix.
+                Integer newColIndex = indexMap.get(col);
+                if (newColIndex != null)
+                    reduced.set(row, newColIndex, v);
+
+                // If the transposed row column was retained, get it's new index
+                // value and add it to the reduced matrix.  This turns the col
+                // value into the row and the new index as the column.
+                newColIndex = indexMap.get(row + words);
+                if (newColIndex != null)
+                    reduced.set(col, newColIndex, v);
+            }
+        }
+
+        return reduced;
+    }
+
     /**
      * {@inheritDoc}
      */
