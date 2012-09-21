@@ -67,6 +67,10 @@ public class ClusterMatrix {
     private static final Logger LOG =
         Logger.getLogger(ClusterMatrix.class.getName());
 
+    /**
+     * Filles a matrix with a range of numbers starting from {@code start} to
+     * {@code end}.
+     */
     public static int[] range(int start, int end) {
         int[] r = new int[end-start];
         for (int i = 0; i < r.length; ++i)
@@ -74,6 +78,11 @@ public class ClusterMatrix {
         return r;
     }
 
+    /**
+     * Samples {@code sampleSize} values between {@code start} and {@code end}.
+     * If {@code withReplacement}, values can be sampled more than once,
+     * otherwise all sampled values will be unique.
+     */
     public static int[] sample(int start, int end,
                                int sampleSize,
                                boolean withReplacement) {

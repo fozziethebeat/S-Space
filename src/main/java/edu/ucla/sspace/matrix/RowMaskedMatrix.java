@@ -53,7 +53,8 @@ import java.util.Set;
  *
  * @author David Jurgens
  */
-public class RowMaskedMatrix implements Matrix, java.io.Serializable {
+public class RowMaskedMatrix extends AbstractMatrix 
+                             implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -200,41 +201,8 @@ public class RowMaskedMatrix implements Matrix, java.io.Serializable {
     /**
      * {@inheritDoc}
      */
-    public double add(int row, int col, double delta) {
-        double old = get(row, col);
-        set(row, col, delta+old);
-        return old;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public double get(int row, int col) {
         return backingMatrix.get(getRealRow(row), col);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[] getColumn(int column) {
-        double[] col = new double[rows];
-        for (int i = 0; i < rowToReal.length; ++i)
-            col[i] = backingMatrix.get(rowToReal[i], column);
-        return col;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DoubleVector getColumnVector(int column) {
-        return new DenseVector(getColumn(column));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[] getRow(int row) {
-        return backingMatrix.getRow(getRealRow(row));
     }
 
     /**
@@ -254,16 +222,6 @@ public class RowMaskedMatrix implements Matrix, java.io.Serializable {
     /**
      * {@inheritDoc}
      */
-    public double[][] toDenseArray() {
-        double[][] arr = new double[rows][backingMatrix.columns()];
-        for (int i = 0; i < rowToReal.length; ++i)
-            arr[i] = backingMatrix.getRow(rowToReal[i]);
-        return arr;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public int rows() {
         return rows;
     }
@@ -273,49 +231,6 @@ public class RowMaskedMatrix implements Matrix, java.io.Serializable {
      */
     public void set(int row, int col, double val) {
         backingMatrix.set(getRealRow(row), col, val);        
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setColumn(int column, double[] values) {
-        if (values.length != rows)
-            throw new IllegalArgumentException("cannot set a column " +
-                "whose dimensions are different than the matrix");
-        for (int i = 0; i < rowToReal.length; ++i)
-            backingMatrix.set(rowToReal[i], column, values[i]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setColumn(int column, DoubleVector values) {
-        if (values.length() != rows)
-            throw new IllegalArgumentException("cannot set a column " +
-                "whose dimensions are different than the matrix");
-        if (values instanceof SparseVector) {
-            SparseVector sv = (SparseVector)values;
-            for (int nz : sv.getNonZeroIndices())
-                backingMatrix.set(getRealRow(nz), nz, values.get(nz));
-        }
-        else {
-            for (int i = 0; i < rowToReal.length; ++i)
-                backingMatrix.set(rowToReal[i], i, values.get(i));
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setRow(int row, double[] columns) {
-        backingMatrix.setRow(getRealRow(row), columns);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setRow(int row, DoubleVector values) {
-        backingMatrix.setRow(getRealRow(row), values);
     }
 
     /**

@@ -31,8 +31,7 @@ import edu.ucla.sspace.vector.DoubleVector;
  * This represents an immutable {@link Matrix} with a single value.
  *
  * @author Keith Stevens
- */
-public class ScalarMatrix implements Matrix {
+ */ public class ScalarMatrix extends AbstractMatrix {
 
     /**
      * The scalar value for all entries in this matrix.
@@ -79,33 +78,6 @@ public class ScalarMatrix implements Matrix {
     /**
      * {@inheritDoc}
      */
-    public double[] getColumn(int column) {
-        double[] values = new double[rows];
-        for (int r = 0; r < rows; ++r)
-            values[r] = scalar;
-        return values;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DoubleVector getColumnVector(int column) {
-        return new DenseVector(getColumn(column));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[] getRow(int row) {
-        double[] values = new double[columns];
-        for (int c = 0; c < columns; ++c)
-            values[c] = scalar;
-        return values;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public DoubleVector getRowVector(int row) {
         return new DenseVector(getRow(row));
     }
@@ -122,19 +94,6 @@ public class ScalarMatrix implements Matrix {
      */
     public int rows() {
         return rows;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[][] toDenseArray() {
-        double[][] values = new double[rows][];
-        for (int r = 0; r < rows; ++r) {
-            values[r] = new double[columns];
-            for (int c = 0; c < columns; ++c)
-                values[r][c] = scalar;
-        }
-        return values;
     }
 
     /**

@@ -38,6 +38,10 @@ import java.util.Queue;
 
 
 /**
+ * A {@link Wordsi} {@link DependencyContextGenerator} that returns context
+ * vectors projected into a reduced Random Indexing based feature space using
+ * only depenency tree information.
+ *
  * @author Keith Stevens
  */
 public class RandomIndexingOccurrenceDependencyContextGenerator

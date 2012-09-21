@@ -162,16 +162,26 @@ public class AdjustedMutualInformation implements MatrixAggregate {
         return (rawAmi < 0) ? 0.0 : rawAmi;
     }
 
+    /**
+     * A helper function for computing a count adjustment.
+     */
     private static double adjustment(double a, double b, double n, double sum) {
         return (a-n) * (b-n) / (n+1) / (sum - a - b + n + 1);
     }
 
-    public static double pmi(double a, double b, double n, double sum) {
+    /**
+     * A helper function that returns the pmi.
+     */
+    private static double pmi(double a, double b, double n, double sum) {
         return (n == 0d)
             ? 0.0
             : n/sum * Math.log(sum*n/(a*b + .000000001));
     }
 
+    /**
+     * A helper function for computing the entropy of an un-normalized
+     * probability distribution.
+     */
     private static double entropy(double[] sums, double total) {
         double entropy = 0;
         for (double sum : sums)

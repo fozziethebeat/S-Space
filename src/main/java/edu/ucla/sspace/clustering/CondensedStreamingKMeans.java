@@ -39,6 +39,10 @@ import java.util.Properties;
 
 
 /**
+ * An extension of {@link StreamingKMeans} that further condenses the results by
+ * running {@link HierarchicalAgglomerativeClustering} over the resulting
+ * clusters returned by {@link StreamingKMeans}.
+ *
  * @author Keith Stevens
  */
 public class CondensedStreamingKMeans implements Clustering {
@@ -75,6 +79,10 @@ public class CondensedStreamingKMeans implements Clustering {
         return computeAssignments(newClusters, matrix.rows());
     }
 
+    /**
+     * Runs {@link StreamingKMeans} over the dataset and returns the resulting
+     * clustering solution.
+     */
     @SuppressWarnings("unchecked")
     public static <T extends DoubleVector> OnlineClustering<T> computeStreamingCluster(
             Matrix matrix) {
@@ -87,6 +95,10 @@ public class CondensedStreamingKMeans implements Clustering {
         return onlineClustering;
     }
 
+    /**
+     * Transforms the clustering solution returned from {@link StreamingKMeans}
+     * to a list of centroid vectors.
+     */
     public static <T extends DoubleVector> List<T> collectCentroids(
             OnlineClustering<T> onlineClustering) {
         List<T> centroids = new ArrayList<T>();
@@ -95,6 +107,9 @@ public class CondensedStreamingKMeans implements Clustering {
         return centroids;
     }
 
+    /**
+     * Combines vectors in a clustering solution.
+     */
     public static <T extends DoubleVector> List<Cluster<T>> mergeClusters(
             int[] assignments, 
             List<Cluster<T>> clusters) {
@@ -119,6 +134,10 @@ public class CondensedStreamingKMeans implements Clustering {
         return newClusters;
     }
 
+    /**
+     * Transforms a set of {@link Cluster} objects into an {@link Assignments}
+     * objects.
+     */
     public static <T extends DoubleVector> Assignments computeAssignments(
             List<Cluster<T>> clusters,
             int numDataPoints) {

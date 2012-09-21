@@ -80,6 +80,7 @@ public class ClusterSSpace {
                 : clustering.cluster(matrix, props);
         }
 
+        // Print out the clustering assignments for each word.
         int a = 0;
         for (String word : words) {
             System.out.printf("%s ", word);

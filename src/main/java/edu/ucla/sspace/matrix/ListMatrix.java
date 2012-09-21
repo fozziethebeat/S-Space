@@ -34,8 +34,8 @@ import java.util.List;
  *
  * @author Keith Stevens
  */
-class ListMatrix<T extends DoubleVector> 
-        implements Matrix, java.io.Serializable {
+class ListMatrix<T extends DoubleVector> extends AbstractMatrix
+                                         implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -72,6 +72,10 @@ class ListMatrix<T extends DoubleVector>
         }        
     }
 
+    /**
+     * Constructs a matrix from the list of vectors where the first list element
+     * is treated as the first row in the matrix and so on.
+     */
     public ListMatrix(List<T> vectors, int columns) {
         if (vectors.size() == 0)
             throw new IllegalArgumentException(
@@ -84,48 +88,8 @@ class ListMatrix<T extends DoubleVector>
     /**
      * {@inheritDoc}
      */
-    public double add(int row, int column, double delta) {
-        double old = get(row, column);
-        set(row, column, delta+old);
-        return old;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public double get(int row, int column) {
         return vectors.get(row).get(column);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[] getColumn(int column) {
-        int i = 0;
-        double[] columnValues = new double[vectors.size()];
-
-        for (DoubleVector vector : vectors)
-            columnValues[i++] = vector.get(column);
-        return columnValues;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DoubleVector getColumnVector(int column) {
-        int i = 0;
-        DoubleVector columnValues = new DenseVector(vectors.size());
-
-        for (DoubleVector vector : vectors)
-            columnValues.set(i++, vector.get(column));
-        return columnValues;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public double[] getRow(int row) {
-        return vectors.get(row).toArray();
     }
 
     /**
@@ -152,58 +116,8 @@ class ListMatrix<T extends DoubleVector>
     /**
      * {@inheritDoc}
      */
-    public double[][] toDenseArray() {
-        double[][] result = new double[vectors.size()][columns];
-        int row = 0;
-        for (DoubleVector vector : vectors) {
-            for (int i = 0; i < vector.length(); ++i)
-                result[row][i] = vector.get(i);
-            row++;
-        }
-        return result;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public void set(int row, int column, double value) {
         T vector = vectors.get(row);
         vector.set(column, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setColumn(int column, double[] values) {
-        int i = 0;
-        for (DoubleVector vector : vectors)
-            vector.set(column, values[i++]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setColumn(int column, DoubleVector values) {
-        int i = 0;
-        for (DoubleVector vector : vectors)
-            vector.set(column, values.get(i++));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setRow(int row, double[] values) {
-        T v = vectors.get(row);
-        for (int i = 0; i < values.length; ++i)
-            v.set(i, values[i]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setRow(int row, DoubleVector values) {
-        T v = vectors.get(row);
-        for (int i = 0; i < values.length(); ++i)
-            v.set(i, values.get(i));
     }
 }

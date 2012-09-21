@@ -38,15 +38,15 @@ public class ScaledSparseDoubleVector extends ScaledDoubleVector
                                       implements SparseDoubleVector {
 
     /**
-    * The original vector.
-    */
+     * The original vector.
+     */
     private SparseDoubleVector vector;
 
     /**
-    * Creates a new {@link ScaledSparseDoubleVector} that decorates a given
-    * {@link SparseDoubleVector} by scaling each value in {@code vector} by
-    * {@code scale}.
-    */
+     * Creates a new {@link ScaledSparseDoubleVector} that decorates a given
+     * {@link SparseDoubleVector} by scaling each value in {@code vector} by
+     * {@code scale}.
+     */
     public ScaledSparseDoubleVector(SparseDoubleVector vector, double scale) {
         super(vector, scale);
 
@@ -62,8 +62,8 @@ public class ScaledSparseDoubleVector extends ScaledDoubleVector
     }
 
     /**
-    * {@inheritDoc}
-    */
+     * {@inheritDoc}
+     */
     public int[] getNonZeroIndices() {
         return vector.getNonZeroIndices();
     }

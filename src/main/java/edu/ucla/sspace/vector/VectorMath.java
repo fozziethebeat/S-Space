@@ -111,7 +111,7 @@ public class VectorMath {
      * @return The summation of {code vector1} and {@code vector2}.
      */
     public static SparseDoubleVector add(SparseDoubleVector vector1,
-                                   SparseDoubleVector vector2) {
+                                         SparseDoubleVector vector2) {
         if (vector2.length() != vector1.length())
             throw new IllegalArgumentException(
                     "Vectors of different sizes cannot be added.  " +

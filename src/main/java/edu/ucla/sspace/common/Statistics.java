@@ -288,6 +288,11 @@ public class Statistics {
     public static final double BIGNO = 1.0e10;
     public static final double BIGNI = 1.0e-10;
 
+    /**
+     * Returns the value of the <a
+     * href="http://en.wikipedia.org/wiki/Bessel_function">Bessel Function</a>
+     * of the zero-th kind evaluated a {@code x}.
+     */
     public static final double bessi0(double x) {
         double answer;
         double ax = Math.abs(x);
@@ -303,6 +308,11 @@ public class Statistics {
         return answer;
     }
 
+    /**
+     * Returns the value of the <a
+     * href="http://en.wikipedia.org/wiki/Bessel_function">Bessel Function</a>
+     * of the first-th kind evaluated a {@code x}.
+     */
     public static final double bessi1(double x) {
         double answer;
         double ax = Math.abs(x);
@@ -319,6 +329,11 @@ public class Statistics {
         return answer;
     }
 
+    /**
+     * Returns the value of the <a
+     * href="http://en.wikipedia.org/wiki/Bessel_function">Bessel Function</a>
+     * of the {@code n}-th kind evaluated a {@code x}.
+     */
     public static final double bessi(int n, double x) {
         if (n == 0)
             return bessi0(x);

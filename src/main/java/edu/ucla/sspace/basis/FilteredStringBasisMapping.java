@@ -27,6 +27,11 @@ import java.util.Set;
 
 
 /**
+ * This {@link FilteredStringBasisMapping} allows a user to specify a set of
+ * tokens that should be excluded automatically from the basis mapping.  Any
+ * calles to {@code getDimension} for words in this set will automatically
+ * return {@code -1}.
+ *
  * @author Keith Stevens
  */
 public class FilteredStringBasisMapping
@@ -34,12 +39,22 @@ public class FilteredStringBasisMapping
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The set of excluded words.
+     */
     private final Set<String> excludedWords;
 
+    /**
+     * Creates a new {@link FilteredStringBasisMapping} where the words in
+     * {@code excludedWords} will never receive a dimension in this mapping.
+     */
     public FilteredStringBasisMapping(Set<String> excludedWords) {
         this.excludedWords = excludedWords;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public int getDimension(String key) {
         String[] parts = key.split("-");
         String base = (parts.length == 0) ? key : parts[0];

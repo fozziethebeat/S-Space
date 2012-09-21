@@ -975,6 +975,11 @@ public class Similarity {
         return ((double)(intersection.cardinality())) / union.cardinality();
     }
 
+    /**
+     * Iterates over the vector {@code a} and adds the nonzero indices to both
+     * {@code intersection} and {@code union}.  This is optimized for {@link
+     * SparseVector}s.
+     */
     private static void addAttributesToSet(Vector a,
                                            BitSet intersection,
                                            BitSet union) {
@@ -1722,10 +1727,10 @@ public class Similarity {
      * and {@code b}.
      */
     public static double jsDivergence(DoubleVector a, DoubleVector b) {
-        DoubleVector median = Vectors.copyOf(a);
-        VectorMath.add(median, b);
-        median = Vectors.scale(median, .5);
-        return .5 * klDivergence(a, median) + .5 * klDivergence(b, median);
+        DoubleVector mean = Vectors.copyOf(a);
+        VectorMath.add(mean, b);
+        mean = Vectors.scale(mean, .5);
+        return .5 * klDivergence(a, mean) + .5 * klDivergence(b, mean);
     }
 
     /**

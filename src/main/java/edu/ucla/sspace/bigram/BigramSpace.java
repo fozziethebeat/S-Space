@@ -46,23 +46,65 @@ import java.util.Set;
 
 
 /**
+ * A {@link BigramSpace} creates a vector for every word in a corpus that
+ * represents the set of words that come <b>after</b> the row's word within some
+ * fixed length window.  If a {@link Transform} is not provided, then the values
+ * in each word's vector wil represent raw occurrance counts, otherwise the
+ * given {@link Transform} will modify the strength of each bigram occurance.
+ *
+ * <p>
+ *
+ * The behavior of resulting model can be significantly modified by specifying a
+ * particular {@link BasisMapping} to accept or reject particular words, the
+ * window size, and the {@link Transform} applied to the initial bigram
+ * co-occurrance counts.  Futhermore, by setting a threshold, particular bigrams
+ * can be automatically dropped.
+ *
  * @author Keith Stevens
  */
 public class BigramSpace implements SemanticSpace {
 
+    /**
+     * The {@link BasisMapping} which decides the dimension given to each token.
+     */
     private final BasisMapping<String, String> basis;
 
+    /**
+     * The occurance strength between discovered bigrams.
+     */
     private final SparseMatrix bigramMatrix;
 
+    /**
+     * The maximum number of words that can separate a valid bigram.
+     */
     private final int windowSize;
 
+    /**
+     * A {@link Transform} that alters the co-occurrence weight between two
+     * words in a bigram.
+     */
     private final Transform filter;
 
+    /**
+     * Creates a new default {@link BigramSpace} using a standard {@link
+     * StringBasisMapping} and a {@link PointWiseMutualInformationTransform}.
+     */
     public BigramSpace() {
         this(new StringBasisMapping(), 8,
              new PointWiseMutualInformationTransform(), 5);
     }
 
+    /**
+     * Creates a fully configured {@link BigramSpace}.
+     *
+     * @param basis A {@link BasisMapping} to decided the token to dimension
+     *              mapping.
+     * @param windowSize The maximum number of words that can go between a valid
+     *                   bigram.
+     * @param base A {@link BaseTransform} to alter the bigram weights.
+     * @param minValue The minimum valid value for a bigram <b>after</b>
+     *                 transforming the weights by the {@code base} transform.
+     */
     public BigramSpace(BasisMapping<String, String> basis, 
                        int windowSize,
                        BaseTransform base,

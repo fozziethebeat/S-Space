@@ -246,7 +246,6 @@ public class GapStatistic implements Clustering {
                 referenceScore, gap);
         gap = referenceScore - gap;
 
-        System.err.printf("k: %d gap: %f std: %f\n", i, gap, referenceStdev);
         gapResults[i] = gap;
         gapStds[i] = referenceStdev;
         gapAssignments[i] = result;
