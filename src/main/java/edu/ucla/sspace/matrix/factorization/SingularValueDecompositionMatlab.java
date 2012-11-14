@@ -150,9 +150,6 @@ public class SingularValueDecompositionMatlab extends AbstractSvd
         } catch (InterruptedException ie) {
             LOG.log(Level.SEVERE, "Matlab svds", ie);
         }
-        
-        throw new UnsupportedOperationException(
-            "Matlab svds is not correctly installed on this system");
     }
 
     /**
