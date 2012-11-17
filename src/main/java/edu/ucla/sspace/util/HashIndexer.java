@@ -73,10 +73,18 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
     }
 
     /**
+     * Creates an empty {@code HashIndexer} with no mappings and an initial
+     * capacity for the expected number of items.
+     */
+    public HashIndexer(int initialCapacity) {
+        indices = new TObjectIntHashMap<T>(initialCapacity);
+    }
+
+    /**
      * Creates an {@code HashIndexer} with indices for all of the provided items.
      */
     public HashIndexer(Collection<? extends T> items) {
-        this();
+        this(items.size());
         for (T item : items)
             index(item);
     }
@@ -85,7 +93,7 @@ public class HashIndexer<T> implements Indexer<T>, java.io.Serializable {
      * Creates an {@code HashIndexer} with indices for all of the provided items.
      */
     public HashIndexer(Indexer<? extends T> indexed) {
-        this();
+        this(indexed.size());
         for (Map.Entry<? extends T,Integer> e : indexed)
             indices.put(e.getKey(), e.getValue());
     }

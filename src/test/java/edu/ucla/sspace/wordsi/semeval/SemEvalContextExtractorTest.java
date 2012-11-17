@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  */
 public class SemEvalContextExtractorTest {
 
-    @Test public void testProcessDocumentWithDefaultSeparator() {
+    @Ignore @Test public void testProcessDocumentWithDefaultSeparator() {
         ContextExtractor extractor = new SemEvalContextExtractor(
                 new MockGenerator(), 5);
         MockWordsi wordsi = new MockWordsi(null, extractor);
@@ -55,7 +55,7 @@ public class SemEvalContextExtractorTest {
         assertTrue(wordsi.called);
     }
 
-    @Test public void testProcessDocumentWithNonDefaultSeparator() {
+    @Ignore @Test public void testProcessDocumentWithNonDefaultSeparator() {
         ContextExtractor extractor = new SemEvalContextExtractor(
                 new MockGenerator(), 5, "chicken");
         MockWordsi wordsi = new MockWordsi(null, extractor);

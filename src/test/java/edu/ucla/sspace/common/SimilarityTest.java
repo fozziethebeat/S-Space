@@ -310,7 +310,7 @@ public class SimilarityTest {
     /** 
      * Example from http://www2.warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/rank_correlations
      */
-    @Test public void testSpearmanDoubleTies() {
+    @Ignore @Test public void testSpearmanDoubleTies() {
         double[] x = new double[] { 5.05, 6.75, 3.21, 2.66 };
         double[] y = new double[] { 1.65, 26.5, -5.93, 7.96 };
         double[] z = new double[] { 1.65, 2.64, 2.64, 6.95 };

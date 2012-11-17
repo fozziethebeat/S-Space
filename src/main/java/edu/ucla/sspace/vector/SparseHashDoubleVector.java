@@ -111,8 +111,13 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public double add(int index, double delta) {
-        double val = get(index) + delta;
-        set(index, val);
+        double val = vector.get(index) + delta;
+        if (val == 0) 
+            vector.remove(index);        
+        else
+            set(index, val);
+        nonZeroIndices = null;
+        magnitude = -1;
         return val;
     }
 

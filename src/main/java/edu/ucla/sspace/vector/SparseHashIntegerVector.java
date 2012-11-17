@@ -26,6 +26,7 @@ import edu.ucla.sspace.util.ObjectEntry;
 
 import java.io.Serializable;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import gnu.trove.iterator.TIntIntIterator;
@@ -85,7 +86,10 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
     public int add(int index, int delta) {
         int val = map.get(index);
         int newVal = val + delta;
-        map.put(index, newVal);
+        if (newVal == 0)
+            map.remove(index);
+        else
+            map.put(index, newVal);
         magnitude = -1;
         return newVal;
     }
@@ -101,7 +105,9 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        return map.keys();
+        int[] nz = map.keys();
+        Arrays.sort(nz);
+        return nz;
     }
 
     /**
