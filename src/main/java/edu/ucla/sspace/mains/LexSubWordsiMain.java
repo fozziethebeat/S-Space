@@ -25,7 +25,7 @@ import edu.ucla.sspace.wordsi.ContextExtractor;
 import edu.ucla.sspace.wordsi.ContextGenerator;
 import edu.ucla.sspace.wordsi.Wordsi;
 import edu.ucla.sspace.wordsi.WordOccrrenceContextGenerator;
-import edu.ucla.sspace.wordsi.semeval.SemEvalContextExtractor;;
+import edu.ucla.sspace.wordsi.semeval.SemEvalContextExtractor;
 
 import java.io.File;
 import java.io.IOError;
