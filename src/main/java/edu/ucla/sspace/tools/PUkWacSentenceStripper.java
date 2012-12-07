@@ -47,18 +47,23 @@ public class PUkWacSentenceStripper {
     public static void main(String[] args) throws IOException {
         Iterator<Document> ukWacIter = new UkWacDependencyFileIterator(args[0]);
 
-        PrintWriter writer = new PrintWriter(args[1]);
-        StringBuilder builder = new StringBuilder();
-        DependencyExtractor extractor = new CoNLLDependencyExtractor();
-        while (ukWacIter.hasNext()) {
-            BufferedReader doc = ukWacIter.next().reader();
-            for (DependencyTreeNode[] tree = null;
-                 (tree = extractor.readNextTree(doc)) != null; ) {
-                for (DependencyTreeNode node : tree)
-                    builder.append(node.word()).append(" ");
-            }
-            writer.println(builder.toString());
-            builder = new StringBuilder();
+        PrintWriter writer = null;
+        try {
+	        writer = new PrintWriter(args[1]);
+	        StringBuilder builder = new StringBuilder();
+	        DependencyExtractor extractor = new CoNLLDependencyExtractor();
+	        while (ukWacIter.hasNext()) {
+	            BufferedReader doc = ukWacIter.next().reader();
+	            for (DependencyTreeNode[] tree = null;
+	                 (tree = extractor.readNextTree(doc)) != null; ) {
+	                for (DependencyTreeNode node : tree)
+	                    builder.append(node.word()).append(" ");
+	            }
+	            writer.println(builder.toString());
+	            builder = new StringBuilder();
+	        }
+        } finally {
+        	if (writer != null) writer.close();
         }
     }
 }
