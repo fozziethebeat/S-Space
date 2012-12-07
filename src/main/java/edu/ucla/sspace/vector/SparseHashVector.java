@@ -85,7 +85,7 @@ public class SparseHashVector<T extends Number> extends AbstractVector<T>
             if (len != length())
                 return false;
             for (int i = 0; i < len; ++i) {
-                if (v.get(i) != vector.get(i))
+                if (v.get(i) != vector.get(i).doubleValue())
                     return false;
             }
             return true;
@@ -96,7 +96,7 @@ public class SparseHashVector<T extends Number> extends AbstractVector<T>
             if (len != length())
                 return false;
             for (int i = 0; i < len; ++i) {
-                if (v.get(i) != vector.get(i))
+                if (v.get(i) != vector.get(i).doubleValue())
                     return false;
             }
             return true;
