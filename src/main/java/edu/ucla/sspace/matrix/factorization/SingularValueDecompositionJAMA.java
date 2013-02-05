@@ -1,7 +1,5 @@
 /*
- * Copyright (c) 2011, Lawrence Livermore National Security, LLC. Produced at
- * the Lawrence Livermore National Laboratory. Written by Keith Stevens,
- * kstevens@cs.ucla.edu OCEC-10-073 All rights reserved. 
+ * Copyright (c) 2013. Earl J. Wagner
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -32,8 +30,6 @@ import edu.ucla.sspace.matrix.MatlabSparseMatrixBuilder;
 
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.SVD.Algorithm;
-//import edu.ucla.sspace.matrix.SvdlibjDriver;
-//import edu.ucla.sspace.matrix.SvdlibcSparseBinaryMatrixBuilder;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -43,15 +39,9 @@ import java.util.logging.Level;
 
 
 /**
- * A wrapper around the {@link SvdlibjDriver} that implements the {@link
- * MatrixFactorization} interface.
+ * A wrapper around the JAMA
  *
- * </p>
- *
- * NOTE: SVDLIBJ is known to have bugs and incorrectly computes the SVD for some
- * dimensions.
- *
- * @author Keith Stevens
+ * @author Earl J. Wagner
  */
 public class SingularValueDecompositionJAMA extends AbstractSvd {
 
@@ -62,7 +52,6 @@ public class SingularValueDecompositionJAMA extends AbstractSvd {
      * {@inheritDoc}
      */
     public void factorize(SparseMatrix matrix, int dimensions) {
-		LOG.log(Level.INFO, "running svd");
         Matrix[] svd = SVD.svd(matrix, Algorithm.JAMA, dimensions);
 
         dataClasses = svd[0];
@@ -102,7 +91,6 @@ public class SingularValueDecompositionJAMA extends AbstractSvd {
      * {@inheritDoc}
      */
     public MatrixBuilder getBuilder() {
-        //return new SvdlibcSparseBinaryMatrixBuilder();
         return new MatlabSparseMatrixBuilder();
     }
 }
