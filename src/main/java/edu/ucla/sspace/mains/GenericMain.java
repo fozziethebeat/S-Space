@@ -278,7 +278,7 @@ public abstract class GenericMain {
                           "recognized compound word", true, "FILE", 
                           "Tokenizing Options");
         options.addOption('z', "wordLimit", "Set the maximum number of words " +
-                          "an document can return",
+                          "a document can return",
                           true, "INT", "Tokenizing Options");
 
         addExtraOptions(options);

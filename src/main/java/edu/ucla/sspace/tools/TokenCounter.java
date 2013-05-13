@@ -178,7 +178,7 @@ public class TokenCounter {
                           "all other filtering has been applied", false, null, 
                           "Tokenizing Options");
         options.addOption('z', "wordLimit", "Set the maximum number of words " +
-                          "an document can return",
+                          "a document can return",
                           true, "INT", "Tokenizing Options");
         options.addOption('v', "verbose",
                           "Print verbose output about counting status",
