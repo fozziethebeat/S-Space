@@ -122,7 +122,7 @@ public class GrowingSparseMatrix extends AbstractMatrix
      */        
     private void checkIndices(int row, int col) {
         if (row < 0 || col < 0)
-            throw new ArrayIndexOutOfBoundsException();
+            throw new ArrayIndexOutOfBoundsException("Negative index");
     }
 
     /**

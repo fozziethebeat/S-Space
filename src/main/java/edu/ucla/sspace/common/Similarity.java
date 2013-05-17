@@ -59,6 +59,10 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import gnu.trove.set.TIntSet;
+
+import gnu.trove.set.hash.TIntHashSet;
+
 
 /**
  * A collection of static methods for computing the similarity, distances,
@@ -754,18 +758,19 @@ public class Similarity {
 
             int[] aNonZero = svA.getNonZeroIndices();
             int[] bNonZero = svB.getNonZeroIndices();
-            HashSet<Integer> sparseIndicesA = new HashSet<Integer>(
-                    aNonZero.length);
+            TIntSet union = new TIntHashSet(aNonZero);
+            union.addAll(bNonZero);
+            
             double sum = 0;
-            for (int nonZero : aNonZero) {
-                sum += Math.pow((a.get(nonZero) - b.get(nonZero)), 2);
-                sparseIndicesA.add(nonZero);
+            int[] nzIndices = union.toArray();
+            for (int nz : nzIndices) {
+                double x = a.get(nz);
+                double y = b.get(nz);
+                double diff = x - y;
+                sum += diff * diff;
             }
+            return Math.sqrt(sum);
 
-            for (int nonZero : bNonZero)
-                if (!sparseIndicesA.contains(nonZero))
-                    sum += Math.pow(b.get(nonZero), 2);
-            return sum;
         } else if (b instanceof SparseVector) {
             // If b is sparse, use a special case where we use the cached
             // magnitude of a and the sparsity of b to avoid most of the

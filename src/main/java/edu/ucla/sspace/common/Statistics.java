@@ -38,6 +38,9 @@ import edu.ucla.sspace.util.ObjectCounter;
 /**
  * A collection of static methods for statistical analysis and basic numeric
  * computation.
+ *
+ * <p>Unless otherwise noted all methods will throw a {@link
+ * NullPointerException} if passed a {@code null} object.
  */
 public class Statistics {
 
@@ -166,7 +169,7 @@ public class Statistics {
     public static <T extends Number> T mode(Collection<T> values) {
         if (values.isEmpty())
             throw new IllegalArgumentException(
-                "No median in an empty collection");
+                "No mode in an empty collection");
         Counter<T> c = new ObjectCounter<T>();
         for (T n : values)
             c.count(n);
@@ -178,7 +181,7 @@ public class Statistics {
      */
     public static int mode(int[] values) {
         if (values.length == 0)
-            throw new IllegalArgumentException("No median in an empty array");        
+            throw new IllegalArgumentException("No mode in an empty array");        
         Counter<Integer> c = new ObjectCounter<Integer>();
         for (int i : values)
             c.count(i);
@@ -190,7 +193,7 @@ public class Statistics {
      */
     public static double mode(double[] values) {
         if (values.length == 0)
-            throw new IllegalArgumentException("No median in an empty array");        
+            throw new IllegalArgumentException("No mode in an empty array");        
         Counter<Double> c = new ObjectCounter<Double>();
         for (double d : values)
             c.count(d);

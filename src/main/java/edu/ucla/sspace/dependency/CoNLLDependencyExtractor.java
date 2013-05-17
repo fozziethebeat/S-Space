@@ -297,6 +297,14 @@ public class CoNLLDependencyExtractor implements DependencyExtractor {
 
             // CoNLL formats using tabs between features.
             String[] nodeFeatures = line.split("\t");
+            
+            // Sanity check that we have enough columns to support parsing
+            if (nodeFeatures.length - 1 < idIndex) {
+                reader.close();
+                throw new IllegalStateException("While parsing, found line with"
+                    + " too few columns.  Missing node id columns.  Offending "+
+                    "line:\n" + line);
+            }
 
             // Multiple parse trees may be within the same set of lines, so in
             // order for the later parse trees to be linked correctly, we need

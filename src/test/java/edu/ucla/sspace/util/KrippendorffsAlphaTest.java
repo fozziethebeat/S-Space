@@ -51,6 +51,12 @@ public class KrippendorffsAlphaTest {
             vectors.add(Vectors.asVector(responses[i]));
         testMatrix = Matrices.asMatrix(vectors);
     }
+
+    @Test public void testNominal() {
+        double alpha = new KrippendorffsAlpha().compute(testMatrix, 
+            KrippendorffsAlpha.LevelOfMeasurement.NOMINAL);
+        assertEquals(0.743, alpha, 0.001);
+    }
    
     @Test public void testOrdinal() {
         double alpha = new KrippendorffsAlpha().compute(testMatrix, 

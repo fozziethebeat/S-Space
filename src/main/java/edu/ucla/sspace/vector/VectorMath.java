@@ -24,6 +24,10 @@ package edu.ucla.sspace.vector;
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.IntegerEntry;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+
 
 /**
  * A collection of static arithmetic operations on {@code Vector} instances. <p>
@@ -526,9 +530,28 @@ public class VectorMath {
         if (left.length() != right.length())
             throw new IllegalArgumentException(
                     "Vectors of different sizes cannot be multiplied");
-        int length = left.length();
-        for (int i = 0; i < length; ++i)
-            left.set(i, left.get(i) * right.get(i));
+
+        if (left instanceof SparseVector && right instanceof SparseVector) {
+            TIntSet lnz = new TIntHashSet(((SparseVector)left).getNonZeroIndices());
+            for (int nz : ((SparseVector)right).getNonZeroIndices()) {
+                if (lnz.contains(nz)) {
+                    left.set(nz, left.get(nz) * right.get(nz));
+                    lnz.remove(nz);
+                }
+            }
+
+            // The remaining non-zero values in left should be zero'd out
+            // because they were effectively multiplied by zero by the right
+            // vector.
+            TIntIterator iter = lnz.iterator();
+            while (iter.hasNext())
+                left.set(iter.next(), 0);
+        }
+        else {
+            int length = left.length();
+            for (int i = 0; i < length; ++i)
+                left.set(i, left.get(i) * right.get(i));
+        }
         return left;
     }
     /**
