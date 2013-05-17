@@ -24,6 +24,7 @@ package edu.ucla.sspace.vector;
 import edu.ucla.sspace.util.DoubleEntry;
 import edu.ucla.sspace.util.ObjectEntry;
 
+import gnu.trove.iterator.TDoubleIterator;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
@@ -49,7 +50,7 @@ public class SparseHashDoubleVector
 
     private static final long serialVersionUID = 1L;
 
-    private TIntDoubleHashMap vector;
+    private final TIntDoubleHashMap vector;
 
     private int[] nonZeroIndices;
 
@@ -79,26 +80,34 @@ public class SparseHashDoubleVector
         maxLength = values.length;
         vector = new TIntDoubleHashMap();
         nonZeroIndices = null;
-        magnitude = 0;
+        magnitude = -1;
         for (int i = 0; i < values.length; ++i) {
             if (values[i] != 0) {
-                magnitude += values[i] * values[i];
                 vector.put(i, values[i]);
             }
         }
-        magnitude = Math.sqrt(magnitude);
     }
 
+    /**
+     * Creates a new vector with a copy of the date in {@code values}.  This
+     * method is preferable than individually adding elements as it can
+     * preallocate the space required for the data and avoid rehashing.
+     */
     public SparseHashDoubleVector(DoubleVector values) {
         maxLength = values.length();
-        vector = new TIntDoubleHashMap();
         nonZeroIndices = null;
-        magnitude = values.magnitude();
-        if (values instanceof SparseVector) {
+        magnitude = -1; 
+        if (values instanceof SparseHashDoubleVector) {
+            SparseHashDoubleVector v = (SparseHashDoubleVector)values;
+            vector = new TIntDoubleHashMap(v.vector);
+        }
+        else if (values instanceof SparseVector) {
             int[] nonZeros = ((SparseVector) values).getNonZeroIndices();
+            vector = new TIntDoubleHashMap(nonZeros.length);
             for (int index : nonZeros)
                 vector.put(index, values.get(index));
         } else {
+            vector = new TIntDoubleHashMap();
             for (int index = 0; index < values.length(); ++index) {
                 double value = values.get(index);
                 if (value != 0d)
@@ -111,8 +120,13 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public double add(int index, double delta) {
-        double val = get(index) + delta;
-        set(index, val);
+        double val = vector.get(index) + delta;
+        if (val == 0) 
+            vector.remove(index);        
+        else
+            set(index, val);
+        nonZeroIndices = null;
+        magnitude = -1;
         return val;
     }
 
@@ -182,8 +196,11 @@ public class SparseHashDoubleVector
     public double magnitude() {
         if (magnitude < 0) {
             magnitude = 0;
-            for (double d : vector.values())
+            TDoubleIterator iter = vector.valueCollection().iterator();
+            while (iter.hasNext()) {
+                double d = iter.next();
                 magnitude += d*d;
+            }
             magnitude = Math.sqrt(magnitude);
         }
         return magnitude;

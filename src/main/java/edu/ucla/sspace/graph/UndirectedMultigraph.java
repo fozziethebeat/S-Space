@@ -103,11 +103,20 @@ public class UndirectedMultigraph<T>
     private int size;
     
     /**
-     * Creates an empty graph with node edges
+     * Creates an empty graph with no edges
      */
     public UndirectedMultigraph() { 
+        this(16);
+    }
+
+    /**
+     * Creates an empty graph with a capacity for the specified number of
+     * vertices.
+     */
+    public UndirectedMultigraph(int vertexCapacity) { 
         typeCounts = new TObjectIntHashMap<T>();
-        vertexToEdges = new TIntObjectHashMap<SparseTypedEdgeSet<T>>();
+        vertexToEdges = 
+            new TIntObjectHashMap<SparseTypedEdgeSet<T>>(vertexCapacity);
         subgraphs = new ArrayList<WeakReference<Subgraph>>();
         size = 0;
     }
@@ -340,7 +349,7 @@ public class UndirectedMultigraph<T>
      * {@inheritDoc}
      */
     public Set<TypedEdge<T>> getEdges(int vertex1, int vertex2, 
-                                              Set<T> types) {
+                                      Set<T> types) {
         SparseTypedEdgeSet<T> edges = vertexToEdges.get(vertex1);        
         return (edges == null) 
             ? Collections.<TypedEdge<T>>emptySet()

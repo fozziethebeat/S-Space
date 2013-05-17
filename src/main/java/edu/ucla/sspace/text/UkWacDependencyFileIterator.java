@@ -84,12 +84,14 @@ public class UkWacDependencyFileIterator implements Iterator<Document> {
 
         while ((line = documentsReader.readLine()) != null
                && !line.equals("</text>")) {
-            // Skip sentence delimitors.
-            if (line.startsWith("<s>") || line.startsWith("</s>"))
+            // Skip sentence delimitors. Also, sometimes the <text/> tags are
+            // interleaved with <s/> tags, so check against those too.
+            if (line.startsWith("<s>") || line.startsWith("</s>") 
+                    || line.startsWith("<text"))
                 continue;
 
             // Append the token line, while avoiding blank lines that seemingly
-            // creep into the corpus.
+            // creep into the corpus.  
             if (line.length() > 0)
                 sb.append(line).append("\n");
        }

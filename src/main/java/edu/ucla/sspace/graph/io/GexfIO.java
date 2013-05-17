@@ -69,6 +69,104 @@ import javax.xml.transform.stream.*;
 public class GexfIO {
 
     /**
+     * Writes the {@link Graph} to file in {@code gexf} format.
+     */
+    public void write(Graph<? extends Edge> g, File gexfFile) 
+            throws IOException {
+        write(g, gexfFile, null);
+    }
+
+    /**
+     * Writes the {@link Graph} to file in {@code gexf} format.
+     */
+    public void write(Graph<? extends Edge> g, 
+                      File gexfFile, Indexer<String> vertexLabels) 
+            throws IOException {
+
+        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = null;
+        try {
+            docBuilder = dbfac.newDocumentBuilder();
+        } catch (ParserConfigurationException pce) {
+            throw new IOError(new IOException(pce));
+        }
+        Document doc = docBuilder.newDocument();
+
+        Element root = doc.createElement("gexf");
+        root.setAttribute("xmlns","http://www.gexf.net/1.2draft");
+        root.setAttribute("xmlns:viz", "http://www.gexf.net/1.2draft/viz");
+        root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        root.setAttribute("version","1.2");
+        root.setAttribute("xsi:schemaLocation","http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd");
+        doc.appendChild(root);
+
+        Element graph = doc.createElement("graph");
+        graph.setAttribute("defaultedgetype","undirected");
+        root.appendChild(graph);
+
+        Element nodes = doc.createElement("nodes");
+        graph.appendChild(nodes);
+        Element edges = doc.createElement("edges");
+        graph.appendChild(edges);
+
+        IntIterator vIter = g.vertices().iterator();
+        while (vIter.hasNext()) {
+            int vertex = vIter.next();
+            Element node = doc.createElement("node");
+            String vLabel = (vertexLabels == null)
+                ? String.valueOf(vertex)
+                : vertexLabels.lookup(vertex);
+            if (vLabel == null)
+                vLabel = String.valueOf(vertex);
+            node.setAttribute("id", vLabel);
+            node.setAttribute("label", vLabel);
+            nodes.appendChild(node);
+        }
+
+        int edgeId = 0;
+        for (Edge e : g.edges()) {
+            Element edge = doc.createElement("edge");
+            edges.appendChild(edge);
+            edge.setAttribute("id", "" + (edgeId++));
+
+            String sourceLabel = (vertexLabels == null)
+                ? String.valueOf(e.from())
+                : vertexLabels.lookup(e.from());
+            if (sourceLabel == null)
+                sourceLabel = String.valueOf(e.from());
+
+            String targetLabel = (vertexLabels == null)
+                ? String.valueOf(e.to())
+                : vertexLabels.lookup(e.to());
+            if (targetLabel == null)
+                targetLabel = String.valueOf(e.to());
+
+            edge.setAttribute("source", sourceLabel);
+            edge.setAttribute("target", targetLabel);
+        }
+
+        // Set up a transformer
+        try {
+            TransformerFactory transfac = TransformerFactory.newInstance();
+            Transformer trans = transfac.newTransformer();
+            trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            trans.setOutputProperty(OutputKeys.INDENT, "yes");
+            trans.setOutputProperty(
+                "{http://xml.apache.org/xslt}indent-amount", "2");
+        
+            // Create string from xml tree
+            BufferedOutputStream bos = 
+                new BufferedOutputStream(new FileOutputStream(gexfFile));
+            StreamResult result = new StreamResult(bos);
+            DOMSource source = new DOMSource(doc);
+            trans.transform(source, result);
+            bos.close();         
+        } catch (TransformerException te) {
+            throw new IOError(new IOException(te));
+        }
+    }
+
+    /**
      * Writes the provided multigraph to the specified {@code gexf} file with
      * all edge colors appearing the same.
      *

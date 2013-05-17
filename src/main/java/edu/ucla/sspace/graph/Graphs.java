@@ -249,10 +249,11 @@ public final class Graphs {
      * Shuffles the edges of {@code g} while still preserving the <a
      * href="http://en.wikipedia.org/wiki/Degree_sequence#Degree_sequence">degree
      * sequence</a> of the graph and that edges are only swapped with those of
-     * the same type.  Each edge in the graph will attempted to be conflated
-     * with another edge in the graph the specified number of times.  If the
-     * edge cannot be swapped (possible due to the new version of the edge
-     * already existing), the attempt fails.
+     * the same type, thereby preserving the number of edges of a single type
+     * attached to each node.  Each edge in the graph will attempted to be
+     * conflated with another edge in the graph the specified number of times.
+     * If the edge cannot be swapped (possible due to the new version of the
+     * edge already existing), the attempt fails.
      *
      * <p> Note that the {@link Multigraph#subview(Set,Set)} method makes it
      * possilble to shuffle the edges for only a subset of the types in the

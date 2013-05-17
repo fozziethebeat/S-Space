@@ -84,14 +84,14 @@ public class SparseHashMatrix extends AbstractMatrix
     /**
      * {@inheritDoc}
      */
-    public int columns() {
+    @Override public int columns() {
         return columns;
     }
 
     /**
      * {@inheritDoc}
      */
-    public SparseDoubleVector getColumnVector(int column) {
+    @Override public SparseDoubleVector getColumnVector(int column) {
         SparseHashDoubleVector col = new SparseHashDoubleVector(rows);
         for (int r = 0; r < rows(); ++r)
             col.set(r, getRowVector(r).get(column));
@@ -101,21 +101,21 @@ public class SparseHashMatrix extends AbstractMatrix
     /**
      * {@inheritDoc}
      */
-    public SparseDoubleVector getRowVector(int row) {
-        return Vectors.immutable(sparseMatrix[row]);
+    @Override public SparseDoubleVector getRowVector(int row) {
+        return sparseMatrix[row];
     }
 
     /**
      * {@inheritDoc}
      */
-    public int rows() {
+    @Override public int rows() {
         return rows;
     }
 
     /**
      * {@inheritDoc}
      */
-    public void set(int row, int col, double val) {
+    @Override public void set(int row, int col, double val) {
         checkIndices(row, col);
         sparseMatrix[row].set(col, val);
     }

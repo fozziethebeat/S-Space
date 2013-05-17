@@ -48,6 +48,33 @@ public class SimilarityTest {
         assertEquals(0, Similarity.euclideanDistance(a, b), .00000001);
     }
 
+
+    @Test public void testEuclideanDistSparseDoubleDiff2() {
+        double[] v1 = new double[] { 0, 2, 0, 0, 0, 0, 0, 0, 0, 0};
+        double[] v2 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        SparseVector a = new CompactSparseVector(10);
+        SparseVector b = new CompactSparseVector(10);
+        for (int i = 0; i < v1.length; ++i) {
+            a.set(i, v1[i]);
+            b.set(i, v2[i]);
+        }
+        assertEquals(2, Similarity.euclideanDistance(a, b), .00000001);
+    }
+
+    @Test public void testEuclideanDistSparseDoubleDiff3() {
+        double[] v1 = new double[] { 0, 2, 0, 0, 0, 0, 0, 0, 0, 0};
+        double[] v2 = new double[] { 0, 0, 0, 0, 3, 0, 0, 0, 0, 0};
+        SparseVector a = new CompactSparseVector(10);
+        SparseVector b = new CompactSparseVector(10);
+        for (int i = 0; i < v1.length; ++i) {
+            a.set(i, v1[i]);
+            b.set(i, v2[i]);
+        }
+        // (2-0)^2  + (3-0)^2
+        assertEquals(Math.sqrt(4 + 9), Similarity.euclideanDistance(a, b), .00000001);
+    }
+
+
     @Test public void testEuclideanDistSparseDoubleDiff() {
         double[] v1 = new double[] { 0, 1, 0, 1, 0, 1, 0, 1, 0, 0};
         double[] v2 = new double[] { 0, 0, 1, 1, 1, 1, 1, 1, 0, 0};
@@ -57,7 +84,7 @@ public class SimilarityTest {
             a.set(i, v1[i]);
             b.set(i, v2[i]);
         }
-        assertEquals(4, Similarity.euclideanDistance(a, b), .00000001);
+        assertEquals(2, Similarity.euclideanDistance(a, b), .00000001);
     }
 
     public static double rawCosine(DoubleVector v1, DoubleVector v2) {

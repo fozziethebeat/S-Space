@@ -74,7 +74,7 @@ public class ChineseWhispersClustering implements java.io.Serializable {
      * The logger to which clustering status updates will be written.
      */
     private static final Logger LOGGER =
-        Logger.getLogger(LinkClustering.class.getName());
+        Logger.getLogger(ChineseWhispersClustering.class.getName());
        
     private static final String PROPERTY_PREFIX =
         "edu.ucla.sspace.graph.LinkClustering";

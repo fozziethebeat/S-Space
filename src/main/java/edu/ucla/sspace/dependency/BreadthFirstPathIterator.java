@@ -71,7 +71,8 @@ public class BreadthFirstPathIterator implements Iterator<DependencyPath> {
      * that will only return paths up to the specified maximum length.
      *
      * @param startNode the node that will start all the paths to be generated.
-     * @param maxPathLength the maximum path length to return
+     * @param maxPathLength the maximum path length to return.  Length is
+     *        defined in terms of the number of relations.
      *
      * @throws IllegalArgumentException if {@maxPathLength} is &lt; 1.
      */

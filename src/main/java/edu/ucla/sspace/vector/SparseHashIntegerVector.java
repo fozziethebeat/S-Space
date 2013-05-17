@@ -26,11 +26,14 @@ import edu.ucla.sspace.util.ObjectEntry;
 
 import java.io.Serializable;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntIntIterator;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
+
 
 /**
  * A {@code SparseVector} implementation backed by a {@code HashMap}.  This
@@ -80,12 +83,43 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
     }
 
     /**
+     * Creates a new vector with a copy of the date in {@code values}.  This
+     * method is preferable than individually adding elements as it can
+     * preallocate the space required for the data and avoid rehashing.
+     */
+    public SparseHashIntegerVector(IntegerVector values) {
+        length = values.length();
+        magnitude = -1; 
+        if (values instanceof SparseHashIntegerVector) {
+            SparseHashIntegerVector v = (SparseHashIntegerVector)values;
+            map = new TIntIntHashMap(v.map);
+        }
+        else if (values instanceof SparseVector) {
+            int[] nonZeros = ((SparseVector) values).getNonZeroIndices();
+            map = new TIntIntHashMap(nonZeros.length);
+            for (int index : nonZeros)
+                map.put(index, values.get(index));
+        } else {
+            map = new TIntIntHashMap();
+            for (int index = 0; index < values.length(); ++index) {
+                int value = values.get(index);
+                if (value != 0)
+                    map.put(index, value);
+            }
+        }
+    }
+
+
+    /**
      * {@inheritDoc}
      */
     public int add(int index, int delta) {
         int val = map.get(index);
         int newVal = val + delta;
-        map.put(index, newVal);
+        if (newVal == 0)
+            map.remove(index);
+        else
+            map.put(index, newVal);
         magnitude = -1;
         return newVal;
     }
@@ -101,7 +135,9 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        return map.keys();
+        int[] nz = map.keys();
+        Arrays.sort(nz);
+        return nz;
     }
 
     /**
@@ -125,9 +161,16 @@ public class SparseHashIntegerVector extends AbstractIntegerVector
      * vector changes.
      */
     @Override public double magnitude() {
-        return (magnitude == -1) 
-            ? magnitude = super.magnitude()
-            : magnitude;
+        if (magnitude < 0) {
+            magnitude = 0;
+            TIntIterator iter = map.valueCollection().iterator();
+            while (iter.hasNext()) {
+                int i = iter.next();
+                magnitude += i*i;
+            }
+            magnitude = Math.sqrt(magnitude);
+        }
+        return magnitude;
     }
 
     /**

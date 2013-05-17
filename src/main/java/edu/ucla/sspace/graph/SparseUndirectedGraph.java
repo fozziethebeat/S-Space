@@ -60,6 +60,14 @@ public class SparseUndirectedGraph extends AbstractGraph<Edge,SparseUndirectedEd
     }
 
     /**
+     * Creates an empty undirected graph with the provided initial vertex
+     * storage capacity and default edge capacity.
+     */
+    public SparseUndirectedGraph(int initialVertexCapacity) {
+        this(initialVertexCapacity, DEFAULT_INITIAL_EDGE_CAPACITY);
+    }
+
+    /**
      * Creates an empty undirected graph with the provided initial edge and
      * vertex storage capacities.
      */
@@ -97,7 +105,7 @@ public class SparseUndirectedGraph extends AbstractGraph<Edge,SparseUndirectedEd
     /**
      * {@inheritDoc}
      */
-    @Override public Graph<Edge> copy(Set<Integer> vertices) {
+    @Override public SparseUndirectedGraph copy(Set<Integer> vertices) {
         // special case for If the called is requesting a copy of the entire
         // graph, which is more easily handled with the copy constructor
         if (vertices.size() == order() && vertices.equals(vertices()))
