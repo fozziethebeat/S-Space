@@ -56,6 +56,8 @@ public class SparseHashDoubleVector
 
     private double magnitude;
 
+    private int[] nonZeroIndices;
+
     /**
      * Creates a new {@link SparseHashDoubleVector} with an unbounded length.
      */
@@ -119,7 +121,7 @@ public class SparseHashDoubleVector
             }
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -213,7 +215,11 @@ public class SparseHashDoubleVector
      * {@inheritDoc}
      */
     public int[] getNonZeroIndices() {
-        return vector.keys();
+        if (nonZeroIndices == null) {
+            nonZeroIndices = vector.keys();
+            Arrays.sort(nonZeroIndices);
+        }
+        return nonZeroIndices;
     }
 
     /**
