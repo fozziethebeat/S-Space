@@ -64,7 +64,7 @@ public class GeneralContextExtractorTest {
                     new CompactSparseVector(new double[]{0, 1, 0, 0, 1, 2, 1}));
     }
 
-    @Test public void testProcessDocument() {
+    @Ignore @Test public void testProcessDocument() {
         ContextExtractor extractor = new GeneralContextExtractor(
                 new MockGenerator(), 5, false);
         MockWordsi wordsi = new MockWordsi(null, extractor, null);
@@ -77,7 +77,7 @@ public class GeneralContextExtractorTest {
         assertTrue(wordsi.called);
     }
 
-    @Test public void testProcessDocumentWithHeader() {
+    @Ignore @Test public void testProcessDocumentWithHeader() {
         ContextExtractor extractor = new GeneralContextExtractor(
                 new MockGenerator(), 5, true);
         MockWordsi wordsi = new MockWordsi(null, extractor, "CHICKEN:");

@@ -8,7 +8,7 @@ import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
-import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;;
+import edu.ucla.sspace.matrix.factorization.NonNegativeMatrixFactorizationMultiplicative;
 
 import edu.ucla.sspace.util.LoggerUtil;
 

@@ -50,10 +50,10 @@ public final class OptionDescriptions {
      */
     public static final String COMPOUND_WORDS_DESCRIPTION =
         "The compound word option specifies a file whose contents are " +
-        "compount tokens,\n" +
+        "compound tokens,\n" +
         "e.g. white house.  Each compound token should be specified on " + 
         "its own line.\n" +
-        "Compount tokenization is greedy and will select the longest " + 
+        "Compound tokenization is greedy and will select the longest " + 
         "compound token\n" +
         "present.  For example if \"bar exam\" and \"California bar " + 
         "exam\" are both\n" +
@@ -72,11 +72,11 @@ public final class OptionDescriptions {
         "first, followed by one or more file names, each separated by " +
         "colons.\n" +
         "Multiple behaviors may be specified one after the other using a ','\n"+
-        "character to separate them.  For example, a typicaly configuration " +
+        "character to separate them.  For example, a typical configuration " +
         "may\n" +
         "look like: " +
         "include=top-tokens.txt:test-words.txt,exclude=stop-words.txt\n" +
-        "Note behaviors are applied in the order they are presented on the " +
+        "Note that behaviors are applied in the order they are presented on the " +
         "command-line.";
  
     /**
@@ -85,7 +85,7 @@ public final class OptionDescriptions {
      */
     public static final String TOKEN_STEMMING_DESCRIPTION =
         "Tokens can be stemmed for various languages using wrappers for " +
-        "the snoball\n" +
+        "the snowball\n" +
         "stemming algorithms.  Each language has it's own stemmer, following " +
         "a simple naming\n " +
         "convention: LanguagenameStemmer.";
@@ -95,7 +95,7 @@ public final class OptionDescriptions {
      * edu.ucla.sspace.common.SemanticSpaceIO}
      */
     public static final String FILE_FORMAT_DESCRIPTION = 
-        "Semantic space files stored in one of four formats: text, " +
+        "Semantic space files are stored in one of four formats: text, " +
         "sparse_text, binary\n" +
         "sparse_binary.  The sparse versions should be used if the " +
         "algorithm produces\n" +

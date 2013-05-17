@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 public class PseudoWordContextExtractorTest {
 
     SparseDoubleVector testVector;
-    @Test public void testProcessDocument() {
+    @Ignore @Test public void testProcessDocument() {
         Map<String, String> termMap = new HashMap<String, String>();
         ContextExtractor extractor = new PseudoWordContextExtractor(
                 new MockGenerator(), 3, termMap);
