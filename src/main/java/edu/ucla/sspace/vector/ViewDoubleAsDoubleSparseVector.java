@@ -134,6 +134,14 @@ class ViewDoubleAsDoubleSparseVector extends DoubleVectorView
     /**
      * {@inheritDoc}
      */
+    public SparseDoubleVector instanceCopy() {
+        throw new UnsupportedOperationException(
+                "Cannot return a new instance of the decorated Double vector");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked") @Override 
     public double magnitude() {
         // Check whether the current magnitude is valid and if not, recompute it

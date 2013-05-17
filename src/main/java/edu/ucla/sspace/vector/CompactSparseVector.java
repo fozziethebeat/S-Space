@@ -197,4 +197,11 @@ public class CompactSparseVector extends AbstractDoubleVector
         double[] array = new double[vector.length()];
         return vector.toPrimitiveArray(array);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return new CompactSparseVector(length());
+    }
 }

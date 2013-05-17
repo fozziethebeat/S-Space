@@ -139,4 +139,12 @@ class ConcatenatedSparseDoubleVector implements SparseDoubleVector,
             array[nz + v1.length()] = v2.get(nz);
         return array;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        throw new UnsupportedOperationException(
+                "Cannot return a new instance of the decorated Double vectors");
+    }
 }

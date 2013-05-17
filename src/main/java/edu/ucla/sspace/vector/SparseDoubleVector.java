@@ -26,4 +26,11 @@ package edu.ucla.sspace.vector;
  * An interface for sparse {@link DoubleVector} instances.
  */
 public interface SparseDoubleVector 
-    extends SparseVector<Double>, DoubleVector { }
+    extends SparseVector<Double>, DoubleVector { 
+
+    /**
+     * Returns a new instance of a vector with the same type.  If the vector is
+     * bounded by size, the returned instance will have the same bound.
+     */
+    SparseDoubleVector instanceCopy();
+}

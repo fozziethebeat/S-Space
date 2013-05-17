@@ -21,16 +21,18 @@
 
 package edu.ucla.sspace.mains;
 
+import edu.ucla.sspace.basis.StringBasisMapping;
+
 import edu.ucla.sspace.common.ArgOptions;
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
 import edu.ucla.sspace.hal.HyperspaceAnalogueToLanguage;
+import edu.ucla.sspace.hal.LinearWeighting;
+import edu.ucla.sspace.hal.WeightingFunction;
 
-import java.io.IOError;
-import java.io.IOException;
+import edu.ucla.sspace.util.ReflectionUtil;
 
-import java.util.Properties;
 
 /**
  * An executable class for running {@link HyperspaceAnalogueToLanguage} (HAL)
@@ -148,14 +150,9 @@ public class HALMain extends GenericMain {
                           "CLASSNAME", "Algorithm Options");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         HALMain hal = new HALMain();
-        try {
-            hal.run(args);
-        }
-        catch (Throwable t) {
-            t.printStackTrace();
-        }
+        hal.run(args);
     }
     
     /**
@@ -169,50 +166,25 @@ public class HALMain extends GenericMain {
      * {@inheritDoc}
      */
     protected SemanticSpace getSpace() {
-        return new HyperspaceAnalogueToLanguage();
-    }
+        WeightingFunction weighting;
+        if (argOptions.hasOption('W'))
+            weighting = ReflectionUtil.getObjectInstance(argOptions.getStringOption('W'));
+        else
+            weighting = new LinearWeighting();
+        int windowSize = argOptions.getIntOption('s', 5);
+        double threshold = argOptions.getDoubleOption('h', -1d);
+        int retain = argOptions.getIntOption('r', -1);
 
-    /**
-     * {@inheritDoc}
-     */
-    protected Properties setupProperties() {
-        // use the System properties in case the user specified them as
-        // -Dprop=<val> to the JVM directly.
-        Properties props = System.getProperties();
-
-         if (argOptions.hasOption("windowSize")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.WINDOW_SIZE_PROPERTY,
-                     argOptions.getStringOption("windowSize"));
-         }
-
-         if (argOptions.hasOption("threshold")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.ENTROPY_THRESHOLD_PROPERTY,
-                     argOptions.getStringOption("threshold"));
-         }
-
-         if (argOptions.hasOption("retain")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.RETAIN_PROPERTY,
-                     argOptions.getStringOption("retain"));
-         }
-
-         if (argOptions.hasOption("weighting")) {
-             props.setProperty(
-                     HyperspaceAnalogueToLanguage.WEIGHTING_FUNCTION_PROPERTY,
-                     argOptions.getStringOption("weighting"));
-         }        
-
-        return props;
+        return new HyperspaceAnalogueToLanguage(
+                new StringBasisMapping(), windowSize, weighting,
+                threshold, retain);
     }
 
     /**
      * {@inheritDoc}
      */
     protected String getAlgorithmSpecifics() {
-        return
-            "Note that the --retain and --threshold properties are mutually " + 
-            "exclusive;\nusing both will cause an exception";
+        return "Note that the --retain and --threshold properties are " +
+               "mutually exclusive;\nusing both will cause an exception";
     }
 }

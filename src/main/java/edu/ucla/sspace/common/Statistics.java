@@ -50,43 +50,35 @@ public class Statistics {
     private Statistics() { }
 
     /**
-     * Returns the entropy of the array.
+     * Returns the entropy of an array representing a (potentially) unormalized
+     * probability distribution).  Note that this method uses the natural log
+     * when computing the entropy.
      */
     public static double entropy(int[] a) {
-        Map<Integer,Integer> symbolFreq = new IntegerMap<Integer>();
-        for (int i : a) {
-            Integer freq = symbolFreq.get(i);
-            symbolFreq.put(i, (freq == null) ? 1 : 1 + freq);
-        }
-        
+        double sum = sum(a);
         double entropy = 0;
-        double symbols = a.length;
-        for (Integer freq : symbolFreq.values()) {
-            double symbolProbability = freq / symbols;
-            entropy -= symbolProbability * log2(symbolProbability);
+        for (int x : a) {
+            double p = x / sum;
+            if (p != 0d)
+                entropy += Math.log(p) * p;
         }
-
-        return entropy;
+        return -entropy;
     }
 
     /**
-     * Returns the entropy of the array.
+     * Returns the entropy of an array representing a (potentially) unormalized
+     * probability distribution).  Note that this method uses the natural log
+     * when computing the entropy.
      */
     public static double entropy(double[] a) {
-        Map<Double,Integer> symbolFreq = new HashMap<Double,Integer>();
-        for (double d : a) {
-            Integer freq = symbolFreq.get(d);
-            symbolFreq.put(d, (freq == null) ? 1 : 1 + freq);
-        }
-        
+        double sum = sum(a);
         double entropy = 0;
-        double symbols = a.length;
-        for (Integer freq : symbolFreq.values()) {
-            double symbolProbability = freq / symbols;
-            entropy -= symbolProbability * log2(symbolProbability);
+        for (double x : a) {
+            double p = x / sum;
+            if (p != 0d)
+                entropy += Math.log(p) * p;
         }
-
-        return entropy;
+        return -entropy; 
     }
 
     /**
