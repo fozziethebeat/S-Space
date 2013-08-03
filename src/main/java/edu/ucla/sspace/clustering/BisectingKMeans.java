@@ -46,8 +46,8 @@ import java.util.logging.Logger;
  * Initially all data points are separated into two clusters.  Then, until the
  * desired number of clusters are created, the largest cluster is divided using
  * K-Means with K equal to 2.  This implementation relies on the {@link
- * KMeansClustering} implementation.  Any properties passed to this clustering
- * method are passed onto the {@link KMeansClustering} algorithm, allowing the
+ * DirectClustering} implementation.  Any properties passed to this clustering
+ * method are passed onto the {@link DirectClustering} algorithm, allowing the
  * user to set the desired seeding method.
  *
  * @see KMeansClustering
@@ -127,7 +127,7 @@ public class BisectingKMeans implements Clustering {
             // Split the largest cluster.
             Matrix clusterToSplit = Matrices.asMatrix(originalCluster);
             Assignment[] newAssignments = 
-                clustering.cluster(dataPoints, 2, props).assignments();
+                clustering.cluster(clusterToSplit, 2, props).assignments();
 
             // Clear the lists for cluster being split and the new cluster.
             // Also clear the number of assignments.
