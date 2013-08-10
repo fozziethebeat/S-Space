@@ -318,8 +318,10 @@ public class SparseTypedEdgeSet<T> extends AbstractSet<TypedEdge<T>>
     public Set<T> types() {
         // NOTE: purely unoptimized!
         Set<T> types = new HashSet<T>();
-        for (Set<T> s : edges.values())
+        for (Object o : edges.values()) {
+            Set<T> s = (Set<T>)o;
             types.addAll(s);
+        }
         return types;
     }
 
