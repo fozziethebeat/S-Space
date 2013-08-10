@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
  */
 public class SingularValueDecompositionOctaveTest {
 
-    @Test public void testMatrixReduction() {
+    @Ignore public void testMatrixReduction() {
         if (SVD.isOctaveAvailable())
             SingularValueDecompositionTestUtil.testReductionMatrix(
                     new SingularValueDecompositionOctave());

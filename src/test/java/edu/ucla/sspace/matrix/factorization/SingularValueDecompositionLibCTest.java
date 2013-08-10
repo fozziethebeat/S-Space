@@ -26,6 +26,8 @@ package edu.ucla.sspace.matrix.factorization;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import edu.ucla.sspace.matrix.SVD;
+
 import static org.junit.Assert.*;
 
 
@@ -35,7 +37,8 @@ import static org.junit.Assert.*;
 public class SingularValueDecompositionLibCTest {
 
     @Test public void testMatrixReduction() {
-        SingularValueDecompositionTestUtil.testReductionMatrix(
+        if (SVD.isSVDLIBCavailable())
+            SingularValueDecompositionTestUtil.testReductionMatrix(
                 new SingularValueDecompositionLibC());
     }
 }

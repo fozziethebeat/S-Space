@@ -220,30 +220,30 @@ public class SparseHashDoubleVector
     /**
      * An iterator over the {@code double} values in the vector, wrapping the
      * backing {@code SparseHashArray}'s own iterator.
-    class DoubleIterator implements Iterator<DoubleEntry> {
-
-        Iterator<ObjectEntry<Number>> it;
-
-        public DoubleIterator() {
-            it = vector.iterator();
-        }
-
-        public boolean hasNext() {
-            return it.hasNext();
-        }
-
-        public DoubleEntry next() {
-            final ObjectEntry<Number> e = it.next();
-            return new DoubleEntry() {
-                public int index() { return e.index(); }
-                public double value() { return e.value().doubleValue(); }
-            };
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException(
-                "Cannot remove from vector");
-        }
-    }
      */
+    // class DoubleIterator implements Iterator<DoubleEntry> {
+
+    //     Iterator<ObjectEntry<Number>> it;
+
+    //     public DoubleIterator() {
+    //         it = vector.iterator();
+    //     }
+
+    //     public boolean hasNext() {
+    //         return it.hasNext();
+    //     }
+
+    //     public DoubleEntry next() {
+    //         final ObjectEntry<Number> e = it.next();
+    //         return new DoubleEntry() {
+    //             public int index() { return e.index(); }
+    //             public double value() { return e.value().doubleValue(); }
+    //         };
+    //     }
+
+    //     public void remove() {
+    //         throw new UnsupportedOperationException(
+    //             "Cannot remove from vector");
+    //     }
+    // }
 }

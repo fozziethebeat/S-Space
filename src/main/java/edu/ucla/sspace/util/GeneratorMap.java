@@ -23,6 +23,7 @@ package edu.ucla.sspace.util;
 
 import java.io.Serializable;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Keith Stevens
  */
-public class GeneratorMap<T> implements Map<String, T>, Serializable {
+public class GeneratorMap<T> extends AbstractMap<String, T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -154,17 +155,18 @@ public class GeneratorMap<T> implements Map<String, T>, Serializable {
      * Unsupported.
      */
     public T put(String key, T vector) {
-        throw new UnsupportedOperationException(
-                "Items may not be inserted into this GeneratorMap.");
+        return termToItem.put(key, vector);
+        // throw new UnsupportedOperationException(
+        //         "Items may not be inserted into this GeneratorMap.");
     }
 
-    /**
-     * Unsupported.
-     */
-    public void putAll(Map<? extends String, ? extends T> m) {
-        throw new UnsupportedOperationException(
-                "Items may not be inserted into this GeneratorMap.");
-    }
+    // /**
+    //  * Unsupported.
+    //  */
+    // public void putAll(Map<? extends String, ? extends T> m) {
+    //     throw new UnsupportedOperationException(
+    //             "Items may not be inserted into this GeneratorMap.");
+    // }
 
     /**
      * {@inheritDoc}

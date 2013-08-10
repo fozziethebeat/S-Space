@@ -76,6 +76,8 @@ public class SvdTests {
     }
 
     @Test public void testSvdlibcCluto() throws Exception {
+        if (!SVD.isSVDLIBCavailable())
+            return;
         File testMatrix = getTestMatrixFile();
         Matrix[] result = SVD.svd(testMatrix, SVD.Algorithm.SVDLIBC,
                                   MatrixIO.Format.CLUTO_DENSE, 2);
