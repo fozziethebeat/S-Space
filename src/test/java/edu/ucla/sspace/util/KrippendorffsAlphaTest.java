@@ -58,11 +58,8 @@ public class KrippendorffsAlphaTest {
         assertEquals(0.743, alpha, 0.001);
     }
    
-<<<<<<< HEAD
-    public void testOrdinal() {
-=======
+
     /* @Test */ public void testOrdinal() {
->>>>>>> b3b0bf34d842ad7be8b2cc16ae51a36612ab516c
         double alpha = new KrippendorffsAlpha().compute(testMatrix, 
             KrippendorffsAlpha.LevelOfMeasurement.ORDINAL);
         assertEquals(0.815, alpha, 0.001);
