@@ -128,4 +128,12 @@ class IntAsSparseDoubleVector extends IntAsDoubleVector
             return range;
         }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        throw new UnsupportedOperationException(
+                "Cannot create an instance of the decorated Integer vector");
+    }
 }

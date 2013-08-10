@@ -93,4 +93,12 @@ public class MaskedSparseDoubleVectorView extends MaskedDoubleVectorView
         }
         return nonZeroIndices;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        throw new UnsupportedOperationException(
+                "Cannot return a new instance of the decorated Double vector");
+    }
 }

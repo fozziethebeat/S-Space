@@ -95,7 +95,7 @@ public class SingularValueDecompositionTestUtil {
 
         for (int r = 0; r < matrix.rows(); ++r)
             for (int c = 0; c < 2; ++c)
-                assertEquals(EXPECTED_U[r][c] * EXPECTED_S[c],U.get(r,c),.001);
+                assertEquals(Math.abs(EXPECTED_U[r][c] * EXPECTED_S[c]),Math.abs(U.get(r,c)),.001);
 
         Matrix V = reducer.classFeatures();
         assertEquals(2, V.rows());
@@ -103,6 +103,6 @@ public class SingularValueDecompositionTestUtil {
 
         for (int r = 0; r < 2; ++r)
             for (int c = 0; c < matrix.columns(); ++c)
-                assertEquals(EXPECTED_V[r][c] * EXPECTED_S[r],V.get(r,c),.001);
+                assertEquals(Math.abs(EXPECTED_V[r][c] * EXPECTED_S[r]),Math.abs(V.get(r,c)),.001);
     }
 }

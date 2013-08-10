@@ -52,11 +52,18 @@ public class SparseHashDoubleVector
 
     private final TIntDoubleHashMap vector;
 
-    private int[] nonZeroIndices;
-
     private int maxLength;
 
     private double magnitude;
+
+    private int[] nonZeroIndices;
+
+    /**
+     * Creates a new {@link SparseHashDoubleVector} with an unbounded length.
+     */
+    public SparseHashDoubleVector() {
+        this(Integer.MAX_VALUE);
+    }
 
     /**
      * Creates a new vector of the specified length
@@ -66,7 +73,6 @@ public class SparseHashDoubleVector
     public SparseHashDoubleVector(int length) {
         maxLength = length;
         vector = new TIntDoubleHashMap();
-        nonZeroIndices = null;
     }
 
     /**
@@ -115,7 +121,7 @@ public class SparseHashDoubleVector
             }
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -170,7 +176,6 @@ public class SparseHashDoubleVector
         else 
             vector.put(index, value);
         magnitude = -1;
-        nonZeroIndices = null;
     }
 
     /**
@@ -215,6 +220,13 @@ public class SparseHashDoubleVector
             Arrays.sort(nonZeroIndices);
         }
         return nonZeroIndices;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public SparseDoubleVector instanceCopy() {
+        return new SparseHashDoubleVector(maxLength);
     }
 
     /**

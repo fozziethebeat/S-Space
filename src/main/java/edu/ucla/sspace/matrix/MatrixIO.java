@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.SortedMap;
@@ -892,6 +893,7 @@ public class MatrixIO {
             // Create a scanner to parse out the values from the current line of
             // the file.
             Scanner s = new Scanner(line);
+            s.useLocale(Locale.US);
             int vals = 0;
             // Count how many columns the row has
             for (; s.hasNextDouble(); vals++, s.nextDouble())
@@ -921,6 +923,7 @@ public class MatrixIO {
         // to load the data into a Matrix instance.  Use a Scanner to parse the
         // text for us.
         Scanner scanner = new Scanner(matrix);
+        scanner.useLocale(Locale.US);
         Matrix m = (transposeOnRead)
             ? Matrices.create(cols, rows, matrixType)
             : Matrices.create(rows, cols, matrixType);

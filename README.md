@@ -10,9 +10,9 @@ The research and development is being done by the Natural Language Processing
 group at UCLA led by David Jurgens and Keith Stevens, under the advisory of Dr.
 Michael Dyer.
 
-See the [Getting Started](/fozziethebeat/S-Space/wiki/GettingStarted/) page for
+See the [Getting Started](../../wiki/GettingStarted) page for
 a quick introduction on how to use the S-Space package, see the [Package
-Overview] (/fozziethebeat/S-Space/wiki/PackageStructure) for information on the
+Overview](../../wiki/PackageLayout) for information on the
 code and available features, or dive right into the
 [Javadoc](http://fozziethebeat.github.com/S-Space/apidocs/) to see what's
 available now.  For any questions, please contact us via our mailing lists:
