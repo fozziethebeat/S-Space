@@ -87,6 +87,8 @@ public class ChineseWhispersClustering implements java.io.Serializable {
 
     /**
      *
+     * @return a mapping from the cluster index to the set of graph vertices
+     *         mapped to that cluster
      */
     public <E extends Edge> MultiMap<Integer,Integer> cluster(Graph<E> graph) {
         return cluster(graph, DEFAULT_MAX_ITERATIONS, 
@@ -95,6 +97,8 @@ public class ChineseWhispersClustering implements java.io.Serializable {
 
     /**
      *
+     * @return a mapping from the cluster index to the set of graph vertices
+     *         mapped to that cluster
      */
     public <E extends Edge> MultiMap<Integer,Integer> 
                       cluster(Graph<E> graph, int maxIterations) {
@@ -103,6 +107,9 @@ public class ChineseWhispersClustering implements java.io.Serializable {
 
     /**
      *
+     *
+     * @return a mapping from the cluster index to the set of graph vertices
+     *         mapped to that cluster
      */
     public <E extends Edge> MultiMap<Integer,Integer> 
                       cluster(Graph<E> graph, int maxIterations, 
@@ -159,7 +166,7 @@ public class ChineseWhispersClustering implements java.io.Serializable {
         MultiMap<Integer,Integer> toReturn = 
             new HashMultiMap<Integer,Integer>();
         for (int i = 0; i < vertices.length; ++i) 
-            toReturn.put(i, vertexAssignments[i]);
+            toReturn.put(vertexAssignments[i], i);
         return toReturn;
     }
 

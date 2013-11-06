@@ -94,16 +94,12 @@ public class KrippendorffsAlpha {
     public double compute(Matrix ratings, LevelOfMeasurement level) {
         
         switch (level) {
-         case NOMINAL:
-             return compute(ratings, new NominalDifference());
-             // 
-             
-        // NOTE: Supported later when we figure out why the unit test isn't
-        // passing...
-
-        // case ORDINAL:
-        //     return compute(ratings, new OrdinalDifference());
-
+        case NOMINAL:
+            return compute(ratings, new NominalDifference());
+           
+        case ORDINAL:
+            return compute(ratings, new OrdinalDifference());
+            
         case INTERVAL:
             return compute(ratings, new IntervalDifference());
         }
@@ -115,6 +111,161 @@ public class KrippendorffsAlpha {
      * the distance between divergent annotations.
      */
     private double compute(Matrix ratings, DifferenceFunction diffFunc) {
+
+        SortedSet<Rating> values = new TreeSet<Rating>();
+        for (int r = 0; r < ratings.rows(); ++r) {
+            for (int c = 0; c < ratings.columns(); ++c) {
+                double d = ratings.get(r, c);
+                if (!Double.isNaN(d))
+                    values.add(new Rating(d));
+            }
+        }
+
+        Indexer<Rating> valueRanks = new ObjectIndexer<Rating>(values);
+
+
+        double[][] coincidence = new double[values.size()][values.size()];
+        int numPairableValues = 0;
+
+        for (int item = 0; item < ratings.columns(); ++item) {
+
+            // This is the number of value pairs for this item 
+            int m_u = 0;
+            for (int c = 0; c < ratings.rows(); ++c) {
+                if (!Double.isNaN(ratings.get(c, item)))
+                    m_u++;
+            }
+
+            if (m_u > 1)
+                numPairableValues += m_u;
+
+            for (int coder1 = 0; coder1 < ratings.rows(); ++coder1) {
+                double d1 = ratings.get(coder1, item);
+                if (Double.isNaN(d1))
+                    continue;
+                Rating r1 = new Rating(d1);
+
+                for (int coder2 = 0; coder2 < ratings.rows(); ++coder2) {
+                    if (coder1 == coder2)
+                        continue;
+                    double d2 = ratings.get(coder2, item);
+                    if (Double.isNaN(d2))
+                        continue;
+                    Rating r2 = new Rating(d2);
+                    coincidence[valueRanks.index(r1)][valueRanks.index(r2)] += 1d / (m_u-1);
+                }
+            }            
+        }
+
+        // System.out.println(numPairableValues);
+
+        // for (int i = 0; i < coincidence.length; ++i) {
+        //     System.out.print("\t" + valueRanks.lookup(i));
+        // }
+        // System.out.println();
+
+        // for (int i = 0; i < coincidence.length; ++i) {
+        //     System.out.print(valueRanks.lookup(i));
+        //     for (int j = 0; j < coincidence.length; ++j) {
+        //         System.out.print("\t" + coincidence[i][j]);
+        //     }
+        //     System.out.println();
+        // }
+
+        // double[] ratingToSum = new double[valueRanks.size()];
+        // for (int i = 0; i < coincidence.length; ++i) {
+        //     for (int j = 0; j < coincidence[i].length; ++j) {
+        //         ratingToSum[i] += coincidence[i][j];
+        //     }
+        // }
+        
+        // System.out.println(Arrays.toString(ratingToSum));
+        
+        double expectedDisagreementSum = 0;
+        for (int i = 0; i < coincidence.length; ++i) {
+            // We can skip diagonals since they do not disagree (i.e., the
+            // values are identical)
+            for (int j = i+1; j < coincidence[i].length; ++j) {
+                expectedDisagreementSum += 
+                    ratingToSum[i] * ratingToSum[j] * diff(i, j, ratingToSum, valueRanks, diffFunc);
+            }
+        }
+
+        
+        double disagreementSum = 0;
+        for (int i = 0; i < coincidence.length; ++i) {
+            // We can skip diagonals since they do not disagree (i.e., the
+            // values are identical)
+            for (int j = i+1; j < coincidence[i].length; ++j) {
+                double co = coincidence[i][j];
+                if (co > 0) {
+                    disagreementSum += co * diff(i, j, ratingToSum, valueRanks, diffFunc);
+
+                    // System.out.printf("%f * %f = %f%n",
+                    //                   co, diff(i, j, ratingToSum, valueRanks, diffFunc),
+                    //                   co * diff(i, j, ratingToSum, valueRanks, diffFunc));
+
+                }
+            }
+        }
+
+        double expectedDisagreement = expectedDisagreementSum / (numPairableValues - 1);
+
+        // System.out.printf("1 - (%f / %f) = %f%n", disagreementSum, expectedDisagreement, 
+        //                   1 - disagreementSum / expectedDisagreement);
+
+        return 1 - disagreementSum / expectedDisagreement;
+    }
+
+    static double diff(int c, int k, double[] ratingToSum, Indexer<Rating> ranks, 
+                       DifferenceFunction diffFunc) {
+        if (diffFunc instanceof OrdinalDifference) {
+            double sum = 0;
+            for (int g = c; g <= k; ++g) {
+                sum += ratingToSum[g];
+                // System.out.printf("(%d, %d, %d) %f - (%f + %f)/2%n",
+                //                   c, g, k, ratingToSum[g], ratingToSum[c], ratingToSum[k],
+                //                   ratingToSum[g] - ((ratingToSum[c] + ratingToSum[k]) / 2d));
+            }
+            sum -= ((ratingToSum[c] + ratingToSum[k]) / 2d);
+            //System.out.printf("delta(%d, %d) = %f^2%n", c, k, sum);
+            
+            return sum * sum;
+        }
+        else {
+            return diffFunc.getDifference(ranks.lookup(c).val, ranks.lookup(k).val);
+        }
+    }
+
+    static class Rating implements Comparable<Rating> {
+
+        final double val;
+        public Rating(double val) {
+            this.val = val;
+        }
+
+        public int compareTo(Rating r) {
+            return Double.compare(val, r.val);
+        }
+
+        public boolean equals(Object o) {
+            return o instanceof Rating && ((Rating)o).val == val;
+        }
+
+        public int hashCode() {
+            return (int)val;
+        }
+
+        public String toString() {
+            return String.valueOf(val);
+        }
+    }
+
+    /**
+     * Computes alpha using the provided {@link DifferenceFunction} to compute
+     * the distance between divergent annotations.
+     */
+    private double compute2(Matrix ratings, DifferenceFunction diffFunc) {
 
         //  Keep track of all the unique values used
         NavigableSet<Double> ratingValues = new TreeSet<Double>();
@@ -191,6 +342,8 @@ public class KrippendorffsAlpha {
                     int n_uk = itemAndRatingCounts.getCount(new Duple<Integer,Double>(u, k));
 //                     System.out.printf("(c=%f, k=%f) %d * %d * %f%n",c, k,
 //                                       n_uc, n_uk, diffFunc.getDifference(c, k));
+                    System.out.printf("%d * %1.2f^2%n", 
+                                      n_uc * n_uk, Math.sqrt(diffFunc.getDifference(c, k)));
                     itemAgreement += n_uc * n_uk * diffFunc.getDifference(c, k);
                 }
             }

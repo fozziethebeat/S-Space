@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * then wait until the tasks are finished.
  *<pre>
  *Collection<Runnable> tasks = new LinkedList<Runnable>();
- *WorkQueue q = new WorkQueue();
+ *WorkQueue q = WorkQueue.getWorkQueue();
  *for (int i = 0; i < numTasks; ++i)
  *    tasks.add(new Runnable() { }); // job to do goes here
  *q.run(tasks);
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  * or for cases where not all of the data for the tasks is availabe at once
  * (although the number of tasks is known).
  *<pre>
- *WorkQueue q = new WorkQueue();
+ *WorkQueue q = WorkQueue.getWorkQueue();
  *Object taskGroupId = Thread.currentThread(); // a unique id
  *q.registerTaskGroup(taskGroupId, numTasks);
  *for (int i = 0; i < numTasks; ++i)

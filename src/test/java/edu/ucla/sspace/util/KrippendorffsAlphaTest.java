@@ -37,38 +37,67 @@ import edu.ucla.sspace.vector.*;
 public class KrippendorffsAlphaTest {
 
     private final Matrix testMatrix;
+    private final Matrix wikiTestMatrix;
 
     public KrippendorffsAlphaTest() {
+
+        double n = Double.NaN;
+
         double[][] responses = {
-            {1,          2, 3, 3, 2, 1, 4, 1, 2, Double.NaN, Double.NaN, Double.NaN },
-            {1,          2, 3, 3, 2, 2, 4, 1, 2, 5, Double.NaN, 3 },
-            {Double.NaN, 3, 3, 3, 2, 3, 4, 2, 2, 5, 1, Double.NaN },
-            {1,          2, 3, 3, 2, 4, 4, 1, 2, 5, 1, Double.NaN }
+            {1, 2, 3, 3, 2, 1, 4, 1, 2, n, n, n },
+            {1, 2, 3, 3, 2, 2, 4, 1, 2, 5, n, 3 },
+            {n, 3, 3, 3, 2, 3, 4, 2, 2, 5, 1, n },
+            {1, 2, 3, 3, 2, 4, 4, 1, 2, 5, 1, n }
         };
 
         List<DoubleVector> vectors = new ArrayList<DoubleVector>();
         for (int i = 0; i < 4; ++i)
             vectors.add(Vectors.asVector(responses[i]));
         testMatrix = Matrices.asMatrix(vectors);
+
+
+
+        double[][] responses2 = {
+            {n, n, n, n, n, 3, 4, 1, 2, 1, 1, 3, 3, n, 3},
+            {1, n, 2, 1, 3, 3, 4, 3, n, n, n, n, n, n, n},
+            {n, n, 2, 1, 3, 4, 4, n, 2, 1, 1, 3, 3, n, 4},
+        };
+
+        List<DoubleVector> vectors2 = new ArrayList<DoubleVector>();
+        for (int i = 0; i < responses2.length; ++i)
+            vectors2.add(Vectors.asVector(responses2[i]));
+        wikiTestMatrix = Matrices.asMatrix(vectors2);
+        
     }
 
-    @Test public void testNominal() {
-        double alpha = new KrippendorffsAlpha().compute(testMatrix, 
-            KrippendorffsAlpha.LevelOfMeasurement.NOMINAL);
-        assertEquals(0.743, alpha, 0.001);
-    }
+    // @Test public void testNominal() {
+    //     double alpha = new KrippendorffsAlpha().compute(testMatrix, 
+    //         KrippendorffsAlpha.LevelOfMeasurement.NOMINAL);
+    //     assertEquals(0.743, alpha, 0.001);
+    // }
+
+    //  @Test public void testNominal2() {
+    //     double alpha = new KrippendorffsAlpha().compute(wikiTestMatrix, 
+    //         KrippendorffsAlpha.LevelOfMeasurement.NOMINAL);
+    //     assertEquals(0.691, alpha, 0.001);
+    // }
    
-
-    /* @Test */ public void testOrdinal() {
+    @Test public void testOrdinal() {
         double alpha = new KrippendorffsAlpha().compute(testMatrix, 
             KrippendorffsAlpha.LevelOfMeasurement.ORDINAL);
         assertEquals(0.815, alpha, 0.001);
-    }
+     }
+    
+    //  @Test public void testInterval() {
+    //     double alpha = new KrippendorffsAlpha().compute(testMatrix, 
+    //         KrippendorffsAlpha.LevelOfMeasurement.INTERVAL);
+    //     assertEquals(0.849, alpha, 0.001);
+    // }
 
-    @Test public void testInterval() {
-        double alpha = new KrippendorffsAlpha().compute(testMatrix, 
-            KrippendorffsAlpha.LevelOfMeasurement.INTERVAL);
-        assertEquals(0.849, alpha, 0.001);
-    }
+    //  @Test public void testInterval2() {
+    //     double alpha = new KrippendorffsAlpha().compute(wikiTestMatrix, 
+    //         KrippendorffsAlpha.LevelOfMeasurement.INTERVAL);
+    //     assertEquals(0.811, alpha, 0.001);
+    // }
 
 }
