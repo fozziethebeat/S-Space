@@ -96,6 +96,6 @@ public class ScaledSparseDoubleVectorTest {
         SparseDoubleVector v = 
             new CompactSparseVector(new double[] {1, 2, 3, 1});
         v = new ScaledSparseDoubleVector(v, 5);
-        assertEquals(Math.sqrt(35), v.magnitude(), .0001);
+        assertEquals(Math.sqrt(375), v.magnitude(), .0001);
     }
 }

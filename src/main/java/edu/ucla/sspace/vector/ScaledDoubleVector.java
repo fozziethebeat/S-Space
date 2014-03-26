@@ -123,8 +123,11 @@ public class ScaledDoubleVector implements DoubleVector {
      */
     public double magnitude() {
         double magnitude = 0;
-        for (int c = 0; c < length(); ++c)
-            magnitude += get(c);
+        int len = length();
+        for (int c = 0; c < len; ++c) {
+            double d = get(c);
+            magnitude += d * d;
+        }
         return Math.sqrt(magnitude);
     }
 
