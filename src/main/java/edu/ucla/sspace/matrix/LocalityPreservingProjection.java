@@ -527,25 +527,13 @@ public class LocalityPreservingProjection {
      * Returns {@code true} if Octave is available
      */
     private static boolean isOctaveAvailable() {
-	try {
-	    Process octave = Runtime.getRuntime().exec("octave -v");
-            octave.waitFor();
-	} catch (Exception e) {
-	    return false;
-	}
-	return true;	
+        return SVD.isOctaveAvailable();
     }
 
     /**
      * Returns {@code true} if Matlab is available
      */
     private static boolean isMatlabAvailable() {
-	try {
-	    Process matlab = Runtime.getRuntime().exec("matlab -h");
-            matlab.waitFor();
-	} catch (Exception ioe) {
-	    return false;
-	}
-	return true;
+        return SVD.isMatlabAvailable();
     }    
 }

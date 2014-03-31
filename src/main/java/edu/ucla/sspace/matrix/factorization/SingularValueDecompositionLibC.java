@@ -212,6 +212,15 @@ public class SingularValueDecompositionLibC extends AbstractSvd
     public static boolean isSVDLIBCavailable() {
         try {
             Process svdlibc = Runtime.getRuntime().exec("svd");
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(svdlibc.getInputStream()));
+            // Read the output to avoid some platform specific bugs where the
+            // waitFor() call does not return.  Thanks to Fabian for noticing
+            // this
+            for (String line = null; (line = br.readLine()) != null; )
+                ;
+            br.close();
+
             svdlibc.waitFor();
         } catch (Exception e) {
             return false;

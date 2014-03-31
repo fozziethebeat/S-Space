@@ -601,6 +601,14 @@ public class SVD {
     public static boolean isSVDLIBCavailable() {
         try {
             Process svdlibc = Runtime.getRuntime().exec("svd");
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(svdlibc.getInputStream()));
+            // Read the output to avoid some platform specific bugs where the
+            // waitFor() call does not return.  Thanks to Fabian for noticing
+            // this
+            for (String line = null; (line = br.readLine()) != null; )
+                ;
+            br.close();
             svdlibc.waitFor();
         } catch (Exception e) {
             return false;
@@ -614,6 +622,14 @@ public class SVD {
     public static boolean isOctaveAvailable() {
         try {
             Process octave = Runtime.getRuntime().exec("octave -v");
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(octave.getInputStream()));
+            // Read the output to avoid some platform specific bugs where the
+            // waitFor() call does not return.  Thanks to Fabian for noticing
+            // this
+            for (String line = null; (line = br.readLine()) != null; )
+                ;
+            br.close();
             octave.waitFor();
         } catch (Exception e) {
             return false;
@@ -627,6 +643,14 @@ public class SVD {
     public static boolean isMatlabAvailable() {
         try {
             Process matlab = Runtime.getRuntime().exec("matlab -h");
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(matlab.getInputStream()));
+            // Read the output to avoid some platform specific bugs where the
+            // waitFor() call does not return.  Thanks to Fabian for noticing
+            // this
+            for (String line = null; (line = br.readLine()) != null; )
+                ;
+            br.close();
             matlab.waitFor();
         } catch (Exception ioe) {
             return false;
