@@ -39,6 +39,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
 /**
  * The return value for all {@link Clustering} implementations.  This class
  * records the number of clusters created, the assignments for each value, and
@@ -47,6 +51,12 @@ import java.util.Set;
  * @author Keith Stevens
  */
 public class Assignments implements Iterable<Assignment> {
+
+    /**
+     * The logger to which clustering status updates will be written.
+     */
+    private static final Logger LOGGER =
+        Logger.getLogger(Assignments.class.getName());    
 
     /**
      * The {@link Assignment}s made for each data point.
@@ -151,15 +161,21 @@ public class Assignments implements Iterable<Assignment> {
     }
 
     /**
-     * Returns the data point indices assigned to each cluster.
+     * Returns the data point indices assigned to each cluster.  Note that if
+     * the underlying clustering algorithm does not put some items in a cluster
+     * (i.e., their cluster assignment is negative) then these items will not be
+     * returned as a part of any cluster.
      */
     public List<Set<Integer>> clusters() {
         List<Set<Integer>> clusters = new ArrayList<Set<Integer>>();
         for (int c = 0; c < numClusters; ++c)
             clusters.add(new HashSet<Integer>());
         for (int i = 0; i < assignments.length; ++i)
-            for (int k : assignments[i].assignments())
-                clusters.get(k).add(i);
+            for (int k : assignments[i].assignments()) {
+                // Check that the item was place in a cluster
+                if (k >= 0)
+                    clusters.get(k).add(i);
+            }
         return clusters;
     }
 
@@ -185,7 +201,14 @@ public class Assignments implements Iterable<Assignment> {
         int row = 0;
         for (Assignment assignment : assignments) {
             if (assignment.length() != 0) {
-                counts[assignment.assignments()[0]]++;
+                // NOTE: why is this only using the first cluster?  Is this a
+                // bug? -david
+                int clus = assignment.assignments()[0];
+                // Skip items whose cluster assignment indicates they were not
+                // assigned to any cluster.
+                if (clus < 0)
+                    continue;
+                counts[clus]++;
                 DoubleVector centroid = centroids[assignment.assignments()[0]];
                 VectorMath.add(centroid, matrix.getRowVector(row));
             }
@@ -212,9 +235,12 @@ public class Assignments implements Iterable<Assignment> {
         if (matrix == null)
             throw new IllegalArgumentException(
                     "The data matrix was not passed to Assignments.");
-
-        SparseMatrix sm = (SparseMatrix) matrix;
-
+        if (!(matrix instanceof SparseMatrix)) {
+            LOGGER.fine(
+                "The underlying matrix that was clustered is not sparse, " +
+                "so sparse centroids may not be sparse");
+        }
+        
         // Initialzie the centroid vectors and the cluster sizes.
         SparseDoubleVector[] centroids = new SparseDoubleVector[numClusters];
 
@@ -230,10 +256,15 @@ public class Assignments implements Iterable<Assignment> {
         // increase the size of the cluster.
         int row = 0;
         for (Assignment assignment : assignments) {
-            if (assignment.length() != 0 && assignment.assignments()[0] != -1) {
+            // NOTE: why is this only using the first cluster?  Is this a
+            // bug? -david
+            //
+            // Skip items whose cluster assignment indicates they were not
+            // assigned to any cluster.
+            if (assignment.length() != 0 && assignment.assignments()[0] >= 0) {
                 counts[assignment.assignments()[0]]++;
                 DoubleVector centroid = centroids[assignment.assignments()[0]];
-                VectorMath.add(centroid, sm.getRowVector(row));
+                VectorMath.add(centroid, matrix.getRowVector(row));
             }
             row++;
         }
