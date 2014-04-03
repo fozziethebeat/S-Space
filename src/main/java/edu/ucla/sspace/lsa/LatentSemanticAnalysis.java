@@ -308,6 +308,24 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
 
     /**
      * Creates a new {@link LatentSemanticAnalysis} instance with the specified
+     * number of dimensions, using the specified method for performing the SVD.
+     * This intializes {@Link LatentSemanticAnalysis} with the default
+     * parameters set in the original paper for all other parameter values.
+     * This construct initializes this instance such that the document space is
+     * <i>not</i> retained.
+     * 
+     * @param dimensions The number of dimensions to retain in the reduced space
+     */
+    public LatentSemanticAnalysis(int numDimensions,
+                                  SingularValueDecomposition svdMethod)
+            throws IOException {
+        this(false, numDimensions, new LogEntropyTransform(),
+             svdMethod, 
+             false, new StringBasisMapping());
+    }
+
+    /**
+     * Creates a new {@link LatentSemanticAnalysis} instance with the specified
      * number of dimensions, which optionally retains both the word and document
      * spaces.  This intializes {@Link LatentSemanticAnalysis} with the default
      * parameters set in the original paper for all other parameter values.

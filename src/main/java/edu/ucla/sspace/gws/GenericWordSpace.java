@@ -361,7 +361,7 @@ public class GenericWordSpace
             // filter and it would have excluded the word, do not keep its
             // semantics around
             boolean calculateSemantics =
-                semanticFilter.isEmpty() || semanticFilter.contains(focusWord)
+                (semanticFilter.isEmpty() || semanticFilter.contains(focusWord))
                 && !focusWord.equals(IteratorFactory.EMPTY_TOKEN);
             
             if (calculateSemantics) {
