@@ -524,7 +524,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
         // Represent the document as a 1-column matrix        
         Matrix queryAsMatrix = new ArrayMatrix(1, numDims);
         for (int nz : docVec.getNonZeroIndices())
-            queryAsMatrix.set(0, nz, docVec.get(nz));
+            queryAsMatrix.set(0, nz, transformed.get(nz));
         
         // Project the new document vector, d, by using
         //
