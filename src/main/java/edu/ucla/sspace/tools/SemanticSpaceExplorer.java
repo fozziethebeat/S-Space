@@ -40,12 +40,16 @@ import edu.ucla.sspace.vector.VectorIO;
 import edu.ucla.sspace.util.SortedMultiMap;
 
 import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+
+import java.nio.charset.UnsupportedCharsetException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,8 +59,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.logging.Logger;
+import java.util.logging.LogManager;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.ibm.icu.text.CharsetDetector;
+import com.ibm.icu.text.CharsetMatch;
+
+import static edu.ucla.sspace.util.LoggerUtil.*;
+
 
 /**
  * A utility class that operates as a command-line tool for interacting with
@@ -89,6 +102,9 @@ public class SemanticSpaceExplorer {
         DESCRIBE_DIMENSION,
         DESCRIBE_SEMANTIC_SPACE
     }
+
+    private static final Logger LOGGER =
+        Logger.getLogger(SemanticSpaceExplorer.class.getName());
 
     /**
      * A mapping from the abbreviation for a command to its {@link Command}
@@ -704,8 +720,22 @@ public class SemanticSpaceExplorer {
         BufferedReader commandsToExecute = null; 
         if (options.hasOption("executeFile")) {
             try {
-                commandsToExecute = new BufferedReader(new FileReader(
-                    options.getStringOption("executeFile")));
+                String commandFile = options.getStringOption("executeFile");
+                BufferedInputStream bis = new BufferedInputStream(
+                    new FileInputStream(commandFile));
+                CharsetDetector cd = new CharsetDetector();
+                cd.setText(bis);
+                CharsetMatch cm = cd.detect();
+                
+                if (cm != null) {
+                    verbose(LOGGER, "Opening SSE command file with %s encoding",
+                            cm.getName());
+                    commandsToExecute = new BufferedReader(cm.getReader());
+                }
+                else {
+                    throw new UnsupportedCharsetException(
+                        "Unknown charset for command file: " +commandFile);
+                }
             } catch (IOException ioe) {
                 System.out.println("unable to open commands file " + 
                                    options.getStringOption("executeFile") 
