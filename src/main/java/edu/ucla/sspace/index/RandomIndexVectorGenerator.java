@@ -148,6 +148,19 @@ public class RandomIndexVectorGenerator
     }
 
     /**
+     * Constructs this instance using the provided properties.
+     */
+    public RandomIndexVectorGenerator(int indexVectorLength,
+                                      int numVectorValues,
+                                      int variance,
+                                      int randSeed) {
+        this.indexVectorLength = indexVectorLength;
+        this.numVectorValues = numVectorValues;
+        this.variance = variance;
+        RANDOM.setSeed(randSeed);
+    }
+
+    /**
      * Creates an {@code TernaryVector} with the provided length.
      *
      * @param length the length of the index vector

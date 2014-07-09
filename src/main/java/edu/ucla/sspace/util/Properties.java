@@ -24,75 +24,113 @@ package edu.ucla.sspace.util;
 
 /**
  * A simple wrapper around {@link java.util.Properties} that provides methods
- * that interpret properties based on the type of the default value.
+ * that interpret properties based on the type of the default value and static
+ * methods for interacting with unwrapped {@code Properties} instances.
  *
  * @author Keith Stevens
  */
 public class Properties {
 
-  /**
-   * The underlying properties intsance.
-   */
-  private final java.util.Properties props;
+    /**
+     * The underlying properties intsance.
+     */
+    private final java.util.Properties props;
 
-  /**
-   * Creates a new {@link Properties} object from the system provided
-   * properties.
-   */
-  public Properties() {
-    this(System.getProperties());
-  }
+    /**
+     * Creates a new {@link Properties} object from the system provided
+     * properties.
+     */
+    public Properties() {
+        this(System.getProperties());
+    }
 
-  /**
-   * Creates a new {@link Properties} object from the provided properties.
-   */
-  public Properties(java.util.Properties props) {
-    this.props = props;
-  }
+    /**
+     * Creates a new {@link Properties} object from the provided properties.
+     */
+    public Properties(java.util.Properties props) {
+        this.props = props;
+    }
 
-  /**
-   * Returns the string property associated with {@code propName}
-   */
-  public String getProperty(String propName) {
-    return props.getProperty(propName);
-  }
+    /**
+     * Returns the string property associated with {@code propName}
+     */
+    public String getProperty(String propName) {
+        return props.getProperty(propName);
+    }
 
-  /**
-   * Returns the string property associated with {@code propName}, or {@code
-   * defaultValue} if there is no property.
-   */
-  public String getProperty(String propName, String defaultValue) {
-    return props.getProperty(propName, defaultValue);
-  }
+    /**
+     * Returns the string property associated with {@code propName}, or {@code
+     * defaultValue} if there is no property.
+     */
+    public String getProperty(String propName, String defaultValue) {
+        return props.getProperty(propName, defaultValue);
+    }
 
-  /**
-   * Returns the integer value of the property associated with {@code propName},
-   * or {@code defaultValue} if there is no property.
-   */
-  public int getProperty(String propName, int defaultValue) {
-    String propValue = props.getProperty(propName);
-    return (propValue == null) ? defaultValue : Integer.parseInt(propValue);
-  }
+    /**
+     * Returns the integer value of the property associated with {@code propName},
+     * or {@code defaultValue} if there is no property.
+     */
+    public int getProperty(String propName, int defaultValue) {
+        String propValue = props.getProperty(propName);
+        return (propValue == null) ? defaultValue : Integer.parseInt(propValue);
+    }
 
-  /**
-   * Returns the double value of the property associated with {@code propName},
-   * or {@code defaultValue} if there is no property.
-   */
-  public double getProperty(String propName, double defaultValue) {
-    String propValue = props.getProperty(propName);
-    return (propValue == null) ? defaultValue : Double.parseDouble(propValue);
-  }
+    /**
+     * Returns the double value of the property associated with {@code propName},
+     * or {@code defaultValue} if there is no property.
+     */
+    public double getProperty(String propName, double defaultValue) {
+        String propValue = props.getProperty(propName);
+        return (propValue == null) ? defaultValue : Double.parseDouble(propValue);
+    }
 
-  /**
-   * Returns a class instance of the property associated with {@code propName},
-   * or {@code defaultValue} if there is no property.  This method assumes that
-   * the class has a no argument constructor.
-   */
-  @SuppressWarnings("unchecked")
-  public <T> T getProperty(String propName, T defaultValue) {
-    String propValue = props.getProperty(propName);
-    if (propValue == null)
-      return defaultValue;
-    return ReflectionUtil.<T>getObjectInstance(propValue);
-  }
+    /**
+     * Returns a class instance of the property associated with {@code propName},
+     * or {@code defaultValue} if there is no property.  This method assumes that
+     * the class has a no argument constructor.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getProperty(String propName, T defaultValue) {
+        String propValue = props.getProperty(propName);
+        if (propValue == null)
+            return defaultValue;
+        return ReflectionUtil.<T>getObjectInstance(propValue);
+    }
+
+    /**
+     * Returns the {@code int} value associated with {@code prop} in {@code
+     * properties} or the provided default value if {@code prop} is unset.
+     */
+    public static int getInt(java.util.Properties properties,
+                             String prop, int defaultVal) {
+        String propVal = properties.getProperty(prop);
+        return  (propVal != null)
+            ? Integer.parseInt(propVal)
+            : defaultVal;
+    }
+
+    /**
+     * Returns the {@code long} value associated with {@code prop} in {@code
+     * properties} or the provided default value if {@code prop} is unset.
+     */
+    public static long getLong(java.util.Properties properties,
+                               String prop, long defaultVal) {
+        String propVal = properties.getProperty(prop);
+        return  (propVal != null)
+            ? Long.parseLong(propVal)
+            : defaultVal;
+    }
+    
+    /**
+     * Returns the {@code boolean} value associated with {@code prop} in {@code
+     * properties} or the provided default value if {@code prop} is unset.
+     */
+    public static boolean getBoolean(java.util.Properties properties,
+                                     String prop,
+                                     boolean defaultVal) {
+        String propVal = properties.getProperty(prop);
+        return  (propVal != null)
+            ? Boolean.parseBoolean(propVal)
+            : defaultVal;
+    }
 }

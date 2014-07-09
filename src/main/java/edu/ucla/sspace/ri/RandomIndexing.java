@@ -57,6 +57,11 @@ import java.util.Set;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import static edu.ucla.sspace.util.Properties.getBoolean;
+import static edu.ucla.sspace.util.Properties.getInt;
+import static edu.ucla.sspace.util.Properties.getLong;
+
+
 /**
  * A co-occurrence based approach to statistical semantics that uses a
  * randomized projection of a full co-occurrence matrix to perform
@@ -233,6 +238,14 @@ public class RandomIndexing implements SemanticSpace, Filterable {
         PROPERTY_PREFIX + ".sparseSemantics";
 
     /**
+     * Specifies the value to use in seeding the source of randomness.  If no
+     * seed is provided, a random seed is used.  This property is designed to
+     * enable having reproduceable RI results.
+     */
+    public static final String RANDOM_SEED_PROPERTY = 
+        PROPERTY_PREFIX + ".randomSeed";
+
+    /**
      * The default number of words to view before and after each word in focus.
      */
     public static final int DEFAULT_WINDOW_SIZE = 2; // +2/-2
@@ -310,7 +323,7 @@ public class RandomIndexing implements SemanticSpace, Filterable {
      * Creates a new {@code RandomIndexing} instance using the provided
      * properites for configuration.
      */
-   public RandomIndexing(Properties properties) {
+    public RandomIndexing(Properties properties, Object o) {      
         String vectorLengthProp = 
             properties.getProperty(VECTOR_LENGTH_PROPERTY);
         vectorLength = (vectorLengthProp != null)
@@ -342,6 +355,12 @@ public class RandomIndexing implements SemanticSpace, Filterable {
         useSparseSemantics = (useSparseProp != null)
             ? Boolean.parseBoolean(useSparseProp)
             : true;
+        
+        long randomSeed =
+            (properties.getProperty(RANDOM_SEED_PROPERTY) != null)
+            ? Integer.parseInt(properties.getProperty(RANDOM_SEED_PROPERTY))
+            : System.currentTimeMillis();
+        
 
         wordToIndexVector = new GeneratorMap<TernaryVector>(
                 indexVectorGenerator);
@@ -350,14 +369,78 @@ public class RandomIndexing implements SemanticSpace, Filterable {
     }
 
     /**
+     * Creates a new {@code RandomIndexing} instance using the provided
+     * properites for configuration.
+     */
+    public RandomIndexing(Properties properties) {
+        this(getInt(properties, VECTOR_LENGTH_PROPERTY, DEFAULT_VECTOR_LENGTH),
+             getInt(properties, WINDOW_SIZE_PROPERTY, DEFAULT_WINDOW_SIZE),
+             getBoolean(properties, USE_PERMUTATIONS_PROPERTY, false),
+             loadPermutationFunction(
+                 properties.getProperty(PERMUTATION_FUNCTION_PROPERTY)),
+             getBoolean(properties, USE_SPARSE_SEMANTICS_PROPERTY, true),
+             getLong(properties, RANDOM_SEED_PROPERTY,
+                    System.currentTimeMillis()),
+             properties);
+    }
+
+    /**
+     * Creates a new {@code RandomIndexing} instance using the provided
+     * parameters for configuration, passing on the additiona {@link Properties}
+     * to any components.
+     *
+     * @param vectorLength The number of dimensions for the semantic and index
+     *        vectors.
+     * @param windowSize The number of words to view before and after each focus
+     *        word in a window.
+     * @param usePermutations Whether the index vectors for co-occurrent words
+     *        should be permuted based on their relative position.
+     * @param permutationFunc If permutations are enabled, the permutation
+     *        function to use on the index vectors.
+     * @param useSparseSemantics whether this instance should use {@code
+     *        SparseIntegerVector} instances for representic a word's semantics,
+     *        which saves space but requires more computation.
+     * @param randomSeed the random value used to seed the source of randomness
+     *        for this class and all randomized methods in its dependencies.
+     * @param otherProps additional properties that will be provided to any
+     *        configurable members of this class.
+     */
+    public RandomIndexing(int vectorLength, int windowSize,
+                          boolean usePermutations,
+                          PermutationFunction permutationFunc,
+                          boolean useSparseSemantics,
+                          long randomSeed, Properties otherProps) {
+        if (permutationFunc == null) {
+            throw new NullPointerException("permutationFunc cannot be null");
+        }
+        this.vectorLength = vectorLength;        
+        this.windowSize = windowSize;
+        this.usePermutations = usePermutations;
+        this.permutationFunc = permutationFunc;        
+        this.useSparseSemantics = useSparseSemantics;
+        RANDOM.setSeed(randomSeed);
+
+        RandomIndexVectorGenerator indexVectorGenerator = 
+            new RandomIndexVectorGenerator(vectorLength, otherProps);
+        wordToIndexVector = new GeneratorMap<TernaryVector>(
+                indexVectorGenerator);
+        wordToMeaning = new ConcurrentHashMap<String,IntegerVector>();
+        semanticFilter = new HashSet<String>();       
+    }
+
+    /**
      * Returns an instance of the the provided class name, that implements
-     * {@code PermutationFunction}.
+     * {@code PermutationFunction} or an instance of {@link
+     * TernaryPermutationFunction} if {@code className} is {@code null}, which
+     * is the default function.
      *
      * @param className the fully qualified name of a class
      */ 
     @SuppressWarnings("unchecked")
     private static PermutationFunction<TernaryVector> loadPermutationFunction(
             String className) {
+        if (className == null)
+            return new TernaryPermutationFunction();
         try {
             Class clazz = Class.forName(className);
             return (PermutationFunction<TernaryVector>)(clazz.newInstance());
