@@ -407,13 +407,18 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * @param documentNumber the number of the document according to when it was
      *        processed
      *
-     * @return the semantics of the document in the document space.
-     * @throws IllegalArgumentException If the document space was not retained
-     *         or the document number is out of range.
+     * @return a vector representing the semantics of the document in the
+     *         document space.
+     *
+     * @throws IllegalArgumentException If the document number is out of range.
+     * @throws IllegalStateException If the document space has not been retained
+     *         or if {@link #processSpace(Properties)} has not been called yet
+     *         to finalize this space.
      */
+    @Override
     public DoubleVector getDocumentVector(int documentNumber) {
         if (documentSpace == null)
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     "The document space has not been retained or generated.");
 
         if (documentNumber < 0 || documentNumber >= documentSpace.rows()) {
@@ -428,17 +433,18 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * Returns the number of documents processed by {@link
      * LatentSemanticAnalysis} if the document space has been retained.
      *
-     * @throws IllegalArgumentException If the document space has not been
+     * @throws IllegalStateException If the document space has not been
      *         retained.
      */
+    @Override
     public int documentSpaceSize() {
         if (documentSpace == null)
-            throw new IllegalArgumentException(
-                    "The document space has not been retained or generated.");
+            throw new IllegalStateException(
+                    "The document space has not yet been generated.");
 
         return documentSpace.rows();
     }
-
+    
     /**
      * {@inheritDoc}
      *

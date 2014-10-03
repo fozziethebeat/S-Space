@@ -173,6 +173,8 @@ public abstract class GenericTermDocumentVectorSpace
 
         this.termDocumentMatrixBuilder = termDocumentMatrixBuilder;
 
+        System.out.println("Saving matrix using " + termDocumentMatrixBuilder);
+
         wordSpace = null;
     }   
 
@@ -227,7 +229,8 @@ public abstract class GenericTermDocumentVectorSpace
         }
 
         document.close();
-
+        System.out.printf("Saw %d terms, %d unique%n", termCounts.sum(), termCounts.size());
+        
         // Check that we actually loaded in some terms before we increase the
         // documentIndex. This is done after increasing the document count since
         // some configurations may need the document order preserved, for
@@ -246,11 +249,55 @@ public abstract class GenericTermDocumentVectorSpace
             documentColumn.set(
                     termToIndex.getDimension(e.getKey()), e.getValue());
 
+        System.out.println(this + " processing doc " + documentColumn);
+
         // Update the term-document matrix with the results of processing the
         // document.
         termDocumentMatrixBuilder.addColumn(documentColumn);
     }
-    
+
+    /**
+     * Returns the vector corresponding to a document processed by this space,
+     * if available (optional operation).  Vector values represent the word
+     * frequencies that have been transformed according to the {@link Transform}
+     * instances provided to {@link #processSpace(Properites)}.
+     *
+     * <p>By default, the document vectors are unavailable and calling this
+     * method will throw an {@link UnsupportedOperationException}.  However,
+     * subclasses may override this method to provide the functionality.
+     * Callers may test to see whether a document vector is available by calling
+     * {@link #documentSpaceSize()}, which will return a positive value if
+     * vectors are available.
+     *
+     * @param documentNumber the number of the document according to when it was
+     *        processed
+     *
+     * @return a vector representing the semantics of the document in the
+     *         document space.
+     *
+     * @throws IllegalArgumentException If the document number is out of range.
+     * @throws IllegalStateException If the document space has not been retained
+     *         or if {@link #processSpace(Properties)} has not been called yet
+     *         to finalize this space.
+     */
+    public Vector getDocumentVector(int documentNumber) {
+        throw new UnsupportedOperationException(
+            "Getting the document vector is not supported by this class.");
+    }
+
+    /**
+     * Returns the number of documents processed by this instance if the
+     * document space has been retained or zero if no document vectors are
+     * available.  Subclasses supporting document vectors should override this
+     * method to indicate that document vectors are available.
+     *
+     * @return the number of documents processed if the document space has been
+     *         retained or zero if no document vectors are available.
+     */
+    public int documentSpaceSize() {
+        return 0;
+    }
+
     /**
      * {@inheritDoc}
      */

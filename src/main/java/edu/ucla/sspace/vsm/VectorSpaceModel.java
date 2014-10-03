@@ -22,6 +22,7 @@
 package edu.ucla.sspace.vsm;
 
 import edu.ucla.sspace.basis.BasisMapping;
+import edu.ucla.sspace.basis.StringBasisMapping;
 
 import edu.ucla.sspace.common.SemanticSpace;
 import edu.ucla.sspace.common.GenericTermDocumentVectorSpace;
@@ -30,9 +31,12 @@ import edu.ucla.sspace.matrix.MatrixBuilder;
 import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.MatrixIO;
 import edu.ucla.sspace.matrix.MatrixIO.Format;
+import edu.ucla.sspace.matrix.SvdlibcSparseBinaryMatrixBuilder;
 import edu.ucla.sspace.matrix.Transform;
 
 import edu.ucla.sspace.util.ReflectionUtil;
+
+import edu.ucla.sspace.vector.DoubleVector;
 
 import java.io.File;
 import java.io.IOError;
@@ -124,7 +128,8 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      *         the backing array files required for processing
      */
     public VectorSpaceModel() throws IOException {
-        super();
+        super(false, new StringBasisMapping(),
+              new SvdlibcSparseBinaryMatrixBuilder());
     }
 
     /**
@@ -158,6 +163,61 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
     }
 
     /**
+     * Returns the vector corresponding to a document processed by this space.
+     * Vector values represent the word frequencies that have been transformed
+     * according to the {@link Transform} instances provided to {@link
+     * #processSpace(Properites)}.
+     *
+     * <p> This method requires that {@code processSpace} has been called first
+     * to ensure the semantic space's state is properly constructed.  Calls
+     * before this point will throw an {@link IllegalStateException}.
+     *
+     * Implementation note: If a specific document ordering is needed, caution
+     * should be used when using this class in a multi-threaded environment.
+     * Beacuse the document number is based on what order it was
+     * <i>processed</i>, no guarantee is made that this will correspond with the
+     * original document ordering as it exists in the corpus files.  However, in
+     * a single-threaded environment, the ordering will be preserved.
+     *
+     * @param documentNumber {@inheritDoc} 
+     *
+     * @return {@inheritDoc} 
+     *
+     * @throws IllegalArgumentException {@inheritDoc} 
+     * @throws IllegalStateException {@inheritDoc} 
+     */
+    @Override
+    public DoubleVector getDocumentVector(int documentNumber) {
+        if (wordSpace == null)
+            throw new IllegalStateException(
+                    "The document space has not yet been generated.");
+
+        if (documentNumber < 0 || documentNumber >= wordSpace.columns()) {
+            throw new IllegalArgumentException(
+                    "Document number is not within the bounds of the number of "
+                    + "documents: " + documentNumber);
+        }
+        return wordSpace.getColumnVector(documentNumber);
+    }
+
+
+    /**
+     * Returns the number of documents processed by {@link
+     * VectorSpaceModel}.
+     *
+     * @throws IllegalStateException If the document space has not been
+     *         retained.
+     */
+    @Override
+    public int documentSpaceSize() {
+        if (wordSpace == null)
+            throw new IllegalStateException(
+                    "The document space has not yet been generated.");
+
+        return wordSpace.columns();
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @param properties {@inheritDoc} See this class's {@link VectorSpaceModel
@@ -173,9 +233,14 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
             if (transformClass != null)
                 transform = ReflectionUtil.getObjectInstance(
                         transformClass);
-            MatrixFile processedSpace = processSpace(transform);
+            MatrixFile processedSpace = super.processSpace(transform);
+            System.out.printf("Matrix saved in %s as %s%n",
+                              processedSpace.getFile(),
+                              processedSpace.getFormat());
             wordSpace = MatrixIO.readMatrix(processedSpace.getFile(),
                                             processedSpace.getFormat());
+            System.out.printf("loaded word space of %d x %d%n", 
+                              wordSpace.rows(), wordSpace.columns());
         } catch (IOException ioe) {
             throw new IOError(ioe);
         }

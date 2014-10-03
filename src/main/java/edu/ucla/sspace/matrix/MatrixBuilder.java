@@ -105,7 +105,7 @@ public interface MatrixBuilder {
     /**
      * Indicates that no further data will be added to the matrix and any
      * remaining matrix meta-data should be written and flushed to disk.  Once
-     * this method has been called {@code addColumn} will thcolumn a {@code
+     * this method has been called {@code addColumn} will throw a {@code
      * IllegalStateException} if called.  
      */
     void finish();
