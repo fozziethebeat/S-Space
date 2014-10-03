@@ -363,6 +363,11 @@ public class HadoopRandomIndexing {
                 semantics = createSemanticVector();
             }
 
+            // Check if this is the last word, if yes then write
+            if(!occurrences.hasNext()) {
+                writer.write(curWord, semantics);
+            }
+
             // NOTE: because we are using a GeneratorMap, this call will create
             // a new index vector for the word if it didn't exist prior.
             TernaryVector indexVector = 

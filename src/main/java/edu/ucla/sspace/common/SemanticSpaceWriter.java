@@ -194,6 +194,7 @@ public class SemanticSpaceWriter {
                 }
             }
             pw.println(sb.toString());
+            pw.flush();
             break;
         }
             
@@ -202,6 +203,7 @@ public class SemanticSpaceWriter {
         case TEXT: {
             PrintWriter pw = new PrintWriter(writer);
             pw.println(word + "|" + VectorIO.toString(vector));
+            pw.flush();
             break;
         }
 
@@ -270,6 +272,7 @@ public class SemanticSpaceWriter {
             String blankStr = new String(blanks);
             PrintWriter pw = new PrintWriter(writer);
             pw.println(blankStr);
+            pw.flush();
             break;
         case BINARY: 
         case SPARSE_BINARY:
