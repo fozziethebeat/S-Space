@@ -57,7 +57,7 @@ public class TokenFilterTests {
     @Test public void testMultipleInclude() throws IOException {
         File toInclude = createFileWithText("include\nthree\nwords");
         File toInclude2 = createFileWithText("foo\nbar\nbaz");
-        String filterSpec = "include=" + toInclude.getAbsolutePath() + ":"
+        String filterSpec = "include=" + toInclude.getAbsolutePath() + ";"
             + toInclude2.getAbsolutePath();
         TokenFilter filter = TokenFilter.loadFromSpecification(filterSpec);
         assertTrue(filter.accept("include"));

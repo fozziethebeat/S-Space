@@ -60,7 +60,7 @@ import java.util.Set;
  * chain of filters from a text configuration.  This is intended to facility
  * command-line tools that want to provide easily configurable filters.  An
  * example configuration might look like:
- * <tt>include=top-tokens.txt:test-words.txt,exclude=stop-words.txt</tt>
+ * <tt>include=top-tokens.txt;test-words.txt,exclude=stop-words.txt</tt>
  *
  * @see FilteredIterator
  */
@@ -160,10 +160,10 @@ public class TokenFilter {
      * 
      * A configuration lists sets of files that contain tokens to be included or
      * excluded.  The behavior, {@code include} or {@code exclude} is specified
-     * first, followed by one or more file names, each separated by colons.
+     * first, followed by one or more file names, each separated by semicolons.
      * Multiple behaviors may be specified one after the other using a {@code ,}
      * character to separate them.  For example, a typicaly configuration may
-     * look like: "include=top-tokens.txt,test-words.txt:exclude=stop-words.txt"
+     * look like: "include=top-tokens.txt;test-words.txt,exclude=stop-words.txt"
      * <b>Note</b> behaviors are applied in the order they are presented on the
      * command-line.
      *
@@ -186,10 +186,10 @@ public class TokenFilter {
      * 
      * A configuration lists sets of files that contain tokens to be included or
      * excluded.  The behavior, {@code include} or {@code exclude} is specified
-     * first, followed by one or more file names, each separated by colons.
+     * first, followed by one or more file names, each separated by semicolons.
      * Multiple behaviors may be specified one after the other using a {@code ,}
      * character to separate them.  For example, a typicaly configuration may
-     * look like: "include=top-tokens.txt,test-words.txt:exclude=stop-words.txt"
+     * look like: "include=top-tokens.txt;test-words.txt,exclude=stop-words.txt"
      * <b>Note</b> behaviors are applied in the order they are presented on the
      * command-line.
      *
@@ -207,7 +207,7 @@ public class TokenFilter {
 
 	TokenFilter toReturn = null;
 
-	// multiple filter are separated by a ':'
+	// multiple filter are separated by a ';'
 	String[] filters = configuration.split(",");
 
 	for (String s : filters) {
@@ -223,7 +223,7 @@ public class TokenFilter {
                 throw new IllegalArgumentException(
                     "Invalid filter behavior: " + behavior);
                 
-            String[] files = optionAndFiles[1].split(":");
+            String[] files = optionAndFiles[1].split(";");
             
 	    // Load the words in the file(s)
 	    Set<String> words = new HashSet<String>();
