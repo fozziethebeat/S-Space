@@ -26,11 +26,17 @@ import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.common.Filterable;
 import edu.ucla.sspace.common.DimensionallyInterpretableSemanticSpace;
 
+import edu.ucla.sspace.matrix.Matrix;
+import edu.ucla.sspace.matrix.Matrices;
+import edu.ucla.sspace.matrix.Transform;
+
 import edu.ucla.sspace.text.IteratorFactory;
 
 import edu.ucla.sspace.util.Duple;
+import edu.ucla.sspace.util.ReflectionUtil;
 
 import edu.ucla.sspace.vector.CompactSparseIntegerVector;
+import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.IntegerVector;
 import edu.ucla.sspace.vector.SparseIntegerVector;
 import edu.ucla.sspace.vector.TernaryVector;
@@ -42,10 +48,12 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Queue;
@@ -115,9 +123,14 @@ import java.util.Set;
  * to access the current semantics of a word.  This allows callers to track
  * incremental changes to the semantics as the corpus is processed.  <p>
  *
- * The {@link #processSpace(Properties) processSpace} method does nothing for
- * this class and calls to it will not affect the results of {@code
- * getVector}.
+ * The {@link #processSpace(Properties) processSpace} method optionally supports
+ * transforming the co-occurrence values of an instance with a {@link Transform}
+ * instance.  Once called, further calls will {@link
+ * #processDocument(BufferedReader)} will cause an exception to be thrown.
+ * However, {@code processSpace} may be called multiple times with {@code
+ * Transform} instances to iteratively transform the values.  Note that by
+ * default, the values stored by this class reflect {@code integer} counts of
+ * co-occurrence but upon being transformed will become {@code double}-valued.
  *
  * @author David Jurgens
  */
@@ -151,6 +164,14 @@ public class GenericWordSpace
         PROPERTY_PREFIX + ".useWordOrder";
 
     /**
+     * The property to specify a full qualified class name of an {@link
+     * Transform} which should be applied to this semantic space when {@link
+     * #processSpace(Properties)} is called.
+     */
+    public static final String TRANSFORM_PROPERTY = 
+        PROPERTY_PREFIX + ".transform";
+
+    /**
      * The default number of words to view before and after each word in focus.
      */
     public static final int DEFAULT_WINDOW_SIZE = 2; // +2/-2
@@ -177,6 +198,13 @@ public class GenericWordSpace
      * do nothing.
      */
     private final BasisMapping<Duple<String,Integer>,String> basisMapping;
+
+    /**
+     * If the user has called {@link #processSpace(Transform)}, a mapping from
+     * each word to the vector containing the transforms values; otherwise the
+     * field is {@code null}.
+     */
+    private Map<String,DoubleVector> wordToTransformedVector;
 
     /**
      * Creates a new {@code GenericWordSpace} instance using the current {@code
@@ -208,7 +236,8 @@ public class GenericWordSpace
             : new WordBasisMapping();        
 
         wordToSemantics = new HashMap<String,SparseIntegerVector>(1024, 4f);
-        semanticFilter = new HashSet<String>();
+        wordToTransformedVector = null;
+        semanticFilter = new HashSet<String>();       
     }
 
     /**
@@ -239,6 +268,11 @@ public class GenericWordSpace
      */
    public GenericWordSpace(int windowSize, 
                            BasisMapping<Duple<String,Integer>,String> basis) {
+       if (windowSize < 1)
+           throw new IllegalArgumentException("windowSize must be at least 1");
+       if (basis == null)
+           throw new NullPointerException("basis cannot be null");
+
        this.windowSize = windowSize;
        this.basisMapping = basis;
        wordToSemantics = new HashMap<String,SparseIntegerVector>(1024, 4f);
@@ -295,12 +329,22 @@ public class GenericWordSpace
      * to the number of dimensions <i>at the time of this call</i> and therefore
      * may be less that the number of dimensions for the same word when obtained
      * at a later time.
+     *
+     * <p>The specific type of {@link Vector} returned will depend upon the
+     * state of this instance at the time of the call.  If this instance has
+     * been processed with a {@link Transform} via {@code processSpace}, then
+     * the vector will be an instanceof {@link DoubleVector}; otherwise, the
+     * vector should contain co-occurrence counts and will therefore be an
+     * instanceof {@link IntegerVector}.
      */ 
-    public SparseIntegerVector getVector(String word) {
-        SparseIntegerVector v = wordToSemantics.get(word);
-        if (v == null) {
+    public Vector getVector(String word) {
+        Vector v = (wordToTransformedVector != null)
+            ? wordToTransformedVector.get(word)
+            : wordToSemantics.get(word);
+        
+        if (v == null) 
             return null;
-        }
+        
         // Note that because the word space is potentially ever growing, we wrap
         // the return vectors with the size of the semantic space at the time of
         // the call.
@@ -326,15 +370,25 @@ public class GenericWordSpace
      * {@inheritDoc}
      */ 
     public Set<String> getWords() {
-        return Collections.unmodifiableSet(wordToSemantics.keySet());
+        return (wordToTransformedVector != null)
+            ? Collections.unmodifiableSet(wordToTransformedVector.keySet())
+            : Collections.unmodifiableSet(wordToSemantics.keySet());
     }
     
     /**
      * Updates the semantic vectors based on the words in the document.
      *
      * @param document {@inheritDoc}
+     *
+     * @throws IllegalStateException if the vector values of this instance have
+     *         been transform using {@link #processSpace(Transform)}
      */
     public void processDocument(BufferedReader document) throws IOException {
+        if (wordToTransformedVector != null) {
+            throw new IllegalStateException("Cannot add new documents to a " +
+                "GenericWordSpace whose vectors have been transformed");
+        }
+
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);
 
@@ -425,12 +479,78 @@ public class GenericWordSpace
     }
     
     /**
-     * Does nothing.
+     * Transforms the word vectors of this instance if the {@value
+     * #TRANSFORM_PROPERTY} is set or otherwise, does nothing.  Once the values
+     * of this space have been transformed, subsequent calls to {@link
+     * #processDocument(BufferedReader)} will throw an {@link
+     * IllegalStateException}.
      *
      * @param properties {@inheritDoc}
+     *
+     * @throws NullPointerException if properties is {@code null}
+     * @throws Error if {@code properties} contains a value for {@value
+     *         #TRANSFORM_PROPERTY} which is not a class name or is not a name
+     *         of class that implements {@link Transform}
      */
     public void processSpace(Properties properties) {
+        String transformClassName = properties.getProperty(TRANSFORM_PROPERTY);
+        if (transformClassName == null)
+            return;
+
+
+        Transform transform = ReflectionUtil.getObjectInstance(transformClassName);
+        processSpace(transform);
     }
+
+    /**
+     * Transforms the vectors in this instance according to the logic specified
+     * in the {@code transform} instance.  Note that this method supports being
+     * called multiple times, enabling sequentially transforming the values
+     * using a series of {@link Transform} instances.
+     *
+     * @param transform the way in which this instance's word vectors should be
+     *        transformmed.
+     */
+    public synchronized void processSpace(Transform transform) {
+        if (transform == null) 
+            throw new NullPointerException("transform cannot be null");
+
+        // Figure out whether we're using the original integer-valued count
+        // vectors or this instance has been transformed, in which case we
+        // support sequential transformations.
+        Map<String,? extends Vector> wordToVector =
+            (wordToTransformedVector != null)
+            ? wordToTransformedVector
+            : wordToSemantics;
+
+        // Create a Matrix instance from the current word vectors, keeping track
+        // of which word corresponds to which vector
+        List<String> wordsInOrder = new ArrayList<String>(wordToVector.size());
+        List<DoubleVector> vectorsInOrder =
+            new ArrayList<DoubleVector>(wordToVector.size());
+        for (Map.Entry<String,? extends Vector> e
+                 : wordToVector.entrySet()) {
+            wordsInOrder.add(e.getKey());
+            // The subview is necessary to control for the length of the
+            // vectors, which are potentially unbounded.
+            vectorsInOrder.add(Vectors.asDouble(
+                Vectors.subview(e.getValue(), 0, getVectorLength())));
+        }
+        Matrix m = Matrices.asMatrix(vectorsInOrder);
+        
+        // Transform the original vectors according to the user's specification
+        Matrix transformed = transform.transform(m);
+
+        // Replace the state of this SemanticSpace with the transformed vectors
+        wordToSemantics.clear();
+        int n = wordsInOrder.size();
+        wordToTransformedVector = new HashMap<String,DoubleVector>(n);
+        for (int i = 0; i < n; ++i) {
+            wordToTransformedVector.put(
+                wordsInOrder.get(i), transformed.getRowVector(i));
+        }
+    }
+
 
     /**
      * {@inheritDoc} Note that all words will still have an index vector

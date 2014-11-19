@@ -221,7 +221,7 @@ public class Vectors {
     /**
      * Returns an immutable view of the given {@code Vector}.
      *
-     * @param vector The {@code DoubleVector} to decorate as immutable.
+     * @param vector The {@code Vector} to decorate as immutable.
      * @return An immutable version of {@code vector}.
      */
     public static Vector immutable(Vector vector) {
@@ -270,6 +270,31 @@ public class Vectors {
     public static DoubleVector scaleByMagnitude(SparseDoubleVector vector) {
         return new ScaledSparseDoubleVector(vector, 1d/vector.magnitude());
     }
+
+    /**
+     * Returns a subview for the given {@code Vector} with a specified offset
+     * and length.  {@code Vector} instances that are not instances of either
+     * {@link DoubleVector} or {@link IntegerVector} will be returned as
+     * instances of {@link DoubleVector}.
+     *
+     * @param vector the {@code Vector} whose values will be shown in the view
+     * @param offset the index of {@code v} at which the first index of this
+     *               view starts
+     * @param length the length of this view.
+     *
+     * @throws IllegalArgumentException if <ul><li>{@code offset} is
+     *         negative<li>{@code length} is less than zero<li>the sum of {@code
+     *         offset} plus {@code length} is greater than the length of {@code
+     *         vector}</ul>
+     */
+    public static Vector subview(Vector vector, int offset,
+                                 int length) {
+        if (vector instanceof IntegerVector)
+            return subview((IntegerVector)vector, offset, length);
+        else 
+            return subview(asDouble(vector), offset, length);
+    }
+
 
     /**
      * Returns a subview for the given {@code DoubleVector} with a specified
