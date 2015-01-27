@@ -991,7 +991,14 @@ public class MatrixIO {
                     int row = valuesSeen / cols;
                     int col = valuesSeen % cols;
 
-                    double val = Double.parseDouble(vals[i]);
+                    // NOTE: SVDLIBC doesn't seem to capitalize its NaN values,
+                    // which causes Java's double parsing code to break.  We
+                    // don't really expect this case to happen but it seems to
+                    // when passed the results of calling SVD on a degenerate
+                    // matrix, so we check so that the code "just works".
+                    double val = (vals[i].equals("nan"))
+                                  ? Double.NaN
+                                  : Double.parseDouble(vals[i]);
 
                     if (transposeOnRead)
                         m.set(col, row, val);
@@ -1071,7 +1078,7 @@ public class MatrixIO {
                           ((transposeOnRead) ? "transposed" : ""),
                           rows, cols, nz));
         Matrix m = null;
-        
+
         // Special case for reading transposed data.  This avoids the log(n)
         // overhead from resorting the row data for the matrix, which can be
         // significant in large matrices.
