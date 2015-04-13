@@ -135,14 +135,18 @@ public class DocumentVectorBuilder {
         return documentVector;
     }
 
-    public void add(DoubleVector dest, Vector src, int factor) {
+    /**
+     * Accumulates the content of {@code src} into {@code dest} using a scalar
+     * to adjust the values of {@code src}.
+     */
+    void add(DoubleVector dest, Vector src, int factor) {
         if (src instanceof SparseVector) {
-            int[] nonZeros = ((SparseVector) src). getNonZeroIndices();
+            int[] nonZeros = ((SparseVector) src).getNonZeroIndices();
             for (int i : nonZeros)
-                dest.add(i, src.getValue(i).doubleValue());
+                dest.add(i, factor * src.getValue(i).doubleValue());
         } else {
             for (int i = 0; i < src.length(); ++i)
-                dest.add(i, src.getValue(i).doubleValue());
+                dest.add(i, factor * src.getValue(i).doubleValue());
         }
     }
 }
