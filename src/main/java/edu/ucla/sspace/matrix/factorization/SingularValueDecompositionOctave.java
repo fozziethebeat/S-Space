@@ -60,6 +60,7 @@ public class SingularValueDecompositionOctave extends AbstractSvd
     public void factorize(SparseMatrix matrix, int dimensions) {
         try {
             File mFile = File.createTempFile("octave-input", ".dat");
+            mFile.deleteOnExit();            
             MatrixIO.writeMatrix(matrix, mFile, Format.MATLAB_SPARSE);
             factorize(new MatrixFile(mFile, Format.MATLAB_SPARSE), dimensions);
         } catch (IOException ioe) {

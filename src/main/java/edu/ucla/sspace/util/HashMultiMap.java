@@ -40,8 +40,9 @@ import java.util.Set;
 import gnu.trove.set.hash.THashSet;
 
 /**
- * A hash table based implementation of the {@code MultiMap} interface.  This
- * implementation permits both {@code null} keys and values. 
+ * An implementation of the {@code MultiMap} interface backed by a {@link
+ * HashMap}.  This implementation permits both {@code null} keys
+ * and values.
  *
  * <p>
  *
@@ -69,13 +70,21 @@ public class HashMultiMap<K,V> implements MultiMap<K,V>, Serializable {
         map = new HashMap<K,Set<V>>();
         range = 0;
     }
-    
+
     /**
-     * Constructs this map and adds in all the mapping from the provided {@code
-     * Map}
+     * Initializes this multi-map with the specified capacaity
+     */
+    public HashMultiMap(int capacity) {
+        map = new HashMap<K,Set<V>>(capacity);
+        range = 0;
+    }
+
+    /**
+     * Constructs this multi-map and adds in all the mapping from the provided
+     * {@code Map}
      */
     public HashMultiMap(Map<? extends K,? extends V> m) {
-        this();
+        this(m.size());
         putAll(m);
     }
 

@@ -292,6 +292,7 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
         try {
             compressedDocuments = 
                 File.createTempFile("reflective-ri-documents",".dat");
+            compressedDocuments.deleteOnExit();            
             compressedDocumentsWriter = new DataOutputStream(
                 new BufferedOutputStream(
                     new FileOutputStream(compressedDocuments)));

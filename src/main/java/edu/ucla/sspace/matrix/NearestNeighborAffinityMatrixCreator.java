@@ -60,6 +60,7 @@ public class NearestNeighborAffinityMatrixCreator
         try {
             File affMatrixFile = 
                 File.createTempFile("affinty-matrix",".dat");
+            affMatrixFile.deleteOnExit();            
             PrintWriter affMatrixWriter = new PrintWriter(affMatrixFile);
             
             int rows = input.rows();
@@ -138,6 +139,7 @@ public class NearestNeighborAffinityMatrixCreator
             // data, and repeatedly loop through the columns (which are really
             // rows in the original matrix) to create the affinity matrix.
             File affMatrixFile = File.createTempFile("affinity-matrix",".dat");
+            affMatrixFile.deleteOnExit();            
             PrintWriter affMatrixWriter = new PrintWriter(affMatrixFile);
 
             // Keep track of the first row and have a reference to the next row.

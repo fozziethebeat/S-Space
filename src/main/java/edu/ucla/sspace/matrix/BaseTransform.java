@@ -73,6 +73,7 @@ public abstract class BaseTransform
         // create a temp file for the output
         File output = File.createTempFile(
                 inputMatrixFile.getName() + ".matrix-transform", ".dat");
+        output.deleteOnExit();
         transform(inputMatrixFile, format, output);
         return output;
     }

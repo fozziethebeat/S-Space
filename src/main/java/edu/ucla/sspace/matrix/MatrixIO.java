@@ -275,7 +275,8 @@ public class MatrixIO {
 
         // NOTE: the current default implementation does not try to keep the
         // matrix data on disk, which could present a memory bottleneck.
-        File output = File.createTempFile("transposed",".dat");            
+        File output = File.createTempFile("transposed",".dat");
+        output.deleteOnExit();        
         // NOTE: the matrix type is not intelligently selected.  Futher work is
         // needed to switch based on the format.
         Matrix transposed = readMatrix(matrix, current, 

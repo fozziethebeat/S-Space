@@ -25,6 +25,7 @@ import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Matrix.Type;
 
 import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
+import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionColt;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionMatlab;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionOctave;
@@ -153,20 +154,25 @@ public class SVD {
             return new SingularValueDecompositionMatlab();
         if (isOctaveAvailable())
             return new SingularValueDecompositionOctave();
-        throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
+        if (isColtAvailable())
+            return new SingularValueDecompositionColt();
+        throw new UnsupportedOperationException(
+            "Cannot find a valid SVD implementation");
     }
 
     /**
-     * Returns the {@link SingularValueDecomposition} implementation corresponding to
-     * the {@link Algorithm} name.
+     * Returns the {@link SingularValueDecomposition} implementation
+     * corresponding to the {@link Algorithm} name.
      */
     public static SingularValueDecomposition getFactorization(Algorithm alg) {
         switch (alg)  {
             case MATLAB: return new SingularValueDecompositionMatlab();
             case OCTAVE: return new SingularValueDecompositionOctave();
             case SVDLIBC: return new SingularValueDecompositionLibC();
+            case COLT: return new SingularValueDecompositionColt();
             case ANY: return getFastestAvailableFactorization();
-            default: throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
+            default: throw new UnsupportedOperationException(
+                "Cannot find a valid SVD implementation");
         }
     }
 
@@ -194,7 +200,8 @@ public class SVD {
         else if (isColtAvailable())
             return Algorithm.COLT;
         else
-            throw new UnsupportedOperationException("Cannot find a valid SVD implementation");
+            throw new UnsupportedOperationException(
+                "Cannot find a valid SVD implementation");
     }
 
     /**

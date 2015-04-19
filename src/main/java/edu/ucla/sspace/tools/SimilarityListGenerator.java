@@ -170,10 +170,16 @@ public class SimilarityListGenerator {
         
         final SemanticSpace sspace = SemanticSpaceIO.load(sspaceFile);
 
-        File output = (overwrite)
-            ? new File(outputDir, sspaceFile.getName() + ".similarityList")
-            : File.createTempFile(sspaceFile.getName(), "similarityList",
-                                  outputDir);
+        File output = null;
+        if (overwrite) {
+            output = new File(outputDir,
+                              sspaceFile.getName() + ".similarityList");
+        }
+        else {
+            output = File.createTempFile(sspaceFile.getName(), "similarityList",
+                                         outputDir);
+            output.deleteOnExit();            
+        }
 
         final PrintWriter outputWriter = new PrintWriter(output);
             

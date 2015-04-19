@@ -192,6 +192,7 @@ public class SvdlibcSparseBinaryMatrixBuilder implements MatrixBuilder {
         File tmp = null;
         try {
             tmp = File.createTempFile("svdlibc-sparse-binary-matrix", ".dat");
+            tmp.deleteOnExit();
             //tmp.deleteOnExit();
         } catch (IOException ioe) {
             throw new IOError(ioe);
@@ -369,6 +370,7 @@ public class SvdlibcSparseBinaryMatrixBuilder implements MatrixBuilder {
                 matrixRaf.writeInt(curCol);
                 matrixRaf.writeInt(nonZeroValues);
                 matrixRaf.close();
+
             } catch (IOException ioe) {
                 throw new IOError(ioe);
             }

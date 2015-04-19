@@ -64,6 +64,7 @@ public class SingularValueDecompositionLibC extends AbstractSvd
     public void factorize(SparseMatrix matrix, int dimensions) {
         try {
             File temp = File.createTempFile("svdlibc.svd.matrix", "dat");
+            temp.deleteOnExit();            
             MatrixIO.writeMatrix(matrix, temp, Format.SVDLIBC_SPARSE_TEXT);
             MatrixFile mFile = new MatrixFile(temp, Format.SVDLIBC_SPARSE_TEXT);
             factorize(mFile, dimensions);

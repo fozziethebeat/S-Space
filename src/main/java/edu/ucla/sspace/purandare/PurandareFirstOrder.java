@@ -238,6 +238,7 @@ public class PurandareFirstOrder implements SemanticSpace {
         try {
             compressedDocuments = 
                 File.createTempFile("petersen-documents",".dat");
+            compressedDocuments.deleteOnExit();            
             compressedDocumentsWriter = new DataOutputStream(
                 new BufferedOutputStream(
                     new FileOutputStream(compressedDocuments)));
