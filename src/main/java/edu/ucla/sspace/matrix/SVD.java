@@ -25,7 +25,6 @@ import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.Matrix.Type;
 
 import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
-import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionColt;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionLibC;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionMatlab;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecompositionOctave;
@@ -154,8 +153,6 @@ public class SVD {
             return new SingularValueDecompositionMatlab();
         if (isOctaveAvailable())
             return new SingularValueDecompositionOctave();
-        if (isColtAvailable())
-            return new SingularValueDecompositionColt();
         throw new UnsupportedOperationException(
             "Cannot find a valid SVD implementation");
     }
@@ -169,7 +166,6 @@ public class SVD {
             case MATLAB: return new SingularValueDecompositionMatlab();
             case OCTAVE: return new SingularValueDecompositionOctave();
             case SVDLIBC: return new SingularValueDecompositionLibC();
-            case COLT: return new SingularValueDecompositionColt();
             case ANY: return getFastestAvailableFactorization();
             default: throw new UnsupportedOperationException(
                 "Cannot find a valid SVD implementation");
