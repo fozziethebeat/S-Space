@@ -212,7 +212,7 @@ public class BasisMaker extends GenericMain {
 
                 // If the filter does not accept this word, skip the semantic
                 // processing, continue with the next word
-                if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+                if (!focus.equals(IteratorFactory.EMPTY_TOKEN)) {
                     int focusIndex = basis.getDimension(focus);
                     
                     countOccurrences(nextWords, focusIndex,
