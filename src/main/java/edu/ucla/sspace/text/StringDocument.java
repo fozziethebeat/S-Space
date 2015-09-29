@@ -28,7 +28,7 @@ import java.io.StringReader;
  * A {@code Document} implementation backed by a {@code String} whose contents
  * are used for the document text.
  */
-public class StringDocument implements Document {
+public class StringDocument {
 
     /**
      * The text of the document

@@ -30,7 +30,7 @@ import java.io.IOException;
  * A {@code TemporalDocument} implementation backed by a {@code File} whose
  * contents are used for the document text.
  */
-public class TemporalFileDocument implements TemporalDocument {
+public class TemporalFileDocument {
 	
     /**
      * The reader for the backing file.

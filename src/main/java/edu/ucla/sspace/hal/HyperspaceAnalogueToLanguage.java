@@ -33,11 +33,18 @@ import edu.ucla.sspace.matrix.MatrixEntropy.EntropyStats;
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;
 import edu.ucla.sspace.util.Pair;
+
+import edu.ucla.sspace.util.primitive.IntPair;
 
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseHashDoubleVector;
@@ -217,6 +224,13 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     private SparseMatrix reduced;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+    
+    /**
      * Constructs a new instance using the default parameters used in the
      * original publication.
      */
@@ -287,17 +301,24 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
                     "columnThreshold and retainColumns cannot both be active.\n" +
                     "columnThreshold: " + columnThreshold + "\n" +
                     "retainColumns: " + retainColumns+ "\n");
+
+        this.tokenProcesser = new PassThroughTokenProcesser();
     }
 
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    protected void process(Sentence sent)  {
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
-
-        Iterator<String> documentTokens =
-            IteratorFactory.tokenizeOrdered(document);
 
         String focus = null;
 
@@ -305,12 +326,14 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         // keep a thread-local count of what needs to be modified in the matrix
         // and update after the document has been processed.  This saves
         // potential contention from concurrent writes.
-        Map<Pair<Integer>,Double> matrixEntryToCount =
-            new HashMap<Pair<Integer>,Double>();
+        Map<IntPair,Double> matrixEntryToCount =
+            new HashMap<IntPair,Double>();
 
+        Iterator<Token> tokenIter = sent.iterator();
+        
         //Load the first windowSize words into the Queue
-        for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
-            nextWords.offer(documentTokens.next());
+        for(int i = 0;  i < windowSize && tokenIter.hasNext(); i++)
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
         while(!nextWords.isEmpty()) {
 
@@ -318,12 +341,12 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
             focus = nextWords.remove();
 
             // Add the next word to nextWords queue (if possible)
-            if (documentTokens.hasNext())
-                nextWords.offer(documentTokens.next());
+            if (tokenIter.hasNext())
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
             // If the filter does not accept this word, skip the semantic
             // processing, continue with the next word
-            if (!focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (!focus.equals(Token.EMPTY_TOKEN_TEXT)) {
                 int focusIndex = termToIndex.getDimension(focus);
                 // Only process co-occurrences with words with non-negative
                 // dimensions.
@@ -343,8 +366,8 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
 
         // Once the document has been processed, update the co-occurrence matrix
         // accordingly.
-        for (Map.Entry<Pair<Integer>,Double> e : matrixEntryToCount.entrySet()){
-            Pair<Integer> p = e.getKey();
+        for (Map.Entry<IntPair,Double> e : matrixEntryToCount.entrySet()){
+            IntPair p = e.getKey();
             cooccurrenceMatrix.addAndGet(p.x, p.y, e.getValue());
         }
     }
@@ -358,17 +381,17 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     private void addTokens(Queue<String> words,
                            int focusIndex,
                            int distance,
-                           Map<Pair<Integer>, Double> matrixEntryToCount) {
+                           Map<IntPair, Double> matrixEntryToCount) {
         for (String word : words) {
             // skip adding co-occurence values for words that are not
             // accepted by the filter
-            if (!word.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (!word.equals(Token.EMPTY_TOKEN_TEXT)) {
                 int index = termToIndex.getDimension(word);
                 if (index >= 0) {
                     // Get the current number of times that the focus word has
                     // co-occurred with this word before after it.  Weight the
                     // word appropriately baed on distance
-                    Pair<Integer> p = new Pair<Integer>(index, focusIndex);
+                    IntPair p = new IntPair(index, focusIndex);
                     double value = weighting.weight(distance, windowSize);
                     Double curCount = matrixEntryToCount.get(p);
                     matrixEntryToCount.put(p, (curCount == null)
@@ -428,7 +451,7 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         // Ensure that the bottom right corner of the matrix has a valid value
         // so that we always create a 2 * n set of dimensions in the default
         // case.
@@ -558,6 +581,20 @@ public class HyperspaceAnalogueToLanguage implements SemanticSpace {
         return reduced;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+    
     /**
      * {@inheritDoc}
      */

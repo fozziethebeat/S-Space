@@ -26,6 +26,9 @@ import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.TokenProcesser;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.Vector;
@@ -523,7 +526,7 @@ public class OnDiskSemanticSpace implements SemanticSpace {
     /**
      * Not supported; throws an {@link UnsupportedOperationException} if called.
      */
-    public void processDocument(BufferedReader document) { 
+    public void process(Corpus corpus) { 
         throw new UnsupportedOperationException(
             "OnDiskSemanticSpace instances cannot be updated");
     }
@@ -531,7 +534,27 @@ public class OnDiskSemanticSpace implements SemanticSpace {
     /**
      * Not supported; throws an {@link UnsupportedOperationException} if called.
      */
-    public void processSpace(Properties props) { 
+    public void build(Properties props) { 
+        throw new UnsupportedOperationException(
+            "OnDiskSemanticSpace instances cannot be updated");
+    }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public TokenProcesser getTokenProcessor() {
+        throw new UnsupportedOperationException(
+            "OnDiskSemanticSpace instances cannot be updated");
+    }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
         throw new UnsupportedOperationException(
             "OnDiskSemanticSpace instances cannot be updated");
     }

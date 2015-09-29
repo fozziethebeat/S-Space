@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 David Jurgens
+ * Copyright 2014 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,33 +21,55 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Queue;
 
+import edu.stanford.nlp.util.ArrayCoreMap;
 import edu.stanford.nlp.util.CoreMap;
+
+import edu.ucla.sspace.util.CombinedIterator;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * A basic implementation of {@link Document} that wraps a collection of {@link
+ * Sentence} instances.
  */
-public interface Document extends Iterable<Sentence> {
+public class SimpleDocument implements Document {
+
+    private final Iterable<Sentence> sentences;
+
+    private final CoreMap annotations;
+    
+    public SimpleDocument(Iterable<Sentence> sentences) {
+        this.sentences = sentences;
+        this.annotations = new ArrayCoreMap();
+    }
 
     /**
-     * The annotations provided for this document.
+     * {@inheritDoc}
      */
-    CoreMap annotations();
+    public CoreMap annotations() {
+        return annotations;
+    }
 
     /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
+     * Returns an iterator over all the tokens in all the sentences in this
+     * document.
      */
-    Iterator<Token> tokens();
+    public Iterator<Token> tokens() {
+        Queue<Iterator<Token>> iters = new ArrayDeque<Iterator<Token>>();
+        for (Sentence s : sentences)
+            iters.add(s.iterator());
+        return new CombinedIterator(iters);
+    }
 
     /**
      * Returns an iterator over all the tokens in this document's text.
      */
-    Iterator<Sentence> iterator();
+    public Iterator<Sentence> iterator() {
+        return sentences.iterator();
+    }  
     
 }

@@ -21,33 +21,31 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
-import java.util.Iterator;
-
 import edu.stanford.nlp.util.CoreMap;
+
+import java.util.List;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * An interface for procedures that convert a token or multi-word expression
+ * into the canonical {@code String} representation use by underlying algorithms
+ * for determining token equivalence.  Common operations include adding the Part
+ * of Speech information, lemmatizing or stemming, and lower casing.
  */
-public interface Document extends Iterable<Sentence> {
+public interface TokenProcesser {
+    
+    /**
+     * Converts a token into the string representation used for measuring token
+     * equality.  Common operations include adding the Part of Speech
+     * information, lemmatizing or stemming, and lower casing.
+     */
+    String process(Token t);
 
     /**
-     * The annotations provided for this document.
+     * Converts multiword expression into the string representation used for
+     * measuring token equality.  Common operations include adding the Part of
+     * Speech information, lemmatizing or stemming, and lower casing.
      */
-    CoreMap annotations();
-
-    /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
-     */
-    Iterator<Token> tokens();
-
-    /**
-     * Returns an iterator over all the tokens in this document's text.
-     */
-    Iterator<Sentence> iterator();
+    String process(List<Token> multiWordExpression);
     
 }

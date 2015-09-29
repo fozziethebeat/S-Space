@@ -21,33 +21,33 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
-import java.util.Iterator;
-
 import edu.stanford.nlp.util.CoreMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * An implementation of {@link TokenProcessor} that does nothing to the text.
  */
-public interface Document extends Iterable<Sentence> {
-
-    /**
-     * The annotations provided for this document.
-     */
-    CoreMap annotations();
-
-    /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
-     */
-    Iterator<Token> tokens();
-
-    /**
-     * Returns an iterator over all the tokens in this document's text.
-     */
-    Iterator<Sentence> iterator();
+public class PassThroughTokenProcesser implements TokenProcesser {
     
+    /**
+     * Returns the base-form of the token, without any processing
+     */
+    public String process(Token t) {
+        return t.text();
+    }
+    
+    /**
+     * Returns the base forms of the tokens in the multi-word expression, joined
+     * by underscore characters.
+     */
+    public String process(List<Token> multiWordExpression) {
+        List<String> tokens = new ArrayList<String>();
+        for (Token t : multiWordExpression)
+            tokens.add(t.text());
+        return String.join("_", tokens);
+    }
+   
 }

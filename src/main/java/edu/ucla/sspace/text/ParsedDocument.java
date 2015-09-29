@@ -30,7 +30,7 @@ import java.io.BufferedReader;
  * An abstraction for a document that has been (or will be) dependency parsed to
  * generate an accompanying parse tree of its contents.
  */
-public interface ParsedDocument extends Document {
+public interface ParsedDocument {
 
     /**
      * Returns the dependency tree of the next document as a sequence of {@link

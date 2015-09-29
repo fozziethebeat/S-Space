@@ -93,9 +93,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * This class is thread-safe for concurrent calls of {@link
  * #processDocument(BufferedReader) processDocument}.  Once {@link
- * #processSpace(Properties) processSpace} has been called, no further calls to
+ * #build(Properties) build} has been called, no further calls to
  * {@code processDocument} should be made.  This implementation does not support
- * access to the semantic vectors until after {@code processSpace} has been
+ * access to the semantic vectors until after {@code build} has been
  * called.
  *
  * @see Transform
@@ -167,7 +167,7 @@ public class LocalityPreservingSemanticAnalysis
      *        LocalityPreservingSemanticAnalysis javadoc} for the full list of
      *        supported properties.
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         try {
             Transform transform = null;
             // If the user specified a transform, then apply it and update the
@@ -177,7 +177,7 @@ public class LocalityPreservingSemanticAnalysis
             if (transformClass != null)
                 transform = ReflectionUtil.getObjectInstance(transformClass);
 
-            MatrixFile transformedMatrix = processSpace(transform);
+            MatrixFile transformedMatrix = build(transform);
 
             // Set all of the default properties
             int dimensions = 300; 

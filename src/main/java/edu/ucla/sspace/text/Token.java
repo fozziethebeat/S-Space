@@ -21,33 +21,44 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
-import java.util.Iterator;
-
+import edu.stanford.nlp.util.ArrayCoreMap;
 import edu.stanford.nlp.util.CoreMap;
 
 
-/**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
- */
-public interface Document extends Iterable<Sentence> {
 
+/**
+ * The representation of a token in text, which may be annotated with one or
+ * more pieces of information.
+ */
+public interface Token {
+
+    public static final Token EMPTY_TOKEN = new EmptyToken();
+
+    public static final String EMPTY_TOKEN_TEXT = ""; 
+    
     /**
-     * The annotations provided for this document.
+     * The annotations provided for this token
      */
     CoreMap annotations();
-
-    /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
-     */
-    Iterator<Token> tokens();
-
-    /**
-     * Returns an iterator over all the tokens in this document's text.
-     */
-    Iterator<Sentence> iterator();
     
+    /**
+     * A convience method that returns the text of this token
+     */
+    String text();
+
+    /**
+     * Returns the text of the token, identical to what {@link #text()} returns.
+     */
+    String toString();
+
+    static class EmptyToken implements Token {
+
+        static final CoreMap EMPTY_MAP = new ArrayCoreMap();
+        
+        @Override public CoreMap annotations() { return EMPTY_MAP; }
+
+        @Override public String text() { return EMPTY_TOKEN_TEXT; }
+
+        @Override public String toString() { return text(); }
+    }
 }

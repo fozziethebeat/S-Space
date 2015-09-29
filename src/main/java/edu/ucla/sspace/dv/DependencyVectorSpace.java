@@ -34,7 +34,13 @@ import edu.ucla.sspace.dependency.DependencyTreeNode;
 import edu.ucla.sspace.dependency.FilteredDependencyIterator;
 import edu.ucla.sspace.dependency.FlatPathWeight;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.SimpleDocument;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.ReflectionUtil;
 
@@ -42,6 +48,19 @@ import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
+
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.IndexedWord;
+
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+
+import edu.stanford.nlp.semgraph.SemanticGraph;
+
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
+
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -201,12 +220,6 @@ public class DependencyVectorSpace
     private Map<String,SparseDoubleVector> termToVector;
 
     /**
-     * The {@link DependencyExtractor} used to extract parse trees from the
-     * already parsed documents
-     */
-    private final DependencyExtractor extractor;
-
-    /**
      * A basis mapping from dependency paths to the the dimensions that
      * represent the content of those paths.
      */
@@ -224,6 +237,13 @@ public class DependencyVectorSpace
      */
     private final DependencyPathAcceptor acceptor;
 
+    /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+    
     private final int pathLength;
 
     /**
@@ -299,7 +319,7 @@ public class DependencyVectorSpace
             ? acceptor.maxPathLength()
             : pathLength;
 
-        extractor = DependencyExtractorManager.getDefaultExtractor();
+        this.tokenProcesser = new PassThroughTokenProcesser();
     }
 
     /**
@@ -376,62 +396,65 @@ public class DependencyVectorSpace
     }
 
     /**
-     * Extracts all the parsed sentences in the document and then updates the
-     * co-occurrence values for those paths matching the loaded set of
-     * templates, according to this instance's {@link BasisFunction}.  Path
-     * occurrences are weighted using this instance's {@link PathWeight}.
+     * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    protected void process(Sentence sent)  {        
         
-        // Iterate over all of the parseable dependency parsed sentences in the
-        // document.
-        for (DependencyTreeNode[] nodes = null; 
-                 (nodes = extractor.readNextTree(document)) != null; ) {
+        // this is the Stanford dependency graph of the current sentence
+        SemanticGraph dependencies =
+            sent.annotations().get(CollapsedCCProcessedDependenciesAnnotation.class);
+        
+        for (int i = 0; i < dependencies.size(); ++i) {
+            
+            IndexedWord iw = dependencies.getNodeByIndex(i);
+            
+            String focusWord = iw.get(TextAnnotation.class);
+            
+            // Acquire the semantic vector for the focus word.
+            SparseDoubleVector focusMeaning = getSemanticVector(focusWord);
+            
+            // Get all the valid paths starting from this word.  The
+            // acceptor will filter out any paths that don't contain the
+            // semantic connections we're looking for.
+            Iterator<DependencyPath> paths = null;
+            // new FilteredDependencyIterator();
+            // nodes[wordIndex], acceptor, pathLength);
 
-            // Skip empty documents.
-            if (nodes.length == 0)
-                continue;            
-
-            // Examine the paths for each word in the sentence.
-            for (int wordIndex = 0; wordIndex < nodes.length; ++wordIndex) {
-
-                String focusWord = nodes[wordIndex].word();              
-
-                // Acquire the semantic vector for the focus word.
-                SparseDoubleVector focusMeaning = getSemanticVector(focusWord);
-
-                // Get all the valid paths starting from this word.  The
-                // acceptor will filter out any paths that don't contain the
-                // semantic connections we're looking for.
-                Iterator<DependencyPath> paths = new FilteredDependencyIterator(
-                            nodes[wordIndex], acceptor, pathLength);
+            if (1==1)
+                throw new IllegalStateException("Not implemented yet :(");
+            
+            // For each of the paths rooted at the focus word, update the
+            // co-occurrences of the focus word in the dimension that the
+            // BasisFunction states.
+            while (paths.hasNext()) {
+                DependencyPath path = paths.next();
                 
-                // For each of the paths rooted at the focus word, update the
-                // co-occurrences of the focus word in the dimension that the
-                // BasisFunction states.
-                while (paths.hasNext()) {
-                    DependencyPath path = paths.next();
-
-                    // Get the dimension associated with the relation and/or
-                    // words in the path from the basis function.  The basis
-                    // function creates a specific dimension for the syntactic
-                    // context in order to meaningfully comparable vectors.
-                    int dimension = basisMapping.getDimension(path);
-
-                    // Then calculate the weight for the feature presence in the
-                    // dimension.  For example, the weighter might score paths
-                    // inversely proportional to their length.
-                    double weight = weighter.scorePath(path);
-
-                    // Last, update the focus word's semantic vector based on
-                    // the dimension and weight
-                    synchronized(focusMeaning) {
-                        focusMeaning.add(dimension, weight);                    
-                    }
+                // Get the dimension associated with the relation and/or
+                // words in the path from the basis function.  The basis
+                // function creates a specific dimension for the syntactic
+                // context in order to meaningfully comparable vectors.
+                int dimension = basisMapping.getDimension(path);
+                
+                // Then calculate the weight for the feature presence in the
+                // dimension.  For example, the weighter might score paths
+                // inversely proportional to their length.
+                double weight = weighter.scorePath(path);
+                
+                // Last, update the focus word's semantic vector based on
+                // the dimension and weight
+                synchronized(focusMeaning) {
+                    focusMeaning.add(dimension, weight);                    
                 }
             }
         }
-        document.close();
     }
         
     /**
@@ -439,6 +462,20 @@ public class DependencyVectorSpace
      *
      * @param properties {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) { }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+    
 }

@@ -27,6 +27,9 @@ import edu.ucla.sspace.matrix.ArrayMatrix;
 import edu.ucla.sspace.matrix.Matrices;
 import edu.ucla.sspace.matrix.Matrix;
 
+import edu.ucla.sspace.text.TokenProcesser;
+import edu.ucla.sspace.text.Corpus;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
@@ -139,12 +142,27 @@ public class VectorMapSemanticSpace<T extends Vector>
     /**
      * A no-op
      */
-    public void processDocument(BufferedReader document) { 
-    }
+    public void process(Corpus corpus) { }
 
     /**
      * A no-op
      */
-    public void processSpace(Properties props) { 
+    public void build(Properties props) { }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public TokenProcesser getTokenProcessor() {
+        return null;
     }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) { }
+    
 }

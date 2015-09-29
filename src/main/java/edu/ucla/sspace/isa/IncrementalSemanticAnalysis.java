@@ -28,7 +28,12 @@ import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 import edu.ucla.sspace.index.TernaryPermutationFunction;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.GeneratorMap;
 import edu.ucla.sspace.util.SparseDoubleArray;
@@ -326,6 +331,13 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
     private final Map<String,Integer> wordToOccurrences;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+
+    /**
      * Creates a new {@code IncrementalSemanticAnalysis} instance using the
      * current {@code System} properties for configuration.
      */
@@ -389,6 +401,7 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
             new GeneratorMap<TernaryVector>(indexVectorGenerator);
         wordToMeaning = new HashMap<String,SemanticVector>();
         wordToOccurrences = new HashMap<String,Integer>();
+        tokenProcesser = new PassThroughTokenProcesser();        
     }
 
 
@@ -491,35 +504,48 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
     }
     
     /**
-     * {@inheritDoc}  Note that this method is <i>not</i> thread safe.
+     * Tokenizes the document using the {@link IteratorFactory} and updates the
+     * term-document frequency counts.
+     *
+     * <p>
+     *
+     * This method is thread-safe and may be called in parallel with separate
+     * documents to speed up overall processing time.
+     *
+     * @param document {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    protected void process(Sentence sent)  {
         Queue<String> prevWords = new ArrayDeque<String>(windowSize);
         Queue<String> nextWords = new ArrayDeque<String>(windowSize);
 
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
-
+        Iterator<Token> tokenIter = sent.iterator();
+        
         String focusWord = null;
 
         // Prefetch the first windowSize words.  As soon as a word enters the
         // nextWords buffer increase its occurrence count.
-        for (int i = 0; i < windowSize && documentTokens.hasNext(); ++i) 
-            nextWords.offer(documentTokens.next());        
+        for (int i = 0; i < windowSize && tokenIter.hasNext(); ++i) 
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
         
         while (!nextWords.isEmpty()) {
             
             focusWord = nextWords.remove();
 
             // shift over the window to the next word
-            if (documentTokens.hasNext()) {
-                String windowEdge = documentTokens.next(); 
-                nextWords.offer(windowEdge);
-            }    
+            if (tokenIter.hasNext()) 
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));                
                 
             // Don't bother calculating the semantics for empty tokens
             // (i.e. words that were filtered out)
-            if (!focusWord.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (!focusWord.equals(Token.EMPTY_TOKEN_TEXT)) {
                 SemanticVector focusMeaning = getSemanticVector(focusWord);
 
                 // Sum up the index vector for all the surrounding words.  If
@@ -532,7 +558,7 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
                     // ensure that the token stream maintains its existing
                     // ordering, which is necessary when permutations are taken
                     // into account.
-                    if (word.equals(IteratorFactory.EMPTY_TOKEN)) {
+                    if (word.equals(Token.EMPTY_TOKEN_TEXT)) {
                         ++permutations;
                         continue;
                     }
@@ -554,7 +580,7 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
                     // ensure that the token stream maintains its existing
                     // ordering, which is necessary when permutations are taken
                     // into account.
-                    if (word.equals(IteratorFactory.EMPTY_TOKEN)) {
+                    if (word.equals(Token.EMPTY_TOKEN_TEXT)) {
                         ++permutations;
                         continue;
                     }
@@ -584,7 +610,6 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
             }
         }    
 
-        document.close();
     }
         
     /**
@@ -593,7 +618,7 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
      *
      * @properties {@inheritDoc}
      */
-    public void processSpace(Properties properties) { }
+    public void build(Properties properties) { }
 
     /**
      * Assigns the token to {@link IntegerVector} mapping to be used by this
@@ -656,6 +681,20 @@ public class IncrementalSemanticAnalysis implements SemanticSpace {
             semantics.add(p, percentage);
         for (int n : index.negativeDimensions())
             semantics.add(n, -percentage);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
     }
 
     /**

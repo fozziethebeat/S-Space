@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.grefenstette;
 
-import edu.ucla.sspace.common.SemanticSpace;
+import edu.ucla.sspace.common.SemanticSpace2;
 
 import edu.ucla.sspace.matrix.GrowingSparseMatrix;
 import edu.ucla.sspace.matrix.Matrix;
@@ -63,7 +63,7 @@ import java.util.logging.Logger;
  *
  * @author Grace Park 
  */
-public class Grefenstette implements SemanticSpace {
+@Deprecated public class Grefenstette implements SemanticSpace2 {
 
     /**
      * The logger for reporting all debugging information

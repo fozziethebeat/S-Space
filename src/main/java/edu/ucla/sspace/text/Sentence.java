@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Keith Stevens 
+ * Copyright 2015 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,15 +21,28 @@
 
 package edu.ucla.sspace.text;
 
+import java.util.List;
+import java.util.Iterator;
+
+import edu.stanford.nlp.util.CoreMap;
+
 
 /**
- * A subclass of {@code UsenetCorpusReader} that always includes timestamps.
- *
- * @author Keith Stevens
+ * 
  */
-public class TemporalUsenetCorpusReader extends UsenetCorpusReader {
+public interface Sentence extends Iterable<Token> {
 
-    public TemporalUsenetCorpusReader() {
-        super(true);
-    }
+    /**
+     * The annotations provided for this document.
+     */
+    CoreMap annotations();
+
+    /**
+     * Returns the {@code Token} instances of this document's text, which will
+     * be annotated with any of the underlying document's annotations in
+     * present.
+     */
+    Iterator<Token> iterator();
+
+    String text();
 }

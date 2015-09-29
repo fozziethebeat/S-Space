@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.svs;
 
-import edu.ucla.sspace.common.SemanticSpace;
+import edu.ucla.sspace.common.SemanticSpace2;
 
 import edu.ucla.sspace.basis.BasisMapping;
 import edu.ucla.sspace.basis.StringBasisMapping;
@@ -109,7 +109,7 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class StructuredVectorSpace implements SemanticSpace, Serializable {
+public class StructuredVectorSpace implements SemanticSpace2, Serializable {
 
     private static final long serialVersionUID = 1L;
 

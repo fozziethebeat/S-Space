@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.wordsi;
 
-import edu.ucla.sspace.common.SemanticSpace;
+import edu.ucla.sspace.common.SemanticSpace2;
 
 import java.util.BitSet;
 import java.util.HashMap;
@@ -38,7 +38,7 @@ import java.io.BufferedReader;
  *
  * @author Keith Stevens
  */
-public abstract class BaseWordsi implements Wordsi, SemanticSpace {
+public abstract class BaseWordsi implements Wordsi, SemanticSpace2 {
 
     /**
      * The set of words which should be represented by {@link Wordsi}.

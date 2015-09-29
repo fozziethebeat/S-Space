@@ -90,9 +90,9 @@ import java.util.concurrent.ConcurrentMap;;
  *
  * This class is thread-safe for concurrent calls of {@link
  * #processDocument(BufferedReader) processDocument}.  Once {@link
- * #processSpace(Properties) processSpace} has been called, no further calls to
+ * #build(Properties) build} has been called, no further calls to
  * {@code processDocument} should be made.  This implementation does not support
- * access to the semantic vectors until after {@code processSpace} has been
+ * access to the semantic vectors until after {@code build} has been
  * called.
  *
  * @see Transform
@@ -143,7 +143,7 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      *        indices.
      * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
      *        document vectors to disk which later get processed in {@link
-     *        #processSpace(Properties) processSpace}.
+     *        #build(Properties) build}.
      *
      * @throws IOException if this instance encounters any errors when creatng
      *         the backing array files required for processing
@@ -166,9 +166,9 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      * Returns the vector corresponding to a document processed by this space.
      * Vector values represent the word frequencies that have been transformed
      * according to the {@link Transform} instances provided to {@link
-     * #processSpace(Properites)}.
+     * #build(Properites)}.
      *
-     * <p> This method requires that {@code processSpace} has been called first
+     * <p> This method requires that {@code build} has been called first
      * to ensure the semantic space's state is properly constructed.  Calls
      * before this point will throw an {@link IllegalStateException}.
      *
@@ -223,7 +223,7 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
      * @param properties {@inheritDoc} See this class's {@link VectorSpaceModel
      *        javadoc} for the full list of supported properties.
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         try {
             Transform transform = null;
 
@@ -233,7 +233,7 @@ public class VectorSpaceModel extends GenericTermDocumentVectorSpace {
             if (transformClass != null)
                 transform = ReflectionUtil.getObjectInstance(
                         transformClass);
-            MatrixFile processedSpace = super.processSpace(transform);
+            MatrixFile processedSpace = super.build(transform);
             System.out.printf("Matrix saved in %s as %s%n",
                               processedSpace.getFile(),
                               processedSpace.getFormat());

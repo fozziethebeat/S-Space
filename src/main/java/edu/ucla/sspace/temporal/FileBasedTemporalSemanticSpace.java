@@ -62,7 +62,7 @@ import java.util.logging.Logger;
  *
  * @see TemporalSemanticSpaceUtils
  */
-public class FileBasedTemporalSemanticSpace implements TemporalSemanticSpace {
+@Deprecated public class FileBasedTemporalSemanticSpace {
 
     private static final Logger LOGGER = 
         Logger.getLogger(FileBasedTemporalSemanticSpace.class.getName());

@@ -21,33 +21,36 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
 import java.util.Iterator;
 
 import edu.stanford.nlp.util.CoreMap;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * TODO
  */
-public interface Document extends Iterable<Sentence> {
+public interface Corpus extends Iterable<Document> {
 
     /**
-     * The annotations provided for this document.
+     * Returns an iterator over the documents in this corpus
+     */
+    Iterator<Document> iterator();
+    
+    /**
+     * The annotations provided for this corpus
      */
     CoreMap annotations();
 
     /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
+     * Returns the current {@code TokenProcesser} used by this corpus for
+     * converting the raw text of a corpus into tokens.
      */
-    Iterator<Token> tokens();
+    TokenProcesser getTokenProcesser();
 
     /**
-     * Returns an iterator over all the tokens in this document's text.
+     * Sets the current {@code TokenProcesser} used by this corpus for
+     * converting the raw text of a corpus into tokens.
      */
-    Iterator<Sentence> iterator();
+    void setTokenProcesser(TokenProcesser processer);
     
 }

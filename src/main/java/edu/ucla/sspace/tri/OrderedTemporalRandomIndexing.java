@@ -25,7 +25,16 @@ import edu.ucla.sspace.common.Filterable;
 
 import edu.ucla.sspace.ri.RandomIndexing;
 
+import edu.ucla.sspace.temporal.DateAnnotation;
 import edu.ucla.sspace.temporal.TemporalSemanticSpace;
+
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.Documents;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.vector.TernaryVector;
 import edu.ucla.sspace.vector.Vector;
@@ -210,6 +219,13 @@ public abstract class OrderedTemporalRandomIndexing
      * The least recent time stamp seen during the current semantic slice
      */
     protected Long startTime;
+
+    /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
     
     /**
      * Creates an instance of {@code OrderedTemporalRandomIndexing} using
@@ -273,18 +289,33 @@ public abstract class OrderedTemporalRandomIndexing
         endTime = null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void processDocument(BufferedReader document) throws IOException {
-        processDocument(document, System.currentTimeMillis());
-    }
 
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document, long timeStamp) 
-        throws IOException {
+    public void process(Corpus corpus) {
+        Long corpusDate = corpus.annotations().get(DateAnnotation.class);
+        // If the corpus does not have a date, assume the current date, which is
+        // overwritten by document specific dates.
+        if (corpusDate == null)
+            corpusDate = System.currentTimeMillis();
+        
+        for (Document doc : corpus) {            
+            Long docDate = doc.annotations().get(DateAnnotation.class);
+
+            // If the document does
+            if (docDate == null)
+                docDate = corpusDate;
+
+            
+            processDocument(doc, docDate);            
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void processDocument(Document document, long timeStamp)  {
 
         if (startTime != null && shouldPartitionSpace(timeStamp)) {
             for (Iterator<Runnable> it = partitionHooks.iterator(); 
@@ -312,7 +343,7 @@ public abstract class OrderedTemporalRandomIndexing
         else if (endTime < timeStamp)
             timeStamp = endTime;
 
-        currentSlice.processDocument(document);
+        currentSlice.process(Documents.asCorpus(document));
     }
 
     /**
@@ -457,7 +488,7 @@ public abstract class OrderedTemporalRandomIndexing
      *
      * @param props {@inheritDoc}
      */
-    public void processSpace(Properties props) { }
+    public void build(Properties props) { }
 
     /**
      * Assigns the token to {@link TernaryVector} mapping to be used by this
@@ -470,6 +501,21 @@ public abstract class OrderedTemporalRandomIndexing
      */
     public void setWordToIndexVector(Map<String,TernaryVector> m) {
         currentSlice.setWordToIndexVector(m);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {        
+        this.tokenProcesser = tokenProcesser;
+        currentSlice.setTokenProcessor(tokenProcesser);
     }
 
 }

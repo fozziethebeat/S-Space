@@ -23,6 +23,8 @@ package edu.ucla.sspace.temporal;
 
 import edu.ucla.sspace.common.SemanticSpace;
 
+import edu.ucla.sspace.text.Corpus;
+
 import edu.ucla.sspace.vector.Vector;
 
 import java.io.BufferedReader;
@@ -41,27 +43,15 @@ import java.util.SortedSet;
 public interface TemporalSemanticSpace extends SemanticSpace {
 
     /**
-     * Processes the contents of the provided reader as a document, using the
-     * current time as the timestamp.
+     * Processes the contents of the provided reader as a document, using each
+     * documents {@link DateAnnotation} the timestamp for the document.
      *
      * @param document a reader that allows access to the text of the document
      *
      * @throws IOException if any error occurs while reading the document
      */
-    void processDocument(BufferedReader document) throws IOException;
+    void process(Corpus document) throws IOException;
 
-    /**
-     * Processes the contents of the provided buffer as a document, using the
-     * provided timestamp as the date when the document was written.
-     *
-     * @param document a reader that allows access to the text of the document
-     * @param timestamp the time at which the document was written
-     *
-     * @throws IOException if any error occurs while reading the document
-     */
-    void processDocument(BufferedReader document, long timestamp) 
-	    throws IOException;
-    
     /**
      * Returns the time for the earliest semantics contained within this space.
      */

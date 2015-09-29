@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.dri;
 
-import edu.ucla.sspace.common.SemanticSpace;
+import edu.ucla.sspace.common.SemanticSpace2;
 
 import edu.ucla.sspace.dependency.DependencyExtractor;
 import edu.ucla.sspace.dependency.DependencyExtractorManager;
@@ -189,7 +189,7 @@ import java.util.logging.Logger;
  *
  * @author Keith Stevens
  */
-public class DependencyRandomIndexing implements SemanticSpace {
+public class DependencyRandomIndexing implements SemanticSpace2 {
 
     /**
      * The base prefix for all {@code DependencyRandomIndexing}

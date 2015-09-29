@@ -21,7 +21,7 @@
 
 package edu.ucla.sspace.text;
 
-import org.tartarus.snowball.ext.porterStemmer;
+import org.tartarus.snowball.ext.PorterStemmer;
 
 /**
  * A wrapper for the porter <a href="http://snowball.tartarus.org/">Snowball
@@ -36,7 +36,7 @@ public class SnowballPorterStemmer implements Stemmer{
      * {@inheritDoc}
      */
     public String stem(String token) {
-        porterStemmer stemmer = new porterStemmer();
+        PorterStemmer stemmer = new PorterStemmer();
         stemmer.setCurrent(token);
         stemmer.stem();
         return stemmer.getCurrent();

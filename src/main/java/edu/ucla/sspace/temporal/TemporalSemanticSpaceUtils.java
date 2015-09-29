@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  *
  * @see TemporalSemanticSpace
  */
-public class TemporalSemanticSpaceUtils {
+@Deprecated public class TemporalSemanticSpaceUtils {
 
     private static final Logger LOGGER = 
     Logger.getLogger(TemporalSemanticSpaceUtils.class.getName());
@@ -109,7 +109,8 @@ public class TemporalSemanticSpaceUtils {
      */
     public static TemporalSemanticSpace loadTemporalSemanticSpace(
             File sspaceFile, TSSpaceFormat format) {
-        return new FileBasedTemporalSemanticSpace(sspaceFile, format);
+        throw new UnsupportedOperationException();
+        // return new FileBasedTemporalSemanticSpace(sspaceFile, format);
     }
 
     /**

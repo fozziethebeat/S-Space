@@ -8,8 +8,14 @@
   <artifactId>sspace</artifactId>
   <packaging>jar</packaging>
   <name>S-Space Package</name>
-  <version>2.0.4</version>
+  <version>3.0.0-SNAPSHOT</version>
 
+  <properties>
+    <nd4j.version>0.0.3.5.5.5</nd4j.version>
+    <dl4j.version>0.0.3.3.4.alpha2</dl4j.version>
+  </properties>
+
+  
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
@@ -78,17 +84,57 @@
   </distributionManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.deeplearning4j</groupId>
+      <artifactId>deeplearning4j-core</artifactId>
+      <version>${dl4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.deeplearning4j</groupId>
+      <artifactId>deeplearning4j-nlp</artifactId>
+      <version>${dl4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.nd4j</groupId>
+      <artifactId>nd4j-jblas</artifactId>
+      <version>${nd4j.version}</version>
+    </dependency>
+
+    <dependency>
+	<groupId>org.nd4j</groupId>
+	<artifactId>nd4j-api</artifactId>
+	<version>${nd4j.version}</version>
+    </dependency>
+    
     <dependency>
       <groupId>net.sf.trove4j</groupId>
       <artifactId>trove4j</artifactId>
       <version>3.0.3</version>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.8</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>edu.stanford.nlp</groupId>
+      <artifactId>stanford-corenlp</artifactId>
+      <version>3.5.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.stanford.nlp</groupId>
+      <artifactId>stanford-corenlp</artifactId>
+      <version>3.5.2</version>
+      <classifier>models</classifier>
+    </dependency>
+    
   </dependencies>
 
   <build>
@@ -162,12 +208,12 @@
                 <dependencyLocationsEnabled>true</dependencyLocationsEnabled>
               </configuration>
             </plugin>
-
+            
             <!-- Javadoc plugin for reporting. -->
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.8</version>
+              <version>2.10.3</version>
               <configuration>
                 <splitindex>true</splitindex>
               </configuration>
@@ -187,10 +233,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>3.3</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>1.8</source>
+          <target>1.8</target>
+          <!-- <compilerArgument>-Xlint:unchecked</compilerArgument> -->
         </configuration>
       </plugin>
 
@@ -198,7 +245,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
+        <version>2.6</version>
         <configuration>
           <archive>
             <manifest>
@@ -241,26 +288,6 @@
         </executions>
       </plugin>
 
-      <!-- Plugin to create a single jar that includes all dependencies -->
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2.1</version>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-        <executions>
-          <execution>
-            <id>make-assembly</id> 
-            <phase>package</phase> 
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
       <!-- Plugin to automatically sign artefacts before deployment -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -278,13 +305,49 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.12</version>
+        <version>2.18.1</version>
         <configuration>
           <includes>
             <include>**/*Test*.java</include>
           </includes>
         </configuration>
       </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>allinone</shadedClassifierName>
+              <artifactSet>
+                <includes>
+                  <include>*:*</include>
+                </includes>
+              </artifactSet>
+              <transformers>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>reference.conf</resource>
+                </transformer>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Main-Class>akka.Main</Main-Class>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>      
  
     </plugins>
   </build>

@@ -35,7 +35,7 @@ import edu.ucla.sspace.util.LineReader;
  * A {@code Document} implementation backed by a {@code File} whose contents are
  * used for the document text.
  */
-public class FileDocument implements Document {
+public class FileDocument {
 	
     /**
      * The name of the file whose contents are this document.

@@ -29,29 +29,28 @@ import java.io.StringReader;
  * A {@code LabeledDocument} implementation backed by a {@code String} whose
  * contents are used for the document text.
  */
-public class LabeledStringDocument extends StringDocument
-        implements LabeledDocument {
+public class LabeledStringDocument {
 
-    /**
-     * The label of the document
-     */
-    private final String label;
+    // /**
+    //  * The label of the document
+    //  */
+    // private final String label;
     
-    /**
-     * Constructs a {@code Document} using the provided string as the document
-     * text
-     *
-     * @param docText the document text
-     */
-    public LabeledStringDocument(String label, String docText) {
-        super(docText);
-        this.label = label;
-    }
+    // /**
+    //  * Constructs a {@code Document} using the provided string as the document
+    //  * text
+    //  *
+    //  * @param docText the document text
+    //  */
+    // public LabeledStringDocument(String label, String docText) {
+    //     super(docText);
+    //     this.label = label;
+    // }
 
-    /**
-     * {@inheritDoc}
-     */
-    public String label() {
-        return label;
-    }   
+    // /**
+    //  * {@inheritDoc}
+    //  */
+    // public String label() {
+    //     return label;
+    // }   
 }

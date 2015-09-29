@@ -23,6 +23,9 @@ package edu.ucla.sspace.common;
 
 import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
 
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.TokenProcesser;
+
 import edu.ucla.sspace.vector.Vector;
 import edu.ucla.sspace.vector.Vectors;
 
@@ -111,13 +114,6 @@ public class CachingOnDiskSemanticSpace implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public String getSpaceName() {
-        return backingSpace.getSpaceName();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public Set<String> getWords() {
 	return backingSpace.getWords();
     }
@@ -153,7 +149,7 @@ public class CachingOnDiskSemanticSpace implements SemanticSpace {
      *
      * @throws an {@link UnsupportedOperationException} if called.
      */
-    public void processDocument(BufferedReader document) { 
+    public void process(Corpus corpus) { 
         throw new UnsupportedOperationException(
             "CachingOnDiskSemanticSpace instances cannot be updated");
     }
@@ -163,8 +159,28 @@ public class CachingOnDiskSemanticSpace implements SemanticSpace {
      *
      * @throws an {@link UnsupportedOperationException} if called.
      */
-    public void processSpace(Properties props) { 
+    public void build(Properties props) { 
         throw new UnsupportedOperationException(
             "CachingOnDiskSemanticSpace instances cannot be updated");
     }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public TokenProcesser getTokenProcessor() {
+        return null;
+    }
+
+    /**
+     * Not supported; throws an {@link UnsupportedOperationException} if called.
+     *
+     * @throws an {@link UnsupportedOperationException} if called.
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        throw new UnsupportedOperationException(
+            "CachingOnDiskSemanticSpace instances cannot be updated");
+    }
+    
 }

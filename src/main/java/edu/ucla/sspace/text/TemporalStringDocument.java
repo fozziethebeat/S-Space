@@ -31,7 +31,7 @@ import java.io.StringReader;
  *
  * @author David Jurgens
  */
-public class TemporalStringDocument implements TemporalDocument {
+public class TemporalStringDocument {
 
     /**
      * A reader to the text of the document

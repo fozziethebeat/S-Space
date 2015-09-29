@@ -28,7 +28,12 @@ import edu.ucla.sspace.index.PermutationFunction;
 import edu.ucla.sspace.index.RandomIndexVectorGenerator;
 import edu.ucla.sspace.index.TernaryPermutationFunction;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.WorkerThread;
 
@@ -249,6 +254,13 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
     private String[] indexToTerm;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+
+    /**
      * Creates a new {@code ReflectiveRandomIndexing} instance using the current
      * {@code System} properties for configuration.
      */
@@ -283,7 +295,8 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
         termToReflectiveSemantics = 
             new ConcurrentHashMap<String,IntegerVector>();
         termToIndex = new ConcurrentHashMap<String,Integer>();
-
+        tokenProcesser = new PassThroughTokenProcesser();
+        
         documentCounter = new AtomicInteger();
         semanticFilter = new HashSet<String>();
 
@@ -374,17 +387,27 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
         return Collections.unmodifiableSet(termToReflectiveSemantics.keySet());
     }
     
+
     /**
-     * Updates the semantic vectors based on the words in the document.
-     *
-     * @param document {@inheritDoc}
+     * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                try {
+                    process(sent);
+                } catch (IOException ioe) {
+                    throw new IOError(ioe);
+                }
+            }
+        }
+    }
+    
+    protected void process(Sentence sent)  throws IOException {
         int docIndex = documentCounter.getAndIncrement();
 
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
-
+        Iterator<Token> tokenIter = sent.iterator();
+        
         // As we read in the document, generate a compressed version of it,
         // which we will use during the process space method to recompute all of
         // the word vectors' semantics
@@ -397,9 +420,9 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
         IntegerVector docVector = createVector();
         docToVector.put(docIndex, docVector);
 
-        while (documentTokens.hasNext()) {
+        while (tokenIter.hasNext()) {
             tokens++;
-            String focusWord = documentTokens.next();
+            String focusWord = tokenProcesser.process(tokenIter.next());
 
             // If we are filtering the semantic vectors, check whether this word
             // should have its semantics calculated.  In addition, if there is a
@@ -407,7 +430,7 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
             // semantics around
             boolean calculateSemantics =
                 semanticFilter.isEmpty() || semanticFilter.contains(focusWord)
-                && !focusWord.equals(IteratorFactory.EMPTY_TOKEN);
+                && !focusWord.equals(Token.EMPTY_TOKEN_TEXT);
 
 	    // If the filter does not accept this word, skip the semantic
 	    // processing, continue with the next word
@@ -431,9 +454,7 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
             // later corpus reprocessing
             dos.writeInt(focusIndex);
         }
-
-        document.close();
-        
+       
         dos.close();
         byte[] docAsBytes = compressedDocument.toByteArray();
 
@@ -451,7 +472,7 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
      *
      * @param properties {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         try {
             // Wrap the call to avoid having all the code in a try/catch.  This
             // is for improved readability purposes only.
@@ -576,4 +597,19 @@ public class ReflectiveRandomIndexing implements SemanticSpace, Filterable {
                 semantics.add(n, -1);
         }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+    
 }

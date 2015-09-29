@@ -28,7 +28,12 @@ import edu.ucla.sspace.common.Similarity;
 
 import edu.ucla.sspace.fft.FastFourierTransform;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.vector.DenseVector;
 import edu.ucla.sspace.vector.DoubleVector;
@@ -142,6 +147,13 @@ public class Beagle implements SemanticSpace {
      */
     private int[] permute2;
 
+    /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+
     private final SemanticType semanticType;
 
     public Beagle(int vectorSize, Map<String, DoubleVector> vectorMap) {
@@ -155,7 +167,8 @@ public class Beagle implements SemanticSpace {
         this.vectorMap = vectorMap;
         termHolographs = new ConcurrentHashMap<String, DoubleVector>();
         this.semanticType = semanticType;
-
+        this.tokenProcesser = new PassThroughTokenProcesser();
+        
         placeHolder = vectorMap.get("");
 
         // Generate the permutation arrays.
@@ -198,31 +211,44 @@ public class Beagle implements SemanticSpace {
         return indexVectorSize;
     }
 
+
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    /**
+     *
+     */
+    protected void process(Sentence sent) {
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
 
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
+        Iterator<Token> tokenIter = sent.iterator();
+        
         Map<String, DoubleVector> documentVectors =
             new HashMap<String, DoubleVector>();
 
         // Fill up the words after the context so that when the real processing
         // starts, the context is fully prepared.
-        for (int i = 0 ; i < nextSize && it.hasNext(); ++i)
-            nextWords.offer(it.next().intern());
-        prevWords.offer(IteratorFactory.EMPTY_TOKEN);
+        for (int i = 0 ; i < nextSize && tokenIter.hasNext(); ++i)
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
+        prevWords.offer(Token.EMPTY_TOKEN_TEXT);
 
         String focusWord = null;
         while (!nextWords.isEmpty()) {
             focusWord = nextWords.remove();
 
-            if (it.hasNext())
-                nextWords.offer(it.next().intern());
+            if (tokenIter.hasNext())
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
-            if (!focusWord.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (!focusWord.equals(Token.EMPTY_TOKEN_TEXT)) {
                 // Incorporate the context into the semantic vector for the
                 // focus word.  If the focus word has no semantic vector yet,
                 // create a new one, as determined by the index builder.
@@ -260,7 +286,7 @@ public class Beagle implements SemanticSpace {
     /**
      * No processing is performed on the holographs.
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
     }
 
     /**
@@ -283,14 +309,14 @@ public class Beagle implements SemanticSpace {
 
             // Sum the words prior to the focus word, skipping filtered tokens.
             for (String term: prevWords) {
-                if (term.equals(IteratorFactory.EMPTY_TOKEN))
+                if (term.equals(Token.EMPTY_TOKEN_TEXT))
                     continue;
                 VectorMath.add(context, vectorMap.get(term));
             }
 
             // Sum the words after the focus word, skipping filtered tokens.
             for (String term: nextWords) {
-                if (term.equals(IteratorFactory.EMPTY_TOKEN))
+                if (term.equals(Token.EMPTY_TOKEN_TEXT))
                     continue;
                 VectorMath.add(context, vectorMap.get(term));
             }
@@ -346,7 +372,7 @@ public class Beagle implements SemanticSpace {
         // Do the convolutions starting at index 0.
         String prevWord = prevWords.peek();
         DoubleVector tempConvolution;
-        if (!prevWord.equals(IteratorFactory.EMPTY_TOKEN)) {
+        if (!prevWord.equals(Token.EMPTY_TOKEN_TEXT)) {
             tempConvolution =
                 convolute(vectorMap.get(prevWords.peek()), placeHolder);
             VectorMath.add(result, tempConvolution);
@@ -355,7 +381,7 @@ public class Beagle implements SemanticSpace {
 
 
         for (String term : nextWords) {
-            if (term.equals(IteratorFactory.EMPTY_TOKEN))
+            if (term.equals(Token.EMPTY_TOKEN_TEXT))
                 continue;
 
             tempConvolution = convolute(tempConvolution, vectorMap.get(term));
@@ -366,7 +392,7 @@ public class Beagle implements SemanticSpace {
 
         // Do the convolutions starting at index 1.
         for (String term : nextWords) {
-            if (term.equals(IteratorFactory.EMPTY_TOKEN))
+            if (term.equals(Token.EMPTY_TOKEN_TEXT))
                 continue;
 
             tempConvolution = convolute(tempConvolution, vectorMap.get(term));
@@ -422,4 +448,19 @@ public class Beagle implements SemanticSpace {
             result.set(i, data.get(orderVector[i]));
         return result;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+    
 }

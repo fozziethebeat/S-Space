@@ -104,7 +104,7 @@ public class ExplicitSemanticAnalysis extends GenericTermDocumentVectorSpace {
      *        indices.
      * @param termDocumentMatrixBuilder The {@link MatrixBuilder} used to write
      *        document vectors to disk which later get processed in {@link
-     *        #processSpace(Properties) processSpace}.
+     *        #build(Properties) build}.
      *
      * @throws IOException if this instance encounters any errors when creatng
      *         the backing array files required for processing
@@ -163,9 +163,9 @@ public class ExplicitSemanticAnalysis extends GenericTermDocumentVectorSpace {
     /**
      * {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         try {
-            MatrixFile processedSpace = processSpace(
+            MatrixFile processedSpace = build(
                     new TfIdfTransform());
             wordSpace = MatrixIO.readMatrix(
                     processedSpace.getFile(), processedSpace.getFormat());

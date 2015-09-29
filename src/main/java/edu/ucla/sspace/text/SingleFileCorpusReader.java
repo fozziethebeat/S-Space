@@ -21,33 +21,26 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
+import java.io.File;
+
 import java.util.Iterator;
 
-import edu.stanford.nlp.util.CoreMap;
+import edu.ucla.sspace.util.LineReader;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * A utility class for creating a {@link Corpus} object where each line in the
+ * provided file is treated as a separate {@link Document} in that corpus.
  */
-public interface Document extends Iterable<Sentence> {
+public class SingleFileCorpusReader implements Iterable<String> {
 
-    /**
-     * The annotations provided for this document.
-     */
-    CoreMap annotations();
-
-    /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
-     */
-    Iterator<Token> tokens();
-
-    /**
-     * Returns an iterator over all the tokens in this document's text.
-     */
-    Iterator<Sentence> iterator();
+    private final File corpusFile;
     
+    public SingleFileCorpusReader(File corpusFile) {
+        this.corpusFile = corpusFile;
+    }
+
+    public Iterator<String> iterator() {
+        return new LineReader(corpusFile).iterator();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Keith Stevens 
+ * Copyright 2015 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -21,18 +21,40 @@
 
 package edu.ucla.sspace.text;
 
+import edu.stanford.nlp.util.CoreMap;
+
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+
+
 /**
- * A subclass of {@code BloglinesCorpusReader} that always includes timestamps.
- *
- * @author Keith Stevens
+ * A basic token that uses provided data to report information on the token.
  */
-public class TemporalBloglinesCorpusReader extends BloglinesCorpusReader {
+public class SimpleToken implements Token {
+
+    private final CoreMap annotations;
+    
+    public SimpleToken(CoreMap annotations) {
+        this.annotations = annotations;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public CoreMap annotations() {
+        return annotations;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public String text() {
+        return annotations.get(TextAnnotation.class);
+    }
 
     /**
-     * Creates a {@code BloglinesCorpusReader} that will always include
-     * timestamps.
+     * {@inheritDoc}
      */
-    public TemporalBloglinesCorpusReader() {
-        super(true);
+    public String toString() {
+        return text();
     }
 }

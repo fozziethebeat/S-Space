@@ -33,14 +33,18 @@ import edu.ucla.sspace.matrix.MatrixIO.Format;
 import edu.ucla.sspace.matrix.SVD;
 import edu.ucla.sspace.matrix.Transform;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.LoggerUtil;
 import edu.ucla.sspace.util.ObjectCounter;
 import edu.ucla.sspace.util.SparseArray;
 import edu.ucla.sspace.util.SparseIntHashArray;
-
 
 import edu.ucla.sspace.vector.DoubleVector;
 import edu.ucla.sspace.vector.Vector;
@@ -138,6 +142,13 @@ public abstract class GenericTermDocumentVectorSpace
     protected Matrix wordSpace;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+    
+    /**
      * Constructs the {@code GenericTermDocumentVectorSpace}.
      *
      * @throws IOException if this instance encounters any errors when creatng
@@ -173,6 +184,8 @@ public abstract class GenericTermDocumentVectorSpace
 
         this.termDocumentMatrixBuilder = termDocumentMatrixBuilder;
 
+        this.tokenProcesser = new PassThroughTokenProcesser();
+        
         System.out.println("Saving matrix using " + termDocumentMatrixBuilder);
 
         wordSpace = null;
@@ -189,7 +202,12 @@ public abstract class GenericTermDocumentVectorSpace
      *
      * @param document {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus)
+            processDocument(doc);
+    }
+
+    protected void processDocument(Document doc) {                
         // Create a mapping for each term that is seen in the document to the
         // number of times it has been seen.  This mapping would more elegantly
         // be a SparseArray<Integer> however, the length of the sparse array
@@ -199,37 +217,31 @@ public abstract class GenericTermDocumentVectorSpace
         // converted to its index form for each occurrence, which results in a
         // double Map look-up.
         Counter<String> termCounts = new ObjectCounter<String>();
-        Iterator<String> documentTokens = IteratorFactory.tokenize(document);
+
 
         // Increaes the count of documents observed so far.
         int docCount = documentCounter.getAndAdd(1);
 
-        // If the first token is to be interpreted as a document header read it.
-        if (readHeaderToken)
-            handleDocumentHeader(docCount, documentTokens.next());
+        for (Sentence sent : doc) {
 
-        // If the document is empty, skip it
-        if (!documentTokens.hasNext())
-            return;
+            for (Token token : sent) {
         
-        // For each word in the text document, keep a count of how many times it
-        // has occurred
-        while (documentTokens.hasNext()) {
-            String word = documentTokens.next();
-            
-            // Skip added empty tokens for words that have been filtered out
-            if (word.equals(IteratorFactory.EMPTY_TOKEN))
-                continue;
-            
-            // Add the term to the total list of terms to ensure it has a proper
-            // index.  If the term was already added, this method is a no-op
-            termToIndex.getDimension(word);
+                // Skip added empty tokens for words that have been filtered out
+                if (token == Token.EMPTY_TOKEN)
+                    continue;
 
-            termCounts.count(word);
+                // For each word in the text document, keep a count of how many
+                // times it has occurred
+                String word = tokenProcesser.process(token);
+                            
+                // Add the term to the total list of terms to ensure it has a
+                // proper index.  If the term was already added, this method is
+                // a no-op
+                termToIndex.getDimension(word);
+
+                termCounts.count(word);
+            }
         }
-
-        document.close();
-        System.out.printf("Saw %d terms, %d unique%n", termCounts.sum(), termCounts.size());
         
         // Check that we actually loaded in some terms before we increase the
         // documentIndex. This is done after increasing the document count since
@@ -248,8 +260,6 @@ public abstract class GenericTermDocumentVectorSpace
         for (Map.Entry<String,Integer> e : termCounts)
             documentColumn.set(
                     termToIndex.getDimension(e.getKey()), e.getValue());
-
-        System.out.println(this + " processing doc " + documentColumn);
 
         // Update the term-document matrix with the results of processing the
         // document.
@@ -332,7 +342,7 @@ public abstract class GenericTermDocumentVectorSpace
      * @param transform A matrix transform used to rescale the original raw
      *        document counts.  If {@code null} no transform is done.
      */
-    protected MatrixFile processSpace(Transform transform) {
+    protected MatrixFile build(Transform transform) {
         try {
             // first ensure that we are no longer writing to the matrix
             termDocumentMatrixBuilder.finish();
@@ -368,13 +378,17 @@ public abstract class GenericTermDocumentVectorSpace
     }
 
     /**
-     * Subclasses should override this method if they need to utilize a header
-     * token for each document.  Implementations of this method <b>must</b> be
-     * thread safe.  The default action is a no-op.
-     *
-     * @param docIndex The document id assigned to the current document
-     * @param documentName The name of the current document.
+     * {@inheritDoc}
      */
-    protected void handleDocumentHeader(int docIndex, String header) {
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+
 }

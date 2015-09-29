@@ -432,13 +432,13 @@ public class PartitioningNearestNeighborFinder
         // dummy SemanticSpace that contains the equivalent term-vector mapping
         else {
             verbose(LOGGER, "%s is not serializable, so writing a copy " +
-                    "of the data", sspace.getSpaceName());
+                    "of the data", sspace);
             Map<String,Vector> termToVector = 
                 new HashMap<String,Vector>(sspace.getWords().size());
             for (String term : sspace.getWords()) 
                 termToVector.put(term, sspace.getVector(term));
             SemanticSpace copy = new VectorMapSemanticSpace<Vector>(
-                termToVector, "copy of " + sspace.getSpaceName(),
+                termToVector, "copy of " + sspace,
                 sspace.getVectorLength());
             out.writeObject(copy);
         }

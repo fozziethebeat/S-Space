@@ -21,33 +21,62 @@
 
 package edu.ucla.sspace.text;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
+import edu.stanford.nlp.util.ArrayCoreMap;
 import edu.stanford.nlp.util.CoreMap;
 
 
 /**
- * An abstraction for a document that allows document processors to access text
- * in a uniform manner.
+ * A basic implementation of {@link Corpus} that wraps a collection of documents
+ * in a single instance.
  */
-public interface Document extends Iterable<Sentence> {
+public class SimpleCorpus implements Corpus {
+
+    private final Iterable<Document> docs;
+
+    private final CoreMap annotations;
+
+    private TokenProcesser processer;
+
+    public SimpleCorpus(Document... docs) {
+        this(Arrays.asList(docs));
+    }
+    
+    public SimpleCorpus(Iterable<Document> docs) {
+        this.docs = docs;
+        this.annotations = new ArrayCoreMap();
+        this.processer = new PassThroughTokenProcesser();
+    }
 
     /**
-     * The annotations provided for this document.
+     * {@inheritDoc}
      */
-    CoreMap annotations();
+    public CoreMap annotations() {
+        return annotations;
+    }
 
     /**
-     * Returns the {@code Token} instances of this document's text, which will
-     * be annotated with any of the underlying document's annotations in
-     * present.
+     * {@inheritDoc}
      */
-    Iterator<Token> tokens();
+    public Iterator<Document> iterator() {
+        return docs.iterator();
+    }
 
     /**
-     * Returns an iterator over all the tokens in this document's text.
+     * {@inheritDoc}
      */
-    Iterator<Sentence> iterator();
+    public TokenProcesser getTokenProcesser() {
+        return processer;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcesser(TokenProcesser processer) {
+        this.processer = processer;
+    }
     
 }

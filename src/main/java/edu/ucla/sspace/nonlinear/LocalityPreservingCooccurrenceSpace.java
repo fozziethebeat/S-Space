@@ -37,7 +37,12 @@ import edu.ucla.sspace.matrix.MatrixFile;
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.BoundedSortedMultiMap;
 import edu.ucla.sspace.util.MultiMap;
@@ -178,6 +183,13 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     private AffinityMatrixCreator affinityCreator;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+
+    /**
      * Constructs a new instance using the system properties for configuration.
      */
     public LocalityPreservingCooccurrenceSpace(AffinityMatrixCreator creator) {
@@ -206,18 +218,27 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
         weighting = ReflectionUtil.getObjectInstance(
                 properties.getProperty(
                     WEIGHTING_FUNCTION_PROPERTY, DEFAULT_WEIGHTING));
+
+        tokenProcesser = new PassThroughTokenProcesser();
     }
 
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    protected void process(Sentence sent)  {
         Queue<String> nextWords = new ArrayDeque<String>();
         Queue<String> prevWords = new ArrayDeque<String>();
             
-        Iterator<String> documentTokens = 
-            IteratorFactory.tokenizeOrdered(document);
-            
+        Iterator<Token> tokenIter = sent.iterator();
+        
         String focus = null;
 
         // Rather than updating the matrix every time an occurrence is seen,
@@ -228,23 +249,21 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
             new HashMap<Pair<Integer>,Double>();
             
         //Load the first windowSize words into the Queue        
-        for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
-            nextWords.offer(documentTokens.next());
+        for(int i = 0;  i < windowSize && tokenIter.hasNext(); i++)
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
             
         while(!nextWords.isEmpty()) {
             
             // Load the top of the nextWords Queue into the focus word
             focus = nextWords.remove();
 
-            // Add the next word to nextWords queue (if possible)
-            if (documentTokens.hasNext()) {        
-                String windowEdge = documentTokens.next();
-                nextWords.offer(windowEdge);
-            }            
+            // shift over the window to the next word
+            if (tokenIter.hasNext())
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
             // If the filter does not accept this word, skip the semantic
             // processing, continue with the next word
-            if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (focus.equals(Token.EMPTY_TOKEN_TEXT)) {
             // shift the window
                 prevWords.offer(focus);
                 if (prevWords.size() > windowSize)
@@ -259,7 +278,7 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
             for (String after : nextWords) {
                 // skip adding co-occurence values for words that are not
                 // accepted by the filter
-                if (!after.equals(IteratorFactory.EMPTY_TOKEN)) {
+                if (!after.equals(Token.EMPTY_TOKEN_TEXT)) {
                     int index = getIndexFor(after);
                     
                     // Get the current number of times that the focus word has
@@ -279,7 +298,7 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
             for (String before : prevWords) {
                 // skip adding co-occurence values for words that are not
                 // accepted by the filter
-                if (!before.equals(IteratorFactory.EMPTY_TOKEN)) {
+                if (!before.equals(Token.EMPTY_TOKEN_TEXT)) {
                     int index = getIndexFor(before);
 
                     // Get the current number of times that the focus word has
@@ -363,7 +382,7 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
 
         // Set all of the default properties
         int dimensions = 300; 
@@ -409,4 +428,18 @@ public class LocalityPreservingCooccurrenceSpace implements SemanticSpace {
     public String getSpaceName() {
         return "nws-semantic-space";
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }    
 }

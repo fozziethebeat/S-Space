@@ -9,11 +9,11 @@ import org.tartarus.snowball.Among;
   * It implements the stemming algorithm defined by a snowball script.
   */
 
-public class porterStemmer extends org.tartarus.snowball.SnowballStemmer {
+public class PorterStemmer extends org.tartarus.snowball.SnowballStemmer {
 
 private static final long serialVersionUID = 1L;
 
-        private final static porterStemmer methodObject = new porterStemmer ();
+        private final static PorterStemmer methodObject = new PorterStemmer ();
 
                 private final static Among a_0[] = {
                     new Among ( "s", -1, 3, "", methodObject ),
@@ -107,7 +107,7 @@ private static final long serialVersionUID = 1L;
         private int I_p2;
         private int I_p1;
 
-                private void copy_from(porterStemmer other) {
+                private void copy_from(PorterStemmer other) {
                     B_Y_found = other.B_Y_found;
                     I_p2 = other.I_p2;
                     I_p1 = other.I_p1;
@@ -909,11 +909,11 @@ private static final long serialVersionUID = 1L;
                 }
 
         public boolean equals( Object o ) {
-            return o instanceof porterStemmer;
+            return o instanceof PorterStemmer;
         }
 
         public int hashCode() {
-            return porterStemmer.class.getName().hashCode();
+            return PorterStemmer.class.getName().hashCode();
         }
 
 

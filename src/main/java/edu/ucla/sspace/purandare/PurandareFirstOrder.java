@@ -40,7 +40,12 @@ import edu.ucla.sspace.matrix.SparseRowMaskedMatrix;
 import edu.ucla.sspace.matrix.YaleSparseMatrix;
 import edu.ucla.sspace.matrix.SparseOnDiskMatrix;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
 
 import edu.ucla.sspace.util.SparseArray;
 import edu.ucla.sspace.util.SparseHashArray;
@@ -206,6 +211,13 @@ public class PurandareFirstOrder implements SemanticSpace {
     private int wordIndexCounter;
 
     /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+    
+    /**
      * Creates a new instance of {@code PurandareFirstOrder} using the system
      * properties for configuration
      */
@@ -222,6 +234,7 @@ public class PurandareFirstOrder implements SemanticSpace {
         termToIndex = new ConcurrentHashMap<String,Integer>();
         termToVector = new ConcurrentHashMap<String,DoubleVector>();
         termCounts = new CopyOnWriteArrayList<AtomicInteger>();
+        this.tokenProcesser = new PassThroughTokenProcesser();
         windowSize = 5;
         contextWindowSize = 20;
         documentCounter = new AtomicInteger(0);        
@@ -249,14 +262,28 @@ public class PurandareFirstOrder implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void  processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                try {
+                    process(sent);
+                } catch (IOException ioe) {
+                    throw new IOError(ioe);
+                }
+            }
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void process(Sentence sent) throws IOException {
         documentCounter.getAndIncrement();
 	Queue<String> nextWords = new ArrayDeque<String>();
 	Queue<String> prevWords = new ArrayDeque<String>();
 		
-	Iterator<String> documentTokens = 
-	    IteratorFactory.tokenizeOrdered(document);
-		
+        Iterator<Token> tokenIter = sent.iterator();
+        
 	String focus = null;
 		
         ByteArrayOutputStream compressedDocument = 
@@ -265,8 +292,8 @@ public class PurandareFirstOrder implements SemanticSpace {
         int tokens = 0; // count how many are in this document
         int unfilteredTokens = 0; 
 	//Load the first windowSize words into the Queue		
-	for(int i = 0;  i < windowSize && documentTokens.hasNext(); i++)
-	    nextWords.offer(documentTokens.next());
+	for(int i = 0;  i < windowSize && tokenIter.hasNext(); i++)
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
 			
 	while(!nextWords.isEmpty()) {
             tokens++;
@@ -275,14 +302,13 @@ public class PurandareFirstOrder implements SemanticSpace {
 	    focus = nextWords.remove();
 
 	    // Add the next word to nextWords queue (if possible)
-	    if (documentTokens.hasNext()) {		
-		String windowEdge = documentTokens.next();
-		nextWords.offer(windowEdge);
+	    if (tokenIter.hasNext()) {
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));                
 	    }			
 
 	    // If the filter does not accept this word, skip the semantic
 	    // processing, continue with the next word
-	    if (focus.equals(IteratorFactory.EMPTY_TOKEN)) {
+	    if (focus.equals(Token.EMPTY_TOKEN_TEXT)) {
                 // Mark the token as empty using a negative term index in the
                 // compressed form of the document
                 dos.writeInt(-1);
@@ -305,7 +331,7 @@ public class PurandareFirstOrder implements SemanticSpace {
 	    for (String after : nextWords) {
 		// skip adding co-occurence values for words that are not
 		// accepted by the filter
-		if (!after.equals(IteratorFactory.EMPTY_TOKEN)) {
+		if (!after.equals(Token.EMPTY_TOKEN_TEXT)) {
 		    int index = getIndexFor(after);
                     cooccurrenceMatrix.addAndGet(focusIndex, index, 1);		 
                 }
@@ -314,7 +340,7 @@ public class PurandareFirstOrder implements SemanticSpace {
 	    for (String before : prevWords) {
 		// skip adding co-occurence values for words that are not
 		// accepted by the filter
-		if (!before.equals(IteratorFactory.EMPTY_TOKEN)) {
+		if (!before.equals(Token.EMPTY_TOKEN_TEXT)) {
 		    int index = getIndexFor(before);
                     cooccurrenceMatrix.addAndGet(focusIndex, index, 1);
                 }
@@ -385,7 +411,7 @@ public class PurandareFirstOrder implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         try {
             // Wrap the call to avoid having all the code in a try/catch.  This
             // is for improved readability purposes only.
@@ -731,6 +757,20 @@ public class PurandareFirstOrder implements SemanticSpace {
      */
     public String getSpaceName() {
 	return "purandare-petersen";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
     }
 
     /**

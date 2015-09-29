@@ -39,6 +39,13 @@ import edu.ucla.sspace.matrix.Normalize;
 import edu.ucla.sspace.matrix.SparseMatrix;
 import edu.ucla.sspace.matrix.Transform;
 
+import edu.ucla.sspace.text.Corpus;
+import edu.ucla.sspace.text.Document;
+import edu.ucla.sspace.text.PassThroughTokenProcesser;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
+import edu.ucla.sspace.text.TokenProcesser;
+
 import edu.ucla.sspace.vector.CompactSparseVector;
 import edu.ucla.sspace.vector.SparseDoubleVector;
 import edu.ucla.sspace.vector.SparseHashDoubleVector;
@@ -221,6 +228,14 @@ public class Coals implements SemanticSpace {
      */
     private final Transform transform;
 
+    /**
+     * The {@code TokenProcesser} used to transform {@link Token} instances into
+     * the word forms desired by the space.  Such a processor could lemmatize or
+     * append part of speech information.
+     */
+    protected TokenProcesser tokenProcesser;
+
+    
     public Coals(Transform transform, MatrixFactorization reducer) {
         this(transform, reducer, DEFAULT_REDUCE_DIMENSIONS,
              DEFAULT_MAX_WORDS, DEFAULT_MAX_DIMENSIONS);
@@ -249,6 +264,7 @@ public class Coals implements SemanticSpace {
         this.maxDimensions = (maxDimensions == 0)
             ? DEFAULT_MAX_DIMENSIONS
             : maxDimensions;
+        this.tokenProcesser = new PassThroughTokenProcesser();
     }
 
     /**
@@ -283,7 +299,15 @@ public class Coals implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processDocument(BufferedReader document) throws IOException {
+    public void process(Corpus corpus) {
+        for (Document doc : corpus) {
+            for (Sentence sent : doc) {
+                process(sent);
+            }
+        }
+    }
+    
+    protected void process(Sentence sent) {
         Map<String, Integer> wordFreq = new HashMap<String, Integer>();
         Map<String, SparseDoubleVector> wordDocSemantics =
             new HashMap<String, SparseDoubleVector>();
@@ -292,23 +316,23 @@ public class Coals implements SemanticSpace {
         // context.
         Queue<String> prevWords = new ArrayDeque<String>();
         Queue<String> nextWords = new ArrayDeque<String>();
+        
+        Iterator<Token> tokenIter = sent.iterator();
 
-        Iterator<String> it = IteratorFactory.tokenizeOrdered(document);
-
-        for (int i = 0; i < 4 && it.hasNext(); ++i)
-            nextWords.offer(it.next());
+        for (int i = 0; i < 4 && tokenIter.hasNext(); ++i)
+            nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
         // Compute the co-occurrance statistics of each focus word in the
         // document.
         while (!nextWords.isEmpty()) {
 
             // Slide over the context by one word.
-            if (it.hasNext())
-                nextWords.offer(it.next());
+            if (tokenIter.hasNext())
+                nextWords.offer(tokenProcesser.process(tokenIter.next()));
 
             // Get the focus word
             String focusWord = nextWords.remove();
-            if (!focusWord.equals(IteratorFactory.EMPTY_TOKEN)) {
+            if (!focusWord.equals(Token.EMPTY_TOKEN_TEXT)) {
                 getIndexFor(focusWord);
 
                 // Update the frequency count of the focus word.
@@ -331,7 +355,7 @@ public class Coals implements SemanticSpace {
                 int offset = 4 - prevWords.size();
                 for (String word : prevWords) {
                     offset++;
-                    if (word.equals(IteratorFactory.EMPTY_TOKEN))
+                    if (word.equals(Token.EMPTY_TOKEN_TEXT))
                         continue;
                     int index = getIndexFor(word);
                     focusSemantics.add(index, offset);
@@ -341,7 +365,7 @@ public class Coals implements SemanticSpace {
                 offset = 5;
                 for (String word : nextWords) {
                     offset--;
-                    if (word.equals(IteratorFactory.EMPTY_TOKEN))
+                    if (word.equals(Token.EMPTY_TOKEN_TEXT))
                         continue;
                     int index = getIndexFor(word);
                     focusSemantics.add(index, offset);
@@ -431,7 +455,7 @@ public class Coals implements SemanticSpace {
     /**
      * {@inheritDoc}
      */
-    public void processSpace(Properties props) {
+    public void build(Properties props) {
         COALS_LOGGER.info("Droppring dimensions from co-occurrance matrix.");
         // Read in the matrix from a file with dimensions dropped.
         finalCorrelation = buildMatrix(maxWords, maxDimensions);
@@ -562,6 +586,20 @@ public class Coals implements SemanticSpace {
         return new CellMaskedSparseMatrix(matrix, rowMask, colMask);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return tokenProcesser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setTokenProcessor(TokenProcesser tokenProcesser) {
+        this.tokenProcesser = tokenProcesser;
+    }
+    
     private class EntryComp
             implements Comparator<Map.Entry<String,AtomicInteger>> {
         public int compare(Map.Entry<String, AtomicInteger> o1,

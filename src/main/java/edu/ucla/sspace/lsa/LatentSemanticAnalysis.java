@@ -118,8 +118,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * This class offers configurable preprocessing and dimensionality reduction.
  * through three parameters.  These properties should be specified in the {@code
- * Properties} object passed to the {@link #processSpace(Properties)
- * processSpace} method.
+ * Properties} object passed to the {@link #build(Properties)
+ * build} method.
  *
  * <dl style="margin-left: 1em">
  *
@@ -154,7 +154,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *      <i>Default:</i> {@code false}
  *
  * <dd style="padding-top: .5em">This property indicate whether the document
- *       space should be retained after {@code processSpace}.  Setting this
+ *       space should be retained after {@code build}.  Setting this
  *       property to {@code true} will enable the {@link #getDocumentVector(int)
  *       getDocumentVector} method. <p>
  *
@@ -164,9 +164,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * This class is thread-safe for concurrent calls of {@link
  * #processDocument(BufferedReader) processDocument}.  Once {@link
- * #processSpace(Properties) processSpace} has been called, no further calls to
+ * #build(Properties) build} has been called, no further calls to
  * {@code processDocument} should be made.  This implementation does not support
- * access to the semantic vectors until after {@code processSpace} has been
+ * access to the semantic vectors until after {@code build} has been
  * called.
  *
  * @see Transform
@@ -201,7 +201,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
 
     /**
      * The property to set the specific SVD algorithm used by an instance during
-     * {@code processSpace}.  The value should be the name of a {@link
+     * {@code build}.  The value should be the name of a {@link
      * edu.ucla.sspace.matrix.SVD.Algorithm}.  If this property is unset, any
      * available algorithm will be used according to the ordering defined in
      * {@link SVD}.
@@ -211,7 +211,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
 
     /**
      * The property whose boolean value indicate whether the document space
-     * should be retained after {@code processSpace}.  Setting this property to
+     * should be retained after {@code build}.  Setting this property to
      * {@code true} will enable the {@link #getDocumentVector(int)
      * getDocumentVector} method.
      */
@@ -228,8 +228,8 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * The document space of the term document based word space If the word
      * space is reduced.  After reduction it is the right factor matrix of the
      * SVD of the word-document matrix.  This matrix is only available after the
-     * {@link #processSpace(Transform, SVD.Algorithm, int, boolean)
-     * processSpace} method has been called.
+     * {@link #build(Transform, SVD.Algorithm, int, boolean)
+     * build} method has been called.
      */
     private Matrix documentSpace;
 
@@ -392,7 +392,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * </p>
      *
      * Similar to {@code getVector}, this method is only to be used after {@code
-     * processSpace} has been called.  By default, the document space is not
+     * build} has been called.  By default, the document space is not
      * retained unless {@code retainDocumentSpace} is set to true.
      *
      * </p>
@@ -412,7 +412,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      *
      * @throws IllegalArgumentException If the document number is out of range.
      * @throws IllegalStateException If the document space has not been retained
-     *         or if {@link #processSpace(Properties)} has not been called yet
+     *         or if {@link #build(Properties)} has not been called yet
      *         to finalize this space.
      */
     @Override
@@ -452,10 +452,10 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      *        LatentSemanticAnalysis javadoc} for the full list of supported
      *        properties.
      */
-    public void processSpace(Properties properties) {
+    public void build(Properties properties) {
         // Perform any optional transformations (e.g., tf-idf) on the
         // term-document matrix
-        MatrixFile processedSpace = processSpace(transform);
+        MatrixFile processedSpace = build(transform);
 
         LoggerUtil.info(LOG, "reducing to %d dimensions", dimensions);
 
@@ -493,7 +493,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * @return the projected version of {@code doc} in this instances latent
      *         document space, using the recognized terms in the document
      *
-     * @throws IllegalStateException if {@link #processSpace(Properties)} has
+     * @throws IllegalStateException if {@link #build(Properties)} has
      *         not yet been called (that is, no latent document space exists
      *         yet).
      */
@@ -501,12 +501,15 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
         // Check that we can actually project the document
         if (wordSpace == null) 
             throw new IllegalStateException(
-                "processSpace has not been called, so the latent document " +
+                "build() has not been called, so the latent document " +
                 "space does not yet exist");
 
         // Tokenize the document using the existing tokenization rules
-        Iterator<String> docTokens = 
-            IteratorFactory.tokenize(doc.reader());
+        Iterator<String> docTokens =
+            null;
+        //IteratorFactory.tokenize(doc.reader());
+        if (1 == 1)
+            throw new Error();
         
         // Ensure that when we are projecting the new document that we do not
         // add any new terms to this space's basis.
