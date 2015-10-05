@@ -27,7 +27,9 @@ import java.util.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.testsetup.DummyCorpus;
+
+import edu.ucla.sspace.text.*;
 
 import static org.junit.Assert.*;
 
@@ -43,45 +45,30 @@ public class VsmTest {
 
     @Test public void testProcessDocument() throws Exception {
         VectorSpaceModel vsm = new VectorSpaceModel();
-        vsm.processDocument(new BufferedReader(new StringReader("This is a test document.")));
+        vsm.process(DummyCorpus.instance());
     }
 
     @Test public void testEmptyDocument() throws Exception {
         VectorSpaceModel vsm = new VectorSpaceModel();
-        vsm.processDocument(new BufferedReader(new StringReader("")));
+        vsm.process(Corpora.fromSentences(""));        
     }
 
     @Test public void testProcessSpace() throws Exception {
         VectorSpaceModel vsm = new VectorSpaceModel();
-        vsm.processDocument(new BufferedReader(new StringReader("This is a test document.")));
-        vsm.processDocument(new BufferedReader(new StringReader("This is a second doc.")));
-        vsm.processDocument(new BufferedReader(new StringReader("After the second, this could be the third document.")));
-        vsm.processSpace(new Properties());
+        vsm.process(DummyCorpus.instance());
+        vsm.build(new Properties());
     }
 
     @Test public void testGetDocumentVector() throws Exception {
         IteratorFactory.setProperties(new Properties());
         VectorSpaceModel vsm = new VectorSpaceModel();
-        try {
-            String[] docArr = new String[] {
-                "shipment of gold damaged in a fire",
-                "delivery of silver arrived in a silver truck",
-                "shipment of gold arrived in a truck"
-            };
-            for (String doc : docArr) {
-                vsm.processDocument(new BufferedReader(new StringReader(doc)));
-            }           
-
-            vsm.processSpace(new Properties());
-            System.out.printf("Vsm has %d docs and %d words%n",
-                              vsm.documentSpaceSize(), vsm.getWords().size());
-            
-            assertEquals(3, vsm.documentSpaceSize());
-            for (int i = 0; i < 3; ++i)
-                vsm.getDocumentVector(i);
-        }
-        catch (Throwable t) {
-            throw new Error(t);
-        }
+        vsm.process(DummyCorpus.instance());
+        vsm.build(new Properties());
+        System.out.printf("Vsm has %d docs and %d words%n",
+                          vsm.documentSpaceSize(), vsm.getWords().size());
+        
+        assertEquals(3, vsm.documentSpaceSize());
+        for (int i = 0; i < 3; ++i)
+            vsm.getDocumentVector(i);
     }
 }

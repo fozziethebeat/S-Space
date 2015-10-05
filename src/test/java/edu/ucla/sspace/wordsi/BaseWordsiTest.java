@@ -68,13 +68,13 @@ public class BaseWordsiTest {
 
     @Test public void testVectorLength() {
         ContextExtractor extractor = new MockExtractor();
-        SemanticSpace mock = new MockWordsi(null, extractor);
+        SemanticSpace2 mock = new MockWordsi(null, extractor);
         assertEquals(extractor.getVectorLength(), mock.getVectorLength());
     }
 
     @Test public void testProcessDocument() throws Exception {
         MockExtractor extractor = new MockExtractor();
-        SemanticSpace mock = new MockWordsi(null, extractor);
+        SemanticSpace2 mock = new MockWordsi(null, extractor);
         mock.processDocument(null);
         assertTrue(extractor.calledProcessDocument);
     }

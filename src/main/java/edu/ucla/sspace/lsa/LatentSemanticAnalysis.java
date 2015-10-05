@@ -38,7 +38,7 @@ import edu.ucla.sspace.matrix.Transform;
 import edu.ucla.sspace.matrix.factorization.SingularValueDecomposition;
 
 import edu.ucla.sspace.text.Document;
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Documents;
 
 import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.LoggerUtil;
@@ -483,8 +483,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
      * distirbution of terms contained within it
      *
      * @param doc A document whose contents are to be mapped into the latent
-     *        document space of this instance.  The contents of this document
-     *        are tokenized using the existing {@link IteratorFactory} settings.
+     *        document space of this instance.  
      *        Note that tokens that are not in the word space of this {@link
      *        LatentSemanticAnalysis} instance will be ignored, so documents
      *        that consist mostly of unseen terms will likely not be represented
@@ -505,11 +504,7 @@ public class LatentSemanticAnalysis extends GenericTermDocumentVectorSpace
                 "space does not yet exist");
 
         // Tokenize the document using the existing tokenization rules
-        Iterator<String> docTokens =
-            null;
-        //IteratorFactory.tokenize(doc.reader());
-        if (1 == 1)
-            throw new Error();
+        Iterator<String> docTokens = Documents.toTokens(doc).iterator();
         
         // Ensure that when we are projecting the new document that we do not
         // add any new terms to this space's basis.

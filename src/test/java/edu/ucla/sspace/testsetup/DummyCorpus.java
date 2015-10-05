@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Keith Stevens 
+ * Copyright 2015 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -19,41 +19,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package edu.ucla.sspace.mains;
+package edu.ucla.sspace.testsetup;
 
-import edu.ucla.sspace.common.ArgOptions;
-import edu.ucla.sspace.common.SemanticSpaceIO.SSpaceFormat;
+import java.io.*;
+import java.util.*;
 
-import edu.ucla.sspace.wordsi.ContextExtractor;
-import edu.ucla.sspace.wordsi.TopicModelContextExtractor;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import java.util.Map;
+import edu.ucla.sspace.text.*;
+
+import static org.junit.Assert.*;
 
 
 /**
- * A main for running a wordsi model over topic signatures for documents.
- *
- * @author Keith Stevens
+ * A basic {@link Corpus} for testing
  */
-public class TopicWordsiMain extends GenericWordsiMain {
+public class DummyCorpus {
 
-    /**
-     * {@inheritDoc}
-     */
-    protected ContextExtractor getExtractor() {
-        // Create the new generator.
-        return new TopicModelContextExtractor();
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected SSpaceFormat getSpaceFormat() {
-        return SSpaceFormat.SPARSE_BINARY;
-    }
-
-    public static void main(String[] args) throws Exception {
-        TopicWordsiMain main = new TopicWordsiMain();
-        main.run(args);
+    public static Corpus instance() {
+        return Corpora.fromSentences(new String[] {
+            "shipment of gold damaged in a fire",
+            "delivery of silver arrived in a silver truck",
+            "shipment of gold arrived in a truck"
+            });
     }
 }

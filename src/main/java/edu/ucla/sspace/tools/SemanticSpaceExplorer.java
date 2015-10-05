@@ -611,7 +611,7 @@ public class SemanticSpaceExplorer {
                 out.println("no .sspace loaded");
                 break;
             }
-            String name = current.getSpaceName();
+            String name = current.toString();
             boolean hasDimDescriptions = 
                 current instanceof DimensionallyInterpretableSemanticSpace;
             int dims = current.getVectorLength();

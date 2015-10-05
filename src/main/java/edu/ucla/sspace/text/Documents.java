@@ -22,6 +22,7 @@
 package edu.ucla.sspace.text;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,6 +47,20 @@ public class Documents {
      */
     public static Corpus asCorpus(Iterable<Document> docs) {
         return new SimpleCorpus(docs);
+    }
+
+    /**
+     * Returns an iterable stream over the tokens in a {@link Document}.
+     */
+    public static Iterable<String> toTokens(Document d) {
+        // REMINDER: wrap this in a proper iterator, rather than dumping to a
+        // secondard data structure.
+        List<String> tokens = new ArrayList<String>();
+        for (Sentence s : d) {
+            for (Token t : s)
+                tokens.add(t.text());
+        }
+        return tokens;
     }
     
     // public static Document of(List<String> tokens) {

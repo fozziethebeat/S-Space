@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 David Jurgens
+ * Copyright 2015 David Jurgens
  *
  * This file is part of the S-Space package and is covered under the terms and
  * conditions therein.
@@ -22,38 +22,32 @@
 package edu.ucla.sspace.text;
 
 import java.util.Arrays;
-import java.util.ArrayDeque;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
+import java.util.Iterator;
 
 import edu.stanford.nlp.util.ArrayCoreMap;
 import edu.stanford.nlp.util.CoreMap;
 
-import edu.ucla.sspace.util.CombinedIterator;
-
 
 /**
- * A basic implementation of {@link Document} that wraps a collection of {@link
- * Sentence} instances.
+ * 
  */
-public class SimpleDocument implements Document {
-
-    private final Iterable<Sentence> sentences;
+public class SimpleSentence implements Sentence {
 
     private final CoreMap annotations;
-    
-    public SimpleDocument(Iterable<Sentence> sentences) {
-        this.sentences = sentences;
-        this.annotations = new ArrayCoreMap();
+
+    private final Iterable tokens;   
+
+    public SimpleSentence(String sentence) {
+        this(Arrays.asList(sentence.split("\\s+")));
     }
 
-    public SimpleDocument(Sentence... sentences) {
-        this.sentences = Arrays.asList(sentences);
+    public SimpleSentence(Iterable<String> tokens) {
+        this.tokens = tokens;
         this.annotations = new ArrayCoreMap();
     }
-
-    
+   
     /**
      * {@inheritDoc}
      */
@@ -62,21 +56,38 @@ public class SimpleDocument implements Document {
     }
 
     /**
-     * Returns an iterator over all the tokens in all the sentences in this
-     * document.
+     * {@inheritDoc}
      */
-    public Iterator<Token> tokens() {
-        Queue<Iterator<Token>> iters = new ArrayDeque<Iterator<Token>>();
-        for (Sentence s : sentences)
-            iters.add(s.iterator());
-        return new CombinedIterator(iters);
+    public Iterator<Token> iterator() {
+        return new TokenIter(tokens.iterator());
     }
 
     /**
-     * Returns an iterator over all the tokens in this document's text.
+     * {@inheritDoc}
      */
-    public Iterator<Sentence> iterator() {
-        return sentences.iterator();
-    }  
-    
+    public String text() {
+        return String.join(" ", tokens);
+    }
+
+    static class TokenIter implements Iterator<Token> {
+
+        private final Iterator<String> iter;
+
+        public TokenIter(Iterator<String> iter) {
+            this.iter = iter;
+        }
+
+        public boolean hasNext() {
+            return iter.hasNext();
+        }
+
+        public Token next() {
+            return new SimpleToken(iter.next());
+        }
+        
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+    }
 }

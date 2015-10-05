@@ -29,7 +29,19 @@ public class DummySemanticSpace implements SemanticSpace {
     /**
      * Does nothing
      */
-    public void processDocument(BufferedReader document) throws IOException { }
+    public void setTokenProcessor(TokenProcesser processer) { }
+
+    /**
+     * Returns {@code null}
+     */
+    public TokenProcesser getTokenProcessor() {
+        return null;
+    }
+        
+    /**
+     * Does nothing
+     */
+    public void process(Corpus corpus) throws IOException { }
 
     /**
      * {@inheritDoc}
@@ -63,7 +75,7 @@ public class DummySemanticSpace implements SemanticSpace {
     /**
      * Does nothing
      */
-    public void processSpace(Properties properties) { }
+    public void build(Properties properties) { }
 
     /**
      * {@inheritDoc}

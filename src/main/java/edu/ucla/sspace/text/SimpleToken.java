@@ -21,6 +21,7 @@
 
 package edu.ucla.sspace.text;
 
+import edu.stanford.nlp.util.ArrayCoreMap;
 import edu.stanford.nlp.util.CoreMap;
 
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
@@ -36,7 +37,12 @@ public class SimpleToken implements Token {
     public SimpleToken(CoreMap annotations) {
         this.annotations = annotations;
     }
-    
+
+    public SimpleToken(String tokenText) {
+        this.annotations = new ArrayCoreMap();
+        annotations.set(TextAnnotation.class, tokenText);
+    }
+
     /**
      * {@inheritDoc}
      */

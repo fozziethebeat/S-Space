@@ -35,15 +35,13 @@ import edu.ucla.sspace.graph.WeightedGraph;
 import edu.ucla.sspace.graph.SparseWeightedGraph;
 import edu.ucla.sspace.graph.SimpleWeightedEdge;
 
-import edu.ucla.sspace.text.BufferedFileListDocumentIterator;
-import edu.ucla.sspace.text.IteratorFactory;
+import edu.ucla.sspace.text.Corpus;
 import edu.ucla.sspace.text.StringUtils;
-import edu.ucla.sspace.text.TermAssociationFinder;
 import edu.ucla.sspace.text.WordIterator;
 import edu.ucla.sspace.text.Document;
-import edu.ucla.sspace.text.FileListDocumentIterator;
 import edu.ucla.sspace.text.IteratorFactory;
-import edu.ucla.sspace.text.OneLinePerDocumentIterator;
+import edu.ucla.sspace.text.Sentence;
+import edu.ucla.sspace.text.Token;
 
 import edu.ucla.sspace.util.Counter;
 import edu.ucla.sspace.util.CombinedIterator;
@@ -201,35 +199,44 @@ public class IterativeBigramExtractor {
        
             int docNum = 0;
             long startTime = System.currentTimeMillis();
-            Iterator<Document> docs = getDocuments(options);
-            while (docs.hasNext()) {
-                Document doc = docs.next();
-                Iterator<String> tokens = new WordIterator(doc.reader());
-                String t1 = null;
-                while (tokens.hasNext()) {
-                    String t2 = tokens.next();
-                    // Count the occurrence of this token if we're supposed to
-                    // record it
-                    if (terms.contains(t2)
-                            && (stopWords == null || !stopWords.contains(t2))) {
+            Iterator<Corpus> iter = getDocuments(options);
+            while (iter.hasNext()) {
+                Corpus c = iter.next();
+                for (Document doc : c) {
+                    for (Sentence sent : doc) {
+                        Iterator<Token> tokens = sent.iterator();
+                        String t1 = null;
+                        if (tokens.hasNext())
+                            t1 = tokens.next().text();
 
-                        termCounts.count(t2);
-                        if (t1 != null) {
-                            allBigramCounts++;
-                            // See if we are supposed to record this bigram
-                            if (curTerms.contains(t1))
-                                bigramCounts.count(new Pair<String>(t1, t2));
+                        while (tokens.hasNext()) {
+                            String t2 = tokens.next().text();
+
+                            // Count the occurrence of this token if we're
+                            // supposed to record it
+                            if (terms.contains(t2)
+                                && (stopWords == null || !stopWords.contains(t2))) {
+
+                                termCounts.count(t2);
+                                if (t1 != null) {
+                                    allBigramCounts++;
+                                    // See if we are supposed to record this bigram
+                                    if (curTerms.contains(t1))
+                                        bigramCounts.count(new Pair<String>(t1, t2));
+                                }
+                            }
+                            t1 = t2;
                         }
                     }
-                    t1 = t2;
-                }
+                
 
-                // Just some reporting
-                if (++docNum % 1000 == 0) {
-                    double now = System.currentTimeMillis();
-                    double docsSec = docNum / ((now - startTime) / 1000);
-                    verbose(LOGGER, "Processed document %d in round %d, " +
-                            "docs/sec: %f", docNum, round, docsSec);
+                    // Just some reporting
+                    if (++docNum % 1000 == 0) {
+                        double now = System.currentTimeMillis();
+                        double docsSec = docNum / ((now - startTime) / 1000);
+                        verbose(LOGGER, "Processed document %d in round %d, " +
+                                "docs/sec: %f", docNum, round, docsSec);
+                    }
                 }
             }
 
@@ -267,8 +274,12 @@ public class IterativeBigramExtractor {
     }
 
 
-    private static Iterator<Document> getDocuments(ArgOptions argOptions) 
+    private static Iterator<Corpus> getDocuments(ArgOptions argOptions) 
             throws IOException {
+
+        throw new AssertionError();
+        
+        /*
         Collection<Iterator<Document>> docIters = 
             new LinkedList<Iterator<Document>>();
 
@@ -289,6 +300,7 @@ public class IterativeBigramExtractor {
         Iterator<Document> docIter = new CombinedIterator<Document>(docIters);
         
         return docIter;
+        */
     }
 
     /**

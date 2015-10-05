@@ -27,6 +27,9 @@ import java.util.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import edu.ucla.sspace.text.*;
+import edu.ucla.sspace.testsetup.DummyCorpus;
+
 import static org.junit.Assert.*;
 
 
@@ -38,13 +41,9 @@ public class TestRandomIndexing {
         RandomIndexing ri = new RandomIndexing(new Properties());
         ri.RANDOM.setSeed(SEED);
 
-        String text = "the quick brown fox jumps over the lazy dog";
-        ri.processDocument(new BufferedReader(new StringReader(text)));
+        Corpus c = DummyCorpus.instance();
+        ri.process(c);
 
-        Set<String> words = new LinkedHashSet<String>();
-        for (String s : text.split("\\s+")) 
-            words.add(s);
-
-        assertEquals(words, ri.getWords());
+        assertEquals(Corpora.getWords(c), ri.getWords());
     }
 }

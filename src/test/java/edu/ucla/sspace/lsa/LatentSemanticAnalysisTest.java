@@ -31,6 +31,8 @@ import edu.ucla.sspace.text.*;
 import edu.ucla.sspace.util.*;
 import edu.ucla.sspace.vector.*;
 
+import edu.ucla.sspace.testsetup.DummyCorpus;
+
 import java.io.*;
 import java.util.*;
 
@@ -52,28 +54,21 @@ public class LatentSemanticAnalysisTest {
     @Test public void testProject() throws Exception {
         // Short circuit if we can't run the test
         if (!SingularValueDecompositionLibC.isSVDLIBCavailable())
-            return;
+            return;        
+        
 
-        String[] docArr = new String[] {
-            "shipment of gold damaged in a fire",
-            "delivery of silver arrived in a silver truck",
-            "shipment of gold arrived in a truck"
-        };
-        
-        
-        List<String> docs = Arrays.asList(docArr);
-        int numDocs = docs.size();
+        int numDocs = 3;
         LatentSemanticAnalysis lsa =
             new LatentSemanticAnalysis(true, 2, new NoTransform(), 
                                        new SingularValueDecompositionLibC(),
                                        false, new StringBasisMapping());
-        for (String doc : docs)
-            lsa.processDocument(new BufferedReader(new StringReader(doc)));        
-        lsa.processSpace(System.getProperties());
+
+        lsa.process(DummyCorpus.instance());
+        lsa.build(System.getProperties());
         
         String query = "gold silver truck";
         
-        DoubleVector projected = lsa.project(new StringDocument(query));
+        DoubleVector projected = lsa.project(new SimpleDocument(new SimpleSentence(query)));
         assertEquals(2, projected.length());
         assertEquals(0.2140, Math.abs(projected.get(0)), 0.001);
         assertEquals(0.1821, Math.abs(projected.get(1)), 0.001);
