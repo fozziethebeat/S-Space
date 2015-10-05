@@ -37,7 +37,7 @@ public class SimpleSentence implements Sentence {
 
     private final CoreMap annotations;
 
-    private final Iterable tokens;   
+    private final Iterable<String> tokens;   
 
     public SimpleSentence(String sentence) {
         this(Arrays.asList(sentence.split("\\s+")));
