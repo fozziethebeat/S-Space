@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -125,11 +126,18 @@ public class DocumentVectorBuilder {
 
         // Iterate through each term in the document and sum the term Vectors 
         // found in the provided SemanticSpace.
+        // If the underlying BasisMapping of the sspace is not read-only, then
+        // the getVector method would try to access a non-existing element. 
+        // We therefore check here if the word is in the mapping and
+        // skip the word if it is not.
+        Set<String> knownWords = sspace.getWords();
         for (Map.Entry<String, Integer> entry : termCounts.entrySet()) {
-            Vector termVector = sspace.getVector(entry.getKey());
-            if (termVector == null)
-                continue;
-            add(documentVector, termVector, entry.getValue());
+            if(knownWords.contains(entry.getKey())) {
+              Vector termVector = sspace.getVector(entry.getKey());
+              if (termVector == null)
+                  continue;
+              add(documentVector, termVector, entry.getValue());
+            }
         }
 
         return documentVector;
