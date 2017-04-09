@@ -70,12 +70,12 @@ public final class OptionDescriptions {
         "included or\n" +
         "excluded.  The behavior, \"include\" or \"exclude\" is specified\n" +
         "first, followed by one or more file names, each separated by " +
-        "colons.\n" +
+        "semicolons.\n" +
         "Multiple behaviors may be specified one after the other using a ','\n"+
         "character to separate them.  For example, a typical configuration " +
         "may\n" +
         "look like: " +
-        "include=top-tokens.txt:test-words.txt,exclude=stop-words.txt\n" +
+        "include=top-tokens.txt;test-words.txt,exclude=stop-words.txt\n" +
         "Note that behaviors are applied in the order they are presented on the " +
         "command-line.";
  
